@@ -51,7 +51,7 @@ tasks:
       - npx tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --minify
   tailwind-watch:
     cmds:
-      - tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --watch
+      - npx tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --watch
   templ-generate:
     internal: true
     cmds:
