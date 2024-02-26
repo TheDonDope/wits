@@ -1,0 +1,118 @@
+package auth
+
+import (
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/TheDonDope/wits/pkg/types"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+)
+
+const (
+	// AccessTokenCookieName is the name of the access token cookie.
+	AccessTokenCookieName = "witx-access-token"
+	// RefreshTokenCookieName is the name of the refresh token cookie.
+	RefreshTokenCookieName = "witx-refresh-token"
+)
+
+// WitsCustomClaims are custom claims extending default ones.
+// See https://github.com/golang-jwt/jwt for more examples
+type WitsCustomClaims struct {
+	Email string `json:"email"`
+	jwt.RegisteredClaims
+}
+
+// GetJWTSecret returns the JWT secret key from the environment.
+func GetJWTSecret() string {
+	return os.Getenv("JWT_SECRET_KEY")
+}
+
+// GetRefreshJWTSecret returns the refresh JWT secret key from the environment.
+func GetRefreshJWTSecret() string {
+	return os.Getenv("JWT_REFRESH_SECRET_KEY")
+}
+
+// JWTErrorChecker will be executed when user try to access a protected path.
+func JWTErrorChecker(c echo.Context, _ error) error {
+	return c.Redirect(http.StatusMovedPermanently, "/login")
+}
+
+// GenerateTokensAndSetCookies generates tokens and sets cookies for the user.
+func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
+	accessToken, exp, err := generateAccessToken(user)
+	if err != nil {
+		return err
+	}
+
+	setTokenCookie(AccessTokenCookieName, accessToken, exp, c)
+	setUserCookie(user, exp, c)
+	refreshToken, exp, err := generateRefreshToken(user)
+	if err != nil {
+		return err
+	}
+	setTokenCookie(RefreshTokenCookieName, refreshToken, exp, c)
+
+	return nil
+}
+
+// generateToken generates a JWT token for the user.
+func generateToken(user *types.User, expirationTime time.Time, secret []byte) (string, time.Time, error) {
+	// Create the JWT claims, which includes the username and expiry time
+	claims := &WitsCustomClaims{
+		user.Email,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	// Declare the token with the algorithm used for signing, and the claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Create the JWT string
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		return "", time.Now(), err
+	}
+
+	return tokenString, expirationTime, nil
+}
+
+// generateAccessToken generates an access token for the user.
+func generateAccessToken(user *types.User) (string, time.Time, error) {
+	// Declare the expiration time of the token
+	expirationTime := time.Now().Add(1 * time.Hour)
+
+	return generateToken(user, expirationTime, []byte(GetJWTSecret()))
+}
+
+// generateRefreshToken generates a refresh token for the user.
+func generateRefreshToken(user *types.User) (string, time.Time, error) {
+	// Declare the expiration time of the token
+	expirationTime := time.Now().Add(24 * time.Hour)
+
+	return generateToken(user, expirationTime, []byte(GetRefreshJWTSecret()))
+}
+
+// setTokenCookie sets a token cookie.
+func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
+	cookie := new(http.Cookie)
+	cookie.Name = name
+	cookie.Value = token
+	cookie.Expires = expiration
+	cookie.Path = "/"
+	cookie.HttpOnly = true
+
+	c.SetCookie(cookie)
+}
+
+// setUserCookie sets a user cookie.
+func setUserCookie(user *types.User, expiration time.Time, c echo.Context) {
+	cookie := new(http.Cookie)
+	cookie.Name = "user"
+	cookie.Value = user.Email
+	cookie.Expires = expiration
+	cookie.Path = "/"
+	c.SetCookie(cookie)
+}

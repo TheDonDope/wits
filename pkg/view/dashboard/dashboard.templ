@@ -1,0 +1,12 @@
+package dashboard
+
+import (
+	"github.com/TheDonDope/wits/pkg/view/layout"
+	"github.com/TheDonDope/wits/pkg/types"
+)
+
+templ Dashboard(u *types.User) {
+	@layout.Container() {
+		Welcome { u.Email }!
+	}
+}
