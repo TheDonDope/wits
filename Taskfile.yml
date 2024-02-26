@@ -1,0 +1,96 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Welcome to Wits!
+
+tasks:
+  default:
+    cmds:
+      - air
+    silent: true
+  install-godoc:
+    internal: true
+    cmds:
+      - go install golang.org/x/tools/cmd/godoc@latest
+    silent: true
+  install-gotests:
+    internal: true
+    cmds:
+      - go install github.com/cweill/gotests/gotests@latest
+    silent: true
+  install-air:
+    internal: true
+    cmds:
+      - go install github.com/cosmtrek/air@latest
+  clean:
+    cmds:
+      - cmd: rm wits{{exeExt}}
+        ignore_error: true
+      - cmd: rm coverage.html
+        ignore_error: true
+      - cmd: rm coverage.out
+        ignore_error: true
+  build:
+    deps: [templ-generate, tailwind-build]
+    cmds:
+      - go build -v -o ./wits{{exeExt}} ./cmd/server.go
+    sources:
+      - '**/*.go'
+    generates:
+      - app{{exeExt}}
+    method: timestamp
+  doc:
+    deps: [install-godoc]
+    cmds:
+      - godoc
+  tailwind-build:
+    internal: true
+    cmds:
+      - npx tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --minify
+  tailwind-watch:
+    cmds:
+      - tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --watch
+  templ-generate:
+    internal: true
+    cmds:
+      - templ generate
+  templ-generate-watch:
+    cmds:
+      - templ generate -watch -proxy http:=//localhost:3000
+  test:
+    deps: [install-gotests]
+    cmds:
+      - go test -race -v ./... -coverprofile coverage.out
+    sources:
+      - '**/*.go'
+    generates:
+      - coverage.out
+    method: timestamp
+  test-ci:
+    deps: [install-gotests]
+    cmds:
+      - go test -race -v ./... -coverprofile coverage.out -covermode=atomic
+      - bash <(curl -s https://codecov.io/bash)
+    sources:
+      - '**/*.go'
+    generates:
+      - coverage.out
+    method: timestamp
+  cover:
+    deps: [test]
+    cmds:
+      - go tool cover -html coverage.out -o coverage.html
+    sources:
+      - coverage.out
+    generates:
+      - coverage.html
+    method: timestamp
+  show-cover:
+    deps: [cover]
+    cmds:
+      - open coverage.html
+  vet:
+    cmds:
+      - go vet ./...
