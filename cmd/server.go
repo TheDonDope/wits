@@ -26,7 +26,11 @@ func main() {
 
 	// Index Route, redirect to login if necessary
 	e.GET("/", func(c echo.Context) error {
-		return c.Redirect(http.StatusSeeOther, "/login")
+		_, err := c.Cookie("user")
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/login")
+		}
+		return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 	})
 
 	// Login routes
