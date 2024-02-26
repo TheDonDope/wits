@@ -1,3 +1,4 @@
+// Package main is the entry point for the Wits server.
 package main
 
 import (
@@ -25,13 +26,7 @@ func main() {
 	e.Static("/assets", "assets")
 
 	// Index Route, redirect to login if necessary
-	e.GET("/", func(c echo.Context) error {
-		_, err := c.Cookie("user")
-		if err != nil {
-			return c.Redirect(http.StatusSeeOther, "/login")
-		}
-		return c.Redirect(http.StatusMovedPermanently, "/dashboard")
-	})
+	e.GET("/", handleGetIndex)
 
 	// Login routes
 	loginHandler := handler.LoginHandler{}
@@ -41,7 +36,16 @@ func main() {
 	// Dashboard routes
 	r := e.Group("/dashboard")
 	// Configure middleware with the custom claims type
-	config := echojwt.Config{
+	r.Use(echojwt.WithConfig(createEchoJWTConfig()))
+	dashboardHandler := handler.DashboardHandler{}
+	r.GET("", dashboardHandler.HandleGetDashboard)
+
+	// Start server
+	e.Logger.Fatal(e.Start(":3000"))
+}
+
+func createEchoJWTConfig() echojwt.Config {
+	return echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(auth.WitsCustomClaims)
 		},
@@ -49,11 +53,12 @@ func main() {
 		TokenLookup:  "cookie:witx-access-token",
 		ErrorHandler: auth.JWTErrorChecker,
 	}
-	r.Use(echojwt.WithConfig(config))
+}
 
-	dashboardHandler := handler.DashboardHandler{}
-	r.GET("", dashboardHandler.HandleGetDashboard)
-
-	// Start server
-	e.Logger.Fatal(e.Start(":3000"))
+func handleGetIndex(c echo.Context) error {
+	_, err := c.Cookie("user")
+	if err != nil {
+		return c.Redirect(http.StatusSeeOther, "/login")
+	}
+	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }

@@ -9,7 +9,7 @@ Wits aims to help cannabis patients and users to manage and monitor their cannab
 To build the binary, run the following (alternatively `$ task build` if you are using [Task](https://taskfile.dev/#/)):
 
 ```shell
-$ go build .
+$ go build -v -o ./wits ./cmd/server.go
 [Empty output on success]
 ```
 
@@ -17,8 +17,17 @@ Afterwards the application can be started by:
 
 ```shell
 $ ./wits
-Wits aims to help cannabis patients and users to manage and monitor
-their cannabis consumption and inventory.
+Welcome to Wits!
+
+   ____    __
+  / __/___/ /  ___
+ / _// __/ _ \/ _ \
+/___/\__/_//_/\___/ v4.11.4
+High performance, minimalist Go web framework
+https://echo.labstack.com
+____________________________________O/_______
+                                    O\
+⇨ http server started on [::]:3000
 ```
 
 The built binary is explicitly ignored from source control (see [.gitignore](.gitignore)).
@@ -29,8 +38,14 @@ The built binary is explicitly ignored from source control (see [.gitignore](.gi
 
 ```shell
 $ go test -race -v ./... -coverprofile coverage.out
-?    github.com/TheDonDope/wits [no test files]
-?    github.com/TheDonDope/wits/cmd [no test files]
+?    github.com/TheDonDope/wits/pkg/types [no test files]
+?    github.com/TheDonDope/wits/pkg/view [no test files]
+ github.com/TheDonDope/wits/cmd  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/handler  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/auth  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/dashboard  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/login  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/layout  coverage: 0.0% of statements
 ```
 
 - Generate the coverage results as html (alternatively `$ task cover` if you are using [Task](https://taskfile.dev/#/)):
