@@ -4,14 +4,15 @@ import (
 	"net/http"
 
 	"github.com/TheDonDope/wits/pkg/auth"
-	"github.com/TheDonDope/wits/pkg/types"
+	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/view/login"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 // LoginHandler ...
-type LoginHandler struct{}
+type LoginHandler struct {
+	userStorage *storage.UserStorage
+}
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
 func (h LoginHandler) HandleGetLogin(c echo.Context) error {
@@ -23,20 +24,15 @@ func (h LoginHandler) HandlePostLogin(c echo.Context) error {
 	email := c.FormValue("email")
 	passwd := c.FormValue("password")
 
-	user := &types.User{
-		ID:       uuid.NewString(),
-		Email:    email,
-		Password: passwd,
+	user, userErr := h.userStorage.GetTestUserByEmailAndPassword(email, passwd)
+
+	if userErr != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
 
-	// Throws unauthorized error
-	if user.Email != "foo@bar.org" || user.Password != "known" {
-		return echo.ErrUnauthorized
-	}
+	tokenErr := auth.GenerateTokensAndSetCookies(user, c)
 
-	err := auth.GenerateTokensAndSetCookies(user, c)
-
-	if err != nil {
+	if tokenErr != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
