@@ -11,7 +11,7 @@ import (
 
 // LoginHandler ...
 type LoginHandler struct {
-	userStorage *storage.UserStorage
+	UserStorage *storage.UserStorage
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
@@ -22,9 +22,9 @@ func (h LoginHandler) HandleGetLogin(c echo.Context) error {
 // HandlePostLogin responds to POST on the /login route by ...
 func (h LoginHandler) HandlePostLogin(c echo.Context) error {
 	email := c.FormValue("email")
-	passwd := c.FormValue("password")
+	password := c.FormValue("password")
 
-	user, userErr := h.userStorage.GetTestUserByEmailAndPassword(email, passwd)
+	user, userErr := h.UserStorage.GetTestUserByEmailAndPassword(email, password)
 
 	if userErr != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")

@@ -2,11 +2,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/handler"
+	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -17,6 +19,11 @@ import (
 
 func main() {
 	fmt.Println("Welcome to Wits!")
+
+	db, err := initDb()
+	if err != nil {
+		fmt.Printf("Error initializing database, error: %v /n", err)
+	}
 
 	e := echo.New()
 
@@ -31,7 +38,8 @@ func main() {
 	e.GET("/", handleGetIndex)
 
 	// Login routes
-	loginHandler := handler.LoginHandler{}
+	userStorage := &storage.UserStorage{DB: db}
+	loginHandler := handler.LoginHandler{UserStorage: userStorage}
 	e.GET("/login", loginHandler.HandleGetLogin)
 	e.POST("/login", loginHandler.HandlePostLogin)
 
@@ -44,6 +52,16 @@ func main() {
 
 	// Start server
 	e.Logger.Fatal(e.Start(":3000"))
+}
+
+func initDb() (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", "./db/wits.db")
+	if err != nil {
+		fmt.Printf("Error opening database, error: %v /n", err)
+		return nil, err
+	}
+	defer db.Close()
+	return db, nil
 }
 
 func createEchoJWTConfig() echojwt.Config {
