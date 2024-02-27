@@ -34,20 +34,20 @@ func Dashboard(u *types.User) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("Welcome ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex min-h-full flex-col justify-center px-6 py-12 lg:px-8 bg-white dark:bg-slate-800\"><div class=\"sm:mx-auto sm:w-full sm:max-w-sm\"><img class=\"mx-auto h-10 w-auto\" src=\"./assets/img/android-chrome-512x512.png\" alt=\"Wits Logo\"><h2 class=\"mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 dark:text-white\">Welcome ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(u.Email)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/view/dashboard/dashboard.templ`, Line: 9, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pkg/view/dashboard/dashboard.templ`, Line: 12, Col: 125}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("!")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("!</h2></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
