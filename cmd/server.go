@@ -2,17 +2,19 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/handler"
 	"github.com/TheDonDope/wits/pkg/storage"
+	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -20,10 +22,13 @@ import (
 func main() {
 	fmt.Println("Welcome to Wits!")
 
-	db, err := initDb()
+	db, err := gorm.Open(sqlite.Open("wits.db"), &gorm.Config{})
 	if err != nil {
-		fmt.Printf("Error initializing database, error: %v /n", err)
+		panic("failed to connect database")
 	}
+
+	// Migrate the schema
+	db.AutoMigrate(&types.User{})
 
 	e := echo.New()
 
@@ -39,6 +44,7 @@ func main() {
 
 	// Login routes
 	userStorage := &storage.UserStorage{DB: db}
+	userStorage.InsertTestUsers()
 	loginHandler := handler.LoginHandler{UserStorage: userStorage}
 	e.GET("/login", loginHandler.HandleGetLogin)
 	e.POST("/login", loginHandler.HandlePostLogin)
@@ -52,16 +58,6 @@ func main() {
 
 	// Start server
 	e.Logger.Fatal(e.Start(":3000"))
-}
-
-func initDb() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", "./db/wits.db")
-	if err != nil {
-		fmt.Printf("Error opening database, error: %v /n", err)
-		return nil, err
-	}
-	defer db.Close()
-	return db, nil
 }
 
 func createEchoJWTConfig() echojwt.Config {

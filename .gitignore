@@ -47,6 +47,5 @@ Thumbs.db
 # Environment Files
 .env
 
-# Ignore all .db files in the "db" folder
-db/*.db
-!db/*.sql
+# Ignore local sqlite3 db
+wits.db

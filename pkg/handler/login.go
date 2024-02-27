@@ -24,7 +24,7 @@ func (h LoginHandler) HandlePostLogin(c echo.Context) error {
 	email := c.FormValue("email")
 	password := c.FormValue("password")
 
-	user, userErr := h.UserStorage.GetTestUserByEmailAndPassword(email, password)
+	user, userErr := h.UserStorage.GetUserByEmailAndPassword(email, password)
 
 	if userErr != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")

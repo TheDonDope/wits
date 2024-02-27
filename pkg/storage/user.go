@@ -1,55 +1,55 @@
 package storage
 
 import (
-	"database/sql"
 	"fmt"
-	"os"
 
 	"github.com/TheDonDope/wits/pkg/types"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // UserStorage provides all storage related functionality for users.
 type UserStorage struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
-// GetTestUserByEmailAndPassword returns a test user by email and password.
-func (s *UserStorage) GetTestUserByEmailAndPassword(email string, password string) (*types.User, error) {
-	testUsers, err := s.GetTestUsers()
-	if err != nil {
-		return nil, err
+// GetUserByEmailAndPassword returns a user with the given email and password.
+func (s *UserStorage) GetUserByEmailAndPassword(email string, password string) (*types.User, error) {
+	var user types.User
+	row := s.DB.Where("email = ?", email).First(&user)
+	if row.Error != nil {
+		return nil, fmt.Errorf("User not found")
+
 	}
 
-	for _, user := range testUsers {
-		if user.Email == email && bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil {
-			return user, nil
-		}
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
+		return nil, fmt.Errorf("Password is incorrect")
 	}
 
-	return nil, fmt.Errorf("User not found")
+	return &user, nil
 }
 
-// GetTestUsers returns a list of test users.
-func (s *UserStorage) GetTestUsers() ([]*types.User, error) {
-	onePasswd, err := bcrypt.GenerateFromPassword([]byte(os.Getenv("ONE_PASSWORD")), 8)
+// InsertTestUsers inserts some test users into the database.
+func (s *UserStorage) InsertTestUsers() {
+	onePasswd, err := bcrypt.GenerateFromPassword([]byte("known"), 8)
 	if err != nil {
-		return nil, err
+		fmt.Println("Error hashing password one")
 	}
 	one := &types.User{
-		ID:       uuid.NewString(),
-		Email:    os.Getenv("ONE_EMAIL"),
+		Email:    "one@foo.org",
 		Password: string(onePasswd),
+		Name:     "One",
 	}
-	twoPasswd, err := bcrypt.GenerateFromPassword([]byte(os.Getenv("TWO_PASSWORD")), 8)
+	s.DB.Create(&one)
+
+	twoPasswd, err := bcrypt.GenerateFromPassword([]byte("known"), 8)
 	if err != nil {
-		return nil, err
+		fmt.Println("Error hashing password two")
 	}
 	two := &types.User{
-		ID:       uuid.NewString(),
-		Email:    os.Getenv("TWO_EMAIL"),
+		Email:    "two@foo.org",
 		Password: string(twoPasswd),
+		Name:     "Two",
 	}
-	return []*types.User{one, two}, nil
+	s.DB.Create(&two)
 }
