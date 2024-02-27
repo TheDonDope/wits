@@ -30,6 +30,8 @@ func main() {
 	// Migrate the schema
 	db.AutoMigrate(&types.User{})
 
+	userStorage := &storage.UserStorage{DB: db}
+
 	e := echo.New()
 
 	// Middleware
@@ -43,11 +45,14 @@ func main() {
 	e.GET("/", handleGetIndex)
 
 	// Login routes
-	userStorage := &storage.UserStorage{DB: db}
-	userStorage.InsertTestUsers()
 	loginHandler := handler.LoginHandler{UserStorage: userStorage}
 	e.GET("/login", loginHandler.HandleGetLogin)
 	e.POST("/login", loginHandler.HandlePostLogin)
+
+	// Register routes
+	registerHandler := handler.RegisterHandler{UserStorage: userStorage}
+	e.GET("/register", registerHandler.HandleGetRegister)
+	e.POST("/register", registerHandler.HandlePostRegister)
 
 	// Dashboard routes
 	r := e.Group("/dashboard")
