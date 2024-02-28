@@ -4,7 +4,6 @@ package main
 import (
 	"log"
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/TheDonDope/wits/pkg/auth"
@@ -47,11 +46,17 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// HTTP Error Handler
+	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		slog.Error("🚨 HTTP Error", "error", err, "path", c.Request().URL.Path)
+	}
+
 	// Serve public assets
 	e.Static("/public", "public")
 
 	// Index Route, redirect to login if necessary
-	e.GET("/", handleGetIndex)
+	homeHandler := handler.HomeHandler{}
+	e.GET("/", homeHandler.HandleHomeIndex)
 
 	// Login routes
 	loginHandler := handler.LoginHandler{UserStorage: userStorage}
@@ -92,12 +97,4 @@ func createEchoJWTConfig() echojwt.Config {
 		TokenLookup:  "cookie:witx-access-token",
 		ErrorHandler: auth.JWTErrorChecker,
 	}
-}
-
-func handleGetIndex(c echo.Context) error {
-	_, err := c.Cookie("user")
-	if err != nil {
-		return c.Redirect(http.StatusSeeOther, "/login")
-	}
-	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }
