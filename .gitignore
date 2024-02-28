@@ -51,3 +51,6 @@ Thumbs.db
 
 # Ignore local sqlite3 db
 wits.db
+
+# Generated go files from Templ
+*_templ.go*

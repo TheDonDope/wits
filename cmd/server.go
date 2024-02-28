@@ -2,8 +2,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -22,15 +22,18 @@ import (
 )
 
 func main() {
-	fmt.Println("Welcome to Wits!")
+	slog.Info("🥦 Welcome to Wits! 🥦")
 
 	if err := initEverything(); err != nil {
 		log.Fatal(err)
 	}
 
-	db, err := gorm.Open(sqlite.Open(os.Getenv("DATA_SOURCE_NAME")), &gorm.Config{})
+	dsn := os.Getenv("DATA_SOURCE_NAME")
+	slog.Info("📁 Using database", "dsn", dsn)
+
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatal(err)
 	}
 
 	// Migrate the schema
@@ -68,7 +71,9 @@ func main() {
 	r.GET("", dashboardHandler.HandleGetDashboard)
 
 	// Start server
-	e.Logger.Fatal(e.Start(os.Getenv("HTTP_LISTEN_ADDR")))
+	addr := os.Getenv("HTTP_LISTEN_ADDR")
+	slog.Info("🚀 Wits server is running at", "addr", addr)
+	e.Logger.Fatal(e.Start(addr))
 }
 
 func initEverything() error {
