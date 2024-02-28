@@ -1,13 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./**/*.html', './**/*.templ', './**/*.go'],
+  content: ['./view/**/*.templ', './**/*.templ'],
   theme: {
-    extend: {
-      container: {
-        center: true,
-        padding: '4px'
-      }
-    }
+    extend: {}
   },
-  plugins: []
+  plugins: [require('daisyui')],
+  daisyui: {
+    themes: ['lemonade', 'forest']
+  }
 };

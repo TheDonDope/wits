@@ -1,8 +1,8 @@
 package layout
 
-templ Container() {
+templ App() {
 	<!DOCTYPE html>
-	<html lang="en" class="h-full">
+	<html lang="en" data-theme="forest">
 		<head>
 			<meta charset="utf-8"/>
 			<title>Wits</title>
@@ -16,7 +16,7 @@ templ Container() {
 			<link href="public/css/styles.css" rel="stylesheet"/>
 			<script src="public/js/htmx.min@1.9.10.js"></script>
 		</head>
-		<body class="h-full">
+		<body>
 			{ children... }
 		</body>
 	</html>
