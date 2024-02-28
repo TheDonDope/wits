@@ -15,7 +15,7 @@ install:
 	npm install -D daisyui@latest
 
 build:
-	npx tailwindcss -i pkg/view/css/input.css -o public/css/styles.css
+	npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css
 	templ generate view
 	go build -v -o ./bin/wits ./cmd/server.go
 

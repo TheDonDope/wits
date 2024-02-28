@@ -48,10 +48,10 @@ tasks:
   tailwind-build:
     internal: true
     cmds:
-      - npx tailwindcss -i ./pkg/view/css/input.css -o ./public/css/styles.css --minify
+      - npx tailwindcss -i ./pkg/view/css/app.css -o ./public/css/styles.css --minify
   tailwind-watch:
     cmds:
-      - npx tailwindcss -i ./pkg/view/css/input.css -o ./public/css/styles.css --watch
+      - npx tailwindcss -i ./pkg/view/css/app.css -o ./public/css/styles.css --watch
   templ-generate:
     internal: true
     cmds:
