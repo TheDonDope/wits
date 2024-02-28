@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/handler"
@@ -22,7 +23,7 @@ import (
 func main() {
 	fmt.Println("Welcome to Wits!")
 
-	db, err := gorm.Open(sqlite.Open("wits.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(os.Getenv("DATA_SOURCE_NAME")), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -62,7 +63,7 @@ func main() {
 	r.GET("", dashboardHandler.HandleGetDashboard)
 
 	// Start server
-	e.Logger.Fatal(e.Start(":3000"))
+	e.Logger.Fatal(e.Start(os.Getenv("HTTP_LISTEN_ADDR")))
 }
 
 func createEchoJWTConfig() echojwt.Config {

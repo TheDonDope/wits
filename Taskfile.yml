@@ -35,7 +35,7 @@ tasks:
   build:
     deps: [templ-generate, tailwind-build]
     cmds:
-      - go build -v -o ./wits{{exeExt}} ./cmd/server.go
+      - go build -v -o ./bin/wits{{exeExt}} ./cmd/server.go
     sources:
       - '**/*.go'
     generates:
