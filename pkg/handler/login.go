@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/TheDonDope/wits/pkg/auth"
@@ -27,12 +28,14 @@ func (h LoginHandler) HandlePostLogin(c echo.Context) error {
 	user, userErr := h.UserStorage.GetUserByEmailAndPassword(email, password)
 
 	if userErr != nil {
+		slog.Error("🚨 Error getting user", "error", userErr)
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
 
 	tokenErr := auth.GenerateTokensAndSetCookies(user, c)
 
 	if tokenErr != nil {
+		slog.Error("🚨 Error generating tokens", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 

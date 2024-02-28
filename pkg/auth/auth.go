@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -35,7 +36,8 @@ func GetRefreshJWTSecret() string {
 }
 
 // JWTErrorChecker will be executed when user try to access a protected path.
-func JWTErrorChecker(c echo.Context, _ error) error {
+func JWTErrorChecker(c echo.Context, err error) error {
+	slog.Error("🚨 JWT Error", "error", err, "path", c.Request().URL.Path)
 	return c.Redirect(http.StatusMovedPermanently, "/login")
 }
 
@@ -43,6 +45,7 @@ func JWTErrorChecker(c echo.Context, _ error) error {
 func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
 	accessToken, exp, err := generateAccessToken(user)
 	if err != nil {
+		slog.Error("🚨 Error generating access token", "error", err, "path", c.Request().URL.Path)
 		return err
 	}
 
@@ -50,10 +53,11 @@ func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
 	setUserCookie(user, exp, c)
 	refreshToken, exp, err := generateRefreshToken(user)
 	if err != nil {
+		slog.Error("🚨 Error generating refresh token", "error", err, "path", c.Request().URL.Path)
 		return err
 	}
 	setTokenCookie(RefreshTokenCookieName, refreshToken, exp, c)
-
+	slog.Info("🔑 Tokens have been generated and set", "path", c.Request().URL.Path)
 	return nil
 }
 
@@ -73,6 +77,7 @@ func generateToken(user *types.User, expirationTime time.Time, secret []byte) (s
 	// Create the JWT string
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
+		slog.Error("🚨 Error signing token", "error", err)
 		return "", time.Now(), err
 	}
 
@@ -103,8 +108,8 @@ func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	cookie.Expires = expiration
 	cookie.Path = "/"
 	cookie.HttpOnly = true
-
 	c.SetCookie(cookie)
+	slog.Info("🍪 Cookie has been set", "name", name, "value", token)
 }
 
 // setUserCookie sets a user cookie.
@@ -115,4 +120,5 @@ func setUserCookie(user *types.User, expiration time.Time, c echo.Context) {
 	cookie.Expires = expiration
 	cookie.Path = "/"
 	c.SetCookie(cookie)
+	slog.Info("🍪 Cookie has been set", "name", "user", "value", user.Email)
 }

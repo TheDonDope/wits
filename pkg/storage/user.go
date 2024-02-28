@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/TheDonDope/wits/pkg/types"
 	"golang.org/x/crypto/bcrypt"
@@ -19,6 +20,7 @@ func (s *UserStorage) GetUserByEmail(email string) (*types.User, error) {
 	var user types.User
 	err := s.DB.Where("email = ?", email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		slog.Error("🚨 User not found", "error", err)
 		return nil, err
 	}
 
@@ -29,10 +31,12 @@ func (s *UserStorage) GetUserByEmail(email string) (*types.User, error) {
 func (s *UserStorage) GetUserByEmailAndPassword(email string, password string) (*types.User, error) {
 	user, err := s.GetUserByEmail(email)
 	if err != nil {
+		slog.Error("🚨 Error getting user by email", "error", err)
 		return nil, err
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
+		slog.Error("🚨 Password is incorrect")
 		return nil, fmt.Errorf("Password is incorrect")
 	}
 

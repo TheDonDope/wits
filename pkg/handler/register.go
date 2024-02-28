@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/TheDonDope/wits/pkg/auth"
@@ -30,21 +31,24 @@ func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
 	passwordConfirm := c.FormValue("password-confirmation")
 
 	if password != passwordConfirm {
+		slog.Error("🚨 Passwords do not match")
 		return echo.NewHTTPError(http.StatusBadRequest, "Passwords do not match")
 	}
 
 	// Check if user with email already exists
 	existingUser, err := h.UserStorage.GetUserByEmail(email)
 	if err != nil {
-		fmt.Println("Error checking if user exists")
+		slog.Error("🚨 Error checking if user exists", "error", err)
 	}
 
 	if existingUser != nil {
+		slog.Error("🚨 User with email already exists")
 		return echo.NewHTTPError(http.StatusBadRequest, "User with email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
 	if err != nil {
+		slog.Error("🚨 Error hashing password", "error", err)
 		fmt.Println("Error hashing password")
 	}
 
@@ -58,6 +62,7 @@ func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
 
 	tokenErr := auth.GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
+		slog.Error("🚨 Error generating tokens", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
