@@ -1,11 +1,11 @@
 package layout
 
-templ App() {
+templ App(nav bool) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="forest">
 		<head>
-			<meta charset="utf-8"/>
 			<title>Wits</title>
+			<meta charset="utf-8"/>
 			<base href="/"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<link rel="icon" type="image/x-icon" href="public/img/favicon.ico"/>
@@ -14,9 +14,15 @@ templ App() {
 			<link rel="icon" type="image/png" sizes="16x16" href="public/img/favicon-16x16.png"/>
 			<link rel="manifest" href="public/img/site.webmanifest"/>
 			<link href="public/css/styles.css" rel="stylesheet"/>
-			<script src="public/js/htmx.min@1.9.10.js"></script>
+			<script src="public/js/jquery@3.7.1.min.js"></script>
+			<script src="public/js/htmx@1.9.10.min.js"></script>
+			<script src="public/js/fontawesome-free@6.5.1.all.min.js"></script>
 		</head>
-		<body>
+		<body class="antialiased">
+			if nav {
+				// @ui.Navigation()
+				Navigation comes here
+			}
 			{ children... }
 		</body>
 	</html>
