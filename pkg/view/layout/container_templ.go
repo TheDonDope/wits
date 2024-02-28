@@ -23,7 +23,7 @@ func Container() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\" class=\"h-full\"><head><title>Wits</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"./assets/img/apple-touch-icon.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"./assets/img/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"./assets/img/favicon-16x16.png\"><link rel=\"manifest\" href=\"./assets/img/site.webmanifest\"><link href=\"./assets/css/output.css\" rel=\"stylesheet\"><script src=\"./assets/js/htmx.min@1.9.10.js\"></script></head><body class=\"h-full\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\" class=\"h-full\"><head><meta charset=\"utf-8\"><title>Wits</title><base href=\"/\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"icon\" type=\"image/x-icon\" href=\"public/img/favicon.ico\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"public/img/apple-touch-icon.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"public/img/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"public/img/favicon-16x16.png\"><link rel=\"manifest\" href=\"public/img/site.webmanifest\"><link href=\"public/css/styles.css\" rel=\"stylesheet\"><script src=\"public/js/htmx.min@1.9.10.js\"></script></head><body class=\"h-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

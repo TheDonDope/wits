@@ -26,7 +26,7 @@ tasks:
       - go install github.com/cosmtrek/air@latest
   clean:
     cmds:
-      - cmd: rm wits{{exeExt}}
+      - cmd: rm ./bin/wits{{exeExt}}
         ignore_error: true
       - cmd: rm coverage.html
         ignore_error: true
@@ -48,10 +48,10 @@ tasks:
   tailwind-build:
     internal: true
     cmds:
-      - npx tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --minify
+      - npx tailwindcss -i ./pkg/view/css/input.css -o ./public/css/styles.css --minify
   tailwind-watch:
     cmds:
-      - npx tailwindcss -i ./pkg/view/input.css -o ./assets/css/output.css --watch
+      - npx tailwindcss -i ./pkg/view/css/input.css -o ./public/css/styles.css --watch
   templ-generate:
     internal: true
     cmds:

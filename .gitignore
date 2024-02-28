@@ -9,6 +9,7 @@ wits
 
 # dependencies
 node_modules
+vendor
 
 # IDEs and editors
 /.idea

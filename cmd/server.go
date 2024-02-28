@@ -44,8 +44,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Serve static assets
-	e.Static("/assets", "assets")
+	// Serve public assets
+	e.Static("/public", "public")
 
 	// Index Route, redirect to login if necessary
 	e.GET("/", handleGetIndex)
