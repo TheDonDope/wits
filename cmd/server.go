@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -17,11 +18,15 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	fmt.Println("Welcome to Wits!")
+
+	if err := initEverything(); err != nil {
+		log.Fatal(err)
+	}
 
 	db, err := gorm.Open(sqlite.Open(os.Getenv("DATA_SOURCE_NAME")), &gorm.Config{})
 	if err != nil {
@@ -64,6 +69,13 @@ func main() {
 
 	// Start server
 	e.Logger.Fatal(e.Start(os.Getenv("HTTP_LISTEN_ADDR")))
+}
+
+func initEverything() error {
+	// if err := godotenv.Load(); err != nil {
+	// 	return err
+	// }
+	return godotenv.Load()
 }
 
 func createEchoJWTConfig() echojwt.Config {
