@@ -14,7 +14,7 @@ import (
 
 // RegisterHandler ...
 type RegisterHandler struct {
-	UserStorage *storage.UserStorage
+	Users *storage.UserStorage
 }
 
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.
@@ -36,7 +36,7 @@ func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
 	}
 
 	// Check if user with email already exists
-	existingUser, err := h.UserStorage.GetUserByEmail(email)
+	existingUser, err := h.Users.GetUserByEmail(email)
 	if err != nil {
 		slog.Error("🚨 🤝 Checking if user exists failed with", "error", err)
 	}
@@ -57,7 +57,7 @@ func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
 		Name:     username,
 	}
 
-	h.UserStorage.DB.Create(&user)
+	h.Users.DB.Create(&user)
 
 	tokenErr := auth.GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {

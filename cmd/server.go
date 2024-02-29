@@ -36,7 +36,7 @@ func main() {
 	// Migrate the schema
 	db.AutoMigrate(&types.User{})
 
-	userStorage := &storage.UserStorage{DB: db}
+	u := &storage.UserStorage{DB: db}
 
 	e := echo.New()
 
@@ -46,32 +46,32 @@ func main() {
 
 	// HTTP Error Handler
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		slog.Error("🚨 🖥️  HTTP Error", "error", err, "path", c.Request().URL.Path)
+		slog.Error("🚨 🖥️  HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
 	}
 
 	// Serve public assets
 	e.Static("/public", "public")
 
 	// Index Route, redirect to login if necessary
-	homeHandler := handler.HomeHandler{}
-	e.GET("/", homeHandler.HandleHomeIndex)
+	h := handler.HomeHandler{}
+	e.GET("/", h.HandleGetHome)
 
 	// Login routes
-	loginHandler := handler.LoginHandler{UserStorage: userStorage}
-	e.GET("/login", loginHandler.HandleGetLogin)
-	e.POST("/login", loginHandler.HandlePostLogin)
+	l := handler.LoginHandler{Users: u}
+	e.GET("/login", l.HandleGetLogin)
+	e.POST("/login", l.HandlePostLogin)
 
 	// Register routes
-	registerHandler := handler.RegisterHandler{UserStorage: userStorage}
-	e.GET("/register", registerHandler.HandleGetRegister)
-	e.POST("/register", registerHandler.HandlePostRegister)
+	r := handler.RegisterHandler{Users: u}
+	e.GET("/register", r.HandleGetRegister)
+	e.POST("/register", r.HandlePostRegister)
 
 	// Dashboard routes
-	r := e.Group("/dashboard")
+	d := handler.DashboardHandler{}
+	g := e.Group("/dashboard")
 	// Configure middleware with the custom claims type
-	r.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
-	dashboardHandler := handler.DashboardHandler{}
-	r.GET("", dashboardHandler.HandleGetDashboard)
+	g.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+	g.GET("", d.HandleGetDashboard)
 
 	// Start server
 	addr := os.Getenv("HTTP_LISTEN_ADDR")

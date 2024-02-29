@@ -12,7 +12,7 @@ import (
 
 // LoginHandler ...
 type LoginHandler struct {
-	UserStorage *storage.UserStorage
+	Users *storage.UserStorage
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
@@ -26,7 +26,7 @@ func (h LoginHandler) HandlePostLogin(c echo.Context) error {
 	email := c.FormValue("email")
 	password := c.FormValue("password")
 
-	user, userErr := h.UserStorage.GetUserByEmailAndPassword(email, password)
+	user, userErr := h.Users.GetUserByEmailAndPassword(email, password)
 
 	if userErr != nil {
 		slog.Error("🚨 🤝 Checking if user exists failed with", "error", userErr)

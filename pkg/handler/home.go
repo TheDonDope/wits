@@ -10,9 +10,9 @@ import (
 // HomeHandler is a handler for the root route
 type HomeHandler struct{}
 
-// HandleHomeIndex responds to GET on the / route by redirecting to the dashboard if the user is logged in,
+// HandleGetHome responds to GET on the / route by redirecting to the dashboard if the user is logged in,
 // otherwise to the login page.
-func (h *HomeHandler) HandleHomeIndex(c echo.Context) error {
+func (h *HomeHandler) HandleGetHome(c echo.Context) error {
 	_, err := c.Cookie("user")
 	if err != nil {
 		slog.Info("🔐 🤝 No user cookie found, redirecting to login")
