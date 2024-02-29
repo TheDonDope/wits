@@ -15,9 +15,9 @@ type HomeHandler struct{}
 func (h *HomeHandler) HandleHomeIndex(c echo.Context) error {
 	_, err := c.Cookie("user")
 	if err != nil {
-		slog.Info("🔐 No user cookie found, redirecting to login")
+		slog.Info("🔐 🤝 No user cookie found, redirecting to login")
 		return c.Redirect(http.StatusSeeOther, "/login")
 	}
-	slog.Info("🔓 User cookie found, redirecting to dashboard")
+	slog.Info("🔓 🤝 User cookie found, redirecting to dashboard")
 	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }

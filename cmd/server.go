@@ -6,11 +6,9 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/handler"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
-	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -21,14 +19,14 @@ import (
 )
 
 func main() {
-	slog.Info("🥦 Welcome to Wits! 🥦")
+	slog.Info("🥦 🖥️  Welcome to Wits!")
 
 	if err := initEverything(); err != nil {
 		log.Fatal(err)
 	}
 
 	dsn := os.Getenv("DATA_SOURCE_NAME")
-	slog.Info("📁 Using database", "dsn", dsn)
+	slog.Info("📁 🖥️  Using database", "dsn", dsn)
 
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -48,7 +46,7 @@ func main() {
 
 	// HTTP Error Handler
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		slog.Error("🚨 HTTP Error", "error", err, "path", c.Request().URL.Path)
+		slog.Error("🚨 🖥️  HTTP Error", "error", err, "path", c.Request().URL.Path)
 	}
 
 	// Serve public assets
@@ -71,13 +69,13 @@ func main() {
 	// Dashboard routes
 	r := e.Group("/dashboard")
 	// Configure middleware with the custom claims type
-	r.Use(echojwt.WithConfig(createEchoJWTConfig()))
+	r.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
 	dashboardHandler := handler.DashboardHandler{}
 	r.GET("", dashboardHandler.HandleGetDashboard)
 
 	// Start server
 	addr := os.Getenv("HTTP_LISTEN_ADDR")
-	slog.Info("🚀 Wits server is running at", "addr", addr)
+	slog.Info("🚀 🖥️  Wits server is running at", "addr", addr)
 	e.Logger.Fatal(e.Start(addr))
 }
 
@@ -86,15 +84,4 @@ func initEverything() error {
 	// 	return err
 	// }
 	return godotenv.Load()
-}
-
-func createEchoJWTConfig() echojwt.Config {
-	return echojwt.Config{
-		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(auth.WitsCustomClaims)
-		},
-		SigningKey:   []byte(auth.GetJWTSecret()),
-		TokenLookup:  "cookie:witx-access-token",
-		ErrorHandler: auth.JWTErrorChecker,
-	}
 }

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -25,31 +24,31 @@ func (h RegisterHandler) HandleGetRegister(c echo.Context) error {
 
 // HandlePostRegister responds to POST on the /register route by ...
 func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
+	slog.Info("🔐 🤝 Registering user")
 	username := c.FormValue("username")
 	email := c.FormValue("email")
 	password := c.FormValue("password")
 	passwordConfirm := c.FormValue("password-confirmation")
 
 	if password != passwordConfirm {
-		slog.Error("🚨 Passwords do not match")
+		slog.Error("🚨 🤝 Passwords do not match")
 		return echo.NewHTTPError(http.StatusBadRequest, "Passwords do not match")
 	}
 
 	// Check if user with email already exists
 	existingUser, err := h.UserStorage.GetUserByEmail(email)
 	if err != nil {
-		slog.Error("🚨 Error checking if user exists", "error", err)
+		slog.Error("🚨 🤝 Checking if user exists failed with", "error", err)
 	}
 
 	if existingUser != nil {
-		slog.Error("🚨 User with email already exists")
+		slog.Error("🚨 🤝 User with email already exists")
 		return echo.NewHTTPError(http.StatusBadRequest, "User with email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
 	if err != nil {
-		slog.Error("🚨 Error hashing password", "error", err)
-		fmt.Println("Error hashing password")
+		slog.Error("🚨 🤝 Hashing password failed with", "error", err)
 	}
 
 	user := &types.User{
@@ -62,9 +61,10 @@ func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
 
 	tokenErr := auth.GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
-		slog.Error("🚨 Error generating tokens", "error", tokenErr)
+		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
+	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard")
 	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }
