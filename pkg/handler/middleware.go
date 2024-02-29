@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -43,14 +44,19 @@ func EchoJWTConfig() echojwt.Config {
 			return new(WitsCustomClaims)
 		},
 		SigningKey:   []byte(JWTSecret()),
-		TokenLookup:  "cookie:witx-access-token",
-		ErrorHandler: JWTErrorChecker,
+		TokenLookup:  fmt.Sprintf("cookie:%s", AccessTokenCookieName),
+		ErrorHandler: JWTErrorHandler,
 	}
 }
 
-// JWTErrorChecker will be executed when user try to access a protected path.
-func JWTErrorChecker(c echo.Context, err error) error {
-	slog.Error("🚨 🏧 JWT Error", "error", err, "path", c.Request().URL.Path)
+// HTTPErrorHandler will be executed when an HTTP request fails.
+func HTTPErrorHandler(err error, c echo.Context) {
+	slog.Error("🚨 🖥️  HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
+}
+
+// JWTErrorHandler will be executed when user try to access a protected path.
+func JWTErrorHandler(c echo.Context, err error) error {
+	slog.Error("🚨 🏧 JWT validation failed with", "error", err, "path", c.Request().URL.Path)
 	return c.Redirect(http.StatusMovedPermanently, "/login")
 }
 

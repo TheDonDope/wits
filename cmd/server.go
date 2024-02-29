@@ -25,34 +25,33 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Database
 	dsn := os.Getenv("DATA_SOURCE_NAME")
 	slog.Info("📁 🖥️  Using database", "dsn", dsn)
-
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Migrate the schema
 	db.AutoMigrate(&types.User{})
 
+	// Storages
 	u := &storage.UserStorage{DB: db}
 
+	// Echo instance
 	e := echo.New()
 
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// HTTP Error Handler
-	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		slog.Error("🚨 🖥️  HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
-	}
+	// Application wide HTTP Error Handler
+	e.HTTPErrorHandler = handler.HTTPErrorHandler
 
 	// Serve public assets
 	e.Static("/public", "public")
 
-	// Index Route, redirect to login if necessary
+	// Home Route
 	h := handler.HomeHandler{}
 	e.GET("/", h.HandleGetHome)
 
