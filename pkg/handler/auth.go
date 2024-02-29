@@ -4,26 +4,55 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
-	"github.com/TheDonDope/wits/pkg/view/register"
+	"github.com/TheDonDope/wits/pkg/view/auth"
+
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RegisterHandler ...
-type RegisterHandler struct {
+// AuthHandler handles the authentication.
+type AuthHandler struct {
 	Users *storage.UserStorage
 }
 
+// HandleGetLogin responds to GET on the /login route by rendering the Login component.
+func (h AuthHandler) HandleGetLogin(c echo.Context) error {
+	return render(c, auth.Login())
+}
+
+// HandlePostLogin responds to POST on the /login route by ...
+func (h AuthHandler) HandlePostLogin(c echo.Context) error {
+	slog.Info("🔐 🤝 Logging in user")
+	email := c.FormValue("email")
+	password := c.FormValue("password")
+
+	user, userErr := h.Users.GetUserByEmailAndPassword(email, password)
+
+	if userErr != nil {
+		slog.Error("🚨 🤝 Checking if user exists failed with", "error", userErr)
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	}
+
+	tokenErr := GenerateTokensAndSetCookies(user, c)
+
+	if tokenErr != nil {
+		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
+		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
+	}
+
+	slog.Info("✅ 🤝 User has been logged in, redirecting to dashboard")
+	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
+}
+
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.
-func (h RegisterHandler) HandleGetRegister(c echo.Context) error {
-	return render(c, register.Register())
+func (h AuthHandler) HandleGetRegister(c echo.Context) error {
+	return render(c, auth.Register())
 }
 
 // HandlePostRegister responds to POST on the /register route by ...
-func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
+func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 	slog.Info("🔐 🤝 Registering user")
 	username := c.FormValue("username")
 	email := c.FormValue("email")
@@ -59,7 +88,7 @@ func (h RegisterHandler) HandlePostRegister(c echo.Context) error {
 
 	h.Users.DB.Create(&user)
 
-	tokenErr := auth.GenerateTokensAndSetCookies(user, c)
+	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
 		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")

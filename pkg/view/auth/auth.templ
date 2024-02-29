@@ -1,6 +1,45 @@
-package register
+package auth
 
 import "github.com/TheDonDope/wits/pkg/view/layout"
+
+templ Login() {
+	@layout.App(false) {
+		<div>
+			<div>
+				<img src="public/img/android-chrome-512x512.png" alt="Wits Logo"/>
+				<h2>Sign in to Wits</h2>
+			</div>
+			<div>
+				<form method="post">
+					<div>
+						<label for="email">Email address</label>
+						<div>
+							<input id="email" name="email" type="email" autocomplete="email" required/>
+						</div>
+					</div>
+					<div>
+						<div>
+							<label for="password">Password</label>
+							<div>
+								<a href="#">Forgot password?</a>
+							</div>
+						</div>
+						<div>
+							<input id="password" name="password" type="password" autocomplete="current-password" required/>
+						</div>
+					</div>
+					<div>
+						<button type="submit">Sign in</button>
+					</div>
+				</form>
+				<p>
+					Not a member?
+					<a href="/register">Register here</a>
+				</p>
+			</div>
+		</div>
+	}
+}
 
 templ Register() {
 	@layout.App(false) {

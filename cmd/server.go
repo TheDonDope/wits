@@ -56,15 +56,12 @@ func main() {
 	h := handler.HomeHandler{}
 	e.GET("/", h.HandleGetHome)
 
-	// Login routes
-	l := handler.LoginHandler{Users: u}
-	e.GET("/login", l.HandleGetLogin)
-	e.POST("/login", l.HandlePostLogin)
-
-	// Register routes
-	r := handler.RegisterHandler{Users: u}
-	e.GET("/register", r.HandleGetRegister)
-	e.POST("/register", r.HandlePostRegister)
+	// Auth routes
+	a := handler.AuthHandler{Users: u}
+	e.GET("/login", a.HandleGetLogin)
+	e.POST("/login", a.HandlePostLogin)
+	e.GET("/register", a.HandleGetRegister)
+	e.POST("/register", a.HandlePostRegister)
 
 	// Dashboard routes
 	d := handler.DashboardHandler{}
