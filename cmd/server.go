@@ -75,6 +75,10 @@ func main() {
 	e.Logger.Fatal(e.Start(addr))
 }
 
+// initEverything initializes everything needed for the server to run.
+//
+// Returns:
+// - error: The error if any.
 func initEverything() error {
 	// if err := godotenv.Load(); err != nil {
 	// 	return err

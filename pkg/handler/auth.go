@@ -12,17 +12,32 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// AuthHandler handles the authentication.
+// AuthHandler provides handlers for the authentication routes of the application.
+// It is responsible for handling user login, registration, and logout.
 type AuthHandler struct {
 	Users *storage.UserStorage
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
+//
+// Parameters:
+// - c echo.Context: The echo context.
+//
+// Returns:
+// - error: The error if any.
 func (h AuthHandler) HandleGetLogin(c echo.Context) error {
 	return render(c, auth.Login())
 }
 
-// HandlePostLogin responds to POST on the /login route by ...
+// HandlePostLogin responds to POST on the /login route by trying to log in the user.
+// If the user exists and the password is correct, the JWT tokens are generated and set as cookies.
+// Finally, the user is redirected to the dashboard.
+//
+// Parameters:
+// - c echo.Context: The echo context.
+//
+// Returns:
+// - error: The error if any.
 func (h AuthHandler) HandlePostLogin(c echo.Context) error {
 	slog.Info("🔐 🤝 Logging in user")
 	email := c.FormValue("email")
@@ -47,11 +62,25 @@ func (h AuthHandler) HandlePostLogin(c echo.Context) error {
 }
 
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.
+//
+// Parameters:
+// - c echo.Context: The echo context.
+//
+// Returns:
+// - error: The error if any.
 func (h AuthHandler) HandleGetRegister(c echo.Context) error {
 	return render(c, auth.Register())
 }
 
-// HandlePostRegister responds to POST on the /register route by ...
+// HandlePostRegister responds to POST on the /register route by trying to register the user.
+// If the user does not exist, the password is hashed and the user is created in the database.
+// Afterwards, the JWT tokens are generated and set as cookies. Finally, the user is redirected to the dashboard.
+//
+// Parameters:
+// - c echo.Context: The echo context.
+//
+// Returns:
+// - error: The error if any.
 func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 	slog.Info("🔐 🤝 Registering user")
 	username := c.FormValue("username")

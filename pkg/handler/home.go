@@ -7,11 +7,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// HomeHandler is a handler for the root route
+// HomeHandler provides handlers for the home route of the application.
 type HomeHandler struct{}
 
 // HandleGetHome responds to GET on the / route by redirecting to the dashboard if the user is logged in,
 // otherwise to the login page.
+//
+// Parameters:
+// - c echo.Context: The echo context.
+//
+// Returns:
+// - error: The error if any.
 func (h *HomeHandler) HandleGetHome(c echo.Context) error {
 	_, err := c.Cookie("user")
 	if err != nil {
