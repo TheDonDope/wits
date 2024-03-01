@@ -28,25 +28,16 @@ type WitsCustomClaims struct {
 }
 
 // JWTSecret returns the JWT secret key from the environment.
-//
-// Returns:
-// - string: The JWT secret key.
 func JWTSecret() string {
 	return os.Getenv("JWT_SECRET_KEY")
 }
 
 // RefreshJWTSecret returns the refresh JWT secret key from the environment.
-//
-// Returns:
-// - string: The refresh JWT secret key.
 func RefreshJWTSecret() string {
 	return os.Getenv("JWT_REFRESH_SECRET_KEY")
 }
 
 // EchoJWTConfig returns the configuration for the echo-jwt middleware.
-//
-// Returns:
-// - echojwt.Config: The configuration for the echo-jwt middleware.
 func EchoJWTConfig() echojwt.Config {
 	return echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
@@ -59,22 +50,11 @@ func EchoJWTConfig() echojwt.Config {
 }
 
 // HTTPErrorHandler will be executed when an HTTP request fails.
-//
-// Parameters:
-// - err: The error encountered during the HTTP request.
-// - c: The echo context.
 func HTTPErrorHandler(err error, c echo.Context) {
 	slog.Error("🚨 🖥️  HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
 }
 
 // JWTErrorHandler will be executed when user tries to access a protected path.
-//
-// Parameters:
-// - c: The echo context.
-// - err: The error encountered during JWT validation.
-//
-// Returns:
-// - error: Any error encountered during JWT validation.
 func JWTErrorHandler(c echo.Context, err error) error {
 	slog.Error("🚨 🏧 JWT validation failed with", "error", err, "path", c.Request().URL.Path)
 	return c.Redirect(http.StatusMovedPermanently, "/login")
@@ -82,13 +62,6 @@ func JWTErrorHandler(c echo.Context, err error) error {
 
 // GenerateTokensAndSetCookies generates a JWT acess and refresh token and set them as cookies for the user,
 // as well as the user cookie.
-//
-// Parameters:
-// - user: The user for whom the tokens are being generated.
-// - c: The echo context.
-//
-// Returns:
-// - error: Any error encountered during token generation.
 func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
 	accessToken, exp, err := generateAccessToken(user)
 	if err != nil {
@@ -110,16 +83,6 @@ func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
 
 // generateToken generates a JWT token for the given user with the specified expiration time.
 // It signs the token using the provided secret and returns the token string, expiration time, and any error encountered.
-//
-// Parameters:
-// - user: The user for whom the token is being generated.
-// - expirationTime: The expiration time for the token.
-// - secret: The secret key used for signing the token.
-//
-// Returns:
-// - string: The generated JWT token string.
-// - time.Time: The expiration time of the token.
-// - error: Any error encountered during token generation.
 func generateToken(user *types.User, expirationTime time.Time, secret []byte) (string, time.Time, error) {
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &WitsCustomClaims{
@@ -143,14 +106,6 @@ func generateToken(user *types.User, expirationTime time.Time, secret []byte) (s
 }
 
 // generateAccessToken generates an access token for the user.
-//
-// Parameters:
-// - user: The user for whom the token is being generated.
-//
-// Returns:
-// - string: The generated JWT token string.
-// - time.Time: The expiration time of the token.
-// - error: Any error encountered during token generation.
 func generateAccessToken(user *types.User) (string, time.Time, error) {
 	// Declare the expiration time of the token
 	expirationTime := time.Now().Add(1 * time.Hour)
@@ -159,14 +114,6 @@ func generateAccessToken(user *types.User) (string, time.Time, error) {
 }
 
 // generateRefreshToken generates a refresh token for the user.
-//
-// Parameters:
-// - user: The user for whom the token is being generated.
-//
-// Returns:
-// - string: The generated JWT token string.
-// - time.Time: The expiration time of the token.
-// - error: Any error encountered during token generation.
 func generateRefreshToken(user *types.User) (string, time.Time, error) {
 	// Declare the expiration time of the token
 	expirationTime := time.Now().Add(24 * time.Hour)
@@ -177,12 +124,6 @@ func generateRefreshToken(user *types.User) (string, time.Time, error) {
 // setTokenCookie sets a cookie with the given name, token, expiration time, and echo.Context.
 // The cookie is set with the specified name, value, expiration time, and path ("/").
 // It is also set to be accessible only through HTTP (HttpOnly).
-//
-// Parameters:
-// - name: The name of the cookie.
-// - token: The value of the cookie.
-// - expiration: The expiration time for the cookie.
-// - c: The echo context.
 func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	cookie := new(http.Cookie)
 	cookie.Name = name
@@ -195,12 +136,6 @@ func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 }
 
 // setUserCookie sets a cookie with the user's email as the value.
-// It also logs the cookie information using slog.Info.
-//
-// Parameters:
-// - user: The user for whom the cookie is being generated.
-// - expiration: The expiration time for the cookie.
-// - c: The echo context.
 func setUserCookie(user *types.User, expiration time.Time, c echo.Context) {
 	cookie := new(http.Cookie)
 	cookie.Name = "user"

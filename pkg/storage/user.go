@@ -16,13 +16,6 @@ type UserStorage struct {
 }
 
 // GetUserByEmail returns a user with the given email.
-//
-// Parameters:
-// - email string: The email of the user to find.
-//
-// Returns:
-// - *types.User: The user with the given email.
-// - error: The error if any.
 func (s *UserStorage) GetUserByEmail(email string) (*types.User, error) {
 	var user types.User
 	err := s.DB.Where("email = ?", email).First(&user).Error
@@ -35,14 +28,6 @@ func (s *UserStorage) GetUserByEmail(email string) (*types.User, error) {
 }
 
 // GetUserByEmailAndPassword returns a user with the given email and password.
-//
-// Parameters:
-// - email string: The email of the user to find.
-// - password string: The password of the user to find.
-//
-// Returns:
-// - *types.User: The user with the given email and password.
-// - error: The error if any.
 func (s *UserStorage) GetUserByEmailAndPassword(email string, password string) (*types.User, error) {
 	user, err := s.GetUserByEmail(email)
 	if err != nil {
