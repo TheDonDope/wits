@@ -1,6 +1,21 @@
 package auth
 
 import "github.com/TheDonDope/wits/pkg/view/layout"
+import "github.com/nedpals/supabase-go"
+
+type LoginErrors struct {
+	Email              string
+	Password           string
+	InvalidCredentials string
+}
+
+type RegisterErrors struct {
+	Username             string
+	Email                string
+	Password             string
+	PasswordConfirmation string
+	InvalidCredentials   string
+}
 
 templ Login() {
 	@layout.App(false) {
@@ -8,7 +23,7 @@ templ Login() {
 			<div class="max-w-screen-sm w-full bg-base-300 py-10 px-16 rounded-xl">
 				<img src="public/img/android-chrome-512x512.png" class="mx-auto h-10 w-auto" alt="Wits Logo"/>
 				<h1 class="text-center text-xl font-black mb-10">Log in to Wits</h1>
-				@LoginForm()
+				@LoginForm(supabase.UserCredentials{}, LoginErrors{})
 				<div class="mt-6 flex items-center justify-end gap-x-6">
 					Not a member?
 					<a class="btn btn-secondary" href="/register">Register here</a>
@@ -18,8 +33,12 @@ templ Login() {
 	}
 }
 
-templ LoginForm() {
-	<form class="space-y-4">
+templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
+	<form
+		hx-post="/login"
+		hx-swap="outerHTML"
+		class="space-y-4"
+	>
 		<div class="w-full">
 			<div class="label">
 				<span class="label-text">Email address</span>
@@ -29,12 +48,11 @@ templ LoginForm() {
 				class="input input-bordered w-full"
 				name="email"
 				type="email"
+				value={ creds.Email }
 				autocomplete="email"
 				required
 			/>
-			// <div class="label">
-			// 	<span class="label-text-alt text-error">This is for errors</span>
-			// </div>
+			@renderErrorLabel(errors.Email)
 		</div>
 		<div class="w-full">
 			<div class="label">
@@ -48,11 +66,10 @@ templ LoginForm() {
 				autocomplete="current-password"
 				required
 			/>
-			<div class="label">
-				// <span class="label-text-alt text-error">This is for errors</span>
-				<a href="/recover-password">Forgot password?</a>
-			</div>
+			@renderErrorLabel(errors.Password)
+			<a href="/recover-password">Forgot password?</a>
 		</div>
+		@renderErrorText(errors.InvalidCredentials)
 		<button class="btn btn-primary w-full" type="submit">Log in <i class="fa-solid fa-arrow-right"></i></button>
 	</form>
 }
@@ -63,74 +80,91 @@ templ Register() {
 			<div class="max-w-screen-sm w-full bg-base-300 py-10 px-16 rounded-xl">
 				<img src="public/img/android-chrome-512x512.png" class="mx-auto h-10 w-auto" alt="Wits Logo"/>
 				<h1 class="text-center text-xl font-black mb-10">Register with Wits</h1>
-				<div class="space-y-4">
-					<form method="post">
-						<div class="w-full">
-							<div class="label">
-								<span class="label-text">Name</span>
-							</div>
-							<input
-								id="username"
-								class="input input-bordered w-full"
-								name="username"
-								type="text"
-								required
-							/>
-							// <div class="label">
-							// 	<span class="label-text-alt text-error">This is for errors</span>
-							// </div>
-						</div>
-						<div class="w-full">
-							<div class="label">
-								<span class="label-text">Email address</span>
-							</div>
-							<input
-								id="email"
-								class="input input-bordered w-full"
-								name="email"
-								type="email"
-								autocomplete="email"
-								required
-							/>
-							// <div class="label">
-							// 	<span class="label-text-alt text-error">This is for errors</span>
-							// </div>
-						</div>
-						<div class="w-full">
-							<div class="label">
-								<span class="label-text">Password</span>
-							</div>
-							<input
-								id="password"
-								class="input input-bordered w-full"
-								name="password"
-								type="password"
-								autocomplete="current-password"
-								required
-							/>
-							// <div class="label">
-							// 	<span class="label-text-alt text-error">This is for errors</span>
-							// </div>
-						</div>
-						<div class="w-full">
-							<div class="label">
-								<span class="label-text">Confirm Password</span>
-							</div>
-							<input
-								id="password-confirmation"
-								class="input input-bordered w-full"
-								name="password-confirmation"
-								type="password"
-								required
-							/>
-							// <div class="label">
-							// 	<span class="label-text-alt text-error">This is for errors</span>
-							// </div>
-						</div>
-						<button class="btn btn-primary w-full mt-4" type="submit">Register <i class="fa-solid fa-arrow-right"></i></button>
-					</form>
-				</div>
+				@RegisterForm(supabase.UserCredentials{}, RegisterErrors{})
 			</div>
+		</div>
+	}
+}
+
+templ RegisterForm(creds supabase.UserCredentials, errors RegisterErrors) {
+	<form
+		hx-post="/register"
+		hx-swap="outerHTML"
+		class="space-y-4"
+	>
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Name</span>
+			</div>
+			<input
+				id="username"
+				class="input input-bordered w-full"
+				name="username"
+				type="text"
+				required
+			/>
+			@renderErrorLabel(errors.Username)
+		</div>
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Email address</span>
+			</div>
+			<input
+				id="email"
+				class="input input-bordered w-full"
+				name="email"
+				type="email"
+				autocomplete="email"
+				required
+			/>
+			@renderErrorLabel(errors.Email)
+		</div>
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Password</span>
+			</div>
+			<input
+				id="password"
+				class="input input-bordered w-full"
+				name="password"
+				type="password"
+				autocomplete="current-password"
+				required
+			/>
+			@renderErrorLabel(errors.Password)
+		</div>
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Confirm Password</span>
+			</div>
+			<input
+				id="password-confirmation"
+				class="input input-bordered w-full"
+				name="password-confirmation"
+				type="password"
+				required
+			/>
+			@renderErrorLabel(errors.PasswordConfirmation)
+		</div>
+		@renderErrorText(errors.InvalidCredentials)
+		<button class="btn btn-primary w-full mt-4" type="submit">Register <i class="fa-solid fa-arrow-right"></i></button>
+	</form>
+}
+
+templ renderErrorText(err string) {
+	if len(err) > 0 {
+		<div class="text-sm text-error">
+			{ err }
+		</div>
+	}
+}
+
+templ renderErrorLabel(err string) {
+	if len(err) > 0 {
+		<div class="label">
+			<span class="label-text-alt text-error">
+				{ err }
+			</span>
 		</div>
 	}
 }
