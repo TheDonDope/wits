@@ -8,51 +8,53 @@ templ Login() {
 			<div class="max-w-screen-sm w-full bg-base-300 py-10 px-16 rounded-xl">
 				<img src="public/img/android-chrome-512x512.png" class="mx-auto h-10 w-auto" alt="Wits Logo"/>
 				<h1 class="text-center text-xl font-black mb-10">Log in to Wits</h1>
-				<div class="space-y-4">
-					<form method="post">
-						<div class="w-full">
-							<div class="label">
-								<span class="label-text">Email address</span>
-							</div>
-							<input
-								id="email"
-								class="input input-bordered w-full"
-								name="email"
-								type="email"
-								autocomplete="email"
-								required
-							/>
-							// <div class="label">
-							// 	<span class="label-text-alt text-error">This is for errors</span>
-							// </div>
-						</div>
-						<div class="w-full">
-							<div class="label">
-								<span class="label-text">Password</span>
-							</div>
-							<input
-								id="password"
-								class="input input-bordered w-full"
-								name="password"
-								type="password"
-								autocomplete="current-password"
-								required
-							/>
-							<div class="label">
-								// <span class="label-text-alt text-error">This is for errors</span>
-								<a href="/recover-password">Forgot password?</a>
-							</div>
-						</div>
-						<button class="btn btn-primary w-full" type="submit">Log in <i class="fa-solid fa-arrow-right"></i></button>
-					</form>
-					<div class="mt-6 flex items-center justify-end gap-x-6">
-						Not a member?
-						<a class="btn btn-secondary" href="/register">Register here</a>
-					</div>
+				@LoginForm()
+				<div class="mt-6 flex items-center justify-end gap-x-6">
+					Not a member?
+					<a class="btn btn-secondary" href="/register">Register here</a>
 				</div>
 			</div>
 		</div>
 	}
+}
+
+templ LoginForm() {
+	<form class="space-y-4">
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Email address</span>
+			</div>
+			<input
+				id="email"
+				class="input input-bordered w-full"
+				name="email"
+				type="email"
+				autocomplete="email"
+				required
+			/>
+			// <div class="label">
+			// 	<span class="label-text-alt text-error">This is for errors</span>
+			// </div>
+		</div>
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Password</span>
+			</div>
+			<input
+				id="password"
+				class="input input-bordered w-full"
+				name="password"
+				type="password"
+				autocomplete="current-password"
+				required
+			/>
+			<div class="label">
+				// <span class="label-text-alt text-error">This is for errors</span>
+				<a href="/recover-password">Forgot password?</a>
+			</div>
+		</div>
+		<button class="btn btn-primary w-full" type="submit">Log in <i class="fa-solid fa-arrow-right"></i></button>
+	</form>
 }
 
 templ Register() {
