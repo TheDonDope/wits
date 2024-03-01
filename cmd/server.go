@@ -8,12 +8,9 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/handler"
 	"github.com/TheDonDope/wits/pkg/storage"
-	"github.com/TheDonDope/wits/pkg/types"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
 )
@@ -24,19 +21,6 @@ func main() {
 	if err := initEverything(); err != nil {
 		log.Fatal(err)
 	}
-
-	// Database
-	dsn := os.Getenv("SQLITE_DATA_SOURCE_NAME")
-	slog.Info("📁 🖥️  Using database", "dsn", dsn)
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Migrate the schema
-	db.AutoMigrate(&types.User{})
-
-	// Storages
-	u := &storage.UserStorage{DB: db}
 
 	// Echo instance
 	e := echo.New()
@@ -56,7 +40,7 @@ func main() {
 	e.GET("/", h.HandleGetHome)
 
 	// Auth routes
-	a := handler.AuthHandler{Users: u}
+	a := handler.AuthHandler{}
 	e.GET("/login", a.HandleGetLogin)
 	e.POST("/login", a.HandlePostLogin)
 	e.GET("/register", a.HandleGetRegister)
@@ -80,5 +64,11 @@ func initEverything() error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
-	return storage.InitSupabaseClient()
+	dbType := os.Getenv("DB_TYPE")
+	if dbType == storage.DBTypeLocal {
+		return storage.InitSQLiteDB(true)
+	} else if dbType == storage.DBTypeRemote {
+		return storage.InitSupabaseDB()
+	}
+	return nil
 }
