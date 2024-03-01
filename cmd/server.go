@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Database
-	dsn := os.Getenv("DATA_SOURCE_NAME")
+	dsn := os.Getenv("SQLITE_DATA_SOURCE_NAME")
 	slog.Info("📁 🖥️  Using database", "dsn", dsn)
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
