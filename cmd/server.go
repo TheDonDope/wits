@@ -77,8 +77,8 @@ func main() {
 
 // initEverything initializes everything needed for the server to run
 func initEverything() error {
-	// if err := godotenv.Load(); err != nil {
-	// 	return err
-	// }
-	return godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		return err
+	}
+	return storage.InitSupabaseClient()
 }
