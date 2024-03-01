@@ -10,7 +10,6 @@ import (
 	"github.com/nedpals/supabase-go"
 
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthHandler provides handlers for the authentication routes of the application.
@@ -86,39 +85,60 @@ func (h AuthHandler) HandleGetRegister(c echo.Context) error {
 // Afterwards, the JWT tokens are generated and set as cookies. Finally, the user is redirected to the dashboard.
 func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 	slog.Info("🔐 🤝 Registering user")
-	username := c.FormValue("username")
-	email := c.FormValue("email")
-	password := c.FormValue("password")
-	passwordConfirm := c.FormValue("password-confirmation")
+	params := auth.RegisterParams{
+		Username:             c.FormValue("username"),
+		Email:                c.FormValue("email"),
+		Password:             c.FormValue("password"),
+		PasswordConfirmation: c.FormValue("password-confirmation"),
+	}
 
-	if password != passwordConfirm {
+	if params.Password != params.PasswordConfirmation {
 		slog.Error("🚨 🤝 Passwords do not match")
-		return echo.NewHTTPError(http.StatusBadRequest, "Passwords do not match")
+		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+			InvalidCredentials: "The passwords do not match",
+		}))
 	}
 
 	// Check if user with email already exists
-	existingUser, err := h.Users.GetUserByEmail(email)
-	if err != nil {
-		slog.Error("🚨 🤝 Checking if user exists failed with", "error", err)
-	}
+	// existingUser, err := h.Users.GetUserByEmail(params.Email)
+	// if err != nil {
+	// 	slog.Error("🚨 🤝 Checking if user exists failed with", "error", err)
+	// }
 
-	if existingUser != nil {
-		slog.Error("🚨 🤝 User with email already exists")
-		return echo.NewHTTPError(http.StatusBadRequest, "User with email already exists")
-	}
+	// if existingUser != nil {
+	// 	slog.Error("🚨 🤝 User with email already exists")
+	// 	return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+	// 		InvalidCredentials: "User with email already exists",
+	// 	}))
+	// }
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	// hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), 8)
+	// if err != nil {
+	// 	slog.Error("🚨 🤝 Hashing password failed with", "error", err)
+	// }
+
+	// user := &types.User{
+	// 	Email:    params.Email,
+	// 	Password: string(hashedPassword),
+	// 	Name:     params.Username,
+	// }
+
+	// h.Users.DB.Create(&user)
+
+	// Call Supabase to sign up
+	signUpResp, err := storage.SupabaseClient.Auth.SignUp(c.Request().Context(), supabase.UserCredentials{Email: params.Email, Password: params.Password})
 	if err != nil {
-		slog.Error("🚨 🤝 Hashing password failed with", "error", err)
+		slog.Error("🚨 🤝 Signing user up with Supabase failed with", "error", err)
+		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+			InvalidCredentials: err.Error(),
+		}))
 	}
+	slog.Info("✅ 🤝 User has been signed up with Supabase with", "signUpResp", signUpResp)
 
 	user := &types.User{
-		Email:    email,
-		Password: string(hashedPassword),
-		Name:     username,
+		Email: params.Email,
+		Name:  params.Username,
 	}
-
-	h.Users.DB.Create(&user)
 
 	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
@@ -126,6 +146,7 @@ func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard")
-	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
+	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard (reactivate me maybe lol)")
+	return render(c, auth.RegisterSuccess(params.Email))
+	//return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }
