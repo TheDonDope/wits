@@ -9,15 +9,47 @@ Wits aims to help cannabis patients and users to manage and monitor their cannab
 To build the binary, run the following (alternatively `$ task build` if you are using [Task](https://taskfile.dev/#/)):
 
 ```shell
-$ go build -v -o ./wits ./cmd/server.go
-[Empty output on success]
+$ make build
+npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css
+
+Rebuilding...
+
+🌼   daisyUI 4.7.2
+├─ ✔︎ 2 themes added  https://daisyui.com/docs/themes
+╰─ ❤︎ Support daisyUI project: https://opencollective.com/daisyui
+
+
+Done in 207ms.
+templ generate view
+(✓) Complete [ updates=4 duration=10.132125ms ]
+go build -v -o ./bin/wits ./cmd/server.go
 ```
+
+### Required Environment Variables
+
+The following environment variables are required to run the application:
+
+| Environment Variable      | Description                                                                                         |
+| ------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTP_LISTEN_ADDR`        | The address the server runs at (format: `<url>:<port>`, example: `:3000`)                           |
+| `JWT_SECRET_KEY`          | The secret key with which to sign the Access Token                                                  |
+| `JWT_REFRESH_SECRET_KEY`  | The secret key with which to sign the Refresh Token                                                 |
+| `DB_TYPE`                 | The type of database to use (choose `local` for local Sqlite db or `remote` for remote Supabase db) |
+| `SQLITE_DATA_SOURCE_NAME` | The name of the Sqlite datasource to use (example: `./bin/wits.db`), when `DB_TYPE=local`           |
+| `DB_HOST`                 | The host of the postgres db, when `DB_TYPE=remote`                                                  |
+| `DB_USER`                 | The user of the postgres db, when `DB_TYPE=remote`                                                  |
+| `DB_PASSWORD`             | The password of the postgres db, when `DB_TYPE=remote`                                              |
+| `DB_NAME`                 | The name of the postgres db, when `DB_TYPE=remote`                                                  |
+| `SUPABASE_URL`            | The Supabase URL (required for the client configuration),, when `DB_TYPE=remote`                    |
+| `SUPABASE_SECRET`         | The Supabase secret (required for the client configuration),, when `DB_TYPE=remote`                 |
 
 Afterwards the application can be started by:
 
 ```shell
-$ ./wits
-Welcome to Wits!
+$ ./bin/wits
+2024/03/02 00:21:11 INFO 🥦 🖥️  Welcome to Wits!
+2024/03/02 00:21:11 INFO 📁 🏠 Using local sqlite database with dsn=./bin/wits.db
+2024/03/02 00:21:11 INFO 🚀 🖥️  Wits server is running at addr=:3000
 
    ____    __
   / __/___/ /  ___
