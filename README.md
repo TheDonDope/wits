@@ -16,6 +16,13 @@ To do this in one command, run the following (alternatively `$ task build` if yo
 
 ```shell
 $ make build
+curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 47755    0 47755    0     0   216k      0 --:--:-- --:--:-- --:--:--  217k
+cp ./node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js
+cp ./node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css
+cp ./node_modules/font-awesome/fonts/* public/fonts/
 npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css
 
 Rebuilding...
@@ -25,9 +32,9 @@ Rebuilding...
 ╰─ ❤︎ Support daisyUI project: https://opencollective.com/daisyui
 
 
-Done in 207ms.
+Done in 200ms.
 templ generate view
-(✓) Complete [ updates=4 duration=10.132125ms ]
+(✓) Complete [ updates=4 duration=23.351583ms ]
 go build -v -o ./bin/wits ./cmd/server.go
 ```
 
