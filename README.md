@@ -4,9 +4,15 @@
 
 Wits aims to help cannabis patients and users to manage and monitor their cannabis consumption and inventory.
 
-## Building and Running
+## Building the Application
 
-To build the binary, run the following (alternatively `$ task build` if you are using [Task](https://taskfile.dev/#/)):
+Building the binary requires multiple steps:
+
+- Compiling the Tailwind CSS output
+- Generating the Go code from the Templ Templates
+- Building the Go binary
+
+To do this in one command, run the following (alternatively `$ task build` if you are using [Task](https://taskfile.dev/#/)):
 
 ```shell
 $ make build
@@ -24,6 +30,8 @@ templ generate view
 (✓) Complete [ updates=4 duration=10.132125ms ]
 go build -v -o ./bin/wits ./cmd/server.go
 ```
+
+## Running the Application
 
 ### Required Environment Variables
 
@@ -43,7 +51,7 @@ The following environment variables are required to run the application:
 | `SUPABASE_URL`            | The Supabase URL (required for the client configuration),, when `DB_TYPE=remote`                    |
 | `SUPABASE_SECRET`         | The Supabase secret (required for the client configuration),, when `DB_TYPE=remote`                 |
 
-Afterwards the application can be started by:
+The built application binary can be started by:
 
 ```shell
 $ ./bin/wits
@@ -69,28 +77,53 @@ The built binary is explicitly ignored from source control (see [.gitignore](.gi
 - Run the testsuite with coverage enabled (alternatively `$ task test` if you are using [Task](https://taskfile.dev/#/)):
 
 ```shell
-$ go test -race -v ./... -coverprofile coverage.out
+$ make test
+go test -race -v ./... -coverprofile coverage.out
 ?    github.com/TheDonDope/wits/pkg/types [no test files]
 ?    github.com/TheDonDope/wits/pkg/view [no test files]
- github.com/TheDonDope/wits/cmd  coverage: 0.0% of statements
  github.com/TheDonDope/wits/pkg/handler  coverage: 0.0% of statements
- github.com/TheDonDope/wits/pkg/auth  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/cmd  coverage: 0.0% of statements
  github.com/TheDonDope/wits/pkg/view/dashboard  coverage: 0.0% of statements
- github.com/TheDonDope/wits/pkg/view/login  coverage: 0.0% of statements
  github.com/TheDonDope/wits/pkg/view/layout  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/auth  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/storage  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/ui  coverage: 0.0% of statements
 ```
 
 - Generate the coverage results as html (alternatively `$ task cover` if you are using [Task](https://taskfile.dev/#/)):
 
 ```shell
-$ go tool cover -html coverage.out -o coverage.html
+$ make cover
+go test -race -v ./... -coverprofile coverage.out
+?    github.com/TheDonDope/wits/pkg/types [no test files]
+?    github.com/TheDonDope/wits/pkg/view [no test files]
+ github.com/TheDonDope/wits/cmd  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/handler  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/auth  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/ui  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/layout  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/storage  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/dashboard  coverage: 0.0% of statements
+go tool cover -html coverage.out -o coverage.html
 [Empty output on success]
 ```
 
 - Open the results in the browser (alternatively `$ task show-cover` if you are using [Task](https://taskfile.dev/#/)):
 
 ```shell
-$ open coverage.html
+$ make show-cover
+go test -race -v ./... -coverprofile coverage.out
+?    github.com/TheDonDope/wits/pkg/types [no test files]
+?    github.com/TheDonDope/wits/pkg/view [no test files]
+ github.com/TheDonDope/wits/cmd  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/handler  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/storage  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/ui  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/auth  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/layout  coverage: 0.0% of statements
+ github.com/TheDonDope/wits/pkg/view/dashboard  coverage: 0.0% of statements
+go tool cover -html coverage.out -o coverage.html
+open coverage.html
 <Opens Browser>
 ```
 
