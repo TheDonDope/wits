@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./tmp/main"
-  cmd = "templ generate && npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css && go build -o ./tmp/main ./cmd/server.go"
+  cmd = "curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js && cp ./node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js && cp ./node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css && cp ./node_modules/font-awesome/fonts/* public/fonts/ && templ generate && npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css && go build -o ./tmp/main ./cmd/server.go"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules"]
   exclude_file = []

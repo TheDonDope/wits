@@ -5,6 +5,12 @@
 /dist
 /tmp
 /out-tsc
+/public/css/styles.css
+/public/css/font-awesome.min.css
+/public/fonts/*
+!/public/fonts/.gitkeep
+/public/js/htmx.min.js
+/public/js/jquery.min.js
 wits
 
 # dependencies

@@ -11,10 +11,16 @@ install:
 	go mod vendor
 	go mod tidy
 	go mod download
-	npm install -D tailwindcss
+	npm install font-awesome@4.7.0
+	npm install jquery@3.7.1
+	npm install -D tailwindcss@3.4.1
 	npm install -D daisyui@latest
 
 build:
+	curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js
+	cp ./node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js
+	cp ./node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css
+	cp ./node_modules/font-awesome/fonts/* public/fonts/
 	npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css
 	templ generate view
 	go build -v -o ./bin/wits ./cmd/server.go
@@ -23,6 +29,9 @@ clean:
 	rm -rf ./bin
 	rm -f coverage.html
 	rm -f coverage.out
+	rm -rf node_modules
+	rm -rf tmp
+	rm -rf vendor
 
 doc:
 	godoc
