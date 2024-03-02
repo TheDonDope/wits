@@ -24,6 +24,18 @@ tasks:
     internal: true
     cmds:
       - go install github.com/cosmtrek/air@latest
+  install:
+    cmds:
+      - go install github.com/a-h/templ/cmd/templ@latest
+      - go install github.com/cosmtrek/air@latest
+      - go install github.com/cweill/gotests/gotests@latest
+      - go install golang.org/x/tools/cmd/godoc@latest
+      - go get ./...
+      - go mod vendor
+      - go mod tidy
+      - go mod download
+      - npm install -D tailwindcss
+      - npm install -D daisyui@latest
   clean:
     cmds:
       - cmd: rm ./bin/wits{{exeExt}}

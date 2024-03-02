@@ -79,6 +79,9 @@ jobs:
       - name: Install Task
         uses: arduino/setup-task@v1
 
+      - name: Install Dependencies
+        run: task install
+
       - run: |
           echo "Run, Build Application using task script"
           task build
