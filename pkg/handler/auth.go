@@ -15,14 +15,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// LoginService is an interface for the authentication service.
-type LoginService interface {
+// Authenticator is an interface for the authentication service.
+type Authenticator interface {
 	// Login logs in the user
 	Login(c echo.Context) error
 }
 
-// RegisterService is an interface for the registration service.
-type RegisterService interface {
+// Deauthenticator is an interface for the deauthentication service.
+type Deauthenticator interface {
+	// Logout logs out the user
+	Logout(c echo.Context) error
+}
+
+// Registrator is an interface for the registration service.
+type Registrator interface {
 	// Register registers the user
 	Register(c echo.Context) error
 }
@@ -30,23 +36,27 @@ type RegisterService interface {
 // AuthHandler provides handlers for the authentication routes of the application.
 // It is responsible for handling user login, registration, and logout.
 type AuthHandler struct {
-	l LoginService
-	r RegisterService
+	a Authenticator
+	d Deauthenticator
+	r Registrator
 }
 
 // NewAuthHandler creates a new AuthHandler with the given LoginService and RegisterService, depending on the database type.
 func NewAuthHandler() *AuthHandler {
 	dbType := os.Getenv("DB_TYPE")
-	var loginService LoginService
-	var registerService RegisterService
+	var a Authenticator
+	var d Deauthenticator
+	var r Registrator
 	if dbType == storage.DBTypeLocal {
-		loginService = LocalLoginService{}
-		registerService = LocalRegisterService{}
+		a = LocalAuthenticator{}
+		d = LocalDeauthenticator{}
+		r = LocalRegistrator{}
 	} else if dbType == storage.DBTypeRemote {
-		loginService = RemoteLoginService{}
-		registerService = RemoteRegisterService{}
+		a = RemoteAuthenticator{}
+		d = RemoteDeauthenticator{}
+		r = RemoteRegistrator{}
 	}
-	return &AuthHandler{l: loginService, r: registerService}
+	return &AuthHandler{a: a, d: d, r: r}
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
@@ -59,7 +69,13 @@ func (h AuthHandler) HandleGetLogin(c echo.Context) error {
 // Finally, the user is redirected to the dashboard.
 func (h AuthHandler) HandlePostLogin(c echo.Context) error {
 	slog.Info("🔐 🤝 Logging in user")
-	return h.l.Login(c)
+	return h.a.Login(c)
+}
+
+// HandlePostLogout responds to POST on the /logout route by logging out the user.
+func (h AuthHandler) HandlePostLogout(c echo.Context) error {
+	slog.Info("🔐 🤝 Logging out user")
+	return h.d.Logout(c)
 }
 
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.

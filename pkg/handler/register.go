@@ -12,11 +12,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// LocalRegisterService is an interface for the user registration, when using a local sqlite database.
-type LocalRegisterService struct{}
+// LocalRegistrator is an interface for the user registration, when using a local sqlite database.
+type LocalRegistrator struct{}
 
 // Register logs in the user with the local sqlite database.
-func (s LocalRegisterService) Register(c echo.Context) error {
+func (s LocalRegistrator) Register(c echo.Context) error {
 	slog.Info("🔐 🏠 Registering user with local sqlite database")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),
@@ -69,11 +69,11 @@ func (s LocalRegisterService) Register(c echo.Context) error {
 	//return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }
 
-// RemoteRegisterService is an interface for the user registration, when using a remote Supabase database.
-type RemoteRegisterService struct{}
+// RemoteRegistrator is an interface for the user registration, when using a remote Supabase database.
+type RemoteRegistrator struct{}
 
 // Register logs in the user with the remote Supabase database.
-func (s RemoteRegisterService) Register(c echo.Context) error {
+func (s RemoteRegistrator) Register(c echo.Context) error {
 	slog.Info("🔐 🛰️  Registering user with remote Supabase database")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),

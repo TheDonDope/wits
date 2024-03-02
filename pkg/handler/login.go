@@ -11,11 +11,11 @@ import (
 	"github.com/nedpals/supabase-go"
 )
 
-// LocalLoginService is an interface for the user login, when using a local sqlite database.
-type LocalLoginService struct{}
+// LocalAuthenticator is an interface for the user login, when using a local sqlite database.
+type LocalAuthenticator struct{}
 
 // Login logs in the user with the local sqlite database.
-func (s LocalLoginService) Login(c echo.Context) error {
+func (s LocalAuthenticator) Login(c echo.Context) error {
 	slog.Info("🔐 🏠 Logging in user with local sqlite database")
 	user, userErr := readByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
@@ -34,11 +34,11 @@ func (s LocalLoginService) Login(c echo.Context) error {
 	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
 }
 
-// RemoteLoginService is an interface for the user login, when using a remote Supabase database.
-type RemoteLoginService struct{}
+// RemoteAuthenticator is an interface for the user login, when using a remote Supabase database.
+type RemoteAuthenticator struct{}
 
 // Login logs in the user with the remote Supabase database.
-func (s RemoteLoginService) Login(c echo.Context) error {
+func (s RemoteAuthenticator) Login(c echo.Context) error {
 	slog.Info("🔐 🛰️  Logging in user with remote Supabase database")
 	credentials := supabase.UserCredentials{
 		Email:    c.FormValue("email"),

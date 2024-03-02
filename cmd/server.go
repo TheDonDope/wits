@@ -43,6 +43,7 @@ func main() {
 	a := handler.NewAuthHandler()
 	e.GET("/login", a.HandleGetLogin)
 	e.POST("/login", a.HandlePostLogin)
+	e.POST("/logout", a.HandlePostLogout)
 	e.GET("/register", a.HandleGetRegister)
 	e.POST("/register", a.HandlePostRegister)
 
