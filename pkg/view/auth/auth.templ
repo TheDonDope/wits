@@ -42,8 +42,8 @@ templ Login() {
 
 templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
 	<form
-		action="/login"
-		method="post"
+		hx-post="/login"
+		hx-swap="outerHTML"
 		class="space-y-4"
 	>
 		<div class="w-full">
@@ -95,8 +95,8 @@ templ Register() {
 
 templ RegisterForm(params RegisterParams, errors RegisterErrors) {
 	<form
-		action="/register"
-		method="post"
+		hx-post="/register"
+		hx-swap="outerHTML"
 		class="space-y-4"
 	>
 		<div class="w-full">

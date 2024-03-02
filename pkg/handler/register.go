@@ -64,9 +64,9 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard (reactivate me maybe lol)")
-	return render(c, auth.RegisterSuccess(params.Email))
-	//return c.Redirect(http.StatusMovedPermanently, "/dashboard")
+	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard")
+	//return render(c, auth.RegisterSuccess(params.Email))
+	return hxRedirect(c, "/dashboard")
 }
 
 // RemoteRegistrator is an interface for the user registration, when using a remote Supabase database.
@@ -109,6 +109,7 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard (reactivate me maybe lol)")
-	return render(c, auth.RegisterSuccess(params.Email))
+	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard")
+	//return render(c, auth.RegisterSuccess(params.Email))
+	return hxRedirect(c, "/dashboard")
 }

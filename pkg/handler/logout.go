@@ -21,7 +21,7 @@ func (s LocalDeauthenticator) Logout(c echo.Context) error {
 	}
 	c.SetCookie(userCookie)
 	slog.Info("🔀 🤝 Redirecting to login")
-	return c.Redirect(http.StatusSeeOther, "/login")
+	return hxRedirect(c, "/login")
 }
 
 // RemoteDeauthenticator is a struct for the user logout, when using a remote Supabase database.
@@ -38,5 +38,5 @@ func (s RemoteDeauthenticator) Logout(c echo.Context) error {
 	}
 	c.SetCookie(userCookie)
 	slog.Info("🔀 🤝 Redirecting to login")
-	return c.Redirect(http.StatusSeeOther, "/login")
+	return hxRedirect(c, "/login")
 }
