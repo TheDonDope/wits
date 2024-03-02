@@ -40,7 +40,7 @@ func main() {
 	e.GET("/", h.HandleGetHome)
 
 	// Auth routes
-	a := handler.AuthHandler{}
+	a := handler.NewAuthHandler()
 	e.GET("/login", a.HandleGetLogin)
 	e.POST("/login", a.HandlePostLogin)
 	e.GET("/register", a.HandleGetRegister)
