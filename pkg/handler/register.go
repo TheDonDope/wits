@@ -97,19 +97,6 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 		}))
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/register.go) 🔓 User has been signed up with Supabase with", "signUpResp", signUpResp)
-
-	user := &types.User{
-		Email: params.Email,
-		Name:  params.Username,
-	}
-
-	tokenErr := GenerateTokensAndSetCookies(user, c)
-	if tokenErr != nil {
-		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
-	}
-
 	slog.Info("✅ 🛰️  (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
-	//return render(c, auth.RegisterSuccess(params.Email))
-	return hxRedirect(c, "/dashboard")
+	return render(c, auth.RegisterSuccess(params.Email))
 }

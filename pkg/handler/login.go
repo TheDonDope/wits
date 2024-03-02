@@ -3,6 +3,7 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
@@ -58,15 +59,11 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 
 	user := &types.User{
 		Email: signInResp.User.Email,
-		Name:  signInResp.User.ID,
 	}
 
-	// Generate JWT tokens and set cookies 'manually'
-	tokenErr := GenerateTokensAndSetCookies(user, c)
-	if tokenErr != nil {
-		slog.Error("🚨 🛰️ (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
-	}
+	SetTokenCookie(AccessTokenCookieName, signInResp.AccessToken, time.Now().Add(1*time.Hour), c)
+	SetTokenCookie(RefreshTokenCookieName, signInResp.RefreshToken, time.Now().Add(24*time.Hour), c)
+	SetUserCookie(user, time.Now().Add(1*time.Hour), c)
 
 	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")

@@ -51,8 +51,12 @@ func main() {
 	// Dashboard routes
 	d := handler.DashboardHandler{}
 	g := e.Group("/dashboard")
-	// Configure middleware with the custom claims type
-	g.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+
+	// Configure middleware with the custom claims type, but only when using local DB
+	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
+		g.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+	}
+
 	g.GET("", d.HandleGetDashboard)
 
 	// Start server

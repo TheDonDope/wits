@@ -70,14 +70,14 @@ func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
 		return err
 	}
 
-	setTokenCookie(AccessTokenCookieName, accessToken, exp, c)
-	setUserCookie(user, exp, c)
+	SetTokenCookie(AccessTokenCookieName, accessToken, exp, c)
+	SetUserCookie(user, exp, c)
 	refreshToken, exp, err := generateRefreshToken(user)
 	if err != nil {
 		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Generating refresh token failed with", "error", err, "path", c.Request().URL.Path)
 		return err
 	}
-	setTokenCookie(RefreshTokenCookieName, refreshToken, exp, c)
+	SetTokenCookie(RefreshTokenCookieName, refreshToken, exp, c)
 	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔑 Tokens have been generated and set", "path", c.Request().URL.Path)
 	return nil
 }
@@ -126,11 +126,11 @@ func generateRefreshToken(user *types.User) (string, time.Time, error) {
 	return generateToken(user, expirationTime, []byte(RefreshJWTSecret()))
 }
 
-// setTokenCookie sets a cookie with the given name, token, expiration time, and echo.Context.
+// SetTokenCookie sets a cookie with the given name, token, expiration time, and echo.Context.
 // The cookie is set with the specified name, value, expiration time, and path ("/").
 // It is also set to be accessible only through HTTP (HttpOnly).
-func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) setTokenCookie")
+func SetTokenCookie(name, token string, expiration time.Time, c echo.Context) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetTokenCookie")
 	cookie := new(http.Cookie)
 	cookie.Name = name
 	cookie.Value = token
@@ -141,9 +141,9 @@ func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", name, "value", token)
 }
 
-// setUserCookie sets a cookie with the user's email as the value.
-func setUserCookie(user *types.User, expiration time.Time, c echo.Context) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) setUserCookie")
+// SetUserCookie sets a cookie with the user's email as the value.
+func SetUserCookie(user *types.User, expiration time.Time, c echo.Context) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetUserCookie")
 	cookie := new(http.Cookie)
 	cookie.Name = "user"
 	cookie.Value = user.Email
