@@ -2,6 +2,8 @@ package handler
 
 import (
 	"log/slog"
+	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -12,7 +14,14 @@ type LocalDeauthenticator struct{}
 // Logout logs out the user with the local sqlite database.
 func (s LocalDeauthenticator) Logout(c echo.Context) error {
 	slog.Info("🔐 🏠 Logging out user with local sqlite database with", "context", c)
-	return nil
+	userCookie := &http.Cookie{
+		Name:    "user",
+		Value:   "",
+		Expires: time.Unix(0, 0),
+		Path:    "/",
+	}
+	c.SetCookie(userCookie)
+	return c.NoContent(http.StatusOK)
 }
 
 // RemoteDeauthenticator is a struct for the user logout, when using a remote Supabase database.
