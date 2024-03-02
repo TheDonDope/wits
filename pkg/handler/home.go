@@ -19,5 +19,5 @@ func (h *HomeHandler) HandleGetHome(c echo.Context) error {
 		return c.Redirect(http.StatusSeeOther, "/login")
 	}
 	slog.Info("🔓 🤝 User cookie found, redirecting to dashboard")
-	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
+	return c.Redirect(http.StatusSeeOther, "/dashboard")
 }

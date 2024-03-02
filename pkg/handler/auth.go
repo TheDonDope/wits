@@ -33,12 +33,19 @@ type Registrator interface {
 	Register(c echo.Context) error
 }
 
+// Verifier is an interface for the verification service.
+type Verifier interface {
+	// Verify verifies the user
+	Verify(c echo.Context) error
+}
+
 // AuthHandler provides handlers for the authentication routes of the application.
 // It is responsible for handling user login, registration, and logout.
 type AuthHandler struct {
 	a Authenticator
 	d Deauthenticator
 	r Registrator
+	v Verifier
 }
 
 // NewAuthHandler creates a new AuthHandler with the given LoginService and RegisterService, depending on the database type.
@@ -47,16 +54,19 @@ func NewAuthHandler() *AuthHandler {
 	var a Authenticator
 	var d Deauthenticator
 	var r Registrator
+	var v Verifier
 	if dbType == storage.DBTypeLocal {
 		a = LocalAuthenticator{}
 		d = LocalDeauthenticator{}
 		r = LocalRegistrator{}
+		v = LocalVerifier{}
 	} else if dbType == storage.DBTypeRemote {
 		a = RemoteAuthenticator{}
 		d = RemoteDeauthenticator{}
 		r = RemoteRegistrator{}
+		v = RemoteVerifier{}
 	}
-	return &AuthHandler{a: a, d: d, r: r}
+	return &AuthHandler{a: a, d: d, r: r, v: v}
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
@@ -89,6 +99,12 @@ func (h AuthHandler) HandleGetRegister(c echo.Context) error {
 func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 	slog.Info("🔐 🤝 Registering user")
 	return h.r.Register(c)
+}
+
+// HandleGetAuthCallback responds to GET on the /auth/callback route by verifying the user.
+func (h AuthHandler) HandleGetAuthCallback(c echo.Context) error {
+	slog.Info("🔐 🤝 Verifying user")
+	return h.v.Verify(c)
 }
 
 // readByEmailAndPassword returns a user with the given email and password.

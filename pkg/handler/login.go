@@ -31,7 +31,7 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 	}
 
 	slog.Info("🔀 🤝 Redirecting to dashboard")
-	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
+	return c.Redirect(http.StatusSeeOther, "/dashboard")
 }
 
 // RemoteAuthenticator is an interface for the user login, when using a remote Supabase database.
@@ -68,5 +68,5 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	}
 
 	slog.Info("🔀 🤝 Redirecting to dashboard")
-	return c.Redirect(http.StatusMovedPermanently, "/dashboard")
+	return c.Redirect(http.StatusSeeOther, "/dashboard")
 }

@@ -42,8 +42,8 @@ templ Login() {
 
 templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
 	<form
-		hx-post="/login"
-		hx-swap="outerHTML"
+		action="/login"
+		method="post"
 		class="space-y-4"
 	>
 		<div class="w-full">
@@ -95,8 +95,8 @@ templ Register() {
 
 templ RegisterForm(params RegisterParams, errors RegisterErrors) {
 	<form
-		hx-post="/register"
-		hx-swap="outerHTML"
+		action="/register"
+		method="post"
 		class="space-y-4"
 	>
 		<div class="w-full">
@@ -162,6 +162,14 @@ templ RegisterForm(params RegisterParams, errors RegisterErrors) {
 
 templ RegisterSuccess(email string) {
 	<div>A confirmation email has been sent to: <span class="font-semibold text-success">{ email }</span>. Please check your inbox and click on the link to verify your email address.</div>
+}
+
+templ AuthCallbackScript() {
+	<script>
+		const url = window.location.href;
+		const newURL = url.replace("#", "?");
+		window.location = newURL;
+	</script>
 }
 
 templ renderErrorText(err string) {

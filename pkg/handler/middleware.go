@@ -15,9 +15,9 @@ import (
 
 const (
 	// AccessTokenCookieName is the name of the access token cookie.
-	AccessTokenCookieName = "witx-access-token"
+	AccessTokenCookieName = "wits-access-token"
 	// RefreshTokenCookieName is the name of the refresh token cookie.
-	RefreshTokenCookieName = "witx-refresh-token"
+	RefreshTokenCookieName = "wits-refresh-token"
 )
 
 // WitsCustomClaims are custom claims extending default ones.

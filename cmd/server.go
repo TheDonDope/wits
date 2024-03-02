@@ -46,6 +46,7 @@ func main() {
 	e.POST("/logout", a.HandlePostLogout)
 	e.GET("/register", a.HandleGetRegister)
 	e.POST("/register", a.HandlePostRegister)
+	e.GET("/auth/callback", a.HandleGetAuthCallback)
 
 	// Dashboard routes
 	d := handler.DashboardHandler{}
