@@ -26,7 +26,7 @@ build:
 	go build -v -o ./bin/wits ./cmd/server.go
 
 clean:
-	rm -rf ./bin
+	rm -f ./bin/wits
 	rm -f coverage.html
 	rm -f coverage.out
 	rm -rf node_modules
