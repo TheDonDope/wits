@@ -55,15 +55,6 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	}
 	slog.Info("✅ 🤝 User has been logged in with", "signInResp", signInResp)
 
-	// Checkme:
-	c.SetCookie(&http.Cookie{
-		Value:    signInResp.AccessToken,
-		Name:     "at",
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-	})
-
 	user := &types.User{
 		Email: signInResp.User.Email,
 		Name:  signInResp.User.ID,

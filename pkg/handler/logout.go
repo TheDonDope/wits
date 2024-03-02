@@ -3,7 +3,6 @@ package handler
 import (
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -15,10 +14,10 @@ type LocalDeauthenticator struct{}
 func (s LocalDeauthenticator) Logout(c echo.Context) error {
 	slog.Info("🔐 🏠 Logging out user with local sqlite database with", "context", c)
 	userCookie := &http.Cookie{
-		Name:    "user",
-		Value:   "",
-		Expires: time.Unix(0, 0),
-		Path:    "/",
+		Name:   "user",
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
 	}
 	c.SetCookie(userCookie)
 	return c.NoContent(http.StatusOK)
