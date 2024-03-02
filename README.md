@@ -1,6 +1,6 @@
 # Wits - The Weed Information Tracking System
 
-[![codecov](https://codecov.io/gh/TheDonDope/wits/graph/badge.svg?token=lMa764i83e)](https://codecov.io/gh/TheDonDope/wits) [![CodeQL](https://github.com/TheDonDope/wits/actions/workflows/codeql.yml/badge.svg)](https://github.com/TheDonDope/wits/actions/workflows/codeql.yml/)
+[![codecov](https://codecov.io/gh/TheDonDope/wits/graph/badge.svg?token=QM1XTAUsfU)](https://codecov.io/gh/TheDonDope/wits)
 
 Wits aims to help cannabis patients and users to manage and monitor their cannabis consumption and inventory.
 
