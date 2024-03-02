@@ -16,21 +16,21 @@ type LocalAuthenticator struct{}
 
 // Login logs in the user with the local sqlite database.
 func (s LocalAuthenticator) Login(c echo.Context) error {
-	slog.Info("🔐 🏠 Logging in user with local sqlite database")
+	slog.Info("💬 🏠 (pkg/handler/login.go) LocalAuthenticator.Login")
 	user, userErr := readByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
-		slog.Error("🚨 🤝 Checking if user exists failed with", "error", userErr)
+		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
 
 	// Generate JWT tokens and set cookies 'manually'
 	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
-		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
+		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
-
-	slog.Info("🔀 🤝 Redirecting to dashboard")
+	slog.Info("🆗 🏠 (pkg/handler/login.go) 🔓 User has been logged in with local Sqlite database")
+	slog.Info("✅ 🏠 (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 	//return c.Redirect(http.StatusSeeOther, "/dashboard")
 }
@@ -40,7 +40,7 @@ type RemoteAuthenticator struct{}
 
 // Login logs in the user with the remote Supabase database.
 func (s RemoteAuthenticator) Login(c echo.Context) error {
-	slog.Info("🔐 🛰️  Logging in user with remote Supabase database")
+	slog.Info("💬 🛰️  (pkg/handler/login.go) RemoteAuthenticator.Login")
 	credentials := supabase.UserCredentials{
 		Email:    c.FormValue("email"),
 		Password: c.FormValue("password"),
@@ -49,12 +49,12 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	// Call Supabase to sign in
 	signInResp, err := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
 	if err != nil {
-		slog.Error("🚨 🤝 Signing user in with Supabase failed with", "error", err)
+		slog.Error("🚨 🛰️  (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing user in with Supabase failed with", "error", err)
 		return render(c, auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: "The credentials you have entered are invalid",
 		}))
 	}
-	slog.Info("✅ 🤝 User has been logged in with", "signInResp", signInResp)
+	slog.Info("🆗 🛰️  (pkg/handler/login.go) 🔓 User has been logged in with", "signInResp", signInResp)
 
 	user := &types.User{
 		Email: signInResp.User.Email,
@@ -64,10 +64,10 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	// Generate JWT tokens and set cookies 'manually'
 	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
-		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
+		slog.Error("🚨 🛰️ (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("🔀 🤝 Redirecting to dashboard")
+	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }

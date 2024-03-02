@@ -12,7 +12,7 @@ type LocalDeauthenticator struct{}
 
 // Logout logs out the user with the local sqlite database.
 func (s LocalDeauthenticator) Logout(c echo.Context) error {
-	slog.Info("🔐 🏠 Logging out user with local sqlite database with", "context", c)
+	slog.Info("💬 🏠 (pkg/handler/logout.go) LocalDeauthenticator.Logout")
 	userCookie := &http.Cookie{
 		Name:   AccessTokenCookieName,
 		Value:  "",
@@ -20,7 +20,8 @@ func (s LocalDeauthenticator) Logout(c echo.Context) error {
 		Path:   "/",
 	}
 	c.SetCookie(userCookie)
-	slog.Info("🔀 🤝 Redirecting to login")
+	slog.Info("🆗 🏠 (pkg/handler/logout.go) 🍪 User has been logged out and cookie cleared with", "userCookie", userCookie)
+	slog.Info("✅ 🏠 (pkg/handler/logout.go) 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
 }
 
@@ -29,7 +30,7 @@ type RemoteDeauthenticator struct{}
 
 // Logout logs out the user with the remote Supabase database.
 func (s RemoteDeauthenticator) Logout(c echo.Context) error {
-	slog.Info("🔐 🛰️  Logging out user with remote Supabase database with", "context", c)
+	slog.Info("💬 🛰️  (pkg/handler/logout.go) RemoteDeauthenticator.Logout")
 	userCookie := &http.Cookie{
 		Name:   AccessTokenCookieName,
 		Value:  "",
@@ -37,6 +38,7 @@ func (s RemoteDeauthenticator) Logout(c echo.Context) error {
 		Path:   "/",
 	}
 	c.SetCookie(userCookie)
-	slog.Info("🔀 🤝 Redirecting to login")
+	slog.Info("🆗 🛰️  (pkg/handler/logout.go) 🍪 User has been logged out and cookie cleared with", "userCookie", userCookie)
+	slog.Info("✅ 🛰️  (pkg/handler/logout.go) 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
 }

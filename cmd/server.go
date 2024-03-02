@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	slog.Info("🥦 🖥️  Welcome to Wits!")
+	slog.Info("💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!")
 
 	if err := initEverything(); err != nil {
 		log.Fatal(err)
@@ -57,7 +57,7 @@ func main() {
 
 	// Start server
 	addr := os.Getenv("HTTP_LISTEN_ADDR")
-	slog.Info("🚀 🖥️  Wits server is running at", "addr", addr)
+	slog.Info("🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at", "addr", addr)
 	e.Logger.Fatal(e.Start(addr))
 }
 

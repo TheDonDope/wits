@@ -51,21 +51,22 @@ func EchoJWTConfig() echojwt.Config {
 
 // HTTPErrorHandler will be executed when an HTTP request fails.
 func HTTPErrorHandler(err error, c echo.Context) {
-	slog.Error("🚨 🖥️  HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
+	slog.Error("🚨 🖥️  (pkg/handler/middleware.go) ❓❓❓❓ 🛜 HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
 }
 
 // JWTErrorHandler will be executed when user tries to access a protected path.
 func JWTErrorHandler(c echo.Context, err error) error {
-	slog.Error("🚨 🏧 JWT validation failed with", "error", err, "path", c.Request().URL.Path)
+	slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 JWT validation failed with", "error", err, "path", c.Request().URL.Path)
 	return c.Redirect(http.StatusMovedPermanently, "/login")
 }
 
 // GenerateTokensAndSetCookies generates a JWT acess and refresh token and set them as cookies for the user,
 // as well as the user cookie.
 func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) GenerateTokensAndSetCookies")
 	accessToken, exp, err := generateAccessToken(user)
 	if err != nil {
-		slog.Error("🚨 🏧 Generating access token failed with", "error", err, "path", c.Request().URL.Path)
+		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Generating access token failed with", "error", err, "path", c.Request().URL.Path)
 		return err
 	}
 
@@ -73,17 +74,18 @@ func GenerateTokensAndSetCookies(user *types.User, c echo.Context) error {
 	setUserCookie(user, exp, c)
 	refreshToken, exp, err := generateRefreshToken(user)
 	if err != nil {
-		slog.Error("🚨 🏧 Generating refresh token failed with", "error", err, "path", c.Request().URL.Path)
+		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Generating refresh token failed with", "error", err, "path", c.Request().URL.Path)
 		return err
 	}
 	setTokenCookie(RefreshTokenCookieName, refreshToken, exp, c)
-	slog.Info("🔑 🏧 Tokens have been generated and set", "path", c.Request().URL.Path)
+	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔑 Tokens have been generated and set", "path", c.Request().URL.Path)
 	return nil
 }
 
 // generateToken generates a JWT token for the given user with the specified expiration time.
 // It signs the token using the provided secret and returns the token string, expiration time, and any error encountered.
 func generateToken(user *types.User, expirationTime time.Time, secret []byte) (string, time.Time, error) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateToken")
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &WitsCustomClaims{
 		user.Email,
@@ -98,15 +100,17 @@ func generateToken(user *types.User, expirationTime time.Time, secret []byte) (s
 	// Create the JWT string
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
-		slog.Error("🚨 🏧 Signing token failed with", "error", err)
+		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Signing token failed with", "error", err)
 		return "", time.Now(), err
 	}
 
+	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔑 Token has been signed for", "email", user.Email)
 	return tokenString, expirationTime, nil
 }
 
 // generateAccessToken generates an access token for the user.
 func generateAccessToken(user *types.User) (string, time.Time, error) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateAccessToken")
 	// Declare the expiration time of the token
 	expirationTime := time.Now().Add(1 * time.Hour)
 
@@ -115,6 +119,7 @@ func generateAccessToken(user *types.User) (string, time.Time, error) {
 
 // generateRefreshToken generates a refresh token for the user.
 func generateRefreshToken(user *types.User) (string, time.Time, error) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateRefreshToken")
 	// Declare the expiration time of the token
 	expirationTime := time.Now().Add(24 * time.Hour)
 
@@ -125,6 +130,7 @@ func generateRefreshToken(user *types.User) (string, time.Time, error) {
 // The cookie is set with the specified name, value, expiration time, and path ("/").
 // It is also set to be accessible only through HTTP (HttpOnly).
 func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) setTokenCookie")
 	cookie := new(http.Cookie)
 	cookie.Name = name
 	cookie.Value = token
@@ -132,16 +138,17 @@ func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	cookie.Path = "/"
 	cookie.HttpOnly = true
 	c.SetCookie(cookie)
-	slog.Info("🍪 🏧 Cookie has been set with", "name", name, "value", token)
+	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", name, "value", token)
 }
 
 // setUserCookie sets a cookie with the user's email as the value.
 func setUserCookie(user *types.User, expiration time.Time, c echo.Context) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) setUserCookie")
 	cookie := new(http.Cookie)
 	cookie.Name = "user"
 	cookie.Value = user.Email
 	cookie.Expires = expiration
 	cookie.Path = "/"
 	c.SetCookie(cookie)
-	slog.Info("🍪 🏧 Cookie has been set with", "name", "user", "value", user.Email)
+	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", "user", "value", user.Email)
 }

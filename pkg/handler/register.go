@@ -17,7 +17,7 @@ type LocalRegistrator struct{}
 
 // Register logs in the user with the local sqlite database.
 func (s LocalRegistrator) Register(c echo.Context) error {
-	slog.Info("🔐 🏠 Registering user with local sqlite database")
+	slog.Info("💬 🏠 (pkg/handler/register.go) LocalRegistrator.Register")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
@@ -26,7 +26,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	}
 
 	if params.Password != params.PasswordConfirmation {
-		slog.Error("🚨 🤝 Passwords do not match")
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: "The passwords do not match",
 		}))
@@ -35,11 +35,11 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	// Check if user with email already exists
 	existingUser, err := readByEmail(params.Email)
 	if err != nil {
-		slog.Error("🚨 🤝 Checking if user exists failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
 	}
 
 	if existingUser != nil {
-		slog.Error("🚨 🤝 User with email already exists")
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: "User with email already exists",
 		}))
@@ -47,7 +47,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), 8)
 	if err != nil {
-		slog.Error("🚨 🤝 Hashing password failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
 	}
 
 	user := &types.User{
@@ -60,11 +60,11 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
-		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard")
+	slog.Info("✅ 🏠 (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	//return render(c, auth.RegisterSuccess(params.Email))
 	return hxRedirect(c, "/dashboard")
 }
@@ -74,7 +74,7 @@ type RemoteRegistrator struct{}
 
 // Register logs in the user with the remote Supabase database.
 func (s RemoteRegistrator) Register(c echo.Context) error {
-	slog.Info("🔐 🛰️  Registering user with remote Supabase database")
+	slog.Info("💬 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
@@ -83,7 +83,7 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 	}
 
 	if params.Password != params.PasswordConfirmation {
-		slog.Error("🚨 🤝 Passwords do not match")
+		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: "The passwords do not match",
 		}))
@@ -91,12 +91,12 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 	// Call Supabase to sign up
 	signUpResp, err := storage.SupabaseClient.Auth.SignUp(c.Request().Context(), supabase.UserCredentials{Email: params.Email, Password: params.Password})
 	if err != nil {
-		slog.Error("🚨 🤝 Signing user up with Supabase failed with", "error", err)
+		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing user up with Supabase failed with", "error", err)
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: err.Error(),
 		}))
 	}
-	slog.Info("✅ 🤝 User has been signed up with Supabase with", "signUpResp", signUpResp)
+	slog.Info("🆗 🛰️  (pkg/handler/register.go) 🔓 User has been signed up with Supabase with", "signUpResp", signUpResp)
 
 	user := &types.User{
 		Email: params.Email,
@@ -105,11 +105,11 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 
 	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
-		slog.Error("🚨 🤝 Generating tokens failed with", "error", tokenErr)
+		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("✅ 🤝 User has been registered, redirecting to dashboard")
+	slog.Info("✅ 🛰️  (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	//return render(c, auth.RegisterSuccess(params.Email))
 	return hxRedirect(c, "/dashboard")
 }

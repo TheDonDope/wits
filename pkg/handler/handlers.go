@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/a-h/templ"
@@ -14,6 +15,7 @@ func render(c echo.Context, component templ.Component) error {
 
 // hxRedirect provides a shorthand function to redirect the user with HX-Redirect header.
 func hxRedirect(c echo.Context, to string) error {
+	slog.Info("💬 🤝 (pkg/handler/handlers.go) 🔄 HTMX-Redirecting to", "to", to)
 	if len(c.Request().Header.Get("HX-Request")) > 0 {
 		c.Response().Header().Set("HX-Redirect", to)
 		return nil

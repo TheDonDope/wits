@@ -13,7 +13,8 @@ type DashboardHandler struct{}
 
 // HandleGetDashboard responds to GET on the /dashboard route by rendering the Dashboard component.
 func (h *DashboardHandler) HandleGetDashboard(c echo.Context) error {
+	slog.Info("💬 🤝 (pkg/handler/dashboard.go) HandleGetDashboard")
 	u, _ := c.Cookie("user")
-	slog.Info("🔓 🤝 User cookie found with", "user", u.Value)
+	slog.Info("✅ 🤝 (pkg/handler/dashboard) 🍪 User cookie found with", "user", u.Value)
 	return render(c, dashboard.Dashboard(&types.User{Email: u.Value}))
 }
