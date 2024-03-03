@@ -12,7 +12,7 @@ type LocalDeauthenticator struct{}
 
 // Logout logs out the user with the local sqlite database.
 func (s LocalDeauthenticator) Logout(c echo.Context) error {
-	slog.Info("💬 🏠 (pkg/handler/logout.go) LocalDeauthenticator.Logout")
+	slog.Info("💬 🏠 (pkg/handler/logout.go) LocalDeauthenticator.Logout()")
 	userCookie := &http.Cookie{
 		Name:   AccessTokenCookieName,
 		Value:  "",
@@ -30,7 +30,7 @@ type RemoteDeauthenticator struct{}
 
 // Logout logs out the user with the remote Supabase database.
 func (s RemoteDeauthenticator) Logout(c echo.Context) error {
-	slog.Info("💬 🛰️  (pkg/handler/logout.go) RemoteDeauthenticator.Logout")
+	slog.Info("💬 🛰️  (pkg/handler/logout.go) RemoteDeauthenticator.Logout()")
 	userCookie := &http.Cookie{
 		Name:   AccessTokenCookieName,
 		Value:  "",

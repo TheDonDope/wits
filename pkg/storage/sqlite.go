@@ -18,7 +18,7 @@ var SQLiteDB *gorm.DB
 
 // InitSQLiteDB initializes the SQLite database.
 func InitSQLiteDB(automigrate bool) error {
-	slog.Info("💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB")
+	slog.Info("💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()")
 	dsn := os.Getenv("SQLITE_DATA_SOURCE_NAME")
 	slog.Info("🆗 🏠 (pkg/storage/sqlite.go) 📂 Using local sqlite database with", "dsn", dsn)
 	var err error

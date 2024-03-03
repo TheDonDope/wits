@@ -18,7 +18,7 @@ type LocalRegistrator struct{}
 
 // Register logs in the user with the local sqlite database.
 func (s LocalRegistrator) Register(c echo.Context) error {
-	slog.Info("💬 🏠 (pkg/handler/register.go) LocalRegistrator.Register")
+	slog.Info("💬 🏠 (pkg/handler/register.go) LocalRegistrator.Register()")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
@@ -82,7 +82,7 @@ type RemoteRegistrator struct{}
 
 // Register logs in the user with the remote Supabase database.
 func (s RemoteRegistrator) Register(c echo.Context) error {
-	slog.Info("💬 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register")
+	slog.Info("💬 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register()")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),

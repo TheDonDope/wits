@@ -18,7 +18,7 @@ type LocalAuthenticator struct{}
 
 // Login logs in the user with the local sqlite database.
 func (s LocalAuthenticator) Login(c echo.Context) error {
-	slog.Info("💬 🏠 (pkg/handler/login.go) LocalAuthenticator.Login")
+	slog.Info("💬 🏠 (pkg/handler/login.go) LocalAuthenticator.Login()")
 	user, userErr := readByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
 		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
@@ -50,7 +50,7 @@ type RemoteAuthenticator struct{}
 
 // Login logs in the user with the remote Supabase database.
 func (s RemoteAuthenticator) Login(c echo.Context) error {
-	slog.Info("💬 🛰️  (pkg/handler/login.go) RemoteAuthenticator.Login")
+	slog.Info("💬 🛰️  (pkg/handler/login.go) RemoteAuthenticator.Login()")
 	credentials := supabase.UserCredentials{
 		Email:    c.FormValue("email"),
 		Password: c.FormValue("password"),

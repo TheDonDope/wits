@@ -71,7 +71,7 @@ func NewAuthHandler() *AuthHandler {
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
 func (h AuthHandler) HandleGetLogin(c echo.Context) error {
-	slog.Info("✅ 🤝 (pkg/handler/auth.go) HandleGetLogin")
+	slog.Info("✅ 🤝 (pkg/handler/auth.go) HandleGetLogin()")
 	return render(c, auth.Login())
 }
 
@@ -79,19 +79,19 @@ func (h AuthHandler) HandleGetLogin(c echo.Context) error {
 // If the user exists and the password is correct, the JWT tokens are generated and set as cookies.
 // Finally, the user is redirected to the dashboard.
 func (h AuthHandler) HandlePostLogin(c echo.Context) error {
-	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLogin")
+	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLogin()")
 	return h.a.Login(c)
 }
 
 // HandlePostLogout responds to POST on the /logout route by logging out the user.
 func (h AuthHandler) HandlePostLogout(c echo.Context) error {
-	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLogout")
+	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLogout()")
 	return h.d.Logout(c)
 }
 
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.
 func (h AuthHandler) HandleGetRegister(c echo.Context) error {
-	slog.Info("✅ 🤝 (pkg/handler/auth.go) HandleGetRegister")
+	slog.Info("✅ 🤝 (pkg/handler/auth.go) HandleGetRegister()")
 	return render(c, auth.Register())
 }
 
@@ -99,19 +99,19 @@ func (h AuthHandler) HandleGetRegister(c echo.Context) error {
 // If the user does not exist, the password is hashed and the user is created in the database.
 // Afterwards, the JWT tokens are generated and set as cookies. Finally, the user is redirected to the dashboard.
 func (h AuthHandler) HandlePostRegister(c echo.Context) error {
-	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostRegister")
+	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostRegister()")
 	return h.r.Register(c)
 }
 
 // HandleGetAuthCallback responds to GET on the /auth/callback route by verifying the user.
 func (h AuthHandler) HandleGetAuthCallback(c echo.Context) error {
-	slog.Info("💬 🤝 (pkg/handler/auth.go) HandleGetAuthCallback")
+	slog.Info("💬 🤝 (pkg/handler/auth.go) HandleGetAuthCallback()")
 	return h.v.Verify(c)
 }
 
 // readByEmailAndPassword returns a user with the given email and password.
 func readByEmailAndPassword(email string, password string) (types.User, error) {
-	slog.Info("💬 🏠 (pkg/handler/auth.go) readByEmailAndPassword")
+	slog.Info("💬 🏠 (pkg/handler/auth.go) readByEmailAndPassword()")
 	user, err := readByEmail(email)
 	if err != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth.go) ❓❓❓❓ 🔒 Finding user by email failed with", "error", err)
@@ -128,7 +128,7 @@ func readByEmailAndPassword(email string, password string) (types.User, error) {
 
 // readByEmail returns a user with the given email.
 func readByEmail(email string) (types.User, error) {
-	slog.Info("💬 🏠 (pkg/handler/auth.go) readByEmail")
+	slog.Info("💬 🏠 (pkg/handler/auth.go) readByEmail()")
 	var user types.User
 	err := storage.SQLiteDB.Where("email = ?", email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {

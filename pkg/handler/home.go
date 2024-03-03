@@ -13,7 +13,7 @@ type HomeHandler struct{}
 // HandleGetHome responds to GET on the / route by redirecting to the dashboard if the user is logged in,
 // otherwise to the login page.
 func (h *HomeHandler) HandleGetHome(c echo.Context) error {
-	slog.Info("💬 🤝 (pkg/handler/home.go) HandleGetHome")
+	slog.Info("💬 🤝 (pkg/handler/home.go) HandleGetHome()")
 	_, err := c.Cookie("user")
 	if err != nil {
 		slog.Error("🚨 🤝 (pkg/handler/home.go) ❓❓❓❓ 🍪 No user cookie found, redirecting to login")

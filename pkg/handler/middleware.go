@@ -63,7 +63,7 @@ func JWTErrorHandler(c echo.Context, err error) error {
 // GenerateTokensAndSetCookies generates a JWT acess and refresh token and set them as cookies for the user,
 // as well as the user cookie.
 func GenerateTokensAndSetCookies(user types.User, c echo.Context) error {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) GenerateTokensAndSetCookies")
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) GenerateTokensAndSetCookies()")
 	accessToken, exp, err := generateAccessToken(user)
 	if err != nil {
 		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Generating access token failed with", "error", err, "path", c.Request().URL.Path)
@@ -85,7 +85,7 @@ func GenerateTokensAndSetCookies(user types.User, c echo.Context) error {
 // generateToken generates a JWT token for the given user with the specified expiration time.
 // It signs the token using the provided secret and returns the token string, expiration time, and any error encountered.
 func generateToken(user types.User, expirationTime time.Time, secret []byte) (string, time.Time, error) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateToken")
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateToken()")
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &WitsCustomClaims{
 		user.Email,
@@ -110,7 +110,7 @@ func generateToken(user types.User, expirationTime time.Time, secret []byte) (st
 
 // generateAccessToken generates an access token for the user.
 func generateAccessToken(user types.User) (string, time.Time, error) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateAccessToken")
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateAccessToken()")
 	// Declare the expiration time of the token
 	expirationTime := time.Now().Add(1 * time.Hour)
 
@@ -119,7 +119,7 @@ func generateAccessToken(user types.User) (string, time.Time, error) {
 
 // generateRefreshToken generates a refresh token for the user.
 func generateRefreshToken(user types.User) (string, time.Time, error) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateRefreshToken")
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateRefreshToken()")
 	// Declare the expiration time of the token
 	expirationTime := time.Now().Add(24 * time.Hour)
 
@@ -130,7 +130,7 @@ func generateRefreshToken(user types.User) (string, time.Time, error) {
 // The cookie is set with the specified name, value, expiration time, and path ("/").
 // It is also set to be accessible only through HTTP (HttpOnly).
 func SetTokenCookie(name, token string, expiration time.Time, c echo.Context) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetTokenCookie")
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetTokenCookie()")
 	cookie := new(http.Cookie)
 	cookie.Name = name
 	cookie.Value = token
@@ -143,7 +143,7 @@ func SetTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 
 // SetUserCookie sets a cookie with the user's email as the value.
 func SetUserCookie(user types.User, expiration time.Time, c echo.Context) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetUserCookie")
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetUserCookie()")
 	cookie := new(http.Cookie)
 	cookie.Name = "user"
 	cookie.Value = user.Email

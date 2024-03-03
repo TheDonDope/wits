@@ -15,7 +15,7 @@ var SupabaseClient *supabase.Client
 
 // InitSupabaseDB initializes the supabase client.
 func InitSupabaseDB() error {
-	slog.Info("💬 🛰️  (pkg/storage/supabase.go) InitSupabaseDB")
+	slog.Info("💬 🛰️  (pkg/storage/supabase.go) InitSupabaseDB()")
 	sbURL := os.Getenv("SUPABASE_URL")
 	sbSecret := os.Getenv("SUPABASE_SECRET")
 	slog.Info("🆗 🛰️  (pkg/storage/supabase.go) 📂 Initializing Supabase client with", "url", sbURL)

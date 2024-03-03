@@ -12,7 +12,7 @@ import (
 // getAuthenticatedUser provides a shorthand function to get the authenticated user from the echo.Context.
 func getAuthenticatedUser(c echo.Context) types.User {
 	var user types.User
-	slog.Info("💬 🤝 (pkg/handler/handlers.go) getAuthenticatedUser")
+	slog.Info("💬 🤝 (pkg/handler/handlers.go) getAuthenticatedUser()")
 	u := c.Get(types.UserContextKey)
 	if u == nil {
 		slog.Error("🚨 🤝 (pkg/handler/handlers.go) ❓❓❓❓ 📦 No User data found in echo.Context, trying with Cookie")
@@ -39,7 +39,7 @@ func render(c echo.Context, component templ.Component) error {
 
 // hxRedirect provides a shorthand function to redirect the user with HX-Redirect header.
 func hxRedirect(c echo.Context, to string) error {
-	slog.Info("💬 🤝 (pkg/handler/handlers.go) 🔄 HTMX-Redirecting", "to", to)
+	slog.Info("💬 🤝 (pkg/handler/handlers.go) 🔄 hxRedirect()", "to", to)
 	if len(c.Request().Header.Get("HX-Request")) > 0 {
 		c.Response().Header().Set("HX-Redirect", to)
 		return nil
