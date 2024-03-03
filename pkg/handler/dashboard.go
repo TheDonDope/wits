@@ -18,7 +18,7 @@ func (h *DashboardHandler) HandleGetDashboard(c echo.Context) error {
 	if user.LoggedIn {
 		slog.Info("🆗 🤝 (pkg/handler/dashboard.go) 📦 User is logged in with", "email", user.Email, "loggedIn", user.LoggedIn)
 		slog.Info("✅ 🤝 (pkg/handler/dashboard.go) 🔀 Redirecting to dashboard")
-		return render(c, dashboard.Dashboard(user))
+		return render(c, dashboard.Index(user))
 	}
 	slog.Info("🆗 🤝 (pkg/handler/dashboard.go) 📦 No User logged")
 	slog.Info("✅ 🤝 (pkg/handler/dashboard.go) 🔀 Redirecting to login")

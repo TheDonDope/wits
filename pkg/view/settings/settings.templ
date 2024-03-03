@@ -1,0 +1,12 @@
+package settings
+
+import (
+	"github.com/TheDonDope/wits/pkg/view/layout"
+	"github.com/TheDonDope/wits/pkg/types"
+)
+
+templ Index(user types.AuthenticatedUser) {
+	@layout.App(true) {
+		<div>Hello { user.Email }</div>
+	}
+}

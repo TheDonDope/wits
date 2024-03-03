@@ -52,14 +52,21 @@ func main() {
 
 	// Dashboard routes
 	d := handler.DashboardHandler{}
-	g := e.Group("/dashboard")
-
+	dg := e.Group("/dashboard")
 	// Configure middleware with the custom claims type, but only when using local DB
 	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
-		g.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+		dg.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
 	}
+	dg.GET("", d.HandleGetDashboard)
 
-	g.GET("", d.HandleGetDashboard)
+	// User settings routes
+	s := handler.SettingsHandler{}
+	sg := e.Group("/settings")
+	// Configure middleware with the custom claims type, but only when using local DB
+	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
+		sg.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+	}
+	sg.GET("", s.HandleGetSettings)
 
 	// Start server
 	addr := os.Getenv("HTTP_LISTEN_ADDR")

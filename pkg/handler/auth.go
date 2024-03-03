@@ -88,7 +88,7 @@ func (h AuthHandler) HandlePostLogin(c echo.Context) error {
 
 // HandleGetLoginWithGoogle responds to GET on the /login/provider/google route by logging in the user with Google.
 func (h AuthHandler) HandleGetLoginWithGoogle(c echo.Context) error {
-	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLoginWithGoogle()")
+	slog.Info("💬 🤝 (pkg/handler/auth.go) HandleGetLoginWithGoogle()")
 	return h.g.Login(c)
 }
 
