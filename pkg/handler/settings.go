@@ -2,7 +2,6 @@ package handler
 
 import (
 	"log/slog"
-	"net/http"
 
 	"github.com/TheDonDope/wits/pkg/view/settings" // Import the missing package
 	"github.com/labstack/echo/v4"
@@ -14,12 +13,12 @@ type SettingsHandler struct{}
 // HandleGetSettings responds to GET on the /settings route by rendering the settings page.
 func (h SettingsHandler) HandleGetSettings(c echo.Context) error {
 	user := getAuthenticatedUser(c)
-	if user.LoggedIn {
-		slog.Info("🆗 🤝 (pkg/handler/settings.go) 💃 User is logged in with", "email", user.Email, "loggedIn", user.LoggedIn)
-		slog.Info("✅ 🤝 (pkg/handler/settings.go) 🔀 Redirecting to dashboard")
-		return render(c, settings.Index(user))
-	}
-	slog.Info("🆗 🤝 (pkg/handler/settings.go) 🥷 No User logged")
-	slog.Info("✅ 🤝 (pkg/handler/settings.go) 🔀 Redirecting to login")
-	return c.Redirect(http.StatusSeeOther, "/login")
+	// if user.LoggedIn {
+	slog.Info("🆗 🤝 (pkg/handler/settings.go) 💃 User is logged in with", "email", user.Email, "loggedIn", user.LoggedIn)
+	slog.Info("✅ 🤝 (pkg/handler/settings.go) 🔀 Redirecting to dashboard")
+	return render(c, settings.Index(user))
+	// }
+	// slog.Info("🆗 🤝 (pkg/handler/settings.go) 🥷 No User logged")
+	// slog.Info("✅ 🤝 (pkg/handler/settings.go) 🔀 Redirecting to login")
+	// return c.Redirect(http.StatusSeeOther, "/login")
 }

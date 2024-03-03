@@ -16,11 +16,11 @@ func (h *HomeHandler) HandleGetHome(c echo.Context) error {
 	slog.Info("💬 🤝 (pkg/handler/home.go) HandleGetHome()")
 	user := getAuthenticatedUser(c)
 	if user.LoggedIn {
-		slog.Info("🆗 🤝 (pkg/handler/home.go) 📦 User is logged in with", "email", user.Email, "loggedIn", user.LoggedIn)
+		slog.Info("🆗 🤝 (pkg/handler/home.go) 💃 User is logged in with", "email", user.Email, "loggedIn", user.LoggedIn)
 		slog.Info("✅ 🤝 (pkg/handler/home.go) 🔀 Redirecting to dashboard")
 		return c.Redirect(http.StatusSeeOther, "/dashboard")
 	}
-	slog.Info("🆗 🤝 (pkg/handler/home.go) 📦 No User logged")
+	slog.Info("🆗 🤝 (pkg/handler/home.go) 🥷 No User logged in")
 	slog.Info("✅ 🤝 (pkg/handler/home.go) 🔀 Redirecting to login")
 	return c.Redirect(http.StatusSeeOther, "/login")
 }

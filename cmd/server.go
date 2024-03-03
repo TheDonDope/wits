@@ -41,6 +41,7 @@ func main() {
 
 	// Auth routes
 	a := handler.NewAuthHandler()
+	e.Use(handler.WithUser())
 	e.GET("/login", a.HandleGetLogin)
 	e.GET("/login/provider/google", a.HandleGetLoginWithGoogle)
 	e.POST("/login", a.HandlePostLogin)
@@ -48,25 +49,23 @@ func main() {
 	e.GET("/register", a.HandleGetRegister)
 	e.POST("/register", a.HandlePostRegister)
 	e.GET("/auth/callback", a.HandleGetAuthCallback)
-	e.Use(handler.WithUser())
+
+	// Authenticated routes
+	g := e.Group("") // Start with root path
+	// Configure middleware with the custom claims type, but only when using local DB
+	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
+		g.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+	}
+
+	g.Use(handler.WithAuth())
 
 	// Dashboard routes
 	d := handler.DashboardHandler{}
-	dg := e.Group("/dashboard")
-	// Configure middleware with the custom claims type, but only when using local DB
-	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
-		dg.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
-	}
-	dg.GET("", d.HandleGetDashboard)
+	g.GET("/dashboard", d.HandleGetDashboard)
 
 	// User settings routes
 	s := handler.SettingsHandler{}
-	sg := e.Group("/settings")
-	// Configure middleware with the custom claims type, but only when using local DB
-	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
-		sg.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
-	}
-	sg.GET("", s.HandleGetSettings)
+	g.GET("/settings", s.HandleGetSettings)
 
 	// Start server
 	addr := os.Getenv("HTTP_LISTEN_ADDR")

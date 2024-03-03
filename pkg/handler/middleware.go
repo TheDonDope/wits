@@ -122,6 +122,27 @@ func WithUser() echo.MiddlewareFunc {
 	}
 }
 
+// WithAuth is a middleware that checks if the user is authenticated.
+func WithAuth() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if strings.Contains(c.Request().URL.Path, "/public") {
+				return next(c)
+			}
+			slog.Info("💬 🏧 (pkg/handler/middleware.go) WitAuth() -> next()", "path", c.Request().URL.Path)
+			user := getAuthenticatedUser(c)
+			if !user.LoggedIn {
+				slog.Info("🆗 🏧 (pkg/handler/middleware.go) 🥷 No authorized user found")
+				slog.Info("✅ 🏧(pkg/handler/middleware.go) 🔀 Redirecting to login")
+				return c.Redirect(http.StatusSeeOther, "/login")
+			}
+			slog.Info("🆗 🏧 (pkg/handler/middleware.go) 💃 Authorized user found with", "email", user.Email)
+			slog.Info("✅ 🏧 (pkg/handler/middleware.go) 💫 Continuing navigation", "to", c.Request().URL.Path)
+			return next(c)
+		}
+	}
+}
+
 // GenerateTokensAndSetCookies generates a JWT acess and refresh token and set them as cookies for the user,
 // as well as the user cookie.
 func GenerateTokensAndSetCookies(user types.AuthenticatedUser, c echo.Context) error {
