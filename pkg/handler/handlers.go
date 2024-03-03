@@ -10,25 +10,25 @@ import (
 )
 
 // getAuthenticatedUser provides a shorthand function to get the authenticated user from the echo.Context.
-func getAuthenticatedUser(c echo.Context) types.User {
-	var user types.User
-	slog.Info("💬 🤝 (pkg/handler/handlers.go) getAuthenticatedUser()")
+func getAuthenticatedUser(c echo.Context) types.AuthenticatedUser {
+	var user types.AuthenticatedUser
+	slog.Info("💬 🤝 (pkg/handler/handlers.go) getAuthenticatedUser()", "path", c.Request().URL.Path)
 	u := c.Get(types.UserContextKey)
 	if u == nil {
-		slog.Error("🚨 🤝 (pkg/handler/handlers.go) ❓❓❓❓ 📦 No User data found in echo.Context, trying with Cookie")
-		cookie, err := c.Cookie("user")
+		slog.Debug("🚨 🤝 (pkg/handler/handlers.go) ❓❓❓❓ 📦 No user data found in echo.Context, trying with Cookie. Looked for", "contextKey", types.UserContextKey)
+		cookie, err := c.Cookie(types.UserContextKey)
 		if err != nil {
-			slog.Error("🚨 🤝 (pkg/handler/handlers.go) ❓❓❓❓ 🍪 No user cookie found, returning empty user")
-			return types.User{}
+			slog.Info("✅ 🤝 (pkg/handler/handlers.go) ❓❓❓❓ 🍪 No user cookie found, returning empty user. Looked for", "cookieName", types.UserContextKey)
+			return types.AuthenticatedUser{}
 		}
-		slog.Info("✅ 🤝 (pkg/handler/handlers.go) 🍪 User cookie found with", "user", cookie.Value)
-		return types.User{
+		slog.Info("✅ 🤝 (pkg/handler/handlers.go) 🍪 User cookie found with", "name", types.UserContextKey, "value", cookie.Value)
+		return types.AuthenticatedUser{
 			Email:    cookie.Value,
 			LoggedIn: true,
 		}
 	}
-	user = u.(types.User)
-	slog.Info("✅ 🤝 (pkg/handler/handlers.go) 📦 User data found in echo.Context with", "email", user.Email, "loggedIn", user.LoggedIn)
+	user = u.(types.AuthenticatedUser)
+	slog.Info("✅ 🤝 (pkg/handler/handlers.go) 📦 User data found in echo.Context with", "contextKey", types.UserContextKey, "email", user.Email, "loggedIn", user.LoggedIn)
 	return user
 }
 

@@ -8,18 +8,15 @@ import (
 )
 
 // AuthenticatedUser returns the authenticated user from the context.
-func AuthenticatedUser(ctx context.Context) types.User {
-	var user types.User
+func AuthenticatedUser(ctx context.Context) types.AuthenticatedUser {
+	var authenticatedUser types.AuthenticatedUser
 	slog.Info("💬 🤝 (pkg/view/views.go) AuthenticatedUser()")
-	u := ctx.Value(types.UserContextKey)
-	if u == nil {
-		slog.Info("✅ 🤝 (pkg/view/views.go) 📦 No User data found in context.Context, returning empty user")
-		return types.User{
-			Email:    "anon@foo.org",
-			LoggedIn: true,
-		}
+	userContext := ctx.Value(types.UserContextKey)
+	if userContext == nil {
+		slog.Debug("✅ 🤝 (pkg/view/views.go) 📦 No User data found in context.Context, returning empty user. Looked for", "contextKey", types.UserContextKey)
+		return types.AuthenticatedUser{}
 	}
-	user = u.(types.User)
-	slog.Info("✅ 🤝 (pkg/view/views.go) 📦 User data found in context.Context with", "email", user.Email, "loggedIn", user.LoggedIn)
-	return user
+	authenticatedUser = userContext.(types.AuthenticatedUser)
+	slog.Info("✅ 🤝 (pkg/view/views.go) 📦 User data found in context.Context with", "email", authenticatedUser.Email, "loggedIn", authenticatedUser.LoggedIn)
+	return authenticatedUser
 }

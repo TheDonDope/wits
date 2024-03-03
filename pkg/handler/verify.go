@@ -44,7 +44,7 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/verify.go) 🔓 User has been verified with", "resp", resp)
 
-	user := types.User{
+	user := types.AuthenticatedUser{
 		Email:    resp.Email,
 		LoggedIn: true,
 	}
