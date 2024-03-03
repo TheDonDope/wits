@@ -42,6 +42,8 @@ go build -v -o ./bin/wits ./cmd/server.go
 
 ### Required Environment Variables
 
+A minimum viable `.env` file can be found at [.env.example](.env.example). Simply rename it to `.env` to be able to run the application with a local Sqlite database. Fill in the other values if you want to use a remote Supabase database.
+
 The following environment variables are required to run the application:
 
 | Environment Variable      | Description                                                                                         |
@@ -55,8 +57,9 @@ The following environment variables are required to run the application:
 | `DB_USER`                 | The user of the postgres db, when `DB_TYPE=remote`                                                  |
 | `DB_PASSWORD`             | The password of the postgres db, when `DB_TYPE=remote`                                              |
 | `DB_NAME`                 | The name of the postgres db, when `DB_TYPE=remote`                                                  |
-| `SUPABASE_URL`            | The Supabase URL (required for the client configuration),, when `DB_TYPE=remote`                    |
-| `SUPABASE_SECRET`         | The Supabase secret (required for the client configuration),, when `DB_TYPE=remote`                 |
+| `SUPABASE_URL`            | The Supabase URL (required for the client configuration), when `DB_TYPE=remote`                     |
+| `SUPABASE_SECRET`         | The Supabase secret (required for the client configuration), when `DB_TYPE=remote`                  |
+| `AUTH_CALLBACK_URL`       | The callback URL for remote login, when `DB_TYPE=remote`                                            |
 
 The built application binary can be started by:
 
