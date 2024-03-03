@@ -18,8 +18,7 @@ func InitSupabaseDB() error {
 	slog.Info("💬 🛰️  (pkg/storage/supabase.go) InitSupabaseDB()")
 	sbURL := os.Getenv("SUPABASE_URL")
 	sbSecret := os.Getenv("SUPABASE_SECRET")
-	slog.Info("🆗 🛰️  (pkg/storage/supabase.go) 📂 Initializing Supabase client with", "url", sbURL)
 	SupabaseClient = supabase.CreateClient(sbURL, sbSecret)
-	slog.Info("✅ 🛰️  (pkg/storage/supabase.go) 📂 Using Supabase with", "url", sbURL)
+	slog.Info("✅ 🛰️  (pkg/storage/supabase.go) 📂 Using Supabase client with", "url", sbURL)
 	return nil
 }

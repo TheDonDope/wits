@@ -99,7 +99,7 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 			InvalidCredentials: err.Error(),
 		}))
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/register.go) 🔓 User has been signed up with Supabase with", "signUpResp", signUpResp)
+	slog.Info("🆗 🛰️  (pkg/handler/register.go)  🔓 User has been signed up with Supabase with", "email", signUpResp.Email)
 	slog.Info("✅ 🛰️  (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	return render(c, auth.RegisterSuccess(signUpResp.Email))
 }

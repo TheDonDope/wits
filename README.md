@@ -62,10 +62,11 @@ The built application binary can be started by:
 
 ```shell
 $ ./bin/wits
-2024/03/02 22:18:40 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
-2024/03/02 22:18:40 INFO 💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB
-2024/03/02 22:18:40 INFO 🆗 🏠 (pkg/storage/sqlite.go) 📂 Using local sqlite database with dsn=./bin/wits.db
-2024/03/02 22:18:40 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
+2024/03/03 23:40:24 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
+2024/03/03 23:40:24 INFO 💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()
+2024/03/03 23:40:24 INFO 🆗 🏠 (pkg/storage/sqlite.go)  📂 Using dsn=./bin/wits.db
+2024/03/03 23:40:24 INFO ✅ 🏠 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations
+2024/03/03 23:40:24 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
 
    ____    __
   / __/___/ /  ___

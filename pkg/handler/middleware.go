@@ -86,7 +86,7 @@ func WithUser() echo.MiddlewareFunc {
 					slog.Debug("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🍪 No user cookie found, returning empty user. Looked for", "cookieName", types.UserContextKey)
 					authenticatedUser = types.AuthenticatedUser{}
 				} else {
-					slog.Info("🆗 🏧 (pkg/handler/middleware.go) 🍪 User cookie found with", "name", types.UserContextKey, "value", userCookie.Value)
+					slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User cookie found with", "name", types.UserContextKey, "value", userCookie.Value)
 					authenticatedUser = types.AuthenticatedUser{
 						Email:    userCookie.Value,
 						LoggedIn: true,
@@ -99,22 +99,18 @@ func WithUser() echo.MiddlewareFunc {
 					LoggedIn: true,
 				}
 			}
-			if len(authenticatedUser.Email) == 0 && !authenticatedUser.LoggedIn {
-				slog.Info("🆗 🏧 (pkg/handler/middleware.go) 🥷 Empty, unauthorized user data found in echo.Context with", "contextKey", types.UserContextKey, "email", authenticatedUser.Email)
-			} else {
-				slog.Info("🆗 🏧 (pkg/handler/middleware.go) 💃 User data found in echo.Context with", "contextKey", types.UserContextKey, "email", authenticatedUser.Email)
-			}
 			// Set the user in the echo.Context
 			c.Set(types.UserContextKey, authenticatedUser)
 			// Set the user in the context.Context
 			r := c.Request().WithContext(context.WithValue(c.Request().Context(), types.UserContextKey, authenticatedUser))
 			c.SetRequest(r)
+
 			if len(authenticatedUser.Email) == 0 && !authenticatedUser.LoggedIn {
-				slog.Info("🆗 🏧 (pkg/handler/middleware.go) 🥷 Empty, unauthorized has been set to context with", "echo.Context.Get(types.UserContextKey)", c.Get(types.UserContextKey), "context.Context.Value(types.UserContextKey)", c.Request().Context().Value(types.UserContextKey))
-				slog.Info("✅ 🏧 (pkg/handler/middleware.go) WithUser() -> next() -> 🥷 Empty, unauthorized found in echo.Context with", "path", c.Request().URL.Path, "contextKey", types.UserContextKey, "email", authenticatedUser.Email)
+				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🥷 Empty, unauthorized user has been set to echo.Context and echo.Context.Request().Context()")
+				slog.Info("✅ 🏧 (pkg/handler/middleware.go) WithUser() -> next() -> 🥷 Empty, unauthorized user found in echo.Context with", "path", c.Request().URL.Path)
 			} else {
-				slog.Info("🆗 🏧 (pkg/handler/middleware.go) 💃 User has been set to context with", "echo.Context.Get(types.UserContextKey)", c.Get(types.UserContextKey), "context.Context.Value(types.UserContextKey)", c.Request().Context().Value(types.UserContextKey))
-				slog.Info("✅ 🏧 (pkg/handler/middleware.go) WithUser() -> next() -> 💃 User found in echo.Context with", "path", c.Request().URL.Path, "contextKey", types.UserContextKey, "email", authenticatedUser.Email)
+				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  💃 User has been set to to echo.Context and echo.Context.Request().Context()")
+				slog.Info("✅ 🏧 (pkg/handler/middleware.go) WithUser() -> next() -> 💃 User found in echo.Context with", "path", c.Request().URL.Path)
 			}
 
 			return next(c)
@@ -132,12 +128,12 @@ func WithAuth() echo.MiddlewareFunc {
 			slog.Info("💬 🏧 (pkg/handler/middleware.go) WitAuth() -> next()", "path", c.Request().URL.Path)
 			user := getAuthenticatedUser(c)
 			if !user.LoggedIn {
-				slog.Info("🆗 🏧 (pkg/handler/middleware.go) 🥷 No authorized user found")
-				slog.Info("✅ 🏧(pkg/handler/middleware.go) 🔀 Redirecting to login")
-				return c.Redirect(http.StatusSeeOther, "/login")
+				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🥷 No authorized user found")
+				slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔀 Redirecting to login")
+				return c.Redirect(http.StatusSeeOther, "/login?to="+c.Request().URL.Path)
 			}
-			slog.Info("🆗 🏧 (pkg/handler/middleware.go) 💃 Authorized user found with", "email", user.Email)
-			slog.Info("✅ 🏧 (pkg/handler/middleware.go) 💫 Continuing navigation", "to", c.Request().URL.Path)
+			slog.Info("🆗 🏧 (pkg/handler/middleware.go)  💃 Authorized user found with", "email", user.Email)
+			slog.Info("✅ 🏧 (pkg/handler/middleware.go) WitAuth() -> next() -> 💫 Continuing navigation", "to", c.Request().URL.Path)
 			return next(c)
 		}
 	}
@@ -177,7 +173,7 @@ func SetTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	cookie.Path = "/"
 	cookie.HttpOnly = true
 	c.SetCookie(cookie)
-	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", name, "value", token)
+	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", name, "value", token[:5]+"...")
 }
 
 // SetUserCookie sets a cookie with the user's email as the value.

@@ -21,7 +21,7 @@ func (s LocalVerifier) Verify(c echo.Context) error {
 	if len(accessToken) == 0 {
 		return render(c, auth.AuthCallbackScript())
 	}
-	slog.Info("🆗 🏠 (pkg/handler/verify.go) 🔑 Parsed URL with", "access_token", accessToken)
+	slog.Info("🆗 🏠 (pkg/handler/verify.go)  🔑 Parsed URL with access_token")
 	SetTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 	return c.Redirect(http.StatusSeeOther, "/")
 }
@@ -36,7 +36,7 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 	if len(accessToken) == 0 {
 		return render(c, auth.AuthCallbackScript())
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/verify.go) 🔑 Parsed URL with", "access_token", accessToken)
+	slog.Info("🆗 🛰️  (pkg/handler/verify.go)  🔑 Parsed URL with access_token")
 	SetTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 
 	resp, err := storage.SupabaseClient.Auth.User(c.Request().Context(), accessToken)
@@ -44,7 +44,7 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 		slog.Error("🚨 🛰️  (pkg/handler/verify.go) ❓❓❓❓ 🔒 Getting user from Supabase failed with", "error", err)
 		return nil
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/verify.go) 🔓 User has been verified with", "resp", resp)
+	slog.Info("🆗 🛰️  (pkg/handler/verify.go)  🔓 User has been verified with", "email", resp.Email)
 
 	user := types.AuthenticatedUser{
 		Email:    resp.Email,

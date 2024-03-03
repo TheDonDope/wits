@@ -35,7 +35,7 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
-	slog.Info("🆗 🏠 (pkg/handler/login.go) 🔓 User has been logged in with local Sqlite database")
+	slog.Info("🆗 🏠 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
 
 	slog.Info("✅ 🏠 (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
@@ -60,7 +60,7 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 			InvalidCredentials: "The credentials you have entered are invalid",
 		}))
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/login.go) 🔓 User has been logged in with", "signInResp", signInResp)
+	slog.Info("🆗 🛰️  (pkg/handler/login.go)  🔓 User has been logged in with", "signInResp", signInResp)
 
 	authenticatedUser := types.AuthenticatedUser{
 		Email:    signInResp.User.Email,
@@ -88,7 +88,7 @@ func (s GoogleAuthenticator) Login(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/login.go) 🔓 User has been logged in with Google", "resp", resp)
+	slog.Info("🆗 🛰️  (pkg/handler/login.go)  🔓 User has been logged in with Google", "resp", resp)
 	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to", "url", resp.URL)
 	return c.Redirect(http.StatusSeeOther, resp.URL)
 }

@@ -32,9 +32,9 @@ func (s LocalDeauthenticator) Logout(c echo.Context) error {
 			Path:   "/",
 		}
 		c.SetCookie(cookie)
-		slog.Info("🆗 🏠 (pkg/handler/logout.go) 🗑️ Cookie cleared with", "cookie", cookie)
+		slog.Info("🆗 🏠 (pkg/handler/logout.go)  🗑️  Cookie cleared with", "cookie", cookie)
 	}
-	slog.Info("🆗 🏠 (pkg/handler/logout.go) 🎬 User has been logged out")
+	slog.Info("🆗 🏠 (pkg/handler/logout.go)  🎬 User has been logged out")
 	slog.Info("✅ 🏠 (pkg/handler/logout.go) 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
 }
@@ -54,9 +54,9 @@ func (s RemoteDeauthenticator) Logout(c echo.Context) error {
 			Path:   "/",
 		}
 		c.SetCookie(cookie)
-		slog.Info("🆗 🛰️  (pkg/handler/logout.go) 🗑️ Cookie cleared with", "cookie", cookie)
+		slog.Info("🆗 🛰️  (pkg/handler/logout.go)  🗑️  Cookie cleared with", "cookie", cookie)
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/logout.go) 🎬 User has been logged out")
+	slog.Info("🆗 🛰️  (pkg/handler/logout.go)  🎬 User has been logged out")
 	slog.Info("✅ 🛰️  (pkg/handler/logout.go) 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
 }
