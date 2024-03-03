@@ -42,6 +42,7 @@ func main() {
 	// Auth routes
 	a := handler.NewAuthHandler()
 	e.GET("/login", a.HandleGetLogin)
+	e.GET("/login/provider/google", a.HandleGetLoginWithGoogle)
 	e.POST("/login", a.HandlePostLogin)
 	e.POST("/logout", a.HandlePostLogout)
 	e.GET("/register", a.HandleGetRegister)

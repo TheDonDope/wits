@@ -43,6 +43,7 @@ type Verifier interface {
 // It is responsible for handling user login, registration, and logout.
 type AuthHandler struct {
 	a Authenticator
+	g Authenticator
 	d Deauthenticator
 	r Registrator
 	v Verifier
@@ -52,6 +53,7 @@ type AuthHandler struct {
 func NewAuthHandler() *AuthHandler {
 	dbType := os.Getenv("DB_TYPE")
 	var a Authenticator
+	var g Authenticator
 	var d Deauthenticator
 	var r Registrator
 	var v Verifier
@@ -66,7 +68,8 @@ func NewAuthHandler() *AuthHandler {
 		r = RemoteRegistrator{}
 		v = RemoteVerifier{}
 	}
-	return &AuthHandler{a: a, d: d, r: r, v: v}
+	g = GoogleAuthenticator{}
+	return &AuthHandler{a: a, g: g, d: d, r: r, v: v}
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
@@ -81,6 +84,12 @@ func (h AuthHandler) HandleGetLogin(c echo.Context) error {
 func (h AuthHandler) HandlePostLogin(c echo.Context) error {
 	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLogin()")
 	return h.a.Login(c)
+}
+
+// HandleGetLoginWithGoogle responds to GET on the /login/provider/google route by logging in the user with Google.
+func (h AuthHandler) HandleGetLoginWithGoogle(c echo.Context) error {
+	slog.Info("💬 🤝 (pkg/handler/auth.go) HandlePostLoginWithGoogle()")
+	return h.g.Login(c)
 }
 
 // HandlePostLogout responds to POST on the /logout route by logging out the user.

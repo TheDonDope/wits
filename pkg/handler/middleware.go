@@ -39,6 +39,11 @@ func RefreshJWTSecret() string {
 	return os.Getenv("JWT_REFRESH_SECRET_KEY")
 }
 
+// AuthCallbackURL returns the authentication callback URL from the environment.
+func AuthCallbackURL() string {
+	return os.Getenv("AUTH_CALLBACK_URL")
+}
+
 // EchoJWTConfig returns the configuration for the echo-jwt middleware.
 func EchoJWTConfig() echojwt.Config {
 	return echojwt.Config{

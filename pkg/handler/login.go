@@ -74,3 +74,21 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
+
+// GoogleAuthenticator is an interface for the user login, when using Google.
+type GoogleAuthenticator struct{}
+
+// Login logs in the user with their Google Credentials
+func (s GoogleAuthenticator) Login(c echo.Context) error {
+	slog.Info("💬 🛰️  (pkg/handler/login.go) GoogleAuthenticator.Login()", "path", c.Request().URL.Path)
+	resp, err := storage.SupabaseClient.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
+		Provider:   "google",
+		RedirectTo: AuthCallbackURL(),
+	})
+	if err != nil {
+		return err
+	}
+	slog.Info("🆗 🛰️  (pkg/handler/login.go) 🔓 User has been logged in with Google", "resp", resp)
+	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to", "url", resp.URL)
+	return c.Redirect(http.StatusSeeOther, resp.URL)
+}

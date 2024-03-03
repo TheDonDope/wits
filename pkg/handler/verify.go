@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/storage"
@@ -20,8 +21,9 @@ func (s LocalVerifier) Verify(c echo.Context) error {
 	if len(accessToken) == 0 {
 		return render(c, auth.AuthCallbackScript())
 	}
-	slog.Info("✅ 🏠 (pkg/handler/verify.go) 🔑 Parsed URL with", "access_token", accessToken)
-	return nil
+	slog.Info("🆗 🏠 (pkg/handler/verify.go) 🔑 Parsed URL with", "access_token", accessToken)
+	SetTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	return c.Redirect(http.StatusSeeOther, "/")
 }
 
 // RemoteVerifier is a struct for the user verification, when using a remote Supabase database.
@@ -49,5 +51,5 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 		LoggedIn: true,
 	}
 	SetUserCookie(user, time.Now().Add(1*time.Hour), c)
-	return nil
+	return c.Redirect(http.StatusSeeOther, "/")
 }

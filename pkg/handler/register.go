@@ -101,5 +101,5 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/register.go) 🔓 User has been signed up with Supabase with", "signUpResp", signUpResp)
 	slog.Info("✅ 🛰️  (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
-	return render(c, auth.RegisterSuccess(params.Email))
+	return render(c, auth.RegisterSuccess(signUpResp.Email))
 }
