@@ -110,31 +110,31 @@ func (h AuthHandler) HandleGetAuthCallback(c echo.Context) error {
 }
 
 // readByEmailAndPassword returns a user with the given email and password.
-func readByEmailAndPassword(email string, password string) (*types.User, error) {
+func readByEmailAndPassword(email string, password string) (types.User, error) {
 	slog.Info("💬 🏠 (pkg/handler/auth.go) readByEmailAndPassword")
 	user, err := readByEmail(email)
 	if err != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth.go) ❓❓❓❓ 🔒 Finding user by email failed with", "error", err)
-		return nil, err
+		return types.User{}, err
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth.go) ❓❓❓❓ 🔒 Password is incorrect")
-		return nil, fmt.Errorf("(pkg/handler/auth.go) Password is incorrect")
+		return types.User{}, fmt.Errorf("(pkg/handler/auth.go) Password is incorrect")
 	}
 
 	return user, nil
 }
 
 // readByEmail returns a user with the given email.
-func readByEmail(email string) (*types.User, error) {
+func readByEmail(email string) (types.User, error) {
 	slog.Info("💬 🏠 (pkg/handler/auth.go) readByEmail")
 	var user types.User
 	err := storage.SQLiteDB.Where("email = ?", email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		slog.Error("🚨 🏠 (pkg/handler/auth.go) ❓❓❓❓ 🔒 Finding user failed with", "error", err)
-		return nil, err
+		return types.User{}, err
 	}
 
-	return &user, nil
+	return user, nil
 }

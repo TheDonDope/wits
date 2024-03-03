@@ -44,8 +44,9 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/verify.go) 🔓 User has been verified with", "resp", resp)
 
-	user := &types.User{
-		Email: resp.Email,
+	user := types.User{
+		Email:    resp.Email,
+		LoggedIn: true,
 	}
 	SetUserCookie(user, time.Now().Add(1*time.Hour), c)
 	return nil

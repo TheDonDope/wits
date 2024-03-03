@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -38,7 +39,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
 	}
 
-	if existingUser != nil {
+	if existingUser != (types.User{}) {
 		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: "User with email already exists",
@@ -50,7 +51,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
 	}
 
-	user := &types.User{
+	user := types.User{
 		Email:    params.Email,
 		Password: string(hashedPassword),
 		Name:     params.Username,
@@ -58,11 +59,18 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	storage.SQLiteDB.Create(&user)
 
+	user.LoggedIn = true
+
 	tokenErr := GenerateTokensAndSetCookies(user, c)
 	if tokenErr != nil {
 		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
+
+	c.Set(types.UserContextKey, user)
+	r := c.Request().WithContext(context.WithValue(c.Request().Context(), types.UserContextKey, user))
+	c.SetRequest(r)
+	slog.Info("🆗 🏠 (pkg/handler/register.go) 📦 User has been set to context with", "echo.Context.Get(types.UserContextKey)", c.Get(types.UserContextKey), "context.Context.Value(types.UserContextKey)", c.Request().Context().Value(types.UserContextKey))
 
 	slog.Info("✅ 🏠 (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	//return render(c, auth.RegisterSuccess(params.Email))
