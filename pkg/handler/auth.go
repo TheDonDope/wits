@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
@@ -42,34 +41,21 @@ type Verifier interface {
 // AuthHandler provides handlers for the authentication routes of the application.
 // It is responsible for handling user login, registration, and logout.
 type AuthHandler struct {
-	a Authenticator
-	g Authenticator
-	d Deauthenticator
-	r Registrator
-	v Verifier
+	auth     Authenticator
+	google   Authenticator
+	deauth   Deauthenticator
+	register Registrator
+	verify   Verifier
 }
 
 // NewAuthHandler creates a new AuthHandler with the given LoginService and RegisterService, depending on the database type.
 func NewAuthHandler() *AuthHandler {
-	dbType := os.Getenv("DB_TYPE")
-	var a Authenticator
-	var g Authenticator
-	var d Deauthenticator
-	var r Registrator
-	var v Verifier
-	if dbType == storage.DBTypeLocal {
-		a = LocalAuthenticator{}
-		d = LocalDeauthenticator{}
-		r = LocalRegistrator{}
-		v = LocalVerifier{}
-	} else if dbType == storage.DBTypeRemote {
-		a = RemoteAuthenticator{}
-		d = RemoteDeauthenticator{}
-		r = RemoteRegistrator{}
-		v = RemoteVerifier{}
-	}
-	g = GoogleAuthenticator{}
-	return &AuthHandler{a: a, g: g, d: d, r: r, v: v}
+	auth, _ := NewAuthenticator()
+	google, _ := NewGoogleAuthenticator()
+	deauth, _ := NewDeauthenticator()
+	register, _ := NewRegistrator()
+	verify, _ := NewVerifier()
+	return &AuthHandler{auth: auth, google: google, deauth: deauth, register: register, verify: verify}
 }
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
@@ -83,19 +69,19 @@ func (h AuthHandler) HandleGetLogin(c echo.Context) error {
 // Finally, the user is redirected to the dashboard.
 func (h AuthHandler) HandlePostLogin(c echo.Context) error {
 	slog.Info("💬 🔒 (pkg/handler/auth.go) HandlePostLogin()")
-	return h.a.Login(c)
+	return h.auth.Login(c)
 }
 
 // HandleGetLoginWithGoogle responds to GET on the /login/provider/google route by logging in the user with Google.
 func (h AuthHandler) HandleGetLoginWithGoogle(c echo.Context) error {
 	slog.Info("💬 🔒 (pkg/handler/auth.go) HandleGetLoginWithGoogle()")
-	return h.g.Login(c)
+	return h.google.Login(c)
 }
 
 // HandlePostLogout responds to POST on the /logout route by logging out the user.
 func (h AuthHandler) HandlePostLogout(c echo.Context) error {
 	slog.Info("💬 🔒 (pkg/handler/auth.go) HandlePostLogout()")
-	return h.d.Logout(c)
+	return h.deauth.Logout(c)
 }
 
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.
@@ -109,13 +95,13 @@ func (h AuthHandler) HandleGetRegister(c echo.Context) error {
 // Afterwards, the JWT tokens are generated and set as cookies. Finally, the user is redirected to the dashboard.
 func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 	slog.Info("💬 🔒 (pkg/handler/auth.go) HandlePostRegister()")
-	return h.r.Register(c)
+	return h.register.Register(c)
 }
 
 // HandleGetAuthCallback responds to GET on the /auth/callback route by verifying the user.
 func (h AuthHandler) HandleGetAuthCallback(c echo.Context) error {
 	slog.Info("💬 🔒 (pkg/handler/auth.go) HandleGetAuthCallback()")
-	return h.v.Verify(c)
+	return h.verify.Verify(c)
 }
 
 // readByEmailAndPassword returns a user with the given email and password.

@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 
+	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/labstack/echo/v4"
 )
@@ -59,4 +62,15 @@ func (s RemoteDeauthenticator) Logout(c echo.Context) error {
 	slog.Info("🆗 🛰️  (pkg/handler/logout.go)  🎬 User has been logged out")
 	slog.Info("✅ 🛰️  (pkg/handler/logout.go) 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
+}
+
+// NewDeauthenticator returns a new Deauthenticator based on the DB_TYPE environment variable.
+func NewDeauthenticator() (Deauthenticator, error) {
+	dbType := os.Getenv("DB_TYPE")
+	if dbType == storage.DBTypeLocal {
+		return &LocalDeauthenticator{}, nil
+	} else if dbType == storage.DBTypeRemote {
+		return &RemoteDeauthenticator{}, nil
+	}
+	return nil, errors.New("DB_TYPE not set or invalid")
 }

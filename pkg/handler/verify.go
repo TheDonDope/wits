@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/storage"
@@ -52,4 +54,15 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 	}
 	SetUserCookie(user, time.Now().Add(1*time.Hour), c)
 	return c.Redirect(http.StatusSeeOther, "/")
+}
+
+// NewVerifier returns a new Verifier based on the DB_TYPE environment variable.
+func NewVerifier() (Verifier, error) {
+	dbType := os.Getenv("DB_TYPE")
+	if dbType == storage.DBTypeLocal {
+		return &LocalVerifier{}, nil
+	} else if dbType == storage.DBTypeRemote {
+		return &RemoteVerifier{}, nil
+	}
+	return nil, errors.New("DB_TYPE not set or invalid")
 }

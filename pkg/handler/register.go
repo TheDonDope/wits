@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
@@ -102,4 +104,15 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 	slog.Info("🆗 🛰️  (pkg/handler/register.go)  🔓 User has been signed up with Supabase with", "email", signUpResp.Email)
 	slog.Info("✅ 🛰️  (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	return render(c, auth.RegisterSuccess(signUpResp.Email))
+}
+
+// NewRegistrator returns a new Registrator based on the DB_TYPE environment variable.
+func NewRegistrator() (Registrator, error) {
+	dbType := os.Getenv("DB_TYPE")
+	if dbType == storage.DBTypeLocal {
+		return &LocalRegistrator{}, nil
+	} else if dbType == storage.DBTypeRemote {
+		return &RemoteRegistrator{}, nil
+	}
+	return nil, errors.New("DB_TYPE not set or invalid")
 }

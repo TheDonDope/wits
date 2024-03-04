@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/storage"
@@ -75,6 +77,17 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	return hxRedirect(c, "/dashboard")
 }
 
+// NewAuthenticator returns the correct Authenticator based on the DB_TYPE environment variable.
+func NewAuthenticator() (Authenticator, error) {
+	dbType := os.Getenv("DB_TYPE")
+	if dbType == storage.DBTypeLocal {
+		return &LocalAuthenticator{}, nil
+	} else if dbType == storage.DBTypeRemote {
+		return &RemoteAuthenticator{}, nil
+	}
+	return nil, errors.New("DB_TYPE not set or invalid")
+}
+
 // GoogleAuthenticator is an interface for the user login, when using Google.
 type GoogleAuthenticator struct{}
 
@@ -91,4 +104,9 @@ func (s GoogleAuthenticator) Login(c echo.Context) error {
 	slog.Info("🆗 🛰️  (pkg/handler/login.go)  🔓 User has been logged in with Google", "resp", resp)
 	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to", "url", resp.URL)
 	return c.Redirect(http.StatusSeeOther, resp.URL)
+}
+
+// NewGoogleAuthenticator returns a new GoogleAuthenticator.
+func NewGoogleAuthenticator() (GoogleAuthenticator, error) {
+	return GoogleAuthenticator{}, nil
 }
