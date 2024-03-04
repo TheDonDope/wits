@@ -35,38 +35,9 @@ func main() {
 
 	// Serve public assets
 	e.Static("/public", "public")
+	e.File("/favicon.ico", "public/img/favicon.ico")
 
-	// Home Route
-	h := handler.HomeHandler{}
-	e.GET("/", h.HandleGetHome)
-
-	// Auth routes
-	a := handler.NewAuthHandler()
-	e.Use(handler.WithUser())
-	e.GET("/login", a.HandleGetLogin)
-	e.GET("/login/provider/google", a.HandleGetLoginWithGoogle)
-	e.POST("/login", a.HandlePostLogin)
-	e.POST("/logout", a.HandlePostLogout)
-	e.GET("/register", a.HandleGetRegister)
-	e.POST("/register", a.HandlePostRegister)
-	e.GET("/auth/callback", a.HandleGetAuthCallback)
-
-	// Authenticated routes
-	g := e.Group("") // Start with root path
-	// Configure middleware with the custom claims type, but only when using local DB
-	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
-		g.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
-	}
-
-	g.Use(handler.WithAuth())
-
-	// Dashboard routes
-	d := handler.DashboardHandler{}
-	g.GET("/dashboard", d.HandleGetDashboard)
-
-	// User settings routes
-	s := handler.SettingsHandler{}
-	g.GET("/settings", s.HandleGetSettings)
+	configureRoutes(e)
 
 	// Start server
 	addr := os.Getenv("HTTP_LISTEN_ADDR")
@@ -108,6 +79,41 @@ func configureLogging(e *echo.Echo) error {
 
 	slog.Info("✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with", "logLevel", handler.LogLevel(), "logFilePath", handler.LogPath(), "accessLogPath", handler.AccessLogPath())
 	return nil
+}
+
+// configureRoutes configures the routes for the server, adding both unprotected and protected routes.
+func configureRoutes(e *echo.Echo) {
+	// Home Route
+	home := handler.HomeHandler{}
+	e.GET("/", home.HandleGetHome)
+
+	// Auth routes
+	auth := handler.NewAuthHandler()
+	e.Use(handler.WithUser())
+	e.GET("/login", auth.HandleGetLogin)
+	e.GET("/login/provider/google", auth.HandleGetLoginWithGoogle)
+	e.POST("/login", auth.HandlePostLogin)
+	e.POST("/logout", auth.HandlePostLogout)
+	e.GET("/register", auth.HandleGetRegister)
+	e.POST("/register", auth.HandlePostRegister)
+	e.GET("/auth/callback", auth.HandleGetAuthCallback)
+
+	// Authenticated routes
+	indexGroup := e.Group("") // Start with root path
+	// Configure middleware with the custom claims type, but only when using local DB
+	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
+		indexGroup.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+	}
+
+	indexGroup.Use(handler.WithAuth())
+
+	// Dashboard routes
+	dashboard := handler.DashboardHandler{}
+	indexGroup.GET("/dashboard", dashboard.HandleGetDashboard)
+
+	// User settings routes
+	settings := handler.SettingsHandler{}
+	indexGroup.GET("/settings", settings.HandleGetSettings)
 }
 
 // initEverything initializes everything needed for the server to run
