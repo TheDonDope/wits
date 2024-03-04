@@ -49,6 +49,9 @@ The following environment variables are required to run the application:
 | Environment Variable      | Description                                                                                         |
 | ------------------------- | --------------------------------------------------------------------------------------------------- |
 | `HTTP_LISTEN_ADDR`        | The address the server runs at (format: `<url>:<port>`, example: `:3000`)                           |
+| `LOG_LEVEL`               | The level at which to log (one of: `DEBUG`, `INFO`, `WARN`, `ERROR`, `OFF`)                         |
+| `LOG_PATH`                | The path to the file for the application logs                                                       |
+| `ACCESS_LOG_PATH`         | The path to the file for the application access logs                                                |
 | `JWT_SECRET_KEY`          | The secret key with which to sign the Access Token                                                  |
 | `JWT_REFRESH_SECRET_KEY`  | The secret key with which to sign the Refresh Token                                                 |
 | `DB_TYPE`                 | The type of database to use (choose `local` for local Sqlite db or `remote` for remote Supabase db) |
@@ -65,11 +68,13 @@ The built application binary can be started by:
 
 ```shell
 $ ./bin/wits
-2024/03/03 23:40:24 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
-2024/03/03 23:40:24 INFO 💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()
-2024/03/03 23:40:24 INFO 🆗 🏠 (pkg/storage/sqlite.go)  📂 Using dsn=./bin/wits.db
-2024/03/03 23:40:24 INFO ✅ 🏠 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations
-2024/03/03 23:40:24 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
+2024/03/04 14:06:18 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
+2024/03/04 14:06:18 INFO 💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()
+2024/03/04 14:06:18 INFO 🆗 🏠 (pkg/storage/sqlite.go)  📂 Using dsn=./bin/wits.db
+2024/03/04 14:06:18 INFO ✅ 🏠 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations
+2024/03/04 14:06:18 INFO 💬 🖥️  (cmd/server.go) configureLogging()
+2024/03/04 14:06:18 INFO ✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with logLevel=INFO logFilePath=log/wits.log accessLogPath=log/access.log
+2024/03/04 14:06:18 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
 
    ____    __
   / __/___/ /  ___

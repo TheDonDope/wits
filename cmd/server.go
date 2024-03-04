@@ -2,6 +2,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"log/slog"
 	"os"
@@ -25,9 +26,9 @@ func main() {
 	// Echo instance
 	e := echo.New()
 
-	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	if err := configureLogging(e); err != nil {
+		log.Fatal(err)
+	}
 
 	// Application wide HTTP Error Handler
 	e.HTTPErrorHandler = handler.HTTPErrorHandler
@@ -71,6 +72,45 @@ func main() {
 	addr := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at", "addr", addr)
 	e.Logger.Fatal(e.Start(addr))
+}
+
+// configureLogging configures the logging for the server, adding Logging and Recovery middlewares as well as
+// setting the log level from the environment. Finally, it sets the log output to a stdout and file.
+//
+// IMPORTANT: If the 'log' folder does not exist, the server will panic. This behaviour might be subject to further
+// change. (We might want to create the folder if it does not exist, for example.)
+func configureLogging(e *echo.Echo) error {
+	slog.Info("💬 🖥️  (cmd/server.go) configureLogging()")
+
+	// Set log level from environment variable
+	e.Logger.SetLevel(handler.ParseLogLevel())
+
+	// Create a log file for the server logs
+	echoLog, err := os.OpenFile(handler.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	if err != nil {
+		slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to open log file", "error", err)
+		return err
+	}
+	// Write logging output both to Stdout and the log file
+	e.Logger.SetOutput(io.MultiWriter(os.Stdout, echoLog))
+
+	// Configure middleware
+
+	// Create an access log
+	accessLog, err := os.OpenFile(handler.AccessLogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	if err != nil {
+		slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to open access log file", "error", err)
+		return err
+
+	}
+
+	middleware.DefaultLoggerConfig.Output = accessLog
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	slog.Info("✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with", "logLevel", handler.LogLevel(), "logFilePath", handler.LogPath(), "accessLogPath", handler.AccessLogPath())
+	return nil
 }
 
 // initEverything initializes everything needed for the server to run
