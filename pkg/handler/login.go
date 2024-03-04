@@ -17,10 +17,10 @@ type LocalAuthenticator struct{}
 
 // Login logs in the user with the local sqlite database.
 func (s LocalAuthenticator) Login(c echo.Context) error {
-	slog.Info("💬 🏠 (pkg/handler/login.go) LocalAuthenticator.Login()")
+	slog.Info("💬 📖 (pkg/handler/login.go) LocalAuthenticator.Login()")
 	user, userErr := readByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
-		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
+		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
 
@@ -32,12 +32,12 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 	// Generate JWT tokens and set cookies 'manually'
 	tokenErr := GenerateTokensAndSetCookies(authenticatedUser, c)
 	if tokenErr != nil {
-		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
+		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
-	slog.Info("🆗 🏠 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
+	slog.Info("🆗 📖 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
 
-	slog.Info("✅ 🏠 (pkg/handler/login.go) 🔀 Redirecting to dashboard")
+	slog.Info("✅ 📖 (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 

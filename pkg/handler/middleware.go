@@ -92,7 +92,7 @@ func EchoJWTConfig() echojwt.Config {
 
 // HTTPErrorHandler will be executed when an HTTP request fails.
 func HTTPErrorHandler(err error, c echo.Context) {
-	slog.Error("🚨 🖥️  (pkg/handler/middleware.go) ❓❓❓❓ 🛜 HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
+	slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🛜 HTTP Request failed with", "error", err, "path", c.Request().URL.Path)
 }
 
 // JWTErrorHandler will be executed when user tries to access a protected path.

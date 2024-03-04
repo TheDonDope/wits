@@ -68,13 +68,13 @@ The built application binary can be started by:
 
 ```shell
 $ ./bin/wits
-2024/03/04 14:06:18 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
-2024/03/04 14:06:18 INFO 💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()
-2024/03/04 14:06:18 INFO 🆗 🏠 (pkg/storage/sqlite.go)  📂 Using dsn=./bin/wits.db
-2024/03/04 14:06:18 INFO ✅ 🏠 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations
-2024/03/04 14:06:18 INFO 💬 🖥️  (cmd/server.go) configureLogging()
-2024/03/04 14:06:18 INFO ✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with logLevel=INFO logFilePath=log/wits.log accessLogPath=log/access.log
-2024/03/04 14:06:18 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
+2024/03/04 15:02:57 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
+2024/03/04 15:02:57 INFO 💬 📖 (pkg/storage/sqlite.go) InitSQLiteDB()
+2024/03/04 15:02:57 INFO 🆗 📖 (pkg/storage/sqlite.go)  📂 Using dsn=./bin/wits.db
+2024/03/04 15:02:57 INFO ✅ 📖 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations
+2024/03/04 15:02:57 INFO 💬 🖥️  (cmd/server.go) configureLogging()
+2024/03/04 15:02:57 INFO ✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with logLevel=INFO logFilePath=log/wits.log accessLogPath=log/access.log
+2024/03/04 15:02:57 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
 
    ____    __
   / __/___/ /  ___

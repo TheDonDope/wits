@@ -18,21 +18,21 @@ var SQLiteDB *gorm.DB
 
 // InitSQLiteDB initializes the SQLite database.
 func InitSQLiteDB(automigrate bool) error {
-	slog.Info("💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()")
+	slog.Info("💬 📖 (pkg/storage/sqlite.go) InitSQLiteDB()")
 	dsn := os.Getenv("SQLITE_DATA_SOURCE_NAME")
-	slog.Info("🆗 🏠 (pkg/storage/sqlite.go)  📂 Using", "dsn", dsn)
+	slog.Info("🆗 📖 (pkg/storage/sqlite.go)  📂 Using", "dsn", dsn)
 	var err error
 	SQLiteDB, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
-		slog.Error("🚨 🏠 (pkg/storage/sqlite.go) ❓❓❓❓ 📂 Opening local sqlite database failed with", "error", err)
+		slog.Error("🚨 📖 (pkg/storage/sqlite.go) ❓❓❓❓ 📂 Opening local sqlite database failed with", "error", err)
 		log.Fatal(err)
 	}
 
 	// Migrate the schema
 	if automigrate {
-		slog.Info("✅ 🏠 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations")
+		slog.Info("✅ 📖 (pkg/storage/sqlite.go) 📂 Initialized sqlite db with automigrations")
 		return SQLiteDB.AutoMigrate(&types.User{})
 	}
-	slog.Info("✅ 🏠 (pkg/storage/sqlite.go) 📂 Initialized sqlite db without automigrations")
+	slog.Info("✅ 📖 (pkg/storage/sqlite.go) 📂 Initialized sqlite db without automigrations")
 	return nil
 }

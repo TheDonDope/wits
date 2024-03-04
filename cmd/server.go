@@ -94,8 +94,6 @@ func configureLogging(e *echo.Echo) error {
 	// Write logging output both to Stdout and the log file
 	e.Logger.SetOutput(io.MultiWriter(os.Stdout, echoLog))
 
-	// Configure middleware
-
 	// Create an access log
 	accessLog, err := os.OpenFile(handler.AccessLogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
@@ -103,7 +101,6 @@ func configureLogging(e *echo.Echo) error {
 		return err
 
 	}
-
 	middleware.DefaultLoggerConfig.Output = accessLog
 
 	e.Use(middleware.Logger())

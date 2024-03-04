@@ -17,7 +17,7 @@ type LocalRegistrator struct{}
 
 // Register logs in the user with the local sqlite database.
 func (s LocalRegistrator) Register(c echo.Context) error {
-	slog.Info("💬 🏠 (pkg/handler/register.go) LocalRegistrator.Register()")
+	slog.Info("💬 📖 (pkg/handler/register.go) LocalRegistrator.Register()")
 	params := auth.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
@@ -26,7 +26,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	}
 
 	if params.Password != params.PasswordConfirmation {
-		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: "The passwords do not match",
 		}))
@@ -35,11 +35,11 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	// Check if user with email already exists
 	existingUser, err := readByEmail(params.Email)
 	if err != nil {
-		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
 	}
 
 	if existingUser != (types.User{}) {
-		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: "User with email already exists",
 		}))
@@ -47,7 +47,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), 8)
 	if err != nil {
-		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
 	}
 
 	user := types.User{
@@ -64,11 +64,11 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	tokenErr := GenerateTokensAndSetCookies(authenticatedUser, c)
 	if tokenErr != nil {
-		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
 		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
 	}
 
-	slog.Info("✅ 🏠 (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
+	slog.Info("✅ 📖 (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
