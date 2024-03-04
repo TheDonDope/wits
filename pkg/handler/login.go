@@ -32,11 +32,19 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 	}
 
 	// Generate JWT tokens and set cookies 'manually'
-	tokenErr := GenerateTokensAndSetCookies(authenticatedUser, c)
-	if tokenErr != nil {
-		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
+	accessToken, err := signToken(authenticatedUser, []byte(JWTSecret()))
+	if err != nil {
+		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
+	refreshToken, err := signToken(authenticatedUser, []byte(RefreshJWTSecret()))
+	if err != nil {
+		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
+	}
+
+	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
+	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+
 	slog.Info("🆗 📖 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
 
 	slog.Info("✅ 📖 (pkg/handler/login.go) 🔀 Redirecting to dashboard")
@@ -69,9 +77,9 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 		LoggedIn: true,
 	}
 
-	SetTokenCookie(AccessTokenCookieName, signInResp.AccessToken, time.Now().Add(1*time.Hour), c)
-	SetTokenCookie(RefreshTokenCookieName, signInResp.RefreshToken, time.Now().Add(24*time.Hour), c)
-	SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(AccessTokenCookieName, signInResp.AccessToken, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(RefreshTokenCookieName, signInResp.RefreshToken, time.Now().Add(24*time.Hour), c)
+	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 
 	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")

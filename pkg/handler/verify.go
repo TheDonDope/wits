@@ -24,7 +24,7 @@ func (s LocalVerifier) Verify(c echo.Context) error {
 		return render(c, auth.AuthCallbackScript())
 	}
 	slog.Info("🆗 📖 (pkg/handler/verify.go)  🔑 Parsed URL with access_token")
-	SetTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
@@ -39,7 +39,7 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 		return render(c, auth.AuthCallbackScript())
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/verify.go)  🔑 Parsed URL with access_token")
-	SetTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 
 	resp, err := storage.SupabaseClient.Auth.User(c.Request().Context(), accessToken)
 	if err != nil {
@@ -52,7 +52,7 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 		Email:    resp.Email,
 		LoggedIn: true,
 	}
-	SetUserCookie(user, time.Now().Add(1*time.Hour), c)
+	setUserCookie(user, time.Now().Add(1*time.Hour), c)
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 

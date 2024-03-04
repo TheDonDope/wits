@@ -3,8 +3,8 @@ package handler
 import (
 	"errors"
 	"log/slog"
-	"net/http"
 	"os"
+	"time"
 
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
@@ -64,12 +64,19 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 		Email:    user.Email,
 		LoggedIn: true}
 
-	tokenErr := GenerateTokensAndSetCookies(authenticatedUser, c)
-	if tokenErr != nil {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔑 Generating tokens failed with", "error", tokenErr)
-		return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
+	// Generate JWT tokens and set cookies 'manually'
+	accessToken, err := signToken(authenticatedUser, []byte(JWTSecret()))
+	if err != nil {
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
+	}
+	refreshToken, err := signToken(authenticatedUser, []byte(RefreshJWTSecret()))
+	if err != nil {
+		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
+	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
+	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 	slog.Info("✅ 📖 (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }

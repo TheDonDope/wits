@@ -173,32 +173,27 @@ func WithAuth() echo.MiddlewareFunc {
 	}
 }
 
-// GenerateTokensAndSetCookies generates a JWT acess and refresh token and set them as cookies for the user,
-// as well as the user cookie.
-func GenerateTokensAndSetCookies(user types.AuthenticatedUser, c echo.Context) error {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) GenerateTokensAndSetCookies()")
-	accessToken, exp, err := generateAccessToken(user)
-	if err != nil {
-		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Generating access token failed with", "error", err, "path", c.Request().URL.Path)
-		return err
+// signToken signs a JWT token for the given user with the specified secret.
+func signToken(user types.AuthenticatedUser, secret []byte) (string, error) {
+	slog.Info("💬 🏧 (pkg/handler/middleware.go) SignToken()")
+	claims := &WitsCustomClaims{
+		user.Email,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+		},
 	}
+	// Declare the token with the algorithm used for signing, and the claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	SetTokenCookie(AccessTokenCookieName, accessToken, exp, c)
-	SetUserCookie(user, exp, c)
-	refreshToken, exp, err := generateRefreshToken(user)
-	if err != nil {
-		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Generating refresh token failed with", "error", err, "path", c.Request().URL.Path)
-		return err
-	}
-	SetTokenCookie(RefreshTokenCookieName, refreshToken, exp, c)
-	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔑 Tokens have been generated and set", "path", c.Request().URL.Path)
-	return nil
+	// Return the signed JWT string
+	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔑 Token has been signed for", "email", user.Email)
+	return token.SignedString(secret)
 }
 
-// SetTokenCookie sets a cookie with the given name, token, expiration time, and echo.Context.
+// setTokenCookie sets a cookie with the given name, token, expiration time, and echo.Context.
 // The cookie is set with the specified name, value, expiration time, and path ("/").
 // It is also set to be accessible only through HTTP (HttpOnly).
-func SetTokenCookie(name, token string, expiration time.Time, c echo.Context) {
+func setTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetTokenCookie()")
 	cookie := new(http.Cookie)
 	cookie.Name = name
@@ -210,8 +205,8 @@ func SetTokenCookie(name, token string, expiration time.Time, c echo.Context) {
 	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", name, "value", token[:5]+"...")
 }
 
-// SetUserCookie sets a cookie with the user's email as the value.
-func SetUserCookie(user types.AuthenticatedUser, expiration time.Time, c echo.Context) {
+// setUserCookie sets a cookie with the user's email as the value.
+func setUserCookie(user types.AuthenticatedUser, expiration time.Time, c echo.Context) {
 	slog.Info("💬 🏧 (pkg/handler/middleware.go) SetUserCookie()")
 	cookie := new(http.Cookie)
 	cookie.Name = types.UserContextKey
@@ -220,48 +215,4 @@ func SetUserCookie(user types.AuthenticatedUser, expiration time.Time, c echo.Co
 	cookie.Path = "/"
 	c.SetCookie(cookie)
 	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🍪 Cookie has been set with", "name", types.UserContextKey, "value", user.Email)
-}
-
-// generateToken generates a JWT token for the given user with the specified expiration time.
-// It signs the token using the provided secret and returns the token string, expiration time, and any error encountered.
-func generateToken(user types.AuthenticatedUser, expirationTime time.Time, secret []byte) (string, time.Time, error) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateToken()")
-	// Create the JWT claims, which includes the username and expiry time
-	claims := &WitsCustomClaims{
-		user.Email,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
-	}
-
-	// Declare the token with the algorithm used for signing, and the claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Create the JWT string
-	tokenString, err := token.SignedString(secret)
-	if err != nil {
-		slog.Error("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🔑 Signing token failed with", "error", err)
-		return "", time.Now(), err
-	}
-
-	slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔑 Token has been signed for", "email", user.Email)
-	return tokenString, expirationTime, nil
-}
-
-// generateAccessToken generates an access token for the user.
-func generateAccessToken(user types.AuthenticatedUser) (string, time.Time, error) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateAccessToken()")
-	// Declare the expiration time of the token
-	expirationTime := time.Now().Add(1 * time.Hour)
-
-	return generateToken(user, expirationTime, []byte(JWTSecret()))
-}
-
-// generateRefreshToken generates a refresh token for the user.
-func generateRefreshToken(user types.AuthenticatedUser) (string, time.Time, error) {
-	slog.Info("💬 🏧 (pkg/handler/middleware.go) generateRefreshToken()")
-	// Declare the expiration time of the token
-	expirationTime := time.Now().Add(24 * time.Hour)
-
-	return generateToken(user, expirationTime, []byte(RefreshJWTSecret()))
 }
