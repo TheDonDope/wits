@@ -6,9 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
-	"github.com/TheDonDope/wits/pkg/view/auth"
+	authview "github.com/TheDonDope/wits/pkg/view/auth"
 	"github.com/labstack/echo/v4"
 	"github.com/nedpals/supabase-go"
 	"golang.org/x/crypto/bcrypt"
@@ -20,7 +21,7 @@ type LocalRegistrator struct{}
 // Register logs in the user with the local sqlite database.
 func (s LocalRegistrator) Register(c echo.Context) error {
 	slog.Info("💬 📖 (pkg/handler/register.go) LocalRegistrator.Register()")
-	params := auth.RegisterParams{
+	params := authview.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
 		Password:             c.FormValue("password"),
@@ -29,7 +30,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	if params.Password != params.PasswordConfirmation {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
-		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: "The passwords do not match",
 		}))
 	}
@@ -42,7 +43,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	if existingUser != (types.User{}) {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
-		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: "User with email already exists",
 		}))
 	}
@@ -65,18 +66,18 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 		LoggedIn: true}
 
 	// Generate JWT tokens and set cookies 'manually'
-	accessToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
+	accessToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
-	refreshToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
+	refreshToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
-	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
-	setTokenCookie(RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
-	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
+	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 	slog.Info("✅ 📖 (pkg/handler/register.go) LocalRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
@@ -87,7 +88,7 @@ type RemoteRegistrator struct{}
 // Register logs in the user with the remote Supabase database.
 func (s RemoteRegistrator) Register(c echo.Context) error {
 	slog.Info("💬 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register()")
-	params := auth.RegisterParams{
+	params := authview.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
 		Password:             c.FormValue("password"),
@@ -96,7 +97,7 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 
 	if params.Password != params.PasswordConfirmation {
 		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
-		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: "The passwords do not match",
 		}))
 	}
@@ -104,13 +105,13 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 	resp, err := storage.SupabaseClient.Auth.SignUp(c.Request().Context(), supabase.UserCredentials{Email: params.Email, Password: params.Password})
 	if err != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing user up with Supabase failed with", "error", err)
-		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
+		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: err.Error(),
 		}))
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/register.go)  🔓 User has been signed up with Supabase with", "email", resp.Email)
 	slog.Info("✅ 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
-	return render(c, auth.RegisterSuccess(resp.Email))
+	return render(c, authview.RegisterSuccess(resp.Email))
 }
 
 // NewRegistrator returns a new Registrator based on the DB_TYPE environment variable.

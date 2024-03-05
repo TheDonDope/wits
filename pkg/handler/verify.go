@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
-	"github.com/TheDonDope/wits/pkg/view/auth"
+	authview "github.com/TheDonDope/wits/pkg/view/auth"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,10 +22,10 @@ func (s LocalVerifier) Verify(c echo.Context) error {
 	slog.Info("💬 📖 (pkg/handler/verify.go) LocalVerifier.Verify()")
 	accessToken := c.Request().URL.Query().Get("access_token")
 	if len(accessToken) == 0 {
-		return render(c, auth.AuthCallbackScript())
+		return render(c, authview.AuthCallbackScript())
 	}
 	slog.Info("🆗 📖 (pkg/handler/verify.go)  🔑 Parsed URL with access_token")
-	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
@@ -36,10 +37,10 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 	slog.Info("💬 🛰️  (pkg/handler/verify.go) RemoteVerifier.Verify()")
 	accessToken := c.Request().URL.Query().Get("access_token")
 	if len(accessToken) == 0 {
-		return render(c, auth.AuthCallbackScript())
+		return render(c, authview.AuthCallbackScript())
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/verify.go)  🔑 Parsed URL with access_token")
-	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 
 	resp, err := storage.SupabaseClient.Auth.User(c.Request().Context(), accessToken)
 	if err != nil {
@@ -52,7 +53,7 @@ func (s RemoteVerifier) Verify(c echo.Context) error {
 		Email:    resp.Email,
 		LoggedIn: true,
 	}
-	setUserCookie(user, time.Now().Add(1*time.Hour), c)
+	auth.SetUserCookie(user, time.Now().Add(1*time.Hour), c)
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 

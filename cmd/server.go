@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/handler"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/joho/godotenv"
@@ -88,21 +89,21 @@ func configureRoutes(e *echo.Echo) {
 	e.GET("/", home.HandleGetHome)
 
 	// Auth routes
-	auth := handler.NewAuthHandler()
+	aut := handler.NewAuthHandler()
 	e.Use(handler.WithUser())
-	e.GET("/login", auth.HandleGetLogin)
-	e.GET("/login/provider/google", auth.HandleGetLoginWithGoogle)
-	e.POST("/login", auth.HandlePostLogin)
-	e.POST("/logout", auth.HandlePostLogout)
-	e.GET("/register", auth.HandleGetRegister)
-	e.POST("/register", auth.HandlePostRegister)
-	e.GET("/auth/callback", auth.HandleGetAuthCallback)
+	e.GET("/login", aut.HandleGetLogin)
+	e.GET("/login/provider/google", aut.HandleGetLoginWithGoogle)
+	e.POST("/login", aut.HandlePostLogin)
+	e.POST("/logout", aut.HandlePostLogout)
+	e.GET("/register", aut.HandleGetRegister)
+	e.POST("/register", aut.HandlePostRegister)
+	e.GET("/auth/callback", aut.HandleGetAuthCallback)
 
 	// Authenticated routes
 	indexGroup := e.Group("") // Start with root path
 	// Configure middleware with the custom claims type, but only when using local DB
 	if os.Getenv("DB_TYPE") == storage.DBTypeLocal {
-		indexGroup.Use(echojwt.WithConfig(handler.EchoJWTConfig()))
+		indexGroup.Use(echojwt.WithConfig(auth.EchoJWTConfig()))
 	}
 
 	indexGroup.Use(handler.WithAuth())

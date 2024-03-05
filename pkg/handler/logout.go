@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/labstack/echo/v4"
@@ -18,8 +19,8 @@ type LocalDeauthenticator struct{}
 
 func init() {
 	cookiesToClear = append(cookiesToClear, types.UserContextKey)
-	cookiesToClear = append(cookiesToClear, AccessTokenCookieName)
-	cookiesToClear = append(cookiesToClear, RefreshTokenCookieName)
+	cookiesToClear = append(cookiesToClear, auth.AccessTokenCookieName)
+	cookiesToClear = append(cookiesToClear, auth.RefreshTokenCookieName)
 }
 
 // Logout logs out the user with the local sqlite database.

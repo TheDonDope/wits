@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
-	"github.com/TheDonDope/wits/pkg/view/auth"
+	authview "github.com/TheDonDope/wits/pkg/view/auth"
 	"github.com/labstack/echo/v4"
 	"github.com/nedpals/supabase-go"
 )
@@ -32,18 +33,18 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 	}
 
 	// Generate JWT tokens and set cookies 'manually'
-	accessToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
+	accessToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
-	refreshToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
+	refreshToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
-	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
-	setTokenCookie(RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
-	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
+	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 
 	slog.Info("🆗 📖 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
 
@@ -66,7 +67,7 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	resp, err := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
 	if err != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing user in with Supabase failed with", "error", err)
-		return render(c, auth.LoginForm(credentials, auth.LoginErrors{
+		return render(c, authview.LoginForm(credentials, authview.LoginErrors{
 			InvalidCredentials: "The credentials you have entered are invalid",
 		}))
 	}
@@ -77,9 +78,9 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 		LoggedIn: true,
 	}
 
-	setTokenCookie(AccessTokenCookieName, resp.AccessToken, time.Now().Add(1*time.Hour), c)
-	setTokenCookie(RefreshTokenCookieName, resp.RefreshToken, time.Now().Add(24*time.Hour), c)
-	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.AccessTokenCookieName, resp.AccessToken, time.Now().Add(1*time.Hour), c)
+	auth.SetTokenCookie(auth.RefreshTokenCookieName, resp.RefreshToken, time.Now().Add(24*time.Hour), c)
+	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 
 	slog.Info("✅ 🛰️  (pkg/handler/login.go) RemoteAuthenticator.Login() -> 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
