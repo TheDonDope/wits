@@ -17,6 +17,6 @@ func AuthenticatedUser(ctx context.Context) types.AuthenticatedUser {
 		return types.AuthenticatedUser{}
 	}
 	authenticatedUser = userContext.(types.AuthenticatedUser)
-	slog.Info("✅ 🔮 (pkg/view/views.go) 💃 User data found in context.Context with", "email", authenticatedUser.Email, "loggedIn", authenticatedUser.LoggedIn)
+	slog.Info("✅ 🔮 (pkg/view/views.go) AuthenticatedUser() -> 💃 User data found in context.Context with", "email", authenticatedUser.Email, "loggedIn", authenticatedUser.LoggedIn)
 	return authenticatedUser
 }

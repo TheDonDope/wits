@@ -77,7 +77,7 @@ func WithAuth() echo.MiddlewareFunc {
 			user := getAuthenticatedUser(c)
 			if !user.LoggedIn {
 				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🥷 No authorized user found")
-				slog.Info("✅ 🏧 (pkg/handler/middleware.go) 🔀 Redirecting to login")
+				slog.Info("✅ 🏧 (pkg/handler/middleware.go) WitAuth() -> next() -> 🔀 Redirecting to login")
 				return c.Redirect(http.StatusSeeOther, "/login?to="+c.Request().URL.Path)
 			}
 			slog.Info("🆗 🏧 (pkg/handler/middleware.go)  💃 Authorized user found with", "email", user.Email)

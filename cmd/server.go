@@ -46,7 +46,7 @@ func main() {
 	e.Logger.Fatal(e.Start(addr))
 }
 
-// configureLogging configures the logging for the server, adding Logging and Recovery middlewares as well as
+// configureLogging configures the logging for the server, adding logging and recovery middlewares as well as
 // setting the log level from the environment. Finally, it sets the log output to a stdout and file.
 //
 // IMPORTANT: If the 'log' folder does not exist, the server will panic. This behaviour might be subject to further
@@ -78,7 +78,7 @@ func configureLogging(e *echo.Echo) error {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	slog.Info("✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with", "logLevel", os.Getenv("LOG_LEVEL"), "logFilePath", os.Getenv("LOG_PATH"), "accessLogPath", os.Getenv("ACCESS_LOG_PATH"))
+	slog.Info("✅ 🖥️  (cmd/server.go) configureLogging() -> 🗒️  OK with", "logLevel", os.Getenv("LOG_LEVEL"), "logFilePath", os.Getenv("LOG_PATH"), "accessLogPath", os.Getenv("ACCESS_LOG_PATH"))
 	return nil
 }
 
@@ -126,7 +126,7 @@ func initEverything() error {
 	if dbType == storage.DBTypeLocal {
 		return storage.InitSQLiteDB(true)
 	} else if dbType == storage.DBTypeRemote {
-		return storage.InitSupabaseDB()
+		return storage.InitSupabaseClient()
 	}
 	return nil
 }

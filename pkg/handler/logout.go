@@ -25,7 +25,7 @@ func init() {
 
 // Logout logs out the user with the local sqlite database.
 func (s LocalDeauthenticator) Logout(c echo.Context) error {
-	slog.Info("💬 📖 (pkg/handler/logout.go) LocalDeauthenticator.Logout()")
+	slog.Info("💬 🏠 (pkg/handler/logout.go) LocalDeauthenticator.Logout()")
 
 	// Clear all cookies
 	for _, cookieName := range cookiesToClear {
@@ -36,10 +36,10 @@ func (s LocalDeauthenticator) Logout(c echo.Context) error {
 			Path:   "/",
 		}
 		c.SetCookie(cookie)
-		slog.Info("🆗 📖 (pkg/handler/logout.go)  🗑️  Cookie cleared with", "cookie", cookie)
+		slog.Info("🆗 🏠 (pkg/handler/logout.go)  🗑️  Cookie cleared with", "cookie", cookie)
 	}
-	slog.Info("🆗 📖 (pkg/handler/logout.go)  🎬 User has been logged out")
-	slog.Info("✅ 📖 (pkg/handler/logout.go) 🔀 Redirecting to login")
+	slog.Info("🆗 🏠 (pkg/handler/logout.go)  🎬 User has been logged out")
+	slog.Info("✅ 🏠 (pkg/handler/logout.go) LocalDeauthenticator.Logout() -> 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
 }
 
@@ -61,7 +61,7 @@ func (s RemoteDeauthenticator) Logout(c echo.Context) error {
 		slog.Info("🆗 🛰️  (pkg/handler/logout.go)  🗑️  Cookie cleared with", "cookie", cookie)
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/logout.go)  🎬 User has been logged out")
-	slog.Info("✅ 🛰️  (pkg/handler/logout.go) 🔀 Redirecting to login")
+	slog.Info("✅ 🛰️  (pkg/handler/logout.go) RemoteDeauthenticator.Logout() -> 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")
 }
 

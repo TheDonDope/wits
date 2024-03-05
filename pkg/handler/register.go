@@ -20,7 +20,7 @@ type LocalRegistrator struct{}
 
 // Register logs in the user with the local sqlite database.
 func (s LocalRegistrator) Register(c echo.Context) error {
-	slog.Info("💬 📖 (pkg/handler/register.go) LocalRegistrator.Register()")
+	slog.Info("💬 🏠 (pkg/handler/register.go) LocalRegistrator.Register()")
 	params := authview.RegisterParams{
 		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
@@ -29,7 +29,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	}
 
 	if params.Password != params.PasswordConfirmation {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Passwords do not match")
 		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: "The passwords do not match",
 		}))
@@ -38,11 +38,11 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	// Check if user with email already exists
 	existingUser, err := storage.ReadByEmail(params.Email)
 	if err != nil {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
 	}
 
 	if existingUser != (types.User{}) {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 User with email already exists")
 		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: "User with email already exists",
 		}))
@@ -50,7 +50,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), 8)
 	if err != nil {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
 	}
 
 	user := types.User{
@@ -68,17 +68,17 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	// Generate JWT tokens and set cookies 'manually'
 	accessToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
 	refreshToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
 	if err != nil {
-		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
 	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 	auth.SetTokenCookie(auth.RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
 	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
-	slog.Info("✅ 📖 (pkg/handler/register.go) LocalRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
+	slog.Info("✅ 🏠 (pkg/handler/register.go) LocalRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
@@ -110,7 +110,7 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 		}))
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/register.go)  🔓 User has been signed up with Supabase with", "email", resp.Email)
-	slog.Info("✅ 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
+	slog.Info("✅ 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register() -> 🔀 User has been registered, rendering success page")
 	return render(c, authview.RegisterSuccess(resp.Email))
 }
 

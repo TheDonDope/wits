@@ -20,10 +20,10 @@ type LocalAuthenticator struct{}
 
 // Login logs in the user with the local sqlite database.
 func (s LocalAuthenticator) Login(c echo.Context) error {
-	slog.Info("💬 📖 (pkg/handler/login.go) LocalAuthenticator.Login()")
+	slog.Info("💬 🏠 (pkg/handler/login.go) LocalAuthenticator.Login()")
 	user, userErr := storage.ReadByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
-		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
+		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
 
@@ -35,20 +35,20 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 	// Generate JWT tokens and set cookies 'manually'
 	accessToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
-		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
 	refreshToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
 	if err != nil {
-		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
+		slog.Error("🚨 🏠 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
 	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 	auth.SetTokenCookie(auth.RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
 	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 
-	slog.Info("🆗 📖 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
+	slog.Info("🆗 🏠 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
 
-	slog.Info("✅ 📖 (pkg/handler/login.go) LocalAuthenticator.Login() -> 🔀 Redirecting to dashboard")
+	slog.Info("✅ 🏠 (pkg/handler/login.go) LocalAuthenticator.Login() -> 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
