@@ -53,14 +53,15 @@ The following environment variables are required to run the application:
 | `LOG_DIR`                 | The path to the directory for the application logs                                                  |
 | `LOG_FILE`                | The name of the file for the application logs (within `LOG_DIR`)                                    |
 | `ACCESS_LOG_FILE`         | The path of the file for the application access logs (within `LOG_DIR`)                             |
-| `JWT_SECRET_KEY`          | The secret key with which to sign the Access Token                                                  |
-| `JWT_REFRESH_SECRET_KEY`  | The secret key with which to sign the Refresh Token                                                 |
+| `JWT_SECRET_KEY`          | The secret key with which to sign the access token                                                  |
+| `JWT_REFRESH_SECRET_KEY`  | The secret key with which to sign the refresh token                                                 |
+| `SESSION_SECRET`          | The secret key with which to sign the cookie store session                                          |
 | `DB_TYPE`                 | The type of database to use (choose `local` for local Sqlite db or `remote` for remote Supabase db) |
 | `SQLITE_DATA_SOURCE_NAME` | The name of the Sqlite datasource to use (example: `./bin/wits.db`), when `DB_TYPE=local`           |
-| `DB_HOST`                 | The host of the postgres db, when `DB_TYPE=remote`                                                  |
-| `DB_USER`                 | The user of the postgres db, when `DB_TYPE=remote`                                                  |
-| `DB_PASSWORD`             | The password of the postgres db, when `DB_TYPE=remote`                                              |
-| `DB_NAME`                 | The name of the postgres db, when `DB_TYPE=remote`                                                  |
+| `DB_HOST`                 | The host of the Postgres db, when `DB_TYPE=remote`                                                  |
+| `DB_USER`                 | The user of the Postgres db, when `DB_TYPE=remote`                                                  |
+| `DB_PASSWORD`             | The password of the Postgres db, when `DB_TYPE=remote`                                              |
+| `DB_NAME`                 | The name of the Postgres db, when `DB_TYPE=remote`                                                  |
 | `SUPABASE_URL`            | The Supabase URL (required for the client configuration), when `DB_TYPE=remote`                     |
 | `SUPABASE_SECRET`         | The Supabase secret (required for the client configuration), when `DB_TYPE=remote`                  |
 | `AUTH_CALLBACK_URL`       | The callback URL for remote login, when `DB_TYPE=remote`                                            |
