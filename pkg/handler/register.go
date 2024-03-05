@@ -65,11 +65,11 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 		LoggedIn: true}
 
 	// Generate JWT tokens and set cookies 'manually'
-	accessToken, err := signToken(authenticatedUser, []byte(JWTSecret()))
+	accessToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
-	refreshToken, err := signToken(authenticatedUser, []byte(RefreshJWTSecret()))
+	refreshToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
 
 const (
@@ -30,61 +29,13 @@ type WitsCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-// JWTSecret returns the JWT secret key from the environment.
-func JWTSecret() string {
-	return os.Getenv("JWT_SECRET_KEY")
-}
-
-// RefreshJWTSecret returns the refresh JWT secret key from the environment.
-func RefreshJWTSecret() string {
-	return os.Getenv("JWT_REFRESH_SECRET_KEY")
-}
-
-// AuthCallbackURL returns the authentication callback URL from the environment.
-func AuthCallbackURL() string {
-	return os.Getenv("AUTH_CALLBACK_URL")
-}
-
-// LogLevel returns the log level from the environment, as a string
-func LogLevel() string {
-	return os.Getenv("LOG_LEVEL")
-}
-
-// LogPath returns the log file path from the environment, as a string
-func LogPath() string {
-	return os.Getenv("LOG_PATH")
-}
-
-// AccessLogPath returns the access log file path from the environment, as a string
-func AccessLogPath() string {
-	return os.Getenv("ACCESS_LOG_PATH")
-}
-
-// ParseLogLevel returns the log level from the environment, as a log.Lvl
-func ParseLogLevel() log.Lvl {
-	switch LogLevel() {
-	case "DEBUG":
-		return log.DEBUG
-	case "INFO":
-		return log.INFO
-	case "WARN":
-		return log.WARN
-	case "ERROR":
-		return log.ERROR
-	case "OFF":
-		return log.OFF
-	default:
-		return log.INFO // Default log level
-	}
-}
-
 // EchoJWTConfig returns the configuration for the echo-jwt middleware.
 func EchoJWTConfig() echojwt.Config {
 	return echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(WitsCustomClaims)
 		},
-		SigningKey:   []byte(JWTSecret()),
+		SigningKey:   []byte(os.Getenv("JWT_SECRET_KEY")),
 		TokenLookup:  fmt.Sprintf("cookie:%s", AccessTokenCookieName),
 		ErrorHandler: JWTErrorHandler,
 	}

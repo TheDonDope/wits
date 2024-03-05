@@ -9,11 +9,11 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/handler"
 	"github.com/TheDonDope/wits/pkg/storage"
+	"github.com/joho/godotenv"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	"github.com/joho/godotenv"
+	gommonlog "github.com/labstack/gommon/log"
 )
 
 func main() {
@@ -54,10 +54,10 @@ func configureLogging(e *echo.Echo) error {
 	slog.Info("💬 🖥️  (cmd/server.go) configureLogging()")
 
 	// Set log level from environment variable
-	e.Logger.SetLevel(handler.ParseLogLevel())
+	e.Logger.SetLevel(parseLogLevel())
 
 	// Create a log file for the server logs
-	echoLog, err := os.OpenFile(handler.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	echoLog, err := os.OpenFile(os.Getenv("LOG_PATH"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
 		slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to open log file", "error", err)
 		return err
@@ -66,7 +66,7 @@ func configureLogging(e *echo.Echo) error {
 	e.Logger.SetOutput(io.MultiWriter(os.Stdout, echoLog))
 
 	// Create an access log
-	accessLog, err := os.OpenFile(handler.AccessLogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	accessLog, err := os.OpenFile(os.Getenv("ACCESS_LOG_PATH"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
 		slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to open access log file", "error", err)
 		return err
@@ -77,7 +77,7 @@ func configureLogging(e *echo.Echo) error {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	slog.Info("✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with", "logLevel", handler.LogLevel(), "logFilePath", handler.LogPath(), "accessLogPath", handler.AccessLogPath())
+	slog.Info("✅ 🖥️  (cmd/server.go) 🗒️  Logging configured with", "logLevel", os.Getenv("LOG_LEVEL"), "logFilePath", os.Getenv("LOG_PATH"), "accessLogPath", os.Getenv("ACCESS_LOG_PATH"))
 	return nil
 }
 
@@ -128,4 +128,22 @@ func initEverything() error {
 		return storage.InitSupabaseDB()
 	}
 	return nil
+}
+
+// parseLogLevel returns the log level from the environment, as a log.Lvl
+func parseLogLevel() gommonlog.Lvl {
+	switch os.Getenv("LOG_LEVEL") {
+	case "DEBUG":
+		return gommonlog.DEBUG
+	case "INFO":
+		return gommonlog.INFO
+	case "WARN":
+		return gommonlog.WARN
+	case "ERROR":
+		return gommonlog.ERROR
+	case "OFF":
+		return gommonlog.OFF
+	default:
+		return gommonlog.INFO // Default log level
+	}
 }

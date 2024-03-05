@@ -32,11 +32,11 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 	}
 
 	// Generate JWT tokens and set cookies 'manually'
-	accessToken, err := signToken(authenticatedUser, []byte(JWTSecret()))
+	accessToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing access token failed with", "error", err)
 	}
-	refreshToken, err := signToken(authenticatedUser, []byte(RefreshJWTSecret()))
+	refreshToken, err := signToken(authenticatedUser, []byte(os.Getenv("JWT_REFRESH_SECRET_KEY")))
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
@@ -104,7 +104,7 @@ func (s GoogleAuthenticator) Login(c echo.Context) error {
 	slog.Info("💬 🛰️  (pkg/handler/login.go) GoogleAuthenticator.Login()")
 	resp, err := storage.SupabaseClient.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
 		Provider:   "google",
-		RedirectTo: AuthCallbackURL(),
+		RedirectTo: os.Getenv("AUTH_CALLBACK_URL"),
 	})
 	if err != nil {
 		return err
