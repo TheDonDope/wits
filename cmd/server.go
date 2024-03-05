@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"log/slog"
@@ -48,17 +49,23 @@ func main() {
 
 // configureLogging configures the logging for the server, adding logging and recovery middlewares as well as
 // setting the log level from the environment. Finally, it sets the log output to a stdout and file.
-//
-// IMPORTANT: If the 'log' folder does not exist, the server will panic. This behaviour might be subject to further
-// change. (We might want to create the folder if it does not exist, for example.)
 func configureLogging(e *echo.Echo) error {
 	slog.Info("💬 🖥️  (cmd/server.go) configureLogging()")
 
 	// Set log level from environment variable
 	e.Logger.SetLevel(parseLogLevel())
 
+	// Check if log directory exists and create if neccessary
+	if _, err := os.Stat(os.Getenv("LOG_DIR")); os.IsNotExist(err) {
+		if err := os.Mkdir(os.Getenv("LOG_DIR"), 0755); err != nil {
+			slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to create log directory", "error", err)
+			return err
+		}
+	}
+
 	// Create a log file for the server logs
-	echoLog, err := os.OpenFile(os.Getenv("LOG_PATH"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	logPath := fmt.Sprintf("%s/%s", os.Getenv("LOG_DIR"), os.Getenv("LOG_FILE"))
+	echoLog, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
 		slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to open log file", "error", err)
 		return err
@@ -67,7 +74,8 @@ func configureLogging(e *echo.Echo) error {
 	e.Logger.SetOutput(io.MultiWriter(os.Stdout, echoLog))
 
 	// Create an access log
-	accessLog, err := os.OpenFile(os.Getenv("ACCESS_LOG_PATH"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	accessLogPath := fmt.Sprintf("%s/%s", os.Getenv("LOG_DIR"), os.Getenv("ACCESS_LOG_FILE"))
+	accessLog, err := os.OpenFile(accessLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
 	if err != nil {
 		slog.Error("🚨 🖥️  (cmd/server.go) ❓❓❓❓ 🗒️  Failed to open access log file", "error", err)
 		return err
@@ -78,7 +86,7 @@ func configureLogging(e *echo.Echo) error {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	slog.Info("✅ 🖥️  (cmd/server.go) configureLogging() -> 🗒️  OK with", "logLevel", os.Getenv("LOG_LEVEL"), "logFilePath", os.Getenv("LOG_PATH"), "accessLogPath", os.Getenv("ACCESS_LOG_PATH"))
+	slog.Info("✅ 🖥️  (cmd/server.go) configureLogging() -> 🗒️  OK with", "logLevel", os.Getenv("LOG_LEVEL"), "logFilePath", logPath, "accessLogPath", accessLogPath)
 	return nil
 }
 

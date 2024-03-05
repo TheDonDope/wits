@@ -29,6 +29,7 @@ clean:
 	rm -f ./bin/wits
 	rm -f coverage.html
 	rm -f coverage.out
+	rm -rf log
 	rm -rf node_modules
 	rm -rf tmp
 	rm -rf vendor

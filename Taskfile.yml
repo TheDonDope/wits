@@ -46,6 +46,8 @@ tasks:
         ignore_error: true
       - cmd: rm coverage.out
         ignore_error: true
+      - cmd: rm -rf log
+        ignore_error: true
       - cmd: rm -rf node_modules
         ignore_error: true
       - cmd: rm -rf tmp
