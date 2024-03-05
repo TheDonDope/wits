@@ -20,7 +20,7 @@ type LocalAuthenticator struct{}
 // Login logs in the user with the local sqlite database.
 func (s LocalAuthenticator) Login(c echo.Context) error {
 	slog.Info("💬 📖 (pkg/handler/login.go) LocalAuthenticator.Login()")
-	user, userErr := readByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
+	user, userErr := storage.ReadByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
 		slog.Error("🚨 📖 (pkg/handler/login.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -47,7 +47,7 @@ func (s LocalAuthenticator) Login(c echo.Context) error {
 
 	slog.Info("🆗 📖 (pkg/handler/login.go)  🔓 User has been logged in with local Sqlite database")
 
-	slog.Info("✅ 📖 (pkg/handler/login.go) 🔀 Redirecting to dashboard")
+	slog.Info("✅ 📖 (pkg/handler/login.go) LocalAuthenticator.Login() -> 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
@@ -63,25 +63,25 @@ func (s RemoteAuthenticator) Login(c echo.Context) error {
 	}
 
 	// Call Supabase to sign in
-	signInResp, err := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
+	resp, err := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
 	if err != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/login.go) ❓❓❓❓ 🔒 Signing user in with Supabase failed with", "error", err)
 		return render(c, auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: "The credentials you have entered are invalid",
 		}))
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/login.go)  🔓 User has been logged in with", "signInResp", signInResp)
+	slog.Info("🆗 🛰️  (pkg/handler/login.go)  🔓 User has been logged in with", "resp", resp)
 
 	authenticatedUser := types.AuthenticatedUser{
-		Email:    signInResp.User.Email,
+		Email:    resp.User.Email,
 		LoggedIn: true,
 	}
 
-	setTokenCookie(AccessTokenCookieName, signInResp.AccessToken, time.Now().Add(1*time.Hour), c)
-	setTokenCookie(RefreshTokenCookieName, signInResp.RefreshToken, time.Now().Add(24*time.Hour), c)
+	setTokenCookie(AccessTokenCookieName, resp.AccessToken, time.Now().Add(1*time.Hour), c)
+	setTokenCookie(RefreshTokenCookieName, resp.RefreshToken, time.Now().Add(24*time.Hour), c)
 	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 
-	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to dashboard")
+	slog.Info("✅ 🛰️  (pkg/handler/login.go) RemoteAuthenticator.Login() -> 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
@@ -101,7 +101,7 @@ type GoogleAuthenticator struct{}
 
 // Login logs in the user with their Google Credentials
 func (s GoogleAuthenticator) Login(c echo.Context) error {
-	slog.Info("💬 🛰️  (pkg/handler/login.go) GoogleAuthenticator.Login()", "path", c.Request().URL.Path)
+	slog.Info("💬 🛰️  (pkg/handler/login.go) GoogleAuthenticator.Login()")
 	resp, err := storage.SupabaseClient.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
 		Provider:   "google",
 		RedirectTo: AuthCallbackURL(),
@@ -110,7 +110,7 @@ func (s GoogleAuthenticator) Login(c echo.Context) error {
 		return err
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/login.go)  🔓 User has been logged in with Google", "resp", resp)
-	slog.Info("✅ 🛰️  (pkg/handler/login.go) 🔀 Redirecting to", "url", resp.URL)
+	slog.Info("✅ 🛰️  (pkg/handler/login.go) RemoteAuthenticator.Login() -> 🔀 Redirecting to", "url", resp.URL)
 	return c.Redirect(http.StatusSeeOther, resp.URL)
 }
 

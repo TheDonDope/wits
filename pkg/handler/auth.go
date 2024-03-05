@@ -1,16 +1,9 @@
 package handler
 
 import (
-	"errors"
-	"fmt"
 	"log/slog"
 
-	"github.com/TheDonDope/wits/pkg/storage"
-	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/TheDonDope/wits/pkg/view/auth"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
-
 	"github.com/labstack/echo/v4"
 )
 
@@ -60,7 +53,7 @@ func NewAuthHandler() *AuthHandler {
 
 // HandleGetLogin responds to GET on the /login route by rendering the Login component.
 func (h AuthHandler) HandleGetLogin(c echo.Context) error {
-	slog.Info("✅ 🔒 (pkg/handler/auth.go) HandleGetLogin()")
+	slog.Info("💬 🔒 (pkg/handler/auth.go) HandleGetLogin()")
 	return render(c, auth.Login())
 }
 
@@ -86,7 +79,7 @@ func (h AuthHandler) HandlePostLogout(c echo.Context) error {
 
 // HandleGetRegister responds to GET on the /register route by rendering the Register component.
 func (h AuthHandler) HandleGetRegister(c echo.Context) error {
-	slog.Info("✅ 🔒 (pkg/handler/auth.go) HandleGetRegister()")
+	slog.Info("💬 🔒 (pkg/handler/auth.go) HandleGetRegister()")
 	return render(c, auth.Register())
 }
 
@@ -102,34 +95,4 @@ func (h AuthHandler) HandlePostRegister(c echo.Context) error {
 func (h AuthHandler) HandleGetAuthCallback(c echo.Context) error {
 	slog.Info("💬 🔒 (pkg/handler/auth.go) HandleGetAuthCallback()")
 	return h.verify.Verify(c)
-}
-
-// readByEmailAndPassword returns a user with the given email and password.
-func readByEmailAndPassword(email string, password string) (types.User, error) {
-	slog.Info("💬 🔒 (pkg/handler/auth.go) readByEmailAndPassword()")
-	user, err := readByEmail(email)
-	if err != nil {
-		slog.Error("🚨 🔒 (pkg/handler/auth.go) ❓❓❓❓ 📖 Finding user by email failed with", "error", err)
-		return types.User{}, err
-	}
-
-	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-		slog.Error("🚨 🔒 (pkg/handler/auth.go) ❓❓❓❓ 📖 Password is incorrect")
-		return types.User{}, fmt.Errorf("(pkg/handler/auth.go) Password is incorrect")
-	}
-
-	return user, nil
-}
-
-// readByEmail returns a user with the given email.
-func readByEmail(email string) (types.User, error) {
-	slog.Info("💬 🔒 (pkg/handler/auth.go) readByEmail()")
-	var user types.User
-	err := storage.SQLiteDB.Where("email = ?", email).First(&user).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		slog.Error("🚨 🔒 (pkg/handler/auth.go) ❓❓❓❓ 📖 Finding user failed with", "error", err)
-		return types.User{}, err
-	}
-
-	return user, nil
 }

@@ -35,7 +35,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	}
 
 	// Check if user with email already exists
-	existingUser, err := readByEmail(params.Email)
+	existingUser, err := storage.ReadByEmail(params.Email)
 	if err != nil {
 		slog.Error("🚨 📖 (pkg/handler/register.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
 	}
@@ -77,7 +77,7 @@ func (s LocalRegistrator) Register(c echo.Context) error {
 	setTokenCookie(AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 	setTokenCookie(RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
 	setUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
-	slog.Info("✅ 📖 (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
+	slog.Info("✅ 📖 (pkg/handler/register.go) LocalRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
@@ -101,16 +101,16 @@ func (s RemoteRegistrator) Register(c echo.Context) error {
 		}))
 	}
 	// Call Supabase to sign up
-	signUpResp, err := storage.SupabaseClient.Auth.SignUp(c.Request().Context(), supabase.UserCredentials{Email: params.Email, Password: params.Password})
+	resp, err := storage.SupabaseClient.Auth.SignUp(c.Request().Context(), supabase.UserCredentials{Email: params.Email, Password: params.Password})
 	if err != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/register.go) ❓❓❓❓ 🔒 Signing user up with Supabase failed with", "error", err)
 		return render(c, auth.RegisterForm(params, auth.RegisterErrors{
 			InvalidCredentials: err.Error(),
 		}))
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/register.go)  🔓 User has been signed up with Supabase with", "email", signUpResp.Email)
-	slog.Info("✅ 🛰️  (pkg/handler/register.go) 🔀 User has been registered, redirecting to dashboard")
-	return render(c, auth.RegisterSuccess(signUpResp.Email))
+	slog.Info("🆗 🛰️  (pkg/handler/register.go)  🔓 User has been signed up with Supabase with", "email", resp.Email)
+	slog.Info("✅ 🛰️  (pkg/handler/register.go) RemoteRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
+	return render(c, auth.RegisterSuccess(resp.Email))
 }
 
 // NewRegistrator returns a new Registrator based on the DB_TYPE environment variable.
