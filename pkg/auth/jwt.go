@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,8 +8,10 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/gorilla/sessions"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	AccessTokenCookieName = "wits-access-token"
 	// RefreshTokenCookieName is the name of the refresh token cookie.
 	RefreshTokenCookieName = "wits-refresh-token"
+	// WitsSessionName is the name of the session cookie.
+	WitsSessionName = "wits-session"
 )
 
 // WitsCustomClaims are custom claims extending default ones.
@@ -27,15 +30,46 @@ type WitsCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
+// EchoBeforeFunc sets the access token in the echo.Context.
+func EchoBeforeFunc(c echo.Context) {
+	slog.Info("💬 🏠 (pkg/auth/jwt.go) EchoBeforeFunc()")
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(c.Request(), WitsSessionName)
+	accessToken, ok := session.Values[AccessTokenCookieName]
+	if !ok {
+		slog.Error("🚨 🏠 (pkg/auth/jwt.go) ❓❓❓❓ 🔑 Access token not found in session")
+		return
+	}
+	token := accessToken.(string)
+	c.Set(AccessTokenCookieName, token)
+	slog.Info("🆗 🏠 (pkg/auth/jwt.go) 🔓 Token found and set with", "token", token[:5]+"...")
+	slog.Info("✅ 🏠 (pkg/auth/jwt.go) EchoBeforeFunc() -> 📦 Access token has been set in echo.Context")
+	return
+}
+
+// EchoContextExtractor extracts the token from the echo.Context.
+func EchoContextExtractor(c echo.Context) ([]string, error) {
+	slog.Info("💬 🏠 (pkg/auth/jwt.go) EchoContextExtractor()")
+	result := make([]string, 0)
+	if token, ok := c.Get(AccessTokenCookieName).(string); ok {
+		result = append(result, token)
+	}
+	slog.Info("✅ 🏠 (pkg/auth/jwt.go) EchoContextExtractor() -> 📦 Token has been extracted from echo.Context with", "token", result[0][:5]+"...")
+	return result, nil
+}
+
 // EchoJWTConfig returns the configuration for the echo-jwt middleware.
 func EchoJWTConfig() echojwt.Config {
 	return echojwt.Config{
+		BeforeFunc:   EchoBeforeFunc,
+		ErrorHandler: JWTErrorHandler,
+		SigningKey:   []byte(os.Getenv("JWT_SECRET_KEY")),
+		TokenLookupFuncs: []middleware.ValuesExtractor{
+			EchoContextExtractor,
+		},
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(WitsCustomClaims)
 		},
-		SigningKey:   []byte(os.Getenv("JWT_SECRET_KEY")),
-		TokenLookup:  fmt.Sprintf("cookie:%s", AccessTokenCookieName),
-		ErrorHandler: JWTErrorHandler,
 	}
 }
 

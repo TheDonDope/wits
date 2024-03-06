@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
@@ -50,9 +49,15 @@ func (l LocalAuthenticator) Login(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
-	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
-	auth.SetTokenCookie(auth.RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
-	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(c.Request(), auth.WitsSessionName)
+	session.Values[auth.AccessTokenCookieName] = accessToken
+	session.Values[auth.RefreshTokenCookieName] = refreshToken
+	session.Values[types.UserContextKey] = authenticatedUser.Email
+	cookieErr := session.Save(c.Request(), c.Response())
+	if cookieErr != nil {
+		slog.Error("🚨 🛰️  (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
+	}
 
 	slog.Info("🆗 🏠 (pkg/handler/auth_local.go)  🔓 User has been logged in with local Sqlite database")
 
@@ -120,9 +125,16 @@ func (l LocalRegistrator) Register(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
-	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
-	auth.SetTokenCookie(auth.RefreshTokenCookieName, refreshToken, time.Now().Add(24*time.Hour), c)
-	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(c.Request(), auth.WitsSessionName)
+	session.Values[auth.AccessTokenCookieName] = accessToken
+	session.Values[auth.RefreshTokenCookieName] = refreshToken
+	session.Values[types.UserContextKey] = authenticatedUser.Email
+	cookieErr := session.Save(c.Request(), c.Response())
+	if cookieErr != nil {
+		slog.Error("🚨 🛰️  (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
+	}
+
 	slog.Info("✅ 🏠 (pkg/handler/auth_local.go) LocalRegistrator.Register() -> 🔀 User has been registered, redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
@@ -134,23 +146,9 @@ type LocalDeauthenticator struct{}
 func (l LocalDeauthenticator) Logout(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalDeauthenticator.Logout()")
 
-	// Keeping for backwards compatibility
-	// Clear all cookies
-	for _, cookieName := range cookiesToClear {
-		cookie := &http.Cookie{
-			Name:   cookieName,
-			Value:  "",
-			MaxAge: -1,
-			Path:   "/",
-		}
-		c.SetCookie(cookie)
-		slog.Info("🆗 🏠 (pkg/handler/auth_local.go)  🗑️  Cookie cleared with", "cookie", cookie)
-	}
-	// End backwards compatibility
-
 	// Clear cookies from gorilla/sessions store
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(c.Request(), WitsSessionName)
+	session, _ := store.Get(c.Request(), auth.WitsSessionName)
 	session.Options.MaxAge = -1
 	session.Options.Path = "/"
 	session.Values[auth.AccessTokenCookieName] = ""

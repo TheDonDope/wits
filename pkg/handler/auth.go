@@ -11,9 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// WitsSessionName is the name of the session cookie.
-const WitsSessionName = "wits-session"
-
 // Authenticator is the interface that wraps the basic Login method.
 type Authenticator interface {
 	// Login signs in the user with the application

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
@@ -28,39 +29,16 @@ func WithUser() echo.MiddlewareFunc {
 
 			// Get the authenticatedUser from the request context
 			var authenticatedUser types.AuthenticatedUser
-
 			store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-			session, _ := store.Get(c.Request(), WitsSessionName)
+			session, _ := store.Get(c.Request(), auth.WitsSessionName)
 			if session.Values[types.UserContextKey] != nil {
 				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User found in session with", "name", types.UserContextKey, "value", session.Values[types.UserContextKey])
 				authenticatedUser = types.AuthenticatedUser{
 					Email:    session.Values[types.UserContextKey].(string),
 					LoggedIn: true,
 				}
-			} else {
-				// Kept for backwards compatibility with local cookies
-				userContext := c.Get(types.UserContextKey)
-				if userContext == nil {
-					slog.Info("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 📦 No user data found in echo.Context, trying with Cookie. Looked for", "contextKey", types.UserContextKey)
-					userCookie, err := c.Cookie(types.UserContextKey)
-					if err != nil {
-						slog.Info("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🍪 No user cookie found, returning empty user. Looked for", "cookieName", types.UserContextKey)
-						authenticatedUser = types.AuthenticatedUser{}
-					} else {
-						slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User cookie found with", "name", types.UserContextKey, "value", userCookie.Value)
-						authenticatedUser = types.AuthenticatedUser{
-							Email:    userCookie.Value,
-							LoggedIn: true,
-						}
-					}
-				} else {
-					user := userContext.(types.AuthenticatedUser)
-					authenticatedUser = types.AuthenticatedUser{
-						Email:    user.Email,
-						LoggedIn: true,
-					}
-				}
 			}
+
 			// Set the user in the echo.Context
 			c.Set(types.UserContextKey, authenticatedUser)
 			// Set the user in the context.Context
