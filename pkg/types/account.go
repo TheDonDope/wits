@@ -8,7 +8,7 @@ import (
 
 // Account is the type for the account of an authenticated user.
 type Account struct {
-	ID        int `bun:"id,pk,autoicrement"`
+	ID        uuid.UUID `bun:"type:uuid,default:uuid_generate_v4()"`
 	UserID    uuid.UUID
 	Username  string
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`

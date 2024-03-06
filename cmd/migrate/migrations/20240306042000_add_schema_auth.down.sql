@@ -1,1 +1,1 @@
-drop schema if exists auth cascade;
+DROP SCHEMA IF EXISTS auth CASCADE;

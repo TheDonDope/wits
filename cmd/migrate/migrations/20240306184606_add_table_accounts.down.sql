@@ -1,1 +1,1 @@
-drop table if exists accounts cascade;
+DROP TABLE IF EXISTS accounts CASCADE;

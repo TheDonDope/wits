@@ -1,7 +1,7 @@
-create table if not exists auth.users (
-  id UUID primary key default gen_random_uuid(),
-  email text not null,
-  password text not null,
-  created_at timestamp not null default now(),
-  updated_at timestamp not null default now()
+CREATE TABLE IF NOT EXISTS auth.users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  password TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

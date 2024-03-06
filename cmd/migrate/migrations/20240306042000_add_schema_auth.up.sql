@@ -1,1 +1,1 @@
-create schema if not exists auth;
+CREATE SCHEMA IF NOT EXISTS auth;

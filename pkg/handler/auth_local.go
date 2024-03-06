@@ -20,7 +20,7 @@ type LocalAuthenticator struct{}
 // Login logs in the user with the local sqlite database.
 func (l LocalAuthenticator) Login(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalAuthenticator.Login()")
-	user, userErr := storage.ReadByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
+	user, userErr := storage.GetAuthenticatedUserByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
 	if userErr != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -78,12 +78,12 @@ func (l LocalRegistrator) Register(c echo.Context) error {
 	}
 
 	// Check if user with email already exists
-	existingUser, err := storage.ReadByEmail(params.Email)
+	existingUser, err := storage.GetAuthenticatedUserByEmail(params.Email)
 	if err != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", err)
 	}
 
-	if existingUser != (types.User{}) {
+	if existingUser != (types.AuthenticatedUser{}) {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 User with email already exists")
 		return render(c, authview.RegisterForm(params, authview.RegisterErrors{
 			InvalidCredentials: "User with email already exists",
@@ -95,17 +95,16 @@ func (l LocalRegistrator) Register(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Hashing password failed with", "error", err)
 	}
 
-	user := types.User{
+	authenticatedUser := types.AuthenticatedUser{
 		Email:    params.Email,
 		Password: string(hashedPassword),
-		Name:     params.Username,
 	}
 
-	storage.SQLiteDB.Create(&user)
+	if err := storage.CreateAuthenticatedUser(&authenticatedUser); err != nil {
+		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Creating user failed with", "error", err)
+	}
 
-	authenticatedUser := types.AuthenticatedUser{
-		Email:    user.Email,
-		LoggedIn: true}
+	authenticatedUser.LoggedIn = true
 
 	// Generate JWT tokens and set cookies 'manually'
 	accessToken, err := auth.SignToken(authenticatedUser, []byte(os.Getenv("JWT_SECRET_KEY")))

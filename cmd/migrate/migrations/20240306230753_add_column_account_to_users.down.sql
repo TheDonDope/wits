@@ -1,0 +1,3 @@
+ALTER TABLE auth.users
+DROP CONSTRAINT IF EXISTS users_account_fkey,
+DROP COLUMN IF EXISTS account;

@@ -15,8 +15,6 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.1.17
 	github.com/uptrace/bun/extra/bundebug v1.1.17
 	golang.org/x/crypto v0.20.0
-	gorm.io/driver/sqlite v1.5.5
-	gorm.io/gorm v1.25.7
 )
 
 require (
@@ -30,12 +28,10 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/labstack/gommon v0.4.2
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/nedpals/postgrest-go v0.1.3 // indirect
 	github.com/nedpals/supabase-go v0.4.0
 	github.com/opencontainers/image-spec v1.1.0 // indirect
