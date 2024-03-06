@@ -3,12 +3,13 @@ package handler
 import (
 	"log/slog"
 	"net/http"
-	"time"
+	"os"
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	authview "github.com/TheDonDope/wits/pkg/view/auth"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"github.com/nedpals/supabase-go"
 )
@@ -25,23 +26,37 @@ func (s SupabaseAuthenticator) Login(c echo.Context) error {
 	}
 
 	// Call Supabase to sign in
-	resp, err := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
-	if err != nil {
-		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Signing user in with Supabase failed with", "error", err)
+	resp, sessionErr := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
+	if sessionErr != nil {
+		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Signing user in with Supabase failed with", "error", sessionErr)
 		return render(c, authview.LoginForm(credentials, authview.LoginErrors{
 			InvalidCredentials: "The credentials you have entered are invalid",
 		}))
 	}
-	slog.Info("🆗 🛰️  (pkg/handler/auth_supabase.go)  🔓 User has been logged in with", "resp", resp)
+	slog.Info("🆗 🛰️  (pkg/handler/auth_supabase.go)  🔓 User has been logged in with", "email", resp.User.Email)
 
 	authenticatedUser := types.AuthenticatedUser{
 		Email:    resp.User.Email,
 		LoggedIn: true,
 	}
 
-	auth.SetTokenCookie(auth.AccessTokenCookieName, resp.AccessToken, time.Now().Add(1*time.Hour), c)
-	auth.SetTokenCookie(auth.RefreshTokenCookieName, resp.RefreshToken, time.Now().Add(24*time.Hour), c)
-	auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, sErr := store.Get(c.Request(), WitsSessionName)
+	if sErr != nil {
+		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Getting session failed with", "error", sErr)
+
+	}
+	session.Values[auth.AccessTokenCookieName] = resp.AccessToken
+	session.Values[auth.RefreshTokenCookieName] = resp.RefreshToken
+	session.Values[types.UserContextKey] = authenticatedUser.Email
+	cookieErr := session.Save(c.Request(), c.Response())
+	if cookieErr != nil {
+		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
+	}
+
+	// auth.SetTokenCookie(auth.AccessTokenCookieName, resp.AccessToken, time.Now().Add(1*time.Hour), c)
+	// auth.SetTokenCookie(auth.RefreshTokenCookieName, resp.RefreshToken, time.Now().Add(24*time.Hour), c)
+	// auth.SetUserCookie(authenticatedUser, time.Now().Add(1*time.Hour), c)
 
 	slog.Info("✅ 🛰️  (pkg/handler/auth_supabase.go) SupabaseAuthenticator.Login() -> 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
@@ -90,7 +105,7 @@ func (s SupabaseVerifier) Verify(c echo.Context) error {
 		return render(c, authview.AuthCallbackScript())
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/auth_supabase.go)  🔑 Parsed URL with access_token")
-	auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
+	// auth.SetTokenCookie(auth.AccessTokenCookieName, accessToken, time.Now().Add(1*time.Hour), c)
 
 	resp, err := storage.SupabaseClient.Auth.User(c.Request().Context(), accessToken)
 	if err != nil {
@@ -99,11 +114,21 @@ func (s SupabaseVerifier) Verify(c echo.Context) error {
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/auth_supabase.go)  🔓 User has been verified with", "email", resp.Email)
 
-	user := types.AuthenticatedUser{
-		Email:    resp.Email,
-		LoggedIn: true,
+	// user := types.AuthenticatedUser{
+	// 	Email:    resp.Email,
+	// 	LoggedIn: true,
+	// }
+
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(c.Request(), WitsSessionName)
+	session.Values[auth.AccessTokenCookieName] = accessToken
+	session.Values[types.UserContextKey] = resp.Email
+	cookieErr := session.Save(c.Request(), c.Response())
+	if cookieErr != nil {
+		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
 	}
-	auth.SetUserCookie(user, time.Now().Add(1*time.Hour), c)
-	slog.Info("✅ 🏠 (pkg/handler/auth_supabase.go) SupabaseVerifier.Verify() -> 🔀 Redirecting to index")
+
+	// auth.SetUserCookie(user, time.Now().Add(1*time.Hour), c)
+	slog.Info("✅ 🛰️ (pkg/handler/auth_supabase.go) SupabaseVerifier.Verify() -> 🔀 Redirecting to index")
 	return c.Redirect(http.StatusSeeOther, "/")
 }

@@ -8,11 +8,11 @@ import (
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/TheDonDope/wits/pkg/view/auth"
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+// WitsSessionName is the name of the session cookie.
+const WitsSessionName = "wits-session"
 
 // Authenticator is the interface that wraps the basic Login method.
 type Authenticator interface {

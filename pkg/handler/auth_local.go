@@ -10,6 +10,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	authview "github.com/TheDonDope/wits/pkg/view/auth"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -133,6 +134,7 @@ type LocalDeauthenticator struct{}
 func (l LocalDeauthenticator) Logout(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalDeauthenticator.Logout()")
 
+	// Keeping for backwards compatibility
 	// Clear all cookies
 	for _, cookieName := range cookiesToClear {
 		cookie := &http.Cookie{
@@ -144,6 +146,21 @@ func (l LocalDeauthenticator) Logout(c echo.Context) error {
 		c.SetCookie(cookie)
 		slog.Info("🆗 🏠 (pkg/handler/auth_local.go)  🗑️  Cookie cleared with", "cookie", cookie)
 	}
+	// End backwards compatibility
+
+	// Clear cookies from gorilla/sessions store
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(c.Request(), WitsSessionName)
+	session.Options.MaxAge = -1
+	session.Options.Path = "/"
+	session.Values[auth.AccessTokenCookieName] = ""
+	session.Values[auth.RefreshTokenCookieName] = ""
+	session.Values[types.UserContextKey] = ""
+	cookieErr := session.Save(c.Request(), c.Response())
+	if cookieErr != nil {
+		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
+	}
+
 	slog.Info("🆗 🏠 (pkg/handler/auth_local.go)  🎬 User has been logged out")
 	slog.Info("✅ 🏠 (pkg/handler/auth_local.go) LocalDeauthenticator.Logout() -> 🔀 Redirecting to login")
 	return hxRedirect(c, "/login")

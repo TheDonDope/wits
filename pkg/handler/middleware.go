@@ -4,9 +4,11 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/TheDonDope/wits/pkg/types"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
 
@@ -19,32 +21,44 @@ func HTTPErrorHandler(err error, c echo.Context) {
 func WithUser() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if strings.Contains(c.Request().URL.Path, "/public") {
+			if strings.Contains(c.Request().URL.Path, "/public") || strings.Contains(c.Request().URL.Path, "/favicon.ico") {
 				return next(c)
 			}
 			slog.Info("💬 🏧 (pkg/handler/middleware.go) WithUser() -> next()", "path", c.Request().URL.Path)
 
 			// Get the authenticatedUser from the request context
 			var authenticatedUser types.AuthenticatedUser
-			userContext := c.Get(types.UserContextKey)
-			if userContext == nil {
-				slog.Debug("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 📦 No user data found in echo.Context, trying with Cookie. Looked for", "contextKey", types.UserContextKey)
-				userCookie, err := c.Cookie(types.UserContextKey)
-				if err != nil {
-					slog.Debug("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🍪 No user cookie found, returning empty user. Looked for", "cookieName", types.UserContextKey)
-					authenticatedUser = types.AuthenticatedUser{}
-				} else {
-					slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User cookie found with", "name", types.UserContextKey, "value", userCookie.Value)
-					authenticatedUser = types.AuthenticatedUser{
-						Email:    userCookie.Value,
-						LoggedIn: true,
-					}
+
+			store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+			session, _ := store.Get(c.Request(), WitsSessionName)
+			if session.Values[types.UserContextKey] != nil {
+				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User found in session with", "name", types.UserContextKey, "value", session.Values[types.UserContextKey])
+				authenticatedUser = types.AuthenticatedUser{
+					Email:    session.Values[types.UserContextKey].(string),
+					LoggedIn: true,
 				}
 			} else {
-				user := userContext.(types.AuthenticatedUser)
-				authenticatedUser = types.AuthenticatedUser{
-					Email:    user.Email,
-					LoggedIn: true,
+				// Kept for backwards compatibility with local cookies
+				userContext := c.Get(types.UserContextKey)
+				if userContext == nil {
+					slog.Info("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 📦 No user data found in echo.Context, trying with Cookie. Looked for", "contextKey", types.UserContextKey)
+					userCookie, err := c.Cookie(types.UserContextKey)
+					if err != nil {
+						slog.Info("🚨 🏧 (pkg/handler/middleware.go) ❓❓❓❓ 🍪 No user cookie found, returning empty user. Looked for", "cookieName", types.UserContextKey)
+						authenticatedUser = types.AuthenticatedUser{}
+					} else {
+						slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User cookie found with", "name", types.UserContextKey, "value", userCookie.Value)
+						authenticatedUser = types.AuthenticatedUser{
+							Email:    userCookie.Value,
+							LoggedIn: true,
+						}
+					}
+				} else {
+					user := userContext.(types.AuthenticatedUser)
+					authenticatedUser = types.AuthenticatedUser{
+						Email:    user.Email,
+						LoggedIn: true,
+					}
 				}
 			}
 			// Set the user in the echo.Context
@@ -70,7 +84,7 @@ func WithUser() echo.MiddlewareFunc {
 func WithAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if strings.Contains(c.Request().URL.Path, "/public") {
+			if strings.Contains(c.Request().URL.Path, "/public") || strings.Contains(c.Request().URL.Path, "/favicon.ico") {
 				return next(c)
 			}
 			slog.Info("💬 🏧 (pkg/handler/middleware.go) WitAuth() -> next()", "path", c.Request().URL.Path)
