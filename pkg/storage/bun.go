@@ -15,6 +15,13 @@ import (
 	_ "github.com/lib/pq" // Importing the postgres driver
 )
 
+const (
+	// DBTypeLocal is the variant of using a local postgresql database
+	DBTypeLocal = "local"
+	// DBTypeRemote is the variant of using a remote postgresql database
+	DBTypeRemote = "remote"
+)
+
 // BunDB is the global database connection
 var BunDB *bun.DB
 

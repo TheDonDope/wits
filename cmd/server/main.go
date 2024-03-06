@@ -136,9 +136,7 @@ func initEverything() error {
 	}
 
 	dbType := os.Getenv("DB_TYPE")
-	if dbType == storage.DBTypeLocal {
-		return storage.InitSQLiteDB(true)
-	} else if dbType == storage.DBTypeRemote {
+	if dbType == storage.DBTypeRemote {
 		return storage.InitSupabaseClient()
 	}
 	return nil

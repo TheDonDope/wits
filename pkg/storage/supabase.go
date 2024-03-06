@@ -7,9 +7,6 @@ import (
 	"github.com/nedpals/supabase-go"
 )
 
-// DBTypeRemote is the variant of using a remote supabase database
-const DBTypeRemote = "remote"
-
 // SupabaseClient is the supabase client for the application
 var SupabaseClient *supabase.Client
 
