@@ -23,7 +23,7 @@ build:
 	cp ./node_modules/font-awesome/fonts/* public/fonts/
 	npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css
 	templ generate view
-	go build -v -o ./bin/wits ./cmd/server.go
+	go build -v -o ./bin/wits ./cmd/server/main.go
 
 clean:
 	rm -f ./bin/wits
@@ -64,9 +64,6 @@ down: ## Database migration down
 
 migration: ## Migrations against the database
 	migrate create -ext sql -dir cmd/migrate/migrations $(filter-out $@,$(MAKECMDGOALS))
-
-gen:
-	go run cmd/generate/main.go
 
 seed:
 	go run cmd/seed/main.go

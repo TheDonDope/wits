@@ -130,6 +130,11 @@ func initEverything() error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
+
+	if err := storage.InitBunWithPostgres(); err != nil {
+		return err
+	}
+
 	dbType := os.Getenv("DB_TYPE")
 	if dbType == storage.DBTypeLocal {
 		return storage.InitSQLiteDB(true)

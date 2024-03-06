@@ -54,6 +54,8 @@ Thumbs.db
 
 # Environment Files
 .env
+.env.local
+.env.remote
 
 # Ignore local sqlite3 db
 wits.db

@@ -60,7 +60,7 @@ tasks:
       - curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js
       - cp node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js
       - cp node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css
-      - go build -v -o ./bin/wits{{exeExt}} ./cmd/server.go
+      - go build -v -o ./bin/wits{{exeExt}} ./cmd/server/main.go
     sources:
       - '**/*.go'
     generates:

@@ -1,14 +1,21 @@
 package types
 
-import "gorm.io/gorm"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 // UserContextKey is the key used to store the user in the context.
 const UserContextKey = "wits-user"
 
-// AuthenticatedUser represents the wrapper for an authenticated user and their logged-in state.
+// AuthenticatedUser represents the wrapper for an authenticated user and their logged-in state, as well as embedding the account.
 type AuthenticatedUser struct {
+	ID       uuid.UUID `bun:"pk,type:uuid,default:uuid_generate_v4()"`
 	Email    string
-	LoggedIn bool
+	Password string
+	LoggedIn bool `bun:"-"`
+
+	Account Account `bun:"rel:belongs-to"` // Check if this is correct
 }
 
 // User represents a user in the system.
