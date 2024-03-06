@@ -14,14 +14,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var cookiesToClear []string
-
-func init() {
-	cookiesToClear = append(cookiesToClear, types.UserContextKey)
-	cookiesToClear = append(cookiesToClear, auth.AccessTokenCookieName)
-	cookiesToClear = append(cookiesToClear, auth.RefreshTokenCookieName)
-}
-
 // LocalAuthenticator is an interface for the user login, when using a local sqlite database.
 type LocalAuthenticator struct{}
 
