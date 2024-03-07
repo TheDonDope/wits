@@ -81,9 +81,15 @@ The following environment variables are required to run the application:
 
 ### Required Database
 
-Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local development and testing, a [docker-compose.yml](docker-compose.yml) is provided. In the [Makefile](Makefile) and [Taskfile](Taskfile) you can spin up a database with either `$ make local-db-up` or `$ task local-db-up`. It can be brought down with `$ make local-db-down` or `$ task local-db-down`. **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
+Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local deployment and testing, kubernetes resources for the database are provided in the `k8s` folder. In the [Makefile](Makefile) and [Taskfile](Taskfile) you can spin up a database with either `$ make local-db-up` or `$ task local-db-up`. It can be brought down with `$ make local-db-down` or `$ task local-db-down`. **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
 
-These commands require [Podman](https://podman.io/) and [podman-compose](https://github.com/containers/podman-compose) to be installed. If you are using Docker, you can use the `docker-compose` command instead.
+These commands require [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to be installed on your machine.
+
+**Important**: Make sure to create the secret for the database credentials, like so:
+
+```shell
+kubectl create secret generic postgres-credentials --from-literal=user=<your-user> --from-literal=password=<your-password> --from-literal=dbname=<your-db-name>
+```
 
 With a running database, the built application binary can be started by:
 

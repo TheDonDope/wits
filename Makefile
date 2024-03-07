@@ -35,10 +35,10 @@ clean:
 	rm -rf vendor
 
 local-db-up:
-	podman-compose up -d
+	kubectl apply -f k8s/
 
 local-db-down:
-	podman-compose down && podman volume rm wits_postgres_data
+	kubectl delete -f k8s/
 
 doc:
 	godoc
