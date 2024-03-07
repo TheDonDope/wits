@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -12,7 +14,7 @@ import (
 // CreateAuthenticatedUser creates an authenticated user in the database
 func CreateAuthenticatedUser(user *types.AuthenticatedUser) error {
 	slog.Info("💬 💾 (pkg/storage/user_repo.go) CreateAuthenticatedUser()")
-	_, err := BunDB.NewInsert().Model(&user).Exec(context.Background())
+	_, err := BunDB.NewInsert().Model(user).Exec(context.Background())
 	slog.Info("✅ 💾 (pkg/storage/user_repo.go) CreateAuthenticatedUser() -> 📂 Authenticated user creation finished with", "error", err)
 	return err
 }
@@ -21,6 +23,12 @@ func CreateAuthenticatedUser(user *types.AuthenticatedUser) error {
 func GetAuthenticatedUserByEmailAndPassword(email string, password string) (types.AuthenticatedUser, error) {
 	slog.Info("💬 💾 (pkg/storage/user_repo.go) GetAuthenticatedUserByEmailAndPassword()")
 	user, err := GetAuthenticatedUserByEmail(email)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		slog.Info("✅ 💾 (pkg/storage/user_repo.go) GetAuthenticatedUserByEmailAndPassword() -> 📖 No user with email found, returning empty user")
+		return types.AuthenticatedUser{}, err
+	}
+
 	if err != nil {
 		slog.Error("🚨 💾 (pkg/storage/user_repo.go) ❓❓❓❓ 📖 Finding user by email failed with", "error", err)
 		return types.AuthenticatedUser{}, err

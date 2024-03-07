@@ -29,7 +29,7 @@ func (s SupabaseAuthenticator) Login(c echo.Context) error {
 	resp, sessionErr := storage.SupabaseClient.Auth.SignIn(c.Request().Context(), credentials)
 	if sessionErr != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Signing user in with Supabase failed with", "error", sessionErr)
-		return render(c, authview.LoginForm(credentials, authview.LoginErrors{
+		return render(c, authview.LoginForm(credentials.Email, credentials.Password, authview.LoginErrors{
 			InvalidCredentials: "The credentials you have entered are invalid",
 		}))
 	}
@@ -61,7 +61,6 @@ type SupabaseRegistrator struct{}
 func (s SupabaseRegistrator) Register(c echo.Context) error {
 	slog.Info("💬 🛰️  (pkg/handler/auth_supabase.go) SupabaseRegistrator.Register()")
 	params := authview.RegisterParams{
-		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
 		Password:             c.FormValue("password"),
 		PasswordConfirmation: c.FormValue("password-confirmation"),

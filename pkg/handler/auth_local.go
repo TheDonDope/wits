@@ -2,13 +2,13 @@ package handler
 
 import (
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	authview "github.com/TheDonDope/wits/pkg/view/auth"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -20,10 +20,14 @@ type LocalAuthenticator struct{}
 // Login logs in the user with the local sqlite database.
 func (l LocalAuthenticator) Login(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalAuthenticator.Login()")
-	user, userErr := storage.GetAuthenticatedUserByEmailAndPassword(c.FormValue("email"), c.FormValue("password"))
+	email := c.FormValue("email")
+	password := c.FormValue("password")
+	user, userErr := storage.GetAuthenticatedUserByEmailAndPassword(email, password)
 	if userErr != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Checking if user exists failed with", "error", userErr)
-		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		return render(c, authview.LoginForm(email, password, authview.LoginErrors{
+			InvalidCredentials: "The credentials you have entered are invalid",
+		}))
 	}
 
 	authenticatedUser := types.AuthenticatedUser{
@@ -64,7 +68,6 @@ type LocalRegistrator struct{}
 func (l LocalRegistrator) Register(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalRegistrator.Register()")
 	params := authview.RegisterParams{
-		Username:             c.FormValue("username"),
 		Email:                c.FormValue("email"),
 		Password:             c.FormValue("password"),
 		PasswordConfirmation: c.FormValue("password-confirmation"),
@@ -96,9 +99,15 @@ func (l LocalRegistrator) Register(c echo.Context) error {
 	}
 
 	authenticatedUser := types.AuthenticatedUser{
+		ID:       uuid.New(),
 		Email:    params.Email,
 		Password: string(hashedPassword),
 	}
+	account := types.Account{
+		ID:     uuid.New(),
+		UserID: authenticatedUser.ID,
+	}
+	authenticatedUser.Account = account
 
 	if err := storage.CreateAuthenticatedUser(&authenticatedUser); err != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Creating user failed with", "error", err)

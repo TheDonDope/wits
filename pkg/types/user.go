@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -14,7 +16,9 @@ type AuthenticatedUser struct {
 	ID            uuid.UUID `bun:"type:uuid,default:uuid_generate_v4()"`
 	Email         string
 	Password      string
-	LoggedIn      bool `bun:"-"`
+	LoggedIn      bool      `bun:"-"`
+	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 
 	Account Account
 }
