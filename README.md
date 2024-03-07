@@ -1,4 +1,4 @@
-# Wits - The Weed Information Tracking System
+# Wits - The 🥦 Information Tracking System
 
 [![codecov](https://codecov.io/gh/TheDonDope/wits/graph/badge.svg?token=QM1XTAUsfU)](https://codecov.io/gh/TheDonDope/wits)
 
@@ -40,43 +40,63 @@ go build -v -o ./bin/wits ./cmd/server.go
 
 ## Running the Application
 
+Wits can be run in two different flavours via environment variables, either `DB_TYPE=local` or `DB_TYPE=remote`. In the applications context, `local` means:
+
+- The application handles User login and registration itself
+- JWT tokens are self-signed and stored in an encrypted session cookie (using [gorilla/sessions](https://github.com/gorilla/sessions))
+- User data is stored in a Postgres database (the connection is configurable with environment variables, see below)
+- Domain data is stored in a Postgres database (the connection is configurable with environment variables, see below)
+
+In contrast, `remote` means:
+
+- The application uses Supabase for User login and registration (including managing and storage of user data)
+- The user can also login with their Google account
+- JWT tokens are signed by Supabase and stored in an encrypted session cookie (using [gorilla/sessions](https://github.com/gorilla/sessions))
+- Domain data is stored in a Postgres database, hosted on Supabase (the connection is configurable with environment variables, see below)
+
 ### Required Environment Variables
 
-A minimum viable `.env` file can be found at [.env.example](.env.example). Simply rename it to `.env` to be able to run the application with a local Sqlite database. Fill in the other values if you want to use a remote Supabase database.
+A minimum viable `.env` file can be found at [.env.example](.env.example). Simply rename it to `.env` to be able to run the application with a Postgres database. Fill in the other values if you want to integrate with Supabase.
 
 The following environment variables are required to run the application:
 
-| Environment Variable      | Description                                                                                         |
-| ------------------------- | --------------------------------------------------------------------------------------------------- |
-| `HTTP_LISTEN_ADDR`        | The address the server runs at (format: `<url>:<port>`, example: `:3000`)                           |
-| `LOG_LEVEL`               | The level at which to log (one of: `DEBUG`, `INFO`, `WARN`, `ERROR`, `OFF`)                         |
-| `LOG_DIR`                 | The path to the directory for the application logs                                                  |
-| `LOG_FILE`                | The name of the file for the application logs (within `LOG_DIR`)                                    |
-| `ACCESS_LOG_FILE`         | The path of the file for the application access logs (within `LOG_DIR`)                             |
-| `JWT_SECRET_KEY`          | The secret key with which to sign the access token                                                  |
-| `JWT_REFRESH_SECRET_KEY`  | The secret key with which to sign the refresh token                                                 |
-| `SESSION_SECRET`          | The secret key with which to sign the cookie store session                                          |
-| `DB_TYPE`                 | The type of database to use (choose `local` for local Sqlite db or `remote` for remote Supabase db) |
-| `SQLITE_DATA_SOURCE_NAME` | The name of the Sqlite datasource to use (example: `./bin/wits.db`), when `DB_TYPE=local`           |
-| `DB_HOST`                 | The host of the Postgres db, when `DB_TYPE=remote`                                                  |
-| `DB_USER`                 | The user of the Postgres db, when `DB_TYPE=remote`                                                  |
-| `DB_PASSWORD`             | The password of the Postgres db, when `DB_TYPE=remote`                                              |
-| `DB_NAME`                 | The name of the Postgres db, when `DB_TYPE=remote`                                                  |
-| `SUPABASE_URL`            | The Supabase URL (required for the client configuration), when `DB_TYPE=remote`                     |
-| `SUPABASE_SECRET`         | The Supabase secret (required for the client configuration), when `DB_TYPE=remote`                  |
-| `AUTH_CALLBACK_URL`       | The callback URL for remote login, when `DB_TYPE=remote`                                            |
+| Environment Variable     | Description                                                                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HTTP_LISTEN_ADDR`       | The address the server runs at (format: `<url>:<port>`, example: `127.0.0.1:3000`)                                                            |
+| `LOG_LEVEL`              | The level at which to log (one of: `DEBUG`, `INFO`, `WARN`, `ERROR`, `OFF`)                                                                   |
+| `LOG_DIR`                | The path to the directory for the application logs                                                                                            |
+| `LOG_FILE`               | The name of the file for the application logs (within `LOG_DIR`)                                                                              |
+| `ACCESS_LOG_FILE`        | The path of the file for the application access logs (within `LOG_DIR`)                                                                       |
+| `JWT_SECRET_KEY`         | The secret key with which to sign the access token (only relevant for `DB_TYPE=local`)                                                        |
+| `JWT_REFRESH_SECRET_KEY` | The secret key with which to sign the refresh (only relevant for `DB_TYPE=local`)token                                                        |
+| `SESSION_SECRET`         | The secret key with which to sign the cookie store session                                                                                    |
+| `DB_TYPE`                | The type of database to use (choose `local` for local Postgres db using Bun or `remote` for remote Postgres db using Bun and Supabase Client) |
+| `DB_HOST`                | The host of the Postgres db                                                                                                                   |
+| `DB_USER`                | The user of the Postgres db                                                                                                                   |
+| `DB_PASSWORD`            | The password of the Postgres db                                                                                                               |
+| `DB_NAME`                | The name of the Postgres db                                                                                                                   |
+| `SUPABASE_URL`           | The Supabase URL (required for the client configuration), when `DB_TYPE=remote`                                                               |
+| `SUPABASE_SECRET`        | The Supabase secret (required for the client configuration), when `DB_TYPE=remote`                                                            |
+| `AUTH_CALLBACK_URL`      | The callback URL for remote login, when `DB_TYPE=remote`                                                                                      |
 
-The built application binary can be started by:
+### Required Database
+
+Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local development and testing, a [docker-compose.yml](docker-compose.yml) is provided. In the [Makefile](Makefile) and [Taskfile](Taskfile) you can spin up a database with either `$ make local-db-up` or `$ task local-db-up`. It can be brought down with `$ make local-db-down` or `$ task local-db-down`. **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
+
+These commands require [Podman](https://podman.io/) and [podman-compose](https://github.com/containers/podman-compose) to be installed. If you are using Docker, you can use the `docker-compose` command instead.
+
+With a running database, the built application binary can be started by:
 
 ```shell
 $ ./bin/wits
-2024/03/05 22:30:56 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
-2024/03/05 22:30:56 INFO 💬 🏠 (pkg/storage/sqlite.go) InitSQLiteDB()
-2024/03/05 22:30:56 INFO 🆗 🏠 (pkg/storage/sqlite.go)  📂 Using dsn=./bin/wits.db
-2024/03/05 22:30:56 INFO ✅ 🏠 (pkg/storage/sqlite.go) InitSQLiteDB() -> 📂 Initialized sqlite db with automigrations
-2024/03/05 22:30:56 INFO 💬 🖥️  (cmd/server.go) configureLogging()
-2024/03/05 22:30:56 INFO ✅ 🖥️  (cmd/server.go) configureLogging() -> 🗒️  OK with logLevel=INFO logFilePath=log/wits.log accessLogPath=log/access.log
-2024/03/05 22:30:56 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=:3000
+2024/03/07 00:27:08 INFO 💬 🖥️  (cmd/server.go) 🥦 Welcome to Wits!
+2024/03/07 00:27:08 INFO 💬 💾 (pkg/storage/bun.go) InitBunWithPostgres()
+2024/03/07 00:27:08 INFO 💬 💾 (pkg/storage/bun.go) CreatePostgresDB()
+2024/03/07 00:27:08 INFO ✅ 💾 (pkg/storage/bun.go) CreatePostgresDB() -> 📂 Successfully created Postgresql db connection with host=127.0.0.1:5432
+2024/03/07 00:27:08 INFO ✅ 💾 (pkg/storage/bun.go) InitBunWithPostgres() -> 📂 Successfully initialized Bun with Postgres db
+2024/03/07 00:27:08 INFO 💬 🖥️  (cmd/server.go) configureLogging()
+2024/03/07 00:27:08 INFO ✅ 🖥️  (cmd/server.go) configureLogging() -> 🗒️  OK with logLevel=INFO logFilePath=log/wits.log accessLogPath=log/access.log
+2024/03/07 00:27:08 INFO 🚀 🖥️  (cmd/server.go) 🛜 Wits server is running at addr=127.0.0.1:3000
 
    ____    __
   / __/___/ /  ___
@@ -86,7 +106,7 @@ High performance, minimalist Go web framework
 https://echo.labstack.com
 ____________________________________O/_______
                                     O\
-⇨ http server started on [::]:3000
+⇨ http server started on 127.0.0.1:3000
 ```
 
 The built binary is explicitly ignored from source control (see [.gitignore](.gitignore)).

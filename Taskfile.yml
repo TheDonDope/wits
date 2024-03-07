@@ -66,6 +66,14 @@ tasks:
     generates:
       - app{{exeExt}}
     method: timestamp
+  local-db-up:
+    cmds:
+      - cmd: podman-compose up -d
+  local-db-down:
+    cmds:
+      - cmd: podman-compose down
+      - cmd: podman volume rm wits_postgres_data
+        ignore_error: true
   doc:
     deps: [install-godoc]
     cmds:

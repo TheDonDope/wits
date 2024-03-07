@@ -34,6 +34,12 @@ clean:
 	rm -rf tmp
 	rm -rf vendor
 
+local-db-up:
+	podman-compose up -d
+
+local-db-down:
+	podman-compose down && podman volume rm wits_postgres_data
+
 doc:
 	godoc
 
