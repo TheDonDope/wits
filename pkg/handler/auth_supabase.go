@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/gob"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	authview "github.com/TheDonDope/wits/pkg/view/auth"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"github.com/nedpals/supabase-go"
@@ -36,15 +38,20 @@ func (s SupabaseAuthenticator) Login(c echo.Context) error {
 	slog.Info("🆗 🛰️  (pkg/handler/auth_supabase.go)  🔓 User has been logged in with", "email", resp.User.Email)
 
 	authenticatedUser := types.AuthenticatedUser{
+		ID:       uuid.MustParse(resp.User.ID),
 		Email:    resp.User.Email,
 		LoggedIn: true,
 	}
+
+	// Register uuid.UUID with gob
+	gob.Register(uuid.UUID{})
 
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(c.Request(), auth.WitsSessionName)
 	session.Values[auth.AccessTokenCookieName] = resp.AccessToken
 	session.Values[auth.RefreshTokenCookieName] = resp.RefreshToken
 	session.Values[types.UserContextKey] = authenticatedUser.Email
+	session.Values[types.UserIdKey] = authenticatedUser.ID
 	cookieErr := session.Save(c.Request(), c.Response())
 	if cookieErr != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
@@ -104,10 +111,14 @@ func (s SupabaseVerifier) Verify(c echo.Context) error {
 	}
 	slog.Info("🆗 🛰️  (pkg/handler/auth_supabase.go)  🔓 User has been verified with", "email", resp.Email)
 
+	// Register uuid.UUID with gob
+	gob.Register(uuid.UUID{})
+
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(c.Request(), auth.WitsSessionName)
 	session.Values[auth.AccessTokenCookieName] = accessToken
 	session.Values[types.UserContextKey] = resp.Email
+	session.Values[types.UserIdKey] = resp.ID
 	cookieErr := session.Save(c.Request(), c.Response())
 	if cookieErr != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/auth_supabase.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)

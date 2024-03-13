@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/gob"
 	"log/slog"
 	"os"
 
@@ -31,6 +32,7 @@ func (l LocalAuthenticator) Login(c echo.Context) error {
 	}
 
 	authenticatedUser := types.AuthenticatedUser{
+		ID:       user.ID,
 		Email:    user.Email,
 		LoggedIn: true,
 	}
@@ -45,11 +47,15 @@ func (l LocalAuthenticator) Login(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
+	// Register uuid.UUID with gob
+	gob.Register(uuid.UUID{})
+
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(c.Request(), auth.WitsSessionName)
 	session.Values[auth.AccessTokenCookieName] = accessToken
 	session.Values[auth.RefreshTokenCookieName] = refreshToken
 	session.Values[types.UserContextKey] = authenticatedUser.Email
+	session.Values[types.UserIdKey] = authenticatedUser.ID
 	cookieErr := session.Save(c.Request(), c.Response())
 	if cookieErr != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
@@ -125,11 +131,15 @@ func (l LocalRegistrator) Register(c echo.Context) error {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Signing refresh token failed with", "error", err)
 	}
 
+    // Register uuid.UUID with gob
+	gob.Register(uuid.UUID{})
+
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(c.Request(), auth.WitsSessionName)
 	session.Values[auth.AccessTokenCookieName] = accessToken
 	session.Values[auth.RefreshTokenCookieName] = refreshToken
 	session.Values[types.UserContextKey] = authenticatedUser.Email
+	session.Values[types.UserIdKey] = authenticatedUser.ID
 	cookieErr := session.Save(c.Request(), c.Response())
 	if cookieErr != nil {
 		slog.Error("🚨 🛰️  (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
@@ -154,6 +164,7 @@ func (l LocalDeauthenticator) Logout(c echo.Context) error {
 	session.Values[auth.AccessTokenCookieName] = ""
 	session.Values[auth.RefreshTokenCookieName] = ""
 	session.Values[types.UserContextKey] = ""
+	session.Values[types.UserIdKey] = ""
 	cookieErr := session.Save(c.Request(), c.Response())
 	if cookieErr != nil {
 		slog.Error("🚨 🏠 (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)

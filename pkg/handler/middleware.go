@@ -9,6 +9,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/auth"
 	"github.com/TheDonDope/wits/pkg/types"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
@@ -34,6 +35,7 @@ func WithUser() echo.MiddlewareFunc {
 			if session.Values[types.UserContextKey] != nil {
 				slog.Info("🆗 🏧 (pkg/handler/middleware.go)  🍪 User found in session with", "name", types.UserContextKey, "value", session.Values[types.UserContextKey])
 				authenticatedUser = types.AuthenticatedUser{
+					ID:       session.Values[types.UserIdKey].(uuid.UUID),
 					Email:    session.Values[types.UserContextKey].(string),
 					LoggedIn: true,
 				}

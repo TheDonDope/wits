@@ -10,6 +10,9 @@ import (
 // UserContextKey is the key used to store the user in the context.
 const UserContextKey = "wits-user"
 
+// UserIdKey is the key used to store the user id in the context.
+const UserIdKey = "wits-user-id"
+
 // AuthenticatedUser represents the wrapper for an authenticated user and their logged-in state, as well as embedding the account.
 type AuthenticatedUser struct {
 	bun.BaseModel `bun:"auth.users,alias:u"`
