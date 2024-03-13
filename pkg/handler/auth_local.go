@@ -14,10 +14,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// LocalAuthenticator is an interface for the user login, when using a local sqlite database.
+// LocalAuthenticator is an interface for the user login, when using a local database.
 type LocalAuthenticator struct{}
 
-// Login logs in the user with the local sqlite database.
+// Login logs in the user with the local database.
 func (l LocalAuthenticator) Login(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalAuthenticator.Login()")
 	email := c.FormValue("email")
@@ -55,16 +55,16 @@ func (l LocalAuthenticator) Login(c echo.Context) error {
 		slog.Error("🚨 🛰️  (pkg/handler/auth_local.go) ❓❓❓❓ 🔒 Saving session failed with", "error", cookieErr)
 	}
 
-	slog.Info("🆗 🏠 (pkg/handler/auth_local.go)  🔓 User has been logged in with local Sqlite database")
+	slog.Info("🆗 🏠 (pkg/handler/auth_local.go)  🔓 User has been logged in with local database")
 
 	slog.Info("✅ 🏠 (pkg/handler/auth_local.go) LocalAuthenticator.Login() -> 🔀 Redirecting to dashboard")
 	return hxRedirect(c, "/dashboard")
 }
 
-// LocalRegistrator is an interface for the user registration, when using a local sqlite database.
+// LocalRegistrator is an interface for the user registration, when using a local database.
 type LocalRegistrator struct{}
 
-// Register logs in the user with the local sqlite database.
+// Register logs in the user with the local database.
 func (l LocalRegistrator) Register(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalRegistrator.Register()")
 	params := authview.RegisterParams{
@@ -139,10 +139,10 @@ func (l LocalRegistrator) Register(c echo.Context) error {
 	return hxRedirect(c, "/dashboard")
 }
 
-// LocalDeauthenticator is an struct for the user logout, when using a local sqlite database.
+// LocalDeauthenticator is an struct for the user logout, when using a local database.
 type LocalDeauthenticator struct{}
 
-// Logout logs out the user with the local sqlite database.
+// Logout logs out the user with the local database.
 func (l LocalDeauthenticator) Logout(c echo.Context) error {
 	slog.Info("💬 🏠 (pkg/handler/auth_local.go) LocalDeauthenticator.Logout()")
 
