@@ -2,12 +2,15 @@ package handler
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/TheDonDope/wits/pkg/auth"
+	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/types"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
@@ -39,6 +42,11 @@ func WithUser() echo.MiddlewareFunc {
 					Email:    session.Values[types.UserContextKey].(string),
 					LoggedIn: true,
 				}
+				account, err := storage.GetAccountByUserID(authenticatedUser.ID)
+				if !errors.Is(err, sql.ErrNoRows) {
+					slog.Error("🚨 🏠 (pkg/handler/middleware.go) ❓❓❓❓ 🔒 Checking if account exists failed with", "error", err)
+				}
+				authenticatedUser.Account = account
 			}
 
 			// Set the user in the echo.Context
