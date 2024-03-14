@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -28,27 +29,36 @@ func TestGetAuthenticatedUserByEmail(t *testing.T) {
 	BunDB = bun.NewDB(db, pgdialect.New())
 
 	unknownEmail := "unknown@foo.org"
-	unknownUser := types.AuthenticatedUser{
-		Email: unknownEmail,
-	}
+	unknownUser := types.AuthenticatedUser{}
 
 	tests := []struct {
 		name      string
 		args      args
 		want      types.AuthenticatedUser
+		wantSQL   string
 		wantErr   error
 		shouldErr bool
 	}{
-		{"Unknown user ID should error", args{email: unknownEmail}, unknownUser, sql.ErrNoRows, true},
+		{
+			"Unknown user ID should error",
+			args{email: unknownEmail},
+			unknownUser,
+			regexp.QuoteMeta("SELECT \"u\".\"id\", \"u\".\"email\", \"u\".\"password\", \"u\".\"created_at\", \"u\".\"updated_at\", \"u\".\"account\" FROM \"auth\".\"users\" AS \"u\""),
+			sql.ErrNoRows,
+			true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Expect a select query and mock the result
-			mock.ExpectQuery("SELECT (.+) FROM auth.users").WithArgs(unknownEmail).WillReturnError(sql.ErrNoRows)
+			mock.ExpectQuery(tt.wantSQL).WillReturnError(sql.ErrNoRows)
 			got, err := GetAuthenticatedUserByEmail(tt.args.email)
 			if (err != nil) != tt.shouldErr {
 				t.Errorf("GetAuthenticatedUserByEmail() error = %v, wantErr = %v, shouldErr = %v", err, tt.wantErr, tt.shouldErr)
+			}
+			if err != tt.wantErr {
+				t.Errorf("GetAuthenticatedUserByEmail() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetAuthenticatedUserByEmail() = %v, want %v", got, tt.want)
