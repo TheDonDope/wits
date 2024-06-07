@@ -20,13 +20,31 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Install Task
-        uses: arduino/setup-task@v1
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            /go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-      - name: Install dependencies
-        run: |
-          go mod tidy
-          go mod download
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '22'
+
+      - name: Cache Node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Set up Task
+        uses: arduino/setup-task@v2
 
       - name: Install Dependencies
         run: task install

@@ -18,10 +18,10 @@ tasks:
     cmds:
       - go install github.com/a-h/templ/cmd/templ@latest
       - go install golang.org/x/tools/cmd/godoc@latest
-      - go get ./...
-      - go mod vendor
-      - go mod tidy
-      - go mod download
+      # - go get ./...
+      # - go mod vendor
+      # - go mod tidy
+      # - go mod download
       - npm install font-awesome@4.7.0
       - npm install jquery@3.7.1
       - npm install -D tailwindcss@3.4.4
