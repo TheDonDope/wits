@@ -23,6 +23,12 @@ build:
 	templ generate view
 	go build -v -o ./bin/wits ./cmd/server/main.go
 
+build-image:
+	podman build -t thedondope/wits:latest .
+
+push-image: build-image
+	podman push localhost/thedondope/wits:latest ghcr.io/thedondope/wits:latest
+
 clean:
 	rm -f ./bin/wits
 	rm -f coverage.html
@@ -32,10 +38,10 @@ clean:
 	rm -rf tmp
 	rm -rf vendor
 
-local-db-up:
+k8s-up:
 	kubectl apply -f k8s/
 
-local-db-down:
+k8s-down:
 	kubectl delete -f k8s/
 
 doc:

@@ -38,6 +38,27 @@ templ generate view
 go build -v -o ./bin/wits ./cmd/server.go
 ```
 
+## Building and pushing the container image
+
+Assuming the use of `podman`, the following steps are supported:
+
+### Building the latest local image
+
+You can run either `make build-image` or `task build-image`
+
+### Pushing the latest tag to GitHub Container Registry
+
+_Prerequisite_: Acquire a Personal Access Token (PAT) in your GitHub Account.
+
+Then, login with GHCR, like so:
+
+```bash
+$ echo <YOUR_PAT> | podman login ghcr.io -u <YOUR_GITHUB_USERNAME> --password-stdin
+Login Succeeded!
+```
+
+Now, the latest local image can be pushed by either running `make push-image` or `task push-image`.
+
 ## Running the Application
 
 Wits can be run in two different flavours via environment variables, either `DB_TYPE=local` or `DB_TYPE=remote`. In the applications context, `local` means:
@@ -81,7 +102,7 @@ The following environment variables are required to run the application:
 
 ### Required Database
 
-Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local deployment and testing, kubernetes resources for the database are provided in the `k8s` folder. In the [Makefile](Makefile) and [Taskfile](Taskfile) you can spin up a database with either `$ make local-db-up` or `$ task local-db-up`. It can be brought down with `$ make local-db-down` or `$ task local-db-down`. **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
+Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local deployment and testing, kubernetes resources for the database and application are provided in the `k8s` folder. In the [Makefile](Makefile) and [Taskfile](Taskfile) you can spin those up with either `$ make k8s-up` or `$ task k8s-up`. It can be brought down with `$ k8s-down` or `$ task k8s-down`. **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
 
 These commands require [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to be installed on your machine.
 
@@ -116,6 +137,16 @@ ____________________________________O/_______
 ```
 
 The built binary is explicitly ignored from source control (see [.gitignore](.gitignore)).
+
+## Running the Application in a Kubernetes cluster
+
+Wits provides the required resources to be deployed to a k8s cluster. If you are running a local cluster, e.g. through `minikube` you will want to add your Personal Access Token from your GitHub Account to be able to read your packages from the ghcr registry. You can do so by running:
+
+```bash
+$ kubectl create secret generic ghcr-secret --from-file=.dockerconfigjson=$HOME/.config/containers/auth.json --type=kubernetes.io/dockerconfigjson
+
+secret/ghcr-secret created
+```
 
 ## Running Tests
 

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wits-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wits
+  template:
+    metadata:
+      labels:
+        app: wits
+    spec:
+      containers:
+      - name: wits
+        image: ghcr.io/thedondope/wits:latest
+        ports:
+        - containerPort: 3000
+      imagePullSecrets:
+      - name: ghcr-secret
