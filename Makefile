@@ -3,8 +3,6 @@ run: build
 
 install:
 	go install github.com/a-h/templ/cmd/templ@latest
-	go install github.com/cosmtrek/air@latest
-	go install github.com/cweill/gotests/gotests@latest
 	go install golang.org/x/tools/cmd/godoc@latest
 
 	go get ./...
@@ -13,11 +11,11 @@ install:
 	go mod download
 	npm install font-awesome@4.7.0
 	npm install jquery@3.7.1
-	npm install -D tailwindcss@3.4.1
+	npm install -D tailwindcss@3.4.4
 	npm install -D daisyui@latest
 
 build:
-	curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js
+	curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js
 	cp ./node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js
 	cp ./node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css
 	cp ./node_modules/font-awesome/fonts/* public/fonts/

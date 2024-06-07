@@ -14,29 +14,17 @@ tasks:
     internal: true
     cmds:
       - go install golang.org/x/tools/cmd/godoc@latest
-    silent: true
-  install-gotests:
-    internal: true
-    cmds:
-      - go install github.com/cweill/gotests/gotests@latest
-    silent: true
-  install-air:
-    internal: true
-    cmds:
-      - go install github.com/cosmtrek/air@latest
   install:
     cmds:
       - go install github.com/a-h/templ/cmd/templ@latest
-      - go install github.com/cosmtrek/air@latest
-      - go install github.com/cweill/gotests/gotests@latest
       - go install golang.org/x/tools/cmd/godoc@latest
-      #  - go get ./...
-      # - go mod vendor
-      # - go mod tidy
-      # - go mod download
+      - go get ./...
+      - go mod vendor
+      - go mod tidy
+      - go mod download
       - npm install font-awesome@4.7.0
       - npm install jquery@3.7.1
-      - npm install -D tailwindcss@3.4.1
+      - npm install -D tailwindcss@3.4.4
       - npm install -D daisyui@latest
   clean:
     cmds:
@@ -91,7 +79,6 @@ tasks:
     cmds:
       - templ generate -watch -proxy http:=//localhost:3000
   test:
-    deps: [install-gotests]
     cmds:
       - go test -race -v ./... -coverprofile coverage.out
     sources:
@@ -100,7 +87,6 @@ tasks:
       - coverage.out
     method: timestamp
   test-ci:
-    deps: [install-gotests]
     cmds:
       - go test -race -v ./... -coverprofile coverage.out -covermode=atomic
       - bash <(curl -s https://codecov.io/bash)
