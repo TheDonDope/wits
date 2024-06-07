@@ -1,0 +1,40 @@
+# Ignore version control files and directories
+.git
+.gitignore
+
+# Ignore Go build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.out
+
+# Ignore Go test artifacts
+*.test
+
+# Ignore node_modules
+node_modules/
+
+# Ignore dependency directories
+vendor/
+
+# Ignore IDE and editor configuration files
+.idea/
+.vscode/
+*.iml
+
+# Ignore temporary and cache files
+*~
+*.swp
+*.tmp
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore documentation and test directories
+docs/
+test/
+
