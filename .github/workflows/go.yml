@@ -23,6 +23,11 @@ jobs:
       - name: Install Task
         uses: arduino/setup-task@v1
 
+      - name: Install dependencies
+        run: |
+          go mod tidy
+          go mod download
+
       - name: Install Dependencies
         run: task install
 
