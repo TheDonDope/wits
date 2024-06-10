@@ -13,9 +13,7 @@ spec:
         app: wits
     spec:
       containers:
-      - name: wits
-        image: ghcr.io/thedondope/wits:latest
-        ports:
-        - containerPort: 3000
-      imagePullSecrets:
-      - name: ghcr-secret
+        - name: wits
+          image: ghcr.io/thedondope/wits:latest
+          ports:
+            - containerPort: 3000

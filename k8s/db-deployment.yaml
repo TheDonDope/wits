@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: wits-db
-          image: postgres:latest
+          image: docker.io/library/postgres:latest
           ports:
             - containerPort: 5432
           env:
