@@ -13,53 +13,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      - name: Cache Go modules
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            /go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Cache Node modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Set up Task
-        uses: arduino/setup-task@v2
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: task install
+        run: make install
 
       - name: Build
-        run: task build
+        run: make build
 
       - name: Test
-        run: task test-ci
+        run: make test-ci
 
       - name: Vet
-        run: task vet
+        run: make vet
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: TheDonDope/wits
+          verbose: true

@@ -5,14 +5,7 @@ install:
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install golang.org/x/tools/cmd/godoc@latest
 
-	go get ./...
-	go mod vendor
-	go mod tidy
-	go mod download
-	npm install font-awesome@4.7.0
-	npm install jquery@3.7.1
-	npm install -D tailwindcss@3.4.4
-	npm install -D daisyui@latest
+	npm install
 
 build:
 	curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js
@@ -24,10 +17,17 @@ build:
 	go build -v -o ./bin/wits ./cmd/server/main.go
 
 build-image:
-	podman build -t thedondope/wits:latest .
+	podman build -t thedondope/wits .
 
 push-image: build-image
-	podman push localhost/thedondope/wits:latest ghcr.io/thedondope/wits:latest
+	podman tag thedondope/wits ghcr.io/thedondope/wits:latest
+	podman push ghcr.io/thedondope/wits:latest
+
+k8s-up:
+	kubectl apply -f k8s/
+
+k8s-down:
+	kubectl delete -f k8s/
 
 clean:
 	rm -f ./bin/wits
@@ -37,12 +37,6 @@ clean:
 	rm -rf node_modules
 	rm -rf tmp
 	rm -rf vendor
-
-k8s-up:
-	kubectl apply -f k8s/
-
-k8s-down:
-	kubectl delete -f k8s/
 
 doc:
 	godoc

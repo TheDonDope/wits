@@ -12,7 +12,7 @@ Building the binary requires multiple steps:
 - Generating the Go code from the Templ Templates
 - Building the Go binary
 
-To do this in one command, run the following (alternatively `$ task build` if you are using [Task](https://taskfile.dev/#/)):
+To do this in one command, run the following:
 
 ```shell
 $ make build
@@ -40,11 +40,11 @@ go build -v -o ./bin/wits ./cmd/server.go
 
 ## Building and pushing the container image
 
-Assuming the use of `podman`, the following steps are supported:
+Assuming the use of [Podman](https://podman.io/), the following steps are supported:
 
 ### Building the latest local image
 
-You can run either `make build-image` or `task build-image`
+You can run `make build-image`.
 
 ### Pushing the latest tag to GitHub Container Registry
 
@@ -53,11 +53,11 @@ _Prerequisite_: Acquire a Personal Access Token (PAT) in your GitHub Account.
 Then, login with GHCR, like so:
 
 ```bash
-$ echo <YOUR_PAT> | podman login ghcr.io -u <YOUR_GITHUB_USERNAME> --password-stdin
+$ echo $PAT | podman login ghcr.io --username <YOUR_GITHUB_USERNAME> --password-stdin
 Login Succeeded!
 ```
 
-Now, the latest local image can be pushed by either running `make push-image` or `task push-image`.
+Now, the latest local image can be pushed by running `make push-image`.
 
 ## Running the Application
 
@@ -102,9 +102,9 @@ The following environment variables are required to run the application:
 
 ### Required Database
 
-Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local deployment and testing, kubernetes resources for the database and application are provided in the `k8s` folder. In the [Makefile](Makefile) and [Taskfile](Taskfile) you can spin those up with either `$ make k8s-up` or `$ task k8s-up`. It can be brought down with `$ k8s-down` or `$ task k8s-down`. **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
+Wits requires a Postgres database to run. The connection details are configurable via environment variables (see above). For local deployment and testing, kubernetes resources for the database and application are provided in the `k8s` folder. In the [Makefile](Makefile) you can spin those up with `$ make k8s-up`. It can be brought down with `$ make k8s-down` . **Note**: Currently, bringing the database down also deletes all data. This behaviour is subject to change.
 
-These commands require [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to be installed on your machine.
+These commands requires [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to be installed on your machine.
 
 **Important**: Make sure to create the secret for the database credentials, like so:
 
@@ -150,7 +150,7 @@ secret/ghcr-secret created
 
 ## Running Tests
 
-- Run the testsuite with coverage enabled (alternatively `$ task test` if you are using [Task](https://taskfile.dev/#/)):
+- Run the testsuite with coverage enabled:
 
 ```shell
 $ make test
@@ -166,7 +166,7 @@ go test -race -v ./... -coverprofile coverage.out
  github.com/TheDonDope/wits/pkg/view/ui  coverage: 0.0% of statements
 ```
 
-- Generate the coverage results as html (alternatively `$ task cover` if you are using [Task](https://taskfile.dev/#/)):
+- Generate the coverage results as html:
 
 ```shell
 $ make cover
@@ -184,7 +184,7 @@ go tool cover -html coverage.out -o coverage.html
 [Empty output on success]
 ```
 
-- Open the results in the browser (alternatively `$ task show-cover` if you are using [Task](https://taskfile.dev/#/)):
+- Open the results in the browser:
 
 ```shell
 $ make show-cover
