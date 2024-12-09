@@ -1,6 +1,7 @@
 module github.com/TheDonDope/wits
 
 go 1.22.0
+toolchain go1.23.4
 
 require (
 	github.com/a-h/templ v0.2.747
@@ -11,10 +12,19 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.12.0
-	github.com/uptrace/bun v1.2.1
-	github.com/uptrace/bun/dialect/pgdialect v1.2.1
+	github.com/uptrace/bun v1.2.6
+	github.com/uptrace/bun/dialect/pgdialect v1.2.6
 	github.com/uptrace/bun/extra/bundebug v1.2.1
 	golang.org/x/crypto v0.25.0
+)
+
+require (
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/puzpuzpuz/xsync/v3 v3.4.0 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.9-0.20240816141633-0a40785b4f41 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
@@ -45,7 +55,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
