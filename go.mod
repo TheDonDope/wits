@@ -11,11 +11,13 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/labstack/echo/v4 v4.12.0
-	github.com/uptrace/bun v1.2.1
-	github.com/uptrace/bun/dialect/pgdialect v1.2.1
+	github.com/uptrace/bun v1.2.9
+	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/extra/bundebug v1.2.1
 	golang.org/x/crypto v0.25.0
 )
+
+require github.com/puzpuzpuz/xsync/v3 v3.5.0 // indirect
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -31,7 +33,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2
 	github.com/lib/pq v1.10.9
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/nedpals/postgrest-go v0.1.3 // indirect
 	github.com/nedpals/supabase-go v0.4.0
@@ -45,7 +47,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
