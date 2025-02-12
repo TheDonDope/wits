@@ -14,7 +14,7 @@ require (
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/extra/bundebug v1.2.1
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.33.0
 )
 
 require github.com/puzpuzpuz/xsync/v3 v3.5.0 // indirect
@@ -47,7 +47,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
