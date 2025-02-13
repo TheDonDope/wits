@@ -12,7 +12,7 @@ build:
 	cp ./node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js
 	cp ./node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css
 	cp ./node_modules/font-awesome/fonts/* public/fonts/
-	npx tailwindcss -i pkg/view/css/app.css -o public/css/styles.css
+	npx @tailwindcss/cli -i pkg/view/css/app.css -o public/css/styles.css
 	templ generate view
 	go build -v -o ./bin/wits ./cmd/server/main.go
 
