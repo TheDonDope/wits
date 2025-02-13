@@ -17,7 +17,10 @@ require (
 	golang.org/x/crypto v0.33.0
 )
 
-require github.com/puzpuzpuz/xsync/v3 v3.5.0 // indirect
+require (
+	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/puzpuzpuz/xsync/v3 v3.5.0 // indirect
+)
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -31,8 +34,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/nedpals/postgrest-go v0.1.3 // indirect
-	github.com/nedpals/supabase-go v0.4.0
+	github.com/nedpals/supabase-go v0.5.0
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
