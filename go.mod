@@ -13,7 +13,7 @@ require (
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
-	github.com/uptrace/bun/extra/bundebug v1.2.1
+	github.com/uptrace/bun/extra/bundebug v1.2.9
 	golang.org/x/crypto v0.33.0
 )
 
@@ -24,7 +24,7 @@ require (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/fatih/color v1.16.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
