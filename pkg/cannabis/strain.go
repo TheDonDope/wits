@@ -1,4 +1,4 @@
-package types
+package cannabis
 
 import (
 	"time"
@@ -8,17 +8,42 @@ import (
 
 // Strain is the type for a cannabis strain.
 type Strain struct {
-	ID           uuid.UUID `bun:"type:uuid,default:uuid_generate_v4()"`
-	Strain       string    // The product name
-	Cultivar     string    // The breed
-	Manufacturer string    // The producer
-	Genetic      string    // The genetic type (sativa, indica, hybrid)
-	THC          float64   // The THC content in %
-	CBD          float64   // The CBD content in %
-	Amount       float64   // The amount in grams
-	CreatedAt    time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	UpdatedAt    time.Time `bun:",nullzero,notnull,default:current_timestamp"`
+	ID           uuid.UUID   `bun:"type:uuid,default:uuid_generate_v4()"`
+	Strain       string      // The product name
+	Cultivar     string      // The breed
+	Manufacturer string      // The producer
+	Genetic      GeneticType // The genetic type
+	THC          float64     // The THC content in %
+	CBD          float64     // The CBD content in %
+	Terpenes     []*Terpene  // The terpenes in the strain
+	Amount       float64     // The amount in grams
+	CreatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp"`
+	UpdatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp"`
 }
+
+// GeneticType is the enum for the genetic types
+type GeneticType int
+
+const (
+	// Sativa is the phenotype of cannabis that is tall and thin with narrow leaves
+	Sativa GeneticType = iota
+	// Indica is the phenotype of cannabis that is short and bushy with wide leaves
+	Indica
+	// Hybrid is a mix of both sativa and indica phenotypes
+	Hybrid
+	// SativaHybrid is a mix of sativa and another phenotype
+	SativaHybrid
+	// IndicaHybrid is a mix of indica and another phenotype
+	IndicaHybrid
+)
+
+// Genetics is a collection of all known genetic types.
+var Genetics = map[GeneticType]string{
+	Sativa:       "Sativa",
+	Indica:       "Indica",
+	Hybrid:       "Hybrid",
+	SativaHybrid: "Sativa-hybrid",
+	IndicaHybrid: "Indica-hybrid"}
 
 // CannabinoidType is the enum for the cannnabinoid keys.
 type CannabinoidType int
@@ -173,7 +198,7 @@ type Terpene struct {
 }
 
 // Terpenes is a collection of all known terpenes.
-var Terpenes = map[TerpeneType]Terpene{
+var Terpenes = map[TerpeneType]*Terpene{
 	BetaCaryophyllene: {
 		Name:         "β-Caryophyllene",
 		Effects:      []string{"anti-malarial", "cytoprotective", "anti-inflammatory"},

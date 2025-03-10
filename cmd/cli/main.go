@@ -4,9 +4,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
+	can "github.com/TheDonDope/wits/pkg/cannabis"
 	tea "github.com/charmbracelet/bubbletea"
 	huh "github.com/charmbracelet/huh"
+	"github.com/google/uuid"
 )
 
 type model struct {
@@ -132,51 +135,59 @@ func renderSubmenu(m model) string {
 }
 
 func onStrainCreated() tea.Model {
-	var strain, cultivar, manufacturer, genetic, thc, cbd, amount string
-	var terpenes []string
+	var genetics []huh.Option[can.GeneticType]
+	for k, v := range can.Genetics {
+		genetics = append(genetics, huh.NewOption(v, k))
+	}
+
+	var terpenes []huh.Option[*can.Terpene]
+	for _, t := range can.Terpenes {
+		terpenes = append(terpenes, huh.NewOption(t.Name, t))
+	}
 
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
+				Key("strain").
 				Title("Strain").
-				Value(&strain),
+				Description("The product name"),
+
 			huh.NewInput().
+				Key("cultivar").
 				Title("Cultivar").
-				Value(&cultivar),
+				Description("The plant name"),
+
 			huh.NewInput().
+				Key("manufacturer").
 				Title("Manufacturer").
-				Value(&manufacturer),
-			huh.NewSelect[string]().
+				Description("The producing company"),
+
+			huh.NewSelect[can.GeneticType]().
+				Key("genetic").
+				Options(genetics...).
 				Title("Genetic").
-				Options(
-					huh.NewOption("Sativa", "sativa"),
-					huh.NewOption("Indica", "indica"),
-					huh.NewOption("Sativa-hybrid", "sativa-hybrid"),
-					huh.NewOption("Indica-hybrid", "indica-hybrid"),
-					huh.NewOption("Hybrid", "hybrid")).
-				Value(&genetic),
+				Description("The phenotype"),
+
 			huh.NewInput().
+				Key("thc").
 				Title("THC (%)").
-				Value(&thc),
-			huh.NewInput().Title("CBD (%)").Value(&cbd),
-			huh.NewMultiSelect[string]().
-				Title("Terpenes").
-				Options(
-					huh.NewOption("Carophyllen", "carophyllen"),
-					huh.NewOption("Humulen", "humulen"),
-					huh.NewOption("Myrcen", "myrcen"),
-					huh.NewOption("Limonen", "limonen"),
-					huh.NewOption("Linalool", "linalool"),
-					huh.NewOption("Ocimen", "ocimen"),
-					huh.NewOption("Alpha-Pinen", "alpha-pinen"),
-					huh.NewOption("Garniol", "garniol"),
-					huh.NewOption("Terpinolen", "terpinolen"),
-					huh.NewOption("Farnesene", "farnesene"),
-				).
-				Value(&terpenes),
+				Description("The THC content"),
+
 			huh.NewInput().
-				Title("Amount (grams)").
-				Value(&amount),
+				Key("cbd").
+				Title("CBD (%)").
+				Description("The CBD content"),
+
+			huh.NewMultiSelect[*can.Terpene]().
+				Key("terpenes").
+				Options(terpenes...).
+				Title("Terpenes").
+				Description("The contained terpenes"),
+
+			huh.NewInput().
+				Key("amount").
+				Title("Amount (g)").
+				Description("The weight"),
 		),
 	)
 
@@ -184,8 +195,20 @@ func onStrainCreated() tea.Model {
 		fmt.Fprintf(os.Stderr, "Error running form: %v\n", err)
 		os.Exit(1)
 	}
+	s := can.Strain{
+		ID:           uuid.New(),
+		Strain:       form.GetString("strain"),
+		Cultivar:     form.GetString("cultivar"),
+		Manufacturer: form.GetString("manufacturer"),
+		Genetic:      form.Get("genetic").(can.GeneticType),
+		THC:          form.Get("thc").(float64),
+		CBD:          form.Get("cbd").(float64),
+		Terpenes:     form.Get("terpenes").([]*can.Terpene),
+		Amount:       form.Get("amount").(float64),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now()}
 
-	fmt.Printf("Strain added: %s, Cultivar: %s, Manufacturer: %s, Genetic: %s, THC: %s%%, CBD: %s%%, Terpenes: %v, Amount: %sg\n", strain, cultivar, manufacturer, genetic, thc, cbd, terpenes, amount)
+	fmt.Printf("Strain model added: %v\n", s)
 	return initialModel()
 }
 
