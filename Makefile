@@ -7,14 +7,19 @@ install:
 
 	npm install
 
-build:
+build-server:
 	curl -L -o public/js/htmx.min.js https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js
 	cp ./node_modules/jquery/dist/jquery.min.js public/js/jquery.min.js
 	cp ./node_modules/font-awesome/css/font-awesome.min.css public/css/font-awesome.min.css
 	cp ./node_modules/font-awesome/fonts/* public/fonts/
 	npx @tailwindcss/cli -i pkg/view/css/app.css -o public/css/styles.css
 	templ generate view
-	go build -v -o ./bin/wits ./cmd/server/main.go
+	go build -v -o ./bin/wits-server ./cmd/server/main.go
+
+build-cli:
+	go build -v -o ./bin/wits ./cmd/cli/main.go
+
+build: build-server build-cli
 
 build-image:
 	podman build -t thedondope/wits .
@@ -30,6 +35,7 @@ k8s-down:
 	kubectl delete -f k8s/
 
 clean:
+	rm -f ./bin/wits-server
 	rm -f ./bin/wits
 	rm -f coverage.html
 	rm -f coverage.out
