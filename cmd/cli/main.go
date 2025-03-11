@@ -48,12 +48,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
+			m.cursor--
+			if m.cursor < 0 {
+				m.cursor = len(m.menu) - 1 // Wrap to last item
 			}
 		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
+			m.cursor++
+			if m.cursor >= len(m.menu) {
+				m.cursor = 0 // Wrap to first item
+			}
+		case "1", "2", "3", "4":
+			idx := int(msg.String()[0] - '1') // Convert key to index
+			if idx < len(m.menu) {
+				m.cursor = idx // Jump to selected menu item
 			}
 		case "enter":
 			return onMenuSelected(m)
