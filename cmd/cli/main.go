@@ -141,21 +141,12 @@ func onSubmenuSelected(m model) string {
 
 // onStrainCreated returns a model for creating a strain.
 func onStrainCreated() tea.Model {
-	form := tui.NewStrainForm()
-
-	if err := form.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error running strain creation form: %v\n", err)
-		os.Exit(1)
-	}
-	s := tui.NewStrainFromForm(form)
-	strainService.AddStrain(s)
-	fmt.Printf("Strain model added: %v\n", s)
-	return initialModel()
+	return tui.AddStrain(strainService)
 }
 
 // onStrainListed returns a model for listing strains.
 func onStrainListed() tea.Model {
-	return tui.NewStrainsListModel(strainService)
+	return tui.ListStrains(strainService)
 }
 
 func main() {

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -38,8 +39,8 @@ func terpeneOptions() []huh.Option[*can.Terpene] {
 	return terpenes
 }
 
-// NewStrainForm returns a form for creating a new strain.
-func NewStrainForm() *huh.Form {
+// newStrainForm returns a form for creating a new strain.
+func newStrainForm() *huh.Form {
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -87,8 +88,8 @@ func NewStrainForm() *huh.Form {
 	)
 }
 
-// NewStrainFromForm creates a new strain from the form data.
-func NewStrainFromForm(form *huh.Form) *can.Strain {
+// newStrainFromForm creates a new strain from the form data.
+func newStrainFromForm(form *huh.Form) *can.Strain {
 	thc, err := strconv.ParseFloat(form.GetString("thc"), 64)
 	if err != nil {
 		thc = 0
@@ -114,6 +115,19 @@ func NewStrainFromForm(form *huh.Form) *can.Strain {
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
+}
+
+// AddStrain opens a form for adding a new strain and returns the created strain object.
+func AddStrain(s *service.StrainService) tea.Model {
+	form := newStrainForm()
+
+	if err := form.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running strain creation form: %v\n", err)
+		os.Exit(1)
+	}
+	strain := newStrainFromForm(form)
+	s.AddStrain(strain)
+	return ListStrains(s)
 }
 
 // StrainsListItem is a list item for strains.
@@ -142,8 +156,8 @@ type StrainsListModel struct {
 	service *service.StrainService
 }
 
-// NewStrainsListModel creates a new model for the strains list.
-func NewStrainsListModel(s *service.StrainService) *StrainsListModel {
+// ListStrains creates a new model for the strains list.
+func ListStrains(s *service.StrainService) *StrainsListModel {
 	items := []list.Item{}
 	for _, strain := range s.GetStrains() {
 		items = append(items, StrainsListItem{value: strain})
