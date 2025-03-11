@@ -11,8 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var strainStore *storage.StrainStore
-var strainService *service.StrainService
+var strainStore storage.StrainStore
+var strainService service.StrainService
 
 type model struct {
 	cursor  int
@@ -150,7 +150,7 @@ func onStrainListed() tea.Model {
 }
 
 func main() {
-	strainStore = storage.NewStrainStore()
+	strainStore = storage.NewStrainStoreInMemory()
 	strainService = service.NewStrainService(strainStore)
 	_, err := tea.NewProgram(initialModel()).Run()
 	if err != nil {

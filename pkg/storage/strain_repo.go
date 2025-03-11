@@ -7,25 +7,31 @@ import (
 	"github.com/google/uuid"
 )
 
-// StrainStore is an in-memory store for strains at runtime
-type StrainStore struct {
+type StrainStore interface {
+	AddStrain(strain *can.Strain)
+	GetStrains() []*can.Strain
+	FindStrain(cultivar string) (*can.Strain, error)
+}
+
+// StrainStoreInMemory is an in-memory store for strains at runtime
+type StrainStoreInMemory struct {
 	Strains map[string]*can.Strain
 }
 
-// NewStrainStore creates a new in-memory Strain store.
-func NewStrainStore() *StrainStore {
-	return &StrainStore{
+// NewStrainStoreInMemory creates a new in-memory Strain store.
+func NewStrainStoreInMemory() *StrainStoreInMemory {
+	return &StrainStoreInMemory{
 		Strains: make(map[string]*can.Strain),
 	}
 }
 
 // AddStrain adds a strain to the store, using its cultivar as the key.
-func (s *StrainStore) AddStrain(strain *can.Strain) {
+func (s *StrainStoreInMemory) AddStrain(strain *can.Strain) {
 	s.Strains[strain.Cultivar] = strain
 }
 
 // GetStrains returns all strains in the store as a slice.
-func (s *StrainStore) GetStrains() []*can.Strain {
+func (s *StrainStoreInMemory) GetStrains() []*can.Strain {
 	var strains []*can.Strain
 	for _, s := range s.Strains {
 		strains = append(strains, s)
@@ -50,6 +56,6 @@ func (s *StrainStore) GetStrains() []*can.Strain {
 }
 
 // FindStrain finds a strain in the store by cultivar.
-func (s *StrainStore) FindStrain(cultivar string) *can.Strain {
-	return s.Strains[cultivar]
+func (s *StrainStoreInMemory) FindStrain(cultivar string) (*can.Strain, error) {
+	return s.Strains[cultivar], nil
 }

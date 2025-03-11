@@ -118,7 +118,7 @@ func newStrainFromForm(form *huh.Form) *can.Strain {
 }
 
 // AddStrain opens a form for adding a new strain and returns the created strain object.
-func AddStrain(s *service.StrainService) tea.Model {
+func AddStrain(s service.StrainService) tea.Model {
 	form := newStrainForm()
 
 	if err := form.Run(); err != nil {
@@ -153,11 +153,11 @@ func (i StrainsListItem) Description() string {
 // StrainsListModel is a model for the strains list.
 type StrainsListModel struct {
 	list    list.Model
-	service *service.StrainService
+	service service.StrainService
 }
 
 // ListStrains creates a new model for the strains list.
-func ListStrains(s *service.StrainService) *StrainsListModel {
+func ListStrains(s service.StrainService) *StrainsListModel {
 	items := []list.Item{}
 	for _, strain := range s.GetStrains() {
 		items = append(items, StrainsListItem{value: strain})
