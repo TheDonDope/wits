@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
@@ -81,16 +82,28 @@ func NewStrainForm() *huh.Form {
 
 // NewStrainFromForm creates a new strain from the form data.
 func NewStrainFromForm(form *huh.Form) *can.Strain {
+	thc, err := strconv.ParseFloat(form.GetString("thc"), 64)
+	if err != nil {
+		thc = 0
+	}
+	cbd, err := strconv.ParseFloat(form.GetString("cbd"), 64)
+	if err != nil {
+		cbd = 0
+	}
+	amount, err := strconv.ParseFloat(form.GetString("amount"), 64)
+	if err != nil {
+		amount = 0
+	}
 	return &can.Strain{
 		ID:           uuid.New(),
 		Strain:       form.GetString("strain"),
 		Cultivar:     form.GetString("cultivar"),
 		Manufacturer: form.GetString("manufacturer"),
 		Genetic:      form.Get("genetic").(can.GeneticType),
-		THC:          form.Get("thc").(float64),
-		CBD:          form.Get("cbd").(float64),
+		THC:          thc,
+		CBD:          cbd,
 		Terpenes:     form.Get("terpenes").([]*can.Terpene),
-		Amount:       form.Get("amount").(float64),
+		Amount:       amount,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
