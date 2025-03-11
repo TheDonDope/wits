@@ -7,8 +7,8 @@ import (
 	"time"
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
+	"github.com/TheDonDope/wits/pkg/tui"
 	tea "github.com/charmbracelet/bubbletea"
-	huh "github.com/charmbracelet/huh"
 	"github.com/google/uuid"
 )
 
@@ -30,11 +30,15 @@ func initialModel() model {
 	}
 }
 
+// Init is the first function that will be called. It returns an optional
+// initial command. To not perform an initial command return nil.
 func (m model) Init() tea.Cmd {
 	// Just return `nil`, which means "no I/O right now, please."
 	return nil
 }
 
+// Update is called when a message is received. Use it to inspect messages
+// and, in response, update the model and/or send a command.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -58,6 +62,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// View renders the program's UI, which is just a string. The view is
+// rendered after every Update.
 func (m model) View() string {
 	s := "🥦 Welcome to Wits!\n\n"
 	if m.menu == "main" {
@@ -135,64 +141,10 @@ func renderSubmenu(m model) string {
 }
 
 func onStrainCreated() tea.Model {
-	var genetics []huh.Option[can.GeneticType]
-	for k, v := range can.Genetics {
-		genetics = append(genetics, huh.NewOption(v, k))
-	}
-
-	var terpenes []huh.Option[*can.Terpene]
-	for _, t := range can.Terpenes {
-		terpenes = append(terpenes, huh.NewOption(t.Name, t))
-	}
-
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewInput().
-				Key("strain").
-				Title("Strain").
-				Description("The product name"),
-
-			huh.NewInput().
-				Key("cultivar").
-				Title("Cultivar").
-				Description("The plant name"),
-
-			huh.NewInput().
-				Key("manufacturer").
-				Title("Manufacturer").
-				Description("The producing company"),
-
-			huh.NewSelect[can.GeneticType]().
-				Key("genetic").
-				Options(genetics...).
-				Title("Genetic").
-				Description("The phenotype"),
-
-			huh.NewInput().
-				Key("thc").
-				Title("THC (%)").
-				Description("The THC content"),
-
-			huh.NewInput().
-				Key("cbd").
-				Title("CBD (%)").
-				Description("The CBD content"),
-
-			huh.NewMultiSelect[*can.Terpene]().
-				Key("terpenes").
-				Options(terpenes...).
-				Title("Terpenes").
-				Description("The contained terpenes"),
-
-			huh.NewInput().
-				Key("amount").
-				Title("Amount (g)").
-				Description("The weight"),
-		),
-	)
+	form := tui.NewStrainForm()
 
 	if err := form.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error running form: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error running strain creation form: %v\n", err)
 		os.Exit(1)
 	}
 	s := can.Strain{
