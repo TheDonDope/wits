@@ -4,12 +4,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
-	can "github.com/TheDonDope/wits/pkg/cannabis"
 	"github.com/TheDonDope/wits/pkg/tui"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/google/uuid"
 )
 
 type model struct {
@@ -147,18 +144,7 @@ func onStrainCreated() tea.Model {
 		fmt.Fprintf(os.Stderr, "Error running strain creation form: %v\n", err)
 		os.Exit(1)
 	}
-	s := can.Strain{
-		ID:           uuid.New(),
-		Strain:       form.GetString("strain"),
-		Cultivar:     form.GetString("cultivar"),
-		Manufacturer: form.GetString("manufacturer"),
-		Genetic:      form.Get("genetic").(can.GeneticType),
-		THC:          form.Get("thc").(float64),
-		CBD:          form.Get("cbd").(float64),
-		Terpenes:     form.Get("terpenes").([]*can.Terpene),
-		Amount:       form.Get("amount").(float64),
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now()}
+	s := tui.NewStrainFromForm(form)
 
 	fmt.Printf("Strain model added: %v\n", s)
 	return initialModel()

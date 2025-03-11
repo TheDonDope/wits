@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"time"
+
 	can "github.com/TheDonDope/wits/pkg/cannabis"
 	"github.com/charmbracelet/huh"
+	"github.com/google/uuid"
 )
 
 // geneticsOptions returns a list of genetic options for the user to choose from.
@@ -70,4 +73,21 @@ func NewStrainForm() *huh.Form {
 				Description("The weight"),
 		),
 	)
+}
+
+// NewStrainFromForm creates a new strain from the form data.
+func NewStrainFromForm(form *huh.Form) *can.Strain {
+	return &can.Strain{
+		ID:           uuid.New(),
+		Strain:       form.GetString("strain"),
+		Cultivar:     form.GetString("cultivar"),
+		Manufacturer: form.GetString("manufacturer"),
+		Genetic:      form.Get("genetic").(can.GeneticType),
+		THC:          form.Get("thc").(float64),
+		CBD:          form.Get("cbd").(float64),
+		Terpenes:     form.Get("terpenes").([]*can.Terpene),
+		Amount:       form.Get("amount").(float64),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
 }
