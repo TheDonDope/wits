@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"time"
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
@@ -97,12 +98,22 @@ func NewStrainFromForm(form *huh.Form) *can.Strain {
 
 // StrainsListItem is a list item for strains.
 type StrainsListItem struct {
-	value string
+	value *can.Strain
 }
 
 // FilterValue returns the filter value for the list item.
 func (i StrainsListItem) FilterValue() string {
-	return i.value
+	return i.value.Cultivar
+}
+
+// Title returns the title for the list item.
+func (i StrainsListItem) Title() string {
+	return i.value.Strain
+}
+
+// Description returns the description for the list item.
+func (i StrainsListItem) Description() string {
+	return fmt.Sprintf("Genetic: %s, THC/CBD: %.1f%% %.1f%%", can.Genetics[i.value.Genetic], i.value.THC, i.value.CBD)
 }
 
 // StrainsListModel is a model for the strains list.
@@ -115,10 +126,10 @@ type StrainsListModel struct {
 func NewStrainsListModel(s *service.StrainService) *StrainsListModel {
 	items := []list.Item{}
 	for _, strain := range s.GetStrains() {
-		items = append(items, StrainsListItem{value: strain.Cultivar})
+		items = append(items, StrainsListItem{value: strain})
 	}
 
-	l := list.New(items, list.NewDefaultDelegate(), 20, 10)
+	l := list.New(items, list.NewDefaultDelegate(), 60, 30)
 	l.Title = "🌿 Strains"
 
 	return &StrainsListModel{list: l, service: s}
