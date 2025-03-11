@@ -4,6 +4,7 @@ run: build
 install:
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install golang.org/x/tools/cmd/godoc@latest
+	go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
 
 	npm install
 
@@ -46,6 +47,9 @@ clean:
 
 doc:
 	godoc
+
+changelog:
+	git-chglog -o CHANGELOG.md
 
 test:
 	go test -race -v ./... -coverprofile coverage.out
