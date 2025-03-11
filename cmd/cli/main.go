@@ -72,7 +72,7 @@ func (m model) View() string {
 			s += fmt.Sprintf("%s(%d): %s\n", cursor, i+1, choice)
 		}
 	} else {
-		s += renderSubmenu(m)
+		s += onSubmenuSelected(m)
 	}
 	s += "\nPress ctrl+c or q to quit."
 	if m.menu != "main" {
@@ -125,7 +125,7 @@ func onMenuSelected(m model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func renderSubmenu(m model) string {
+func onSubmenuSelected(m model) string {
 	s := fmt.Sprintf("%s Menu:\n", m.menu)
 	for i, choice := range m.choices {
 		cursor := " "
@@ -151,8 +151,8 @@ func onStrainCreated() tea.Model {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
+	_, err := tea.NewProgram(initialModel()).Run()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error starting program: %v", err)
 		os.Exit(1)
 	}
