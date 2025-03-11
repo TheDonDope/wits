@@ -7,9 +7,9 @@ import (
 
 // StrainService provides operations on strains.
 type StrainService interface {
-	AddStrain(strain *can.Strain)
+	AddStrain(strain *can.Strain) error
 	GetStrains() []*can.Strain
-	FindStrainByCultivar(cultivar string) (*can.Strain, error)
+	FindStrainByProduct(product string) (*can.Strain, error)
 }
 
 // StrainServiceType provides operations on strains.
@@ -23,8 +23,8 @@ func NewStrainService(store storage.StrainStore) *StrainServiceType {
 }
 
 // AddStrain adds a strain to the store.
-func (s *StrainServiceType) AddStrain(strain *can.Strain) {
-	s.store.AddStrain(strain)
+func (s *StrainServiceType) AddStrain(strain *can.Strain) error {
+	return s.store.AddStrain(strain)
 }
 
 // GetStrains retrieves all strains from the store.
@@ -32,7 +32,7 @@ func (s *StrainServiceType) GetStrains() []*can.Strain {
 	return s.store.GetStrains()
 }
 
-// FindStrainByCultivar looks up a strain by its cultivar.
-func (s *StrainServiceType) FindStrainByCultivar(cultivar string) (*can.Strain, error) {
-	return s.store.FindStrain(cultivar)
+// FindStrainByProduct looks up a strain by its prodcut name.
+func (s *StrainServiceType) FindStrainByProduct(product string) (*can.Strain, error) {
+	return s.store.FindStrain(product)
 }

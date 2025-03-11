@@ -1,14 +1,23 @@
 package storage
 
 import (
+	"errors"
 	"time"
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
 	"github.com/google/uuid"
 )
 
+var (
+	// ErrStrainNotFound is returned when a strain is not found in the store.
+	ErrStrainNotFound = errors.New("Strain with that product name not found")
+	// ErrStrainAlreadyExists is returned when a strain with the same product name already exists in the store.
+	ErrStrainAlreadyExists = errors.New("Strain with that product name already exists")
+)
+
+// StrainStore is an interface for storing strains.
 type StrainStore interface {
-	AddStrain(strain *can.Strain)
+	AddStrain(strain *can.Strain) error
 	GetStrains() []*can.Strain
 	FindStrain(cultivar string) (*can.Strain, error)
 }
@@ -25,9 +34,13 @@ func NewStrainStoreInMemory() *StrainStoreInMemory {
 	}
 }
 
-// AddStrain adds a strain to the store, using its cultivar as the key.
-func (s *StrainStoreInMemory) AddStrain(strain *can.Strain) {
-	s.Strains[strain.Cultivar] = strain
+// AddStrain adds a strain to the store, using its product name as the key.
+func (s *StrainStoreInMemory) AddStrain(strain *can.Strain) error {
+	if _, exists := s.Strains[strain.Strain]; exists {
+		return ErrStrainAlreadyExists
+	}
+	s.Strains[strain.Strain] = strain
+	return nil
 }
 
 // GetStrains returns all strains in the store as a slice.
@@ -55,7 +68,11 @@ func (s *StrainStoreInMemory) GetStrains() []*can.Strain {
 	return strains
 }
 
-// FindStrain finds a strain in the store by cultivar.
-func (s *StrainStoreInMemory) FindStrain(cultivar string) (*can.Strain, error) {
-	return s.Strains[cultivar], nil
+// FindStrain finds a strain in the store by product name.
+func (s *StrainStoreInMemory) FindStrain(product string) (*can.Strain, error) {
+	strain, exists := s.Strains[product]
+	if !exists {
+		return nil, ErrStrainNotFound
+	}
+	return strain, nil
 }
