@@ -4,6 +4,9 @@ import (
 	"time"
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
+	"github.com/TheDonDope/wits/pkg/service"
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/google/uuid"
 )
@@ -90,4 +93,58 @@ func NewStrainFromForm(form *huh.Form) *can.Strain {
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
+}
+
+// StrainsListItem is a list item for strains.
+type StrainsListItem struct {
+	value string
+}
+
+// FilterValue returns the filter value for the list item.
+func (i StrainsListItem) FilterValue() string {
+	return i.value
+}
+
+// StrainsListModel is a model for the strains list.
+type StrainsListModel struct {
+	list    list.Model
+	service *service.StrainService
+}
+
+// NewStrainsListModel creates a new model for the strains list.
+func NewStrainsListModel(s *service.StrainService) *StrainsListModel {
+	items := []list.Item{}
+	for _, strain := range s.GetStrains() {
+		items = append(items, StrainsListItem{value: strain.Cultivar})
+	}
+
+	l := list.New(items, list.NewDefaultDelegate(), 20, 10)
+	l.Title = "🌿 Strains"
+
+	return &StrainsListModel{list: l, service: s}
+}
+
+// Init initializes the strains list model.
+func (m StrainsListModel) Init() tea.Cmd {
+	return nil
+}
+
+// Update updates the strains list model.
+func (m StrainsListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q":
+			return m, tea.Quit
+		}
+	}
+
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
+// View renders the strains list model.
+func (m StrainsListModel) View() string {
+	return m.list.View()
 }

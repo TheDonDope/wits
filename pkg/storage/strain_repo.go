@@ -1,6 +1,11 @@
 package storage
 
-import can "github.com/TheDonDope/wits/pkg/cannabis"
+import (
+	"time"
+
+	can "github.com/TheDonDope/wits/pkg/cannabis"
+	"github.com/google/uuid"
+)
 
 // StrainStore is an in-memory store for strains at runtime
 type StrainStore struct {
@@ -24,6 +29,22 @@ func (s *StrainStore) GetStrains() []*can.Strain {
 	var strains []*can.Strain
 	for _, s := range s.Strains {
 		strains = append(strains, s)
+	}
+	if len(strains) == 0 {
+		// Add dummy strain for testing
+		strains = append(strains, &can.Strain{
+			ID:           uuid.New(),
+			Strain:       "Barongo 27/1 MAC3",
+			Cultivar:     "MAC 3",
+			Manufacturer: "WMG Pharma",
+			Genetic:      can.Hybrid,
+			THC:          27.0,
+			CBD:          1.0,
+			Terpenes:     []*can.Terpene{can.Terpenes[can.BetaMyrcene], can.Terpenes[can.Limonene], can.Terpenes[can.Linalool], can.Terpenes[can.BetaCaryophyllene]},
+			Amount:       5.0,
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		})
 	}
 	return strains
 }

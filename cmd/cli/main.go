@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/TheDonDope/wits/pkg/service"
+	"github.com/TheDonDope/wits/pkg/storage"
 	"github.com/TheDonDope/wits/pkg/tui"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+var strainStore *storage.StrainStore
+var strainService *service.StrainService
 
 type model struct {
 	cursor  int
@@ -81,6 +86,7 @@ func (m model) View() string {
 	return s
 }
 
+// onMenuSelected returns a model for the selected menu.
 func onMenuSelected(m model) (tea.Model, tea.Cmd) {
 	switch m.menu {
 	case "main":
@@ -118,13 +124,17 @@ func onMenuSelected(m model) (tea.Model, tea.Cmd) {
 				menu: "stats"}, nil
 		}
 	case "strains":
-		if m.cursor == 0 {
+		switch m.cursor {
+		case 0:
 			return onStrainCreated(), nil
+		case 1:
+			return onStrainListed(), nil
 		}
 	}
 	return m, nil
 }
 
+// onSubmenuSelected renders the selected submenu and its items.
 func onSubmenuSelected(m model) string {
 	s := fmt.Sprintf("%s Menu:\n", m.menu)
 	for i, choice := range m.choices {
@@ -137,6 +147,7 @@ func onSubmenuSelected(m model) string {
 	return s
 }
 
+// onStrainCreated returns a model for creating a strain.
 func onStrainCreated() tea.Model {
 	form := tui.NewStrainForm()
 
@@ -145,12 +156,19 @@ func onStrainCreated() tea.Model {
 		os.Exit(1)
 	}
 	s := tui.NewStrainFromForm(form)
-
+	strainService.AddStrain(s)
 	fmt.Printf("Strain model added: %v\n", s)
 	return initialModel()
 }
 
+// onStrainListed returns a model for listing strains.
+func onStrainListed() tea.Model {
+	return tui.NewStrainsListModel(strainService)
+}
+
 func main() {
+	strainStore = storage.NewStrainStore()
+	strainService = service.NewStrainService(strainStore)
 	_, err := tea.NewProgram(initialModel()).Run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error starting program: %v", err)

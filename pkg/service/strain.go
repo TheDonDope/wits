@@ -20,8 +20,8 @@ func (s *StrainService) AddStrain(strain *can.Strain) {
 	s.store.AddStrain(strain)
 }
 
-// GetAllStrains retrieves all strains from the store.
-func (s *StrainService) GetAllStrains() []*can.Strain {
+// GetStrains retrieves all strains from the store.
+func (s *StrainService) GetStrains() []*can.Strain {
 	return s.store.GetStrains()
 }
 
