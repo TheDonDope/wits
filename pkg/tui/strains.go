@@ -30,6 +30,14 @@ func geneticsOptions() []huh.Option[can.GeneticType] {
 	return genetics
 }
 
+// radiationOptions returns a list of options for radiation treatment for the user to choose from.
+func radiationOptions() []huh.Option[bool] {
+	var radiations []huh.Option[bool]
+	radiations = append(radiations, huh.NewOption("yes", true))
+	radiations = append(radiations, huh.NewOption("no", false))
+	return radiations
+}
+
 // terpeneOptions returns a list of terpene options for the user to choose from.
 func terpeneOptions() []huh.Option[*can.Terpene] {
 	var terpenes []huh.Option[*can.Terpene]
@@ -58,11 +66,22 @@ func newStrainForm() *huh.Form {
 				Title("Manufacturer").
 				Description("The producing company"),
 
+			huh.NewInput().
+				Key("country").
+				Title("Country").
+				Description("The country of origin"),
+
 			huh.NewSelect[can.GeneticType]().
 				Key("genetic").
 				Options(geneticsOptions()...).
 				Title("Genetic").
 				Description("The phenotype"),
+
+			huh.NewSelect[bool]().
+				Key("radiated").
+				Options(radiationOptions()...).
+				Title("Radiated").
+				Description("If the plant was radiation treated"),
 
 			huh.NewInput().
 				Key("thc").
@@ -107,7 +126,9 @@ func newStrainFromForm(form *huh.Form) *can.Strain {
 		Strain:       form.GetString("strain"),
 		Cultivar:     form.GetString("cultivar"),
 		Manufacturer: form.GetString("manufacturer"),
+		Country:      form.GetString("country"),
 		Genetic:      form.Get("genetic").(can.GeneticType),
+		Radiated:     form.GetBool("radiated"),
 		THC:          thc,
 		CBD:          cbd,
 		Terpenes:     form.Get("terpenes").([]*can.Terpene),
@@ -118,7 +139,7 @@ func newStrainFromForm(form *huh.Form) *can.Strain {
 }
 
 // AddStrain opens a form for adding a new strain and returns the created strain object.
-func AddStrain(s service.StrainService) tea.Model {
+func AddStrain(svc service.StrainService) tea.Model {
 	form := newStrainForm()
 
 	if err := form.Run(); err != nil {
@@ -126,8 +147,8 @@ func AddStrain(s service.StrainService) tea.Model {
 		os.Exit(1)
 	}
 	strain := newStrainFromForm(form)
-	s.AddStrain(strain)
-	return ListStrains(s)
+	svc.AddStrain(strain)
+	return ListStrains(svc)
 }
 
 // StrainsListItem is a list item for strains.
@@ -136,18 +157,18 @@ type StrainsListItem struct {
 }
 
 // FilterValue returns the filter value for the list item.
-func (i StrainsListItem) FilterValue() string {
-	return i.value.Cultivar
+func (sli StrainsListItem) FilterValue() string {
+	return sli.value.Cultivar
 }
 
 // Title returns the title for the list item.
-func (i StrainsListItem) Title() string {
-	return i.value.Strain
+func (sli StrainsListItem) Title() string {
+	return sli.value.Strain
 }
 
 // Description returns the description for the list item.
-func (i StrainsListItem) Description() string {
-	return fmt.Sprintf("Genetic: %s, THC/CBD: %.1f%% %.1f%%", can.Genetics[i.value.Genetic], i.value.THC, i.value.CBD)
+func (sli StrainsListItem) Description() string {
+	return fmt.Sprintf("Genetic: %s, THC/CBD: %.1f%% %.1f%%", can.Genetics[sli.value.Genetic], sli.value.THC, sli.value.CBD)
 }
 
 // StrainsListModel is a model for the strains list.
@@ -157,39 +178,39 @@ type StrainsListModel struct {
 }
 
 // ListStrains creates a new model for the strains list.
-func ListStrains(s service.StrainService) *StrainsListModel {
+func ListStrains(svc service.StrainService) *StrainsListModel {
 	items := []list.Item{}
-	for _, strain := range s.GetStrains() {
+	for _, strain := range svc.GetStrains() {
 		items = append(items, StrainsListItem{value: strain})
 	}
 
 	l := list.New(items, list.NewDefaultDelegate(), 60, 30)
 	l.Title = "🌿 Strains"
 
-	return &StrainsListModel{list: l, service: s}
+	return &StrainsListModel{list: l, service: svc}
 }
 
 // Init initializes the strains list model.
-func (m StrainsListModel) Init() tea.Cmd {
+func (slm StrainsListModel) Init() tea.Cmd {
 	return nil
 }
 
 // Update updates the strains list model.
-func (m StrainsListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (slm StrainsListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
-			return m, tea.Quit
+			return slm, tea.Quit
 		}
 	}
 
 	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	slm.list, cmd = slm.list.Update(msg)
+	return slm, cmd
 }
 
 // View renders the strains list model.
-func (m StrainsListModel) View() string {
-	return m.list.View()
+func (slm StrainsListModel) View() string {
+	return slm.list.View()
 }

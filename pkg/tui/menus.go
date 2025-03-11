@@ -28,9 +28,9 @@ type MenuModel struct {
 }
 
 // InitialMenuModel returns the initial model for the main menu.
-func InitialMenuModel(strainSrv service.StrainService, strainStr storage.StrainStore) MenuModel {
-	strainStore = strainStr
-	strainService = strainSrv
+func InitialMenuModel(sSvc service.StrainService, sStr storage.StrainStore) MenuModel {
+	strainStore = sStr
+	strainService = sSvc
 	return MenuModel{
 		Items: MainMenu,
 		Menu:  "main",

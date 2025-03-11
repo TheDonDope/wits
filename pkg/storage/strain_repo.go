@@ -17,9 +17,9 @@ var (
 
 // StrainStore is an interface for storing strains.
 type StrainStore interface {
-	AddStrain(strain *can.Strain) error
+	AddStrain(s *can.Strain) error
 	GetStrains() []*can.Strain
-	FindStrain(cultivar string) (*can.Strain, error)
+	FindStrainByProduct(p string) (*can.Strain, error)
 }
 
 // StrainStoreInMemory is an in-memory store for strains at runtime
@@ -35,18 +35,18 @@ func NewStrainStoreInMemory() *StrainStoreInMemory {
 }
 
 // AddStrain adds a strain to the store, using its product name as the key.
-func (s *StrainStoreInMemory) AddStrain(strain *can.Strain) error {
-	if _, exists := s.Strains[strain.Strain]; exists {
+func (sstr *StrainStoreInMemory) AddStrain(s *can.Strain) error {
+	if _, exists := sstr.Strains[s.Strain]; exists {
 		return ErrStrainAlreadyExists
 	}
-	s.Strains[strain.Strain] = strain
+	sstr.Strains[s.Strain] = s
 	return nil
 }
 
 // GetStrains returns all strains in the store as a slice.
-func (s *StrainStoreInMemory) GetStrains() []*can.Strain {
+func (sstr *StrainStoreInMemory) GetStrains() []*can.Strain {
 	var strains []*can.Strain
-	for _, s := range s.Strains {
+	for _, s := range sstr.Strains {
 		strains = append(strains, s)
 	}
 	if len(strains) == 0 {
@@ -68,9 +68,9 @@ func (s *StrainStoreInMemory) GetStrains() []*can.Strain {
 	return strains
 }
 
-// FindStrain finds a strain in the store by product name.
-func (s *StrainStoreInMemory) FindStrain(product string) (*can.Strain, error) {
-	strain, exists := s.Strains[product]
+// FindStrainByProduct finds a strain in the store by product name.
+func (sstr *StrainStoreInMemory) FindStrainByProduct(p string) (*can.Strain, error) {
+	strain, exists := sstr.Strains[p]
 	if !exists {
 		return nil, ErrStrainNotFound
 	}

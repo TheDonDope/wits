@@ -8,17 +8,19 @@ import (
 
 // Strain is the type for a cannabis strain.
 type Strain struct {
-	ID           uuid.UUID   `bun:"type:uuid,default:uuid_generate_v4()"`
+	ID           uuid.UUID   // The unique identifier
 	Strain       string      // The product name
 	Cultivar     string      // The breed
 	Manufacturer string      // The producer
+	Country      string      // The country of origin
 	Genetic      GeneticType // The genetic type
+	Radiated     bool        // If the strain was radiation treated
 	THC          float64     // The THC content in %
 	CBD          float64     // The CBD content in %
 	Terpenes     []*Terpene  // The terpenes in the strain
 	Amount       float64     // The amount in grams
-	CreatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp"`
-	UpdatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp"`
+	CreatedAt    time.Time   // The creation timestamp
+	UpdatedAt    time.Time   // The last update timestamp
 }
 
 // GeneticType is the enum for the genetic types

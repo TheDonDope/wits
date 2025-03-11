@@ -7,32 +7,32 @@ import (
 
 // StrainService provides operations on strains.
 type StrainService interface {
-	AddStrain(strain *can.Strain) error
+	AddStrain(s *can.Strain) error
 	GetStrains() []*can.Strain
-	FindStrainByProduct(product string) (*can.Strain, error)
+	FindStrainByProduct(p string) (*can.Strain, error)
 }
 
-// StrainServiceType provides operations on strains.
+// StrainServiceType provides operations on strains, accessing a store.
 type StrainServiceType struct {
 	store storage.StrainStore
 }
 
 // NewStrainService creates a new service layer for strains.
-func NewStrainService(store storage.StrainStore) *StrainServiceType {
-	return &StrainServiceType{store: store}
+func NewStrainService(s storage.StrainStore) *StrainServiceType {
+	return &StrainServiceType{store: s}
 }
 
 // AddStrain adds a strain to the store.
-func (s *StrainServiceType) AddStrain(strain *can.Strain) error {
-	return s.store.AddStrain(strain)
+func (svc *StrainServiceType) AddStrain(s *can.Strain) error {
+	return svc.store.AddStrain(s)
 }
 
 // GetStrains retrieves all strains from the store.
-func (s *StrainServiceType) GetStrains() []*can.Strain {
-	return s.store.GetStrains()
+func (svc *StrainServiceType) GetStrains() []*can.Strain {
+	return svc.store.GetStrains()
 }
 
 // FindStrainByProduct looks up a strain by its prodcut name.
-func (s *StrainServiceType) FindStrainByProduct(product string) (*can.Strain, error) {
-	return s.store.FindStrain(product)
+func (svc *StrainServiceType) FindStrainByProduct(p string) (*can.Strain, error) {
+	return svc.store.FindStrainByProduct(p)
 }
