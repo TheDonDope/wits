@@ -100,35 +100,20 @@ func onMenuSelected(m model) (tea.Model, tea.Cmd) {
 		switch m.cursor {
 		case 0:
 			return model{
-				choices: []string{
-					"➕ Add Strain",
-					"📋 View Strains",
-					"✏️ Edit Strain",
-					"❌ Remove Strain"},
-				menu: "strains"}, nil
+				choices: tui.StrainsSubmenu,
+				menu:    "strains"}, nil
 		case 1:
 			return model{
-				choices: []string{
-					"➕ Register Device",
-					"📋 View Devices",
-					"✏️ Edit Device",
-					"❌ Remove Device"},
-				menu: "devices"}, nil
+				choices: tui.DevicesSubmenu,
+				menu:    "devices"}, nil
 		case 2:
 			return model{
-				choices: []string{
-					"🎨 Appearance",
-					"⌨️ Keybindings",
-					"🌍 Localization",
-					"💾 Backup & Restore"},
-				menu: "settings"}, nil
+				choices: tui.SettingsSubmenu,
+				menu:    "settings"}, nil
 		case 3:
 			return model{
-				choices: []string{
-					"📅 Usage History",
-					"📈 Trends",
-					"🔢 Dosage Tracker"},
-				menu: "stats"}, nil
+				choices: tui.StatsSubmenu,
+				menu:    "stats"}, nil
 		}
 	case "strains":
 		switch m.cursor {

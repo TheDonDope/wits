@@ -13,6 +13,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// StrainsSubmenu is a list of options for the strains submenu.
+var StrainsSubmenu = []string{
+	"➕ Add Strain",
+	"📋 View Strains",
+	"✏️ Edit Strain",
+	"❌ Remove Strain"}
+
 // geneticsOptions returns a list of genetic options for the user to choose from.
 func geneticsOptions() []huh.Option[can.GeneticType] {
 	var genetics []huh.Option[can.GeneticType]
