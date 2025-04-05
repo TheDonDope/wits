@@ -1,7 +1,6 @@
 module github.com/TheDonDope/wits
 
-go 1.23.6
-toolchain go1.24.1
+go 1.24.2
 
 require (
 	github.com/a-h/templ v0.3.857
