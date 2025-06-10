@@ -16,7 +16,7 @@ require (
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/uptrace/bun v1.2.12
 	github.com/uptrace/bun/dialect/pgdialect v1.2.12
-	github.com/uptrace/bun/extra/bundebug v1.2.11
+	github.com/uptrace/bun/extra/bundebug v1.2.12
 	golang.org/x/crypto v0.39.0
 )
 
