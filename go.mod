@@ -1,6 +1,6 @@
 module github.com/TheDonDope/wits-tui
 
-go 1.24.2
+go 1.26.3
 
 require (
 	github.com/charmbracelet/bubbles v0.21.1-0.20250623103423-23b8fd6302d7
