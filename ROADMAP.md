@@ -98,8 +98,8 @@ the tin on the table.
 ### Bundles — `wits bundle` / `wits restore`
 
 The whole repository as one plain-text file, restoring to a journal identical
-**byte for byte**, hash chain included. 1369 entries: 500,729 bytes as a journal,
-27,510 as a bundle, 6,299 gzipped.
+**byte for byte**, hash chain included. 1369 entries: 506,205 bytes as a journal,
+27,968 as a bundle, 6,399 gzipped.
 
 Plain text and line-oriented on purpose: the record may outlive this program, and
 it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
@@ -116,6 +116,9 @@ Nothing is written without `--commit`, and a repository that already holds entri
 is refused: a second import would double every gram, and it cannot be told from a
 genuine second helping of the same product on the same day.
 
+Two spellings of one product at one strength still merge, and that is reported
+rather than done quietly. Two strengths of one product never do.
+
 It is tested against the real workbook, committed at
 `assets/Tracking.2022.cleaned.xlsx`, rather than only against fixtures — a
 fixture agrees with whatever the code believes, and this one does not. Every
@@ -123,9 +126,9 @@ figure asserted was reconciled against the workbook read independently.
 
 ### The interface
 
-Built on Bubble Tea v2. Four screens — dashboard, journal, analysis, devices —
-reading from the ledger and nothing else, so the figures on screen and the
-figures in `wits status` are the same figures by construction.
+Built on Bubble Tea v2. Five screens — dashboard, journal, analysis, products,
+devices — reading from the ledger and nothing else, so the figures on screen and
+the figures in `wits status` are the same figures by construction.
 
 Entries are recorded with huh v2 forms embedded as models. Nothing calls
 `form.Run()`, which is what the previous interface did inside `Update` and why it
@@ -154,10 +157,19 @@ held by default and everything ever dispensed on `a`, because a catalog
 remembering four years of prescriptions is a history rather than a shelf.
 
 Every product gets a short handle when it is first bought — three to five
-characters from the cultivar, never one keystroke from another, since references
-resolve by prefix. `--slug` chooses one by hand. It is fixed once and never
-changes: it is the name every entry refers to, so `e` on the products screen
-corrects what a product is *called*, not which product it *is*.
+characters from the cultivar, then the THC/CBD ratio: `wcake-221`. Handles are
+never one keystroke from another, since references resolve by prefix, and a
+prefix is enough while it is unambiguous. `--slug` chooses one by hand and is
+taken as written.
+
+**The ratio is part of the slug** because one cultivar from one manufacturer at
+two strengths is two prescriptions. Without it the two collapsed into one
+product and their grams were added together: these records held two such pairs,
+a MAC1 at 22/1 and 25/1, and a Lemon Tartz at 21/1 and 25/1.
+
+A handle is fixed once and never changes: it is the name every entry refers to,
+so `e` on the products screen corrects what a product is *called*, not which
+product it *is*.
 
 `wits reconcile`, and `r` in the interface, record the difference between what
 the ledger believes an account holds and what it actually weighs. Nothing in the
@@ -183,13 +195,6 @@ range is checked when it is typed rather than later when a session is refused.
 - Imported history holds no sessions at all, because the spreadsheet only ever
   recorded grinding. Nothing was invented to fill that gap, so the stash balance
   of a product recurring across cycles reads high until it is worked down.
-
-### 🔹 Splitting products the slug merged
-
-- **Status**: Planned
-- The importer's `Slugify` drops the THC ratio, so the same cultivar from one manufacturer at two
-  potencies becomes one product. The importer reports these rather than doing it
-  quietly, but there is no way to split them afterwards.
 
 ### 🔹 `wits show` and `wits fsck`
 
@@ -246,9 +251,11 @@ than the tool, and are worth correcting at the source:
   missing from that cycle's arithmetic too.
 - **`2025-06` lists Ghost Train Haze at 0.01 g** where the other two products are
   10 g. Either a typo or a deliberate "trace left" marker.
-- **Two products were named more than one way** and became one, because the slug
-  drops the THC ratio: `420 Evolution 22/1 CA MAC: MAC1` with its 25/1 spelling,
-  and `All Nations 21/1 Lemon Tartz` with its 25/1.
+- **Two cultivars were dispensed at two strengths each** — `420 Evolution CA MAC:
+  MAC1` at 22/1 and 25/1, and `All Nations Lemon Tartz` at 21/1 and 25/1. These
+  used to become one product apiece, because the slug dropped the ratio. The
+  ratio is now the end of every slug and they stand apart, which is why the
+  import reports 50 products where it once reported 48.
 
 ---
 
