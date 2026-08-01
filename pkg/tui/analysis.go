@@ -70,7 +70,9 @@ func (v analysisView) View(a *App, height int) string {
 		v.byProduct(a, events, width),
 	}
 	if v.scope != 0 {
-		sections = append(sections, "", t.Rule("Cycles", width), v.cycles(a, width))
+		sections = append(sections,
+			"", t.Rule("Rhythm", width), v.rhythm(a, events, width),
+			"", t.Rule("Cycles", width), v.cycles(a, width))
 	}
 	return lipgloss.NewStyle().Padding(1, 1).Render(
 		clip(lipgloss.JoinVertical(lipgloss.Left, sections...), height-2))
@@ -142,27 +144,48 @@ func (v analysisView) perDay(a *App, events []journal.Event, width int) string {
 		return t.Dim.Render("nothing ground in this range")
 	}
 
-	var cols []Column
+	var values []float64
 	for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
-		cols = append(cols, Column{Value: perDay[d.Format(time.DateOnly)]})
-	}
-	// A long scope is averaged down to the terminal width rather than truncated,
-	// so the shape of the whole range is still what is shown.
-	if len(cols) > width {
-		values := make([]float64, len(cols))
-		for i, c := range cols {
-			values[i] = c.Value
-		}
-		values = fit(values, width)
-		cols = cols[:0]
-		for _, v := range values {
-			cols = append(cols, Column{Value: v})
-		}
+		values = append(values, perDay[d.Format(time.DateOnly)])
 	}
 
-	chart := ColumnChart(cols, 8, t, t.StashC)
+	// The braille area carries two days per cell and the whole range is
+	// resampled to the width, so a four-year scope keeps its shape rather than
+	// being cut off. The seven-day average rides over it as a line: the daily
+	// spikes are the record, the line is the habit.
+	chart := AreaChart(values, movingAverage(values, 7), width, 6, t, t.StashC, t.Alt)
+	legend := lipgloss.JoinHorizontal(lipgloss.Left,
+		lipgloss.NewStyle().Foreground(t.StashC).Render("⣿"), t.Dim.Render(" daily   "),
+		lipgloss.NewStyle().Foreground(t.Alt).Render("⠒⠒"), t.Dim.Render(" 7-day average"),
+	)
 	return lipgloss.JoinVertical(lipgloss.Left, chart,
-		axisLabels(t, first.Format("02 Jan 06"), last.Format("02 Jan 06"), len(cols)))
+		axisLabels(t, first.Format("02 Jan 06"), last.Format("02 Jan 06"), width),
+		legend)
+}
+
+// rhythm draws the longer scopes as a calendar heatmap, one cell per day. The
+// per-day chart says how much; this says when — the pauses, the heavy weeks,
+// whether weekends differ — which is what a year of habit actually consists of.
+func (v analysisView) rhythm(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	perDay := map[string]float64{}
+	var first, last time.Time
+	for _, e := range events {
+		if e.Type != journal.Grind {
+			continue
+		}
+		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
+		if first.IsZero() || e.OccurredAt.Before(first) {
+			first = e.OccurredAt
+		}
+		if e.OccurredAt.After(last) {
+			last = e.OccurredAt
+		}
+	}
+	if first.IsZero() {
+		return t.Dim.Render("nothing ground in this range")
+	}
+	return Calendar(perDay, first, last, width, t)
 }
 
 // byProduct ranks the products by how much of them was ground.

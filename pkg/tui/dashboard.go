@@ -78,7 +78,7 @@ func (d dashboard) headline(a *App, c *ledger.Cycle, stats ledger.Stats, width i
 		lipgloss.NewStyle().Width(width/3).Render(last),
 	)
 
-	bar := Gauge(width, fraction, t.Level(fraction), t.Dim)
+	bar := GradientGauge(width, fraction, t.Good, t.Level(fraction), t.Dim)
 	scale := lipgloss.JoinHorizontal(lipgloss.Left,
 		t.Dim.Render(c.Start.Format("02 Jan")),
 		strings.Repeat(" ", maxInt(width-12-lipgloss.Width(fmt.Sprintf("%.0f%%", fraction*100)), 1)),
@@ -175,10 +175,22 @@ func (d dashboard) recent(a *App, _ int) string {
 			perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
 		}
 	}
+	peak := 0.0
+	for i := 0; i < span; i++ {
+		if v := perDay[end.AddDate(0, 0, -i).Format(time.DateOnly)]; v > peak {
+			peak = v
+		}
+	}
 	cols := make([]Column, 0, span)
 	for i := span - 1; i >= 0; i-- {
-		day := end.AddDate(0, 0, -i)
-		cols = append(cols, Column{Value: perDay[day.Format(time.DateOnly)]})
+		v := perDay[end.AddDate(0, 0, -i).Format(time.DateOnly)]
+		c := Column{Value: v}
+		// Heavier days burn hotter, so the week that got away with itself is
+		// visible before the axis is read.
+		if peak > 0 && v > 0 {
+			c.Color = heatAt(t, v/peak)
+		}
+		cols = append(cols, c)
 	}
 
 	chart := ColumnChart(cols, 6, t, t.StashC)

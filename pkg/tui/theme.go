@@ -20,6 +20,7 @@ type Theme struct {
 	Line             tint
 	StorageC, StashC tint
 	AVBC, SeshC      tint
+	Heat             []tint
 
 	// Chrome
 	Title, Subtitle   lipgloss.Style
@@ -60,6 +61,22 @@ func NewTheme(dark bool) *Theme {
 	t.StashC = t.Accent
 	t.AVBC = pick(lipgloss.Color("#8B5E34"), lipgloss.Color("#C98A55"))
 	t.SeshC = pick(lipgloss.Color("#9B51E0"), lipgloss.Color("#B57BEE"))
+
+	// Heat is the intensity ramp the calendar and the heavier chart columns
+	// use, dimmest first. The shades are the contribution greens GitHub uses,
+	// which read on both backgrounds and already mean "more happened here" to
+	// anyone who has looked at a profile page.
+	if dark {
+		t.Heat = []tint{
+			lipgloss.Color("#0E4429"), lipgloss.Color("#006D32"),
+			lipgloss.Color("#26A641"), lipgloss.Color("#39D353"),
+		}
+	} else {
+		t.Heat = []tint{
+			lipgloss.Color("#9BE9A8"), lipgloss.Color("#40C463"),
+			lipgloss.Color("#30A14E"), lipgloss.Color("#216E39"),
+		}
+	}
 
 	t.Title = lipgloss.NewStyle().Bold(true).Foreground(t.Accent)
 	t.Subtitle = lipgloss.NewStyle().Foreground(t.Muted)
