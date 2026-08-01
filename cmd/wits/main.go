@@ -51,6 +51,7 @@ func init() {
 		commands.Bundle,
 		commands.Buy,
 		commands.Grind,
+		commands.Import,
 		commands.Sesh,
 		commands.Device,
 		commands.Temps,

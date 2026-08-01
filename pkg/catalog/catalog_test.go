@@ -100,6 +100,14 @@ func TestFind(t *testing.T) {
 	})
 }
 
+func TestAddedAtIsToTheSecond(t *testing.T) {
+	c := &Catalog{}
+	require.NoError(t, c.Add(&Product{Name: "Enua 22/1 Wedding Cake"}))
+
+	assert.Zero(t, c.Products[0].AddedAt.Nanosecond(),
+		"Should be to the second, so a bundle round trip leaves the catalog unchanged")
+}
+
 func TestAdd(t *testing.T) {
 	c := &Catalog{}
 	require.NoError(t, c.Add(&Product{Name: "Enua 22/1 Wedding Cake"}))
