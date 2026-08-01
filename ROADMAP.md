@@ -116,6 +116,11 @@ Nothing is written without `--commit`, and a repository that already holds entri
 is refused: a second import would double every gram, and it cannot be told from a
 genuine second helping of the same product on the same day.
 
+It is tested against the real workbook, committed at
+`assets/Tracking.2022.cleaned.xlsx`, rather than only against fixtures — a
+fixture agrees with whatever the code believes, and this one does not. Every
+figure asserted was reconciled against the workbook read independently.
+
 ### The interface
 
 Built on Bubble Tea v2. Four screens — dashboard, journal, analysis, devices —
