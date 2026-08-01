@@ -12,11 +12,11 @@ import (
 
 func TestSlugify(t *testing.T) {
 	for name, want := range map[string]string{
-		"Enua 22/1 Wedding Cake (g)":                         "enua-wedding-cake",
-		"Cantourage 25/1 MAC1+ (g)":                          "cantourage-mac1",
-		"420 Evolution 27/1 Ice Cream Cake":                  "420-evolution-ice-cream-cake",
-		"CNBS FK 30/1: Florida Kush.":                        "cnbs-fk-florida-kush",
-		"Cannamedical Hybrid Ultra DK 28/1 Ghost Train Haze": "cannamedical-hybrid-ultra-dk-ghost-train-haze",
+		"Enua 22/1 Wedding Cake (g)":                         "enua-wedding-cake-221",
+		"Cantourage 25/1 MAC1+ (g)":                          "cantourage-mac1-251",
+		"420 Evolution 27/1 Ice Cream Cake":                  "420-evolution-ice-cream-cake-271",
+		"CNBS FK 30/1: Florida Kush.":                        "cnbs-fk-florida-kush-301",
+		"Cannamedical Hybrid Ultra DK 28/1 Ghost Train Haze": "cannamedical-hybrid-ultra-dk-ghost-train-haze-281",
 	} {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, want, Slugify(name), "Should be a stable, typeable identifier")
@@ -65,7 +65,7 @@ func TestFind(t *testing.T) {
 	require.NoError(t, c.Add(&Product{Name: "Khiron 20/1 Wedding Cake"}))
 
 	t.Run("BySlug", func(t *testing.T) {
-		p, err := c.Find("enua-wedding-cake")
+		p, err := c.Find("enua-wedding-cake-221")
 		require.NoError(t, err)
 		assert.Equal(t, "Enua 22/1 Wedding Cake", p.Name, "Should resolve an exact slug")
 	})
@@ -73,21 +73,21 @@ func TestFind(t *testing.T) {
 	t.Run("ByDisplayName", func(t *testing.T) {
 		p, err := c.Find("Cannamedical 28/1 Lemon Cookie")
 		require.NoError(t, err)
-		assert.Equal(t, "cannamedical-lemon-cookie", p.Slug, "Should resolve an exact display name")
+		assert.Equal(t, "cannamedical-lemon-cookie-281", p.Slug, "Should resolve an exact display name")
 	})
 
 	t.Run("ByUniqueSubstring", func(t *testing.T) {
 		p, err := c.Find("lemon")
 		require.NoError(t, err)
-		assert.Equal(t, "cannamedical-lemon-cookie", p.Slug, "Should resolve a unique substring for fast entry")
+		assert.Equal(t, "cannamedical-lemon-cookie-281", p.Slug, "Should resolve a unique substring for fast entry")
 	})
 
 	t.Run("RefusesToGuessBetweenTwoMatches", func(t *testing.T) {
 		_, err := c.Find("wedding")
 
 		assert.ErrorIs(t, err, ErrAmbiguous, "Should not pick one of two products for you")
-		assert.Contains(t, err.Error(), "enua-wedding-cake", "Should say which products matched")
-		assert.Contains(t, err.Error(), "khiron-wedding-cake", "Should say which products matched")
+		assert.Contains(t, err.Error(), "enua-wedding-cake-221", "Should say which products matched")
+		assert.Contains(t, err.Error(), "khiron-wedding-cake-201", "Should say which products matched")
 	})
 
 	t.Run("Unknown", func(t *testing.T) {
@@ -151,15 +151,25 @@ func TestLoadAndSave(t *testing.T) {
 	})
 }
 
+// memorable is the part of a handle before the potency suffix, which is what
+// the three-to-five character bound applies to. The suffix is carried on top of
+// it and is as long as the ratio needs to be.
+func memorable(handle string) string {
+	if i := strings.LastIndex(handle, "-"); i > 0 {
+		return handle[:i]
+	}
+	return handle
+}
+
 func TestNewHandle(t *testing.T) {
 	var free []string
 
 	t.Run("ReadsLikeSomeoneAbbreviatingIt", func(t *testing.T) {
 		for name, want := range map[string]string{
-			"Enua 22/1 Wedding Cake":             "wcake",
-			"Pedanios 22/1 DNK Ghost Train Haze": "dgth",
-			"Cantourage 25/1 MAC1+":              "mac1",
-			"Khiron 20/1 Munson":                 "muns",
+			"Enua 22/1 Wedding Cake":             "wcake-221",
+			"Pedanios 22/1 DNK Ghost Train Haze": "dgth-221",
+			"Cantourage 25/1 MAC1+":              "mac1-251",
+			"Khiron 20/1 Munson":                 "muns-201",
 		} {
 			t.Run(name, func(t *testing.T) {
 				got := NewHandle(Parse(name), free)
@@ -168,14 +178,34 @@ func TestNewHandle(t *testing.T) {
 		}
 	})
 
-	t.Run("AlwaysThreeToFiveCharacters", func(t *testing.T) {
+	// The same cultivar from the same maker at two strengths is two
+	// prescriptions, and four years of real records held two such pairs. With
+	// the ratio outside the slug they resolved to one product and their grams
+	// were added together.
+	t.Run("TellsOneStrengthFromAnother", func(t *testing.T) {
+		c := &Catalog{}
+		for _, name := range []string{"Cantourage 25/1 MAC1+", "Cantourage 22/1 MAC1+"} {
+			p := Parse(name)
+			p.Slug = NewHandle(p, c.Handles())
+			require.NoError(t, c.Add(p))
+		}
+
+		assert.ElementsMatch(t, []string{"mac1-251", "mac1-221"}, c.Handles(),
+			"Should keep the cultivar readable in both and let the ratio separate them")
+
+		p, err := c.Find("mac1-251")
+		require.NoError(t, err)
+		assert.Equal(t, "Cantourage 25/1 MAC1+", p.Name, "Should resolve to the strength asked for")
+	})
+
+	t.Run("AlwaysThreeToFiveCharactersBeforeTheRatio", func(t *testing.T) {
 		for _, name := range []string{
 			"Enua 22/1 Wedding Cake", "X 1/1 Ab", "Maker 20/1 A", "Nothing At All",
 			"Cansativa Vanilla Cake 26/1", "CNBS FK 30/1: Florida Kush.",
 		} {
 			h := NewHandle(Parse(name), free)
-			assert.GreaterOrEqual(t, len(h), minHandle, "%q gave %q", name, h)
-			assert.LessOrEqual(t, len(h), maxHandle, "%q gave %q", name, h)
+			assert.GreaterOrEqual(t, len(memorable(h)), minHandle, "%q gave %q", name, h)
+			assert.LessOrEqual(t, len(memorable(h)), maxHandle, "%q gave %q", name, h)
 			assert.NoError(t, CheckSlug(h), "%q gave %q, which is not a usable slug", name, h)
 		}
 	})
@@ -195,7 +225,7 @@ func TestNewHandle(t *testing.T) {
 		seen := map[string]bool{}
 		for _, h := range handles {
 			assert.False(t, seen[h], "%q was handed out twice", h)
-			assert.LessOrEqual(t, len(h), maxHandle, "%q outgrew the limit", h)
+			assert.LessOrEqual(t, len(memorable(h)), maxHandle, "%q outgrew the limit", h)
 			seen[h] = true
 		}
 		// And none of them is a keystroke from another, since references are
