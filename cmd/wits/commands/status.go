@@ -23,7 +23,7 @@ var Status = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		writeStatus(cmd.OutOrStdout(), s.state)
+		writeStatus(cmd.OutOrStdout(), s.State)
 		return nil
 	},
 }

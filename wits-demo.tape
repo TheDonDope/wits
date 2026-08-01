@@ -58,11 +58,41 @@
 Output vhs-output/wits-demo.gif
 
 Set Shell "bash"
-Set FontSize 24 
+Set FontSize 24
 Set FontFamily "JetBrainsMono Nerd Font"
-Set Width 1400 
+Set Width 1400
 Set Height 900
 
-Type "./bin/wits" Sleep 500ms  Enter
+# A throwaway repository first. `wits` reads a .wits directory and a source
+# checkout has none, so without this the tape would only record the words
+# "not a wits repository".
+Hide
+Type "export PATH=$PWD/bin:$PATH" Enter
+Type "rm -rf /tmp/wits-demo && mkdir -p /tmp/wits-demo && cd /tmp/wits-demo" Enter
+Type "wits init ." Enter
+Type "wits device add 'Volcano Hybrid' --kind desktop --min 40 --max 230 --default 185" Enter
+Type "wits buy 'Enua 22/1 Wedding Cake' 20g --date 2026-07-09" Enter
+Type "wits buy 'Cannamedical 28/1 Lemon Cookie' 20g --date 2026-07-09" Enter
+Type "wits buy 'Cantourage 25/1 MAC1+' 20g --date 2026-07-09" Enter
+Type "wits grind wedding 0.75 --date 2026-07-10" Enter
+Type "wits sesh wedding 0.30 --device volcano --date 2026-07-10" Enter
+Type "wits grind lemon 1.25 --date 2026-07-11" Enter
+Type "wits grind mac1 0.90 --date 2026-07-12" Enter
+Type "wits grind wedding 1.10 --date 2026-07-13" Enter
+Type "wits grind lemon 0.85 --date 2026-07-14" Enter
+Type "clear" Enter
+Show
 
-Sleep 5s
+# What is left, and how long it will last.
+Type "wits status" Sleep 500ms Enter
+Sleep 4s
+Type "clear" Sleep 300ms Enter
+
+# The interface: dashboard, journal, analysis, devices.
+Type "wits" Sleep 500ms Enter
+Sleep 3s
+Tab Sleep 3s
+Tab Sleep 3s
+Tab Sleep 3s
+Type "q"
+Sleep 1s

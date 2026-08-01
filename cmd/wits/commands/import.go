@@ -43,7 +43,7 @@ var Import = &cobra.Command{
 			fmt.Fprintf(out, "\nDry run. Nothing was written. Re-run with --commit to import.\n")
 			return nil
 		}
-		if err := importer.Commit(s.repo, result); err != nil {
+		if err := importer.Commit(s.Repo, result); err != nil {
 			return err
 		}
 		fmt.Fprintf(out, "\nImported %d products and %d entries.\n",

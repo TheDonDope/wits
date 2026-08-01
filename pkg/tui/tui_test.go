@@ -16,6 +16,7 @@ import (
 	"github.com/TheDonDope/wits-tui/pkg/catalog"
 	"github.com/TheDonDope/wits-tui/pkg/journal"
 	"github.com/TheDonDope/wits-tui/pkg/ledger"
+	"github.com/TheDonDope/wits-tui/pkg/workspace"
 )
 
 // TestMain handles global test setup
@@ -49,10 +50,12 @@ func sample(t *testing.T) Data {
 	require.NoError(t, products.Add(catalog.Parse("Cannamedical 28/1 Lemon Cookie")))
 
 	return Data{
-		Products: products,
-		Devices:  &catalog.Devices{},
-		State:    ledger.Fold(events),
-		Now:      at.AddDate(0, 0, 4),
+		Workspace: &workspace.Workspace{
+			Products: products,
+			Devices:  &catalog.Devices{},
+			State:    ledger.Fold(events),
+		},
+		Now: at.AddDate(0, 0, 4),
 	}
 }
 
@@ -139,7 +142,9 @@ func TestRendersAtAwkwardSizes(t *testing.T) {
 }
 
 func TestEmptyRepository(t *testing.T) {
-	empty := Data{Products: &catalog.Catalog{}, Devices: &catalog.Devices{}, State: ledger.Fold(nil), Now: time.Now()}
+	empty := Data{Workspace: &workspace.Workspace{
+		Products: &catalog.Catalog{}, Devices: &catalog.Devices{}, State: ledger.Fold(nil),
+	}, Now: time.Now()}
 
 	out := render(t, empty, dashboardScreen, 96, 30)
 

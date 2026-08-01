@@ -26,11 +26,11 @@ var Revert = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		original, err := s.recorder.Find(args[0])
+		original, err := s.Recorder.Find(args[0])
 		if err != nil {
 			return err
 		}
-		e, err := s.recorder.Revert(args[0], revertReason)
+		e, err := s.Recorder.Revert(args[0], revertReason)
 		if err != nil {
 			return err
 		}

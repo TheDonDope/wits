@@ -46,15 +46,15 @@ var Export = &cobra.Command{
 			out = f
 		}
 
-		cycles := s.state.Cycles
+		cycles := s.State.Cycles
 		if !exportAll {
-			if current := s.state.CurrentCycle(); current != nil {
+			if current := s.State.CurrentCycle(); current != nil {
 				cycles = []ledger.Cycle{*current}
 			} else if n := len(cycles); n > 0 {
 				cycles = cycles[n-1:]
 			}
 		}
-		writeMarkdown(out, cycles, s.catalog)
+		writeMarkdown(out, cycles, s.Products)
 
 		if exportOut != "" {
 			fmt.Fprintf(cmd.ErrOrStderr(), "Wrote %d cycle(s) to %s\n", len(cycles), exportOut)

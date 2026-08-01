@@ -33,12 +33,12 @@ var Grind = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		e, err := s.recorder.Grind(args[0], grams, at)
+		e, err := s.Recorder.Grind(args[0], grams, at)
 		if err != nil {
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "[%s] grind %.2fg %s, %.2fg left in storage\n",
-			shortHash(e.Hash), e.Grams, e.Product, s.recorder.Available(e.Product, journal.Storage))
+			shortHash(e.Hash), e.Grams, e.Product, s.Recorder.Available(e.Product, journal.Storage))
 		return nil
 	},
 }

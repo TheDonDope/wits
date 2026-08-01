@@ -321,6 +321,22 @@ model above rather than fixed in place:
 
 ---
 
+### 🔹 Toward a server and a web interface
+
+- **Status**: Planned
+- **Description**: A `wits-server` exposing a REST API, and a `wits-ui` in Angular.
+  The domain packages are already shared by the commands and the interface, and
+  `pkg/workspace` is what a request handler would open a repository with, so the
+  seam exists. Two things do not yet:
+  - **Concurrency.** Appending is a read-then-write: the tip is read to chain
+    onto. That is now guarded by an advisory file lock as well as a mutex, so two
+    processes cannot fork the chain, but a long-lived server should also cache the
+    fold rather than replay the journal per request.
+  - **Layout.** One Go module with several commands is the plan, rather than a
+    module per component: the domain is shared, and a module boundary between a
+    server and the ledger it serves would mean versioning the ledger against
+    itself. See the notes in the pull request that added this line.
+
 ## 📜 Notes
 
 - Changes will be updated as development progresses.

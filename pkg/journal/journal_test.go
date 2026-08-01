@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -241,4 +242,47 @@ func TestFlow(t *testing.T) {
 		_, _, ok := Flow("smoke")
 		assert.False(t, ok, "Should not know the type")
 	})
+}
+
+func TestAppendIsSafeAcrossProcesses(t *testing.T) {
+	// Two Journal values over one file stand in for two processes: they share no
+	// mutex, so only the file lock keeps them from reading the same tip and
+	// appending two entries that claim the same predecessor.
+	path := filepath.Join(t.TempDir(), "journal.ndjson")
+
+	const writers = 8
+	var wg sync.WaitGroup
+	errs := make(chan error, writers)
+	start := make(chan struct{})
+
+	for i := 0; i < writers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			j := Open(path) // its own Journal, its own mutex
+			<-start
+			_, err := j.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 0.5})
+			errs <- err
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	j := Open(path)
+	events, err := j.Events()
+	require.NoError(t, err)
+	assert.Len(t, events, writers, "Every append should have landed")
+	assert.NoError(t, j.Verify(),
+		"The chain must still verify: without the file lock, two writers read the same tip and fork it")
+
+	seqs := map[int]bool{}
+	for _, e := range events {
+		assert.False(t, seqs[e.Seq], "Sequence %d was used twice", e.Seq)
+		seqs[e.Seq] = true
+	}
 }
