@@ -30,7 +30,7 @@ type journalKeys struct {
 }
 
 func (k journalKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Next, k.Up, k.Down, k.Filter, k.Help, k.Quit}
+	return []key.Binding{k.Next, k.Up, k.Down, k.Filter, k.New, k.Help, k.Quit}
 }
 
 func (k journalKeys) FullHelp() [][]key.Binding {

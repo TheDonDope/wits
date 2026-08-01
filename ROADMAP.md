@@ -235,50 +235,40 @@ routinely overlap, because a new sheet gets started before the old one is finish
   - [ ] Observed yield ratio (input grams vs. collected grams) over time
 - **Relevant Commits**: tbd
 
+### 🔹 The interface
+
+- **Status**: Implemented (unreleased)
+- **Description**: Rebuilt on Bubble Tea v2 as a reader over the ledger, replacing
+  the interface that sat on the storage and service layers. Three screens: a
+  dashboard of what is left and how long it will last, the journal, and an
+  analysis view scoping from the current cycle out to all four years. Entries are
+  made with huh v2 forms embedded as models — never by calling `Run`, which is what
+  the previous version did and why it blocked the event loop.
+- **Tasks**:
+  - [x] Dashboard, journal and analysis screens
+  - [x] Charts drawn in-tree, sharing one colour per account with the log
+  - [x] Grind, session and fill forms, applying the same checks as the commands
+  - [ ] Products and devices screens
+  - [ ] Editing and reverting an entry from the journal view
+- **Relevant Commits**: tbd
+
 ### 🔹 Statistics with inline plots
 
-- **Status**: Planned
-- **Description**: A table view first, then inline charts. The README already lists
-  [NimbleMarkets/ntcharts](https://github.com/NimbleMarkets/ntcharts) as a used
-  technology, but it is not yet a dependency — this is where it earns its place.
+- **Status**: Implemented (unreleased)
+- **Description**: Charts are drawn in-tree rather than pulled in.
+  [NimbleMarkets/ntcharts](https://github.com/NimbleMarkets/ntcharts) is still on
+  the Bubble Tea v1 line, and mixing the majors would put two renderers and two
+  colour-profile detectors in one binary, which shows up on screen as inconsistent
+  colour. The README still lists it and should be corrected.
 - **Tasks**:
-  - [ ] `bubbles/table` for the status and log views
-  - [ ] Time series of grams per day with a cycle-average line
-  - [ ] Per-product and per-cycle breakdowns
+  - [x] Gauge, column chart, stacked bar and sparkline primitives
+  - [x] Grams per day across a cycle, a year, or the whole history
+  - [x] Per-product and per-cycle breakdowns
 - **Relevant Commits**: tbd
 
 ---
 
 ## 🔧 Improvements & Refactoring
-
-### 🔹 Navigation loses the parent model (bug)
-
-- **Status**: Planned
-- **Description**: `HomeModel.Update` returns `hm.listView.Update(msg)`, which makes
-  the inner list the new top-level model. Selecting Strains from the main menu fires
-  `onStrainsListed()` immediately, so `StrainsHomeModel` — and with it the only
-  `StrainService` — is discarded before the user can press anything. Every strain
-  added through the normal path is parsed and then silently dropped, and the header
-  disappears.
-- **Tasks**:
-  - [ ] Have the parent keep ownership and forward messages to its children
-  - [ ] Regression test that drives menu → strains → add as a real key sequence
-- **Relevant Commits**: tbd
-
-### 🔹 Swallowed store errors (bug)
-
-- **Status**: Planned
-- **Description**: `shm.service.AddStrain(msg.strain)` ignores its error, so a
-  duplicate silently does nothing and the user is not told why.
-- **Relevant Commits**: tbd
-
-### 🔹 Form blocks the event loop (bug)
-
-- **Status**: Planned
-- **Description**: `onStrainAdded()` calls `form.Run()` synchronously inside
-  `Update`, starting a second Bubble Tea program while the outer one owns the
-  terminal. The form should be embedded as a model in its parent.
-- **Relevant Commits**: tbd
 
 ### 🔹 File permissions on health data
 

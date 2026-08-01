@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"io"
+	"log"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +17,13 @@ import (
 	"github.com/TheDonDope/wits-tui/pkg/journal"
 	"github.com/TheDonDope/wits-tui/pkg/ledger"
 )
+
+// TestMain handles global test setup
+func TestMain(m *testing.M) {
+	// Disable log output during tests
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
+}
 
 // sample builds a small repository state to render against.
 func sample(t *testing.T) Data {

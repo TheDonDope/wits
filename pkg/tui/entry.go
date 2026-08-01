@@ -1,0 +1,247 @@
+package tui
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
+
+	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits-tui/pkg/record"
+)
+
+// entryKind is which entry the form is collecting.
+type entryKind int
+
+const (
+	entryGrind entryKind = iota
+	entrySesh
+	entryBuy
+)
+
+func (k entryKind) String() string {
+	switch k {
+	case entrySesh:
+		return "Session"
+	case entryBuy:
+		return "Prescription fill"
+	default:
+		return "Grind"
+	}
+}
+
+// entryForm collects one entry.
+//
+// The form is a model driven by Update, not a call to Run. Running it would
+// block the event loop and start a second program inside the one already
+// holding the terminal, which is how the previous interface did it.
+type entryForm struct {
+	kind entryKind
+	form *huh.Form
+
+	product string
+	amount  string
+	device  string
+	temp    string
+	note    string
+	name    string
+
+	err error
+}
+
+// newEntryForm builds the form for a kind of entry against the current data.
+func newEntryForm(kind entryKind, a *App) *entryForm {
+	f := &entryForm{kind: kind}
+
+	switch kind {
+	case entryBuy:
+		f.form = huh.NewForm(huh.NewGroup(
+			huh.NewInput().Title("Product").
+				Description("As written on the label, e.g. Enua 22/1 Wedding Cake").
+				Value(&f.name).
+				Validate(required("a product name")),
+			huh.NewInput().Title("Amount").Description("Grams dispensed").
+				Value(&f.amount).Validate(validGrams),
+		))
+	case entryGrind:
+		f.form = huh.NewForm(huh.NewGroup(
+			huh.NewSelect[string]().Title("Product").
+				Description("Taken out of storage").
+				Options(productOptions(a, journal.Storage)...).
+				Value(&f.product),
+			huh.NewInput().Title("Amount").Description("Grams ground into the tin").
+				Value(&f.amount).Validate(validGrams),
+		))
+	case entrySesh:
+		fields := []huh.Field{
+			huh.NewSelect[string]().Title("Product").
+				Description("Taken out of the tin").
+				Options(productOptions(a, journal.Stash)...).
+				Value(&f.product),
+			huh.NewInput().Title("Amount").Description("Grams through the device").
+				Value(&f.amount).Validate(validGrams),
+		}
+		if opts := deviceOptions(a); len(opts) > 0 {
+			fields = append(fields,
+				huh.NewSelect[string]().Title("Device").Options(opts...).Value(&f.device),
+				huh.NewInput().Title("Temperature").Description("°C, blank for the device default").
+					Value(&f.temp).Validate(optionalInt),
+			)
+		}
+		fields = append(fields, huh.NewInput().Title("Note").Description("Optional").Value(&f.note))
+		f.form = huh.NewForm(huh.NewGroup(fields...))
+	}
+
+	f.form = f.form.WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	return f
+}
+
+// productOptions lists the products that actually have something in the given
+// account, with the amount alongside, so the form cannot offer a choice that is
+// bound to be refused.
+func productOptions(a *App, account journal.Account) []huh.Option[string] {
+	var opts []huh.Option[string]
+	for _, slug := range a.data.State.Products() {
+		b := a.data.State.Balances[slug]
+		if b == nil {
+			continue
+		}
+		var have float64
+		switch account {
+		case journal.Storage:
+			have = b.Storage
+		case journal.Stash:
+			have = b.Stash
+		}
+		if have <= 0 {
+			continue
+		}
+		label := fmt.Sprintf("%s  (%.2f g)", truncate(a.data.ProductName(slug), 40), have)
+		opts = append(opts, huh.NewOption(label, slug))
+	}
+	return opts
+}
+
+// deviceOptions lists the known devices.
+func deviceOptions(a *App) []huh.Option[string] {
+	if a.data.Devices == nil {
+		return nil
+	}
+	var opts []huh.Option[string]
+	for _, d := range a.data.Devices.Devices {
+		opts = append(opts, huh.NewOption(d.Name, d.Slug))
+	}
+	return opts
+}
+
+// required rejects an empty value.
+func required(what string) func(string) error {
+	return func(s string) error {
+		if strings.TrimSpace(s) == "" {
+			return fmt.Errorf("needs %s", what)
+		}
+		return nil
+	}
+}
+
+// validGrams accepts a positive amount, in the shapes a scale reads out.
+func validGrams(s string) error {
+	v, err := strconv.ParseFloat(strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(s), "g")), ",", ".", 1), 64)
+	if err != nil {
+		return fmt.Errorf("not an amount in grams")
+	}
+	if v <= 0 {
+		return fmt.Errorf("must be more than zero")
+	}
+	return nil
+}
+
+// optionalInt accepts a whole number or nothing at all.
+func optionalInt(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	if _, err := strconv.Atoi(strings.TrimSpace(s)); err != nil {
+		return fmt.Errorf("not a whole number")
+	}
+	return nil
+}
+
+// entryDoneMsg is sent when an entry has been written, so the app can reload.
+type entryDoneMsg struct {
+	event journal.Event
+	err   error
+}
+
+// Update advances the form and, once it is complete, writes the entry.
+func (f *entryForm) Update(msg tea.Msg, a *App) (*entryForm, tea.Cmd) {
+	model, cmd := f.form.Update(msg)
+	if form, ok := model.(*huh.Form); ok {
+		f.form = form
+	}
+
+	switch f.form.State {
+	case huh.StateAborted:
+		return nil, nil
+	case huh.StateCompleted:
+		e, err := f.commit(a)
+		return nil, func() tea.Msg { return entryDoneMsg{event: e, err: err} }
+	}
+	return f, cmd
+}
+
+// commit writes the collected entry through the recorder, so the interface
+// applies the same checks the commands do.
+func (f *entryForm) commit(a *App) (journal.Event, error) {
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	at := time.Now()
+
+	grams, err := parseGrams(f.amount)
+	if err != nil {
+		return journal.Event{}, err
+	}
+
+	switch f.kind {
+	case entryBuy:
+		e, _, _, err := rec.Buy(strings.TrimSpace(f.name), grams, at)
+		return e, err
+	case entryGrind:
+		return rec.Grind(f.product, grams, at)
+	default:
+		temp, _ := strconv.Atoi(strings.TrimSpace(f.temp))
+		return rec.Session(f.product, grams, at, f.device, temp, strings.TrimSpace(f.note))
+	}
+}
+
+// View renders the form inside a titled panel.
+func (f *entryForm) View(a *App, width int) string {
+	t := a.theme
+	body := f.form.View()
+	if f.err != nil {
+		body = lipgloss.JoinVertical(lipgloss.Left, body, "", t.Negative.Render("✗ "+f.err.Error()))
+	}
+	panel := lipgloss.JoinVertical(lipgloss.Left,
+		t.PanelTitle.Render(f.kind.String()),
+		t.Dim.Render("enter to move on · esc to cancel"),
+		"",
+		body,
+	)
+	return t.Panel.Width(minInt(width-2, 74)).Render(panel)
+}
+
+// parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".
+func parseGrams(s string) (float64, error) {
+	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(s)), "g"))
+	grams, err := strconv.ParseFloat(strings.Replace(trimmed, ",", ".", 1), 64)
+	if err != nil {
+		return 0, fmt.Errorf("%q is not an amount in grams", s)
+	}
+	if grams <= 0 {
+		return 0, fmt.Errorf("amount must be positive, got %v", grams)
+	}
+	return grams, nil
+}

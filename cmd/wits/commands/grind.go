@@ -25,10 +25,6 @@ var Grind = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		product, err := s.catalog.Find(args[0])
-		if err != nil {
-			return err
-		}
 		grams, err := parseGrams(args[1])
 		if err != nil {
 			return err
@@ -37,29 +33,12 @@ var Grind = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		// Refuse to grind more than is actually in storage. The journal would
-		// happily record it, but a negative balance means the log has stopped
-		// describing the tin on the table.
-		if available := s.state.Balances[product.Slug]; available == nil || available.Storage < grams {
-			have := 0.0
-			if available != nil {
-				have = available.Storage
-			}
-			return fmt.Errorf("only %.2fg of %s left in storage, cannot grind %.2fg", have, product.Slug, grams)
-		}
-
-		e, err := s.journal.Append(journal.Event{
-			Type:       journal.Grind,
-			Product:    product.Slug,
-			Grams:      grams,
-			OccurredAt: at,
-		})
+		e, err := s.recorder.Grind(args[0], grams, at)
 		if err != nil {
 			return err
 		}
-		left := s.state.Balances[product.Slug].Storage - grams
-		fmt.Fprintf(cmd.OutOrStdout(), "[%s] grind %.2fg %s, %.2fg left in storage\n", shortHash(e.Hash), e.Grams, product.Slug, left)
+		fmt.Fprintf(cmd.OutOrStdout(), "[%s] grind %.2fg %s, %.2fg left in storage\n",
+			shortHash(e.Hash), e.Grams, e.Product, s.recorder.Available(e.Product, journal.Storage))
 		return nil
 	},
 }

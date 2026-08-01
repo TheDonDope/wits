@@ -36,10 +36,6 @@ var Sesh = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		product, err := s.catalog.Find(args[0])
-		if err != nil {
-			return err
-		}
 		grams, err := parseGrams(args[1])
 		if err != nil {
 			return err
@@ -48,56 +44,15 @@ var Sesh = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		var device *catalog.Device
-		if seshDevice != "" {
-			devices, err := catalog.LoadDevices(s.repo.DevicesPath())
-			if err != nil {
-				return err
-			}
-			if device, err = devices.Find(seshDevice); err != nil {
-				return err
-			}
-			if seshTemp == 0 {
-				seshTemp = device.DefaultTemp
-			}
-			if device.MaxTemp > 0 && seshTemp > device.MaxTemp {
-				return fmt.Errorf("%s only goes up to %d°C", device.Name, device.MaxTemp)
-			}
-		}
-
-		// The tin has to actually hold this much. Overdrawing means the log has
-		// stopped describing the tin on the table.
-		balance := s.state.Balances[product.Slug]
-		if balance == nil || balance.Stash < grams {
-			have := 0.0
-			if balance != nil {
-				have = balance.Stash
-			}
-			return fmt.Errorf("only %.2fg of %s in the tin, cannot sesh %.2fg; grind some first", have, product.Slug, grams)
-		}
-
-		e := journal.Event{
-			Type:        journal.Sesh,
-			Product:     product.Slug,
-			Grams:       grams,
-			OccurredAt:  at,
-			Temperature: seshTemp,
-			Note:        seshNote,
-		}
-		if device != nil {
-			e.Device = device.Slug
-		}
-		stored, err := s.journal.Append(e)
+		e, err := s.recorder.Session(args[0], grams, at, seshDevice, seshTemp, seshNote)
 		if err != nil {
 			return err
 		}
-
 		out := cmd.OutOrStdout()
 		fmt.Fprintf(out, "[%s] sesh %.2fg %s, %.2fg left in the tin\n",
-			shortHash(stored.Hash), stored.Grams, product.Slug, balance.Stash-grams)
-		if seshTemp > 0 {
-			writeReleased(out, seshTemp)
+			shortHash(e.Hash), e.Grams, e.Product, s.recorder.Available(e.Product, journal.Stash))
+		if e.Temperature > 0 {
+			writeReleased(out, e.Temperature)
 		}
 		return nil
 	},

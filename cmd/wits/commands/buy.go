@@ -1,11 +1,8 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
 	"github.com/spf13/cobra"
 )
 
@@ -36,32 +33,15 @@ var Buy = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		product, err := s.catalog.Find(args[0])
-		switch {
-		case errors.Is(err, catalog.ErrNotFound):
-			product = catalog.Parse(args[0])
-			if err := s.catalog.Add(product); err != nil {
-				return err
-			}
-			if err := s.catalog.Save(s.repo.ProductsPath()); err != nil {
-				return err
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "New product %s (%s)\n", product.Slug, product.Name)
-		case err != nil:
-			return err
-		}
-
-		e, err := s.journal.Append(journal.Event{
-			Type:       journal.Purchase,
-			Product:    product.Slug,
-			Grams:      grams,
-			OccurredAt: at,
-		})
+		e, product, added, err := s.recorder.Buy(args[0], grams, at)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "[%s] purchase %.2fg %s into storage\n", shortHash(e.Hash), e.Grams, product.Slug)
+		if added {
+			fmt.Fprintf(cmd.OutOrStdout(), "New product %s (%s)\n", product.Slug, product.Name)
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "[%s] purchase %.2fg %s into storage\n",
+			shortHash(e.Hash), e.Grams, product.Slug)
 		return nil
 	},
 }
