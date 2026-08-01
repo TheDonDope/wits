@@ -11,7 +11,7 @@ correction, the way `git revert` adds a commit rather than rewriting one. The
 data is a multi-year medical record, and that is how a medical record should
 behave.
 
-![Wits](./assets/wits-demo.gif)
+![The Wits interface](./assets/wits-tour.gif)
 
 ## How it thinks
 
@@ -61,21 +61,27 @@ Record a fill, then use it:
 
 ```console
 $ wits buy "Enua 22/1 Wedding Cake" 20g
-New product Enua 22/1 Wedding Cake — refer to it as wcake
-[029efe8] purchase 20.00g wcake into storage
+New product Enua 22/1 Wedding Cake — refer to it as wcake-221
+[029efe8] purchase 20.00g wcake-221 into storage
 ```
 
-Every product gets a short handle — three to five characters, made up from the
-cultivar and guaranteed not to be one keystroke from another, since references
-are resolved by prefix. Pass `--slug lemon` to choose your own. It is settled
-when the product first appears and never changes, because it is the name every
-later entry refers to.
+Every product gets a short handle: three to five characters from the cultivar,
+then the THC/CBD ratio. The ratio is there because the same cultivar from the
+same maker at two strengths is two prescriptions — `wcake-221` and `wcake-251`
+are legible as a pair, and adding their grams together would be wrong. Pass
+`--slug lemon` to choose your own, which is taken as written. A handle is
+settled when the product first appears and never changes, because it is the
+name every later entry refers to.
 
 ```sh
 wits grind wcake 0.75
-wits sesh wcake 0.3 --device volcano --temp 185
+wits sesh wcake-221 0.3 --device volcano --temp 185
 wits status
 ```
+
+References resolve by prefix, so `wcake` is enough while it is unambiguous.
+
+![Recording a fill and a session](./assets/wits-cli.gif)
 
 Tab completion offers the handles, with the full name and how much is left
 beside each — and only the ones the command can act on, so `sesh` offers what is
@@ -83,9 +89,9 @@ in a tin rather than everything ever dispensed:
 
 ```console
 $ wits grind <TAB>
-lcook   10.00 g · Cannamedical 28/1 Lemon Cookie
-mac1    15.00 g · Cantourage 25/1 MAC1+
-wcake   18.00 g · Enua 22/1 Wedding Cake
+lcook-281   10.00 g · Cannamedical 28/1 Lemon Cookie
+mac1-251    15.00 g · Cantourage 25/1 MAC1+
+wcake-221   18.00 g · Enua 22/1 Wedding Cake
 ```
 
 Install it with `wits completion bash` (or `zsh`, `fish`).
@@ -98,12 +104,12 @@ then.
 $ wits status
 On cycle 29, opened 2026-07-09 (day 24)
 
-PRODUCT                       STORAGE  STASH   AVB    LEFT
-420-evolution-ice-cream-cake  16.90g   3.10g   0.00g  84%
-enua-citrus-slap              17.09g   2.91g   0.00g  85%
-cantourage-mac1               17.23g   47.77g  0.00g  86%
+PRODUCT                           STORAGE  STASH   AVB    LEFT
+420-evolution-ice-cream-cake-271  16.90g   3.10g   0.00g  84%
+enua-citrus-slap-361              17.09g   2.91g   0.00g  85%
+cantourage-mac1-251               17.23g   47.77g  0.00g  86%
 
-total                         41.00g                  68%
+total                             41.00g                  68%
 
 41.00g of 60.00g left over 23 days, 11 of them with an entry
 1.73g per active day, 1.37g median, 0.83g per elapsed day
@@ -136,6 +142,20 @@ too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
 
 Every command takes `--help`. `import` writes nothing unless given `--commit`.
 
+## Bringing a spreadsheet across
+
+`wits import` reads a tracking workbook and turns each worksheet into a
+prescription fill and the grinds that followed it. The default is a dry run: it
+reports what it would record, and anything about the spreadsheet that does not
+add up, so years of history can be checked before any of it is written.
+
+![Importing four years of a spreadsheet](./assets/wits-import.gif)
+
+Products are resolved **by position**, through the bindings in the running
+balance formulas, rather than by the label in the strain column — those labels
+are dropdown values that were not always renamed as products changed. On the
+records this was written for, trusting the labels misplaces 1116.97 g.
+
 ## Correcting a mistake
 
 Nothing is edited in place. An entry is undone by recording a correction that
@@ -158,12 +178,14 @@ wrong — instead the difference is recorded, and the account agrees with the ja
 again:
 
 ```console
-$ wits reconcile wedding-cake 17.6 --dry-run
+$ wits reconcile wcake-221 17.6 --dry-run
 storage holds 18.00g by the ledger and 17.60g on the scale: -0.40g
 
-$ wits reconcile wedding-cake 17.6 --reason "spilled on the desk"
+$ wits reconcile wcake-221 17.6 --reason "spilled on the desk"
 [21ee6ae] adjusted 0.40g out of storage, now 17.60g
 ```
+
+![Reconciling against the scale](./assets/wits-reconcile.gif)
 
 `--stash` weighs the tin instead, `--avb` the already vaped bud. In the interface
 this is `r`, on any screen — it offers the jar under the cursor on the products
@@ -199,13 +221,15 @@ diffs cleanly in git. Small, too, because most of what the journal stores is
 derivable and is left out: sequence numbers, account pairs and the whole hash
 chain are recomputed on restore.
 
-Nearly three years of real history, 1369 entries across 48 products:
+Nearly three years of real history, 1369 entries across 50 products:
 
 | | bytes | |
 | --- | ---: | --- |
-| journal | 500,729 | |
-| **bundle** | **27,510** | **18×** |
-| bundle, gzipped | 6,299 | 79× |
+| journal | 506,205 | |
+| **bundle** | **27,968** | **18×** |
+| bundle, gzipped | 6,399 | 79× |
+
+![Bundling and restoring](./assets/wits-bundle.gif)
 
 ## Temperatures
 
@@ -280,8 +304,10 @@ make vet
 ```
 
 `make build-windows` cross-compiles `bin/wits.exe`. `make render-tapes` re-records
-`assets/wits-demo.gif` from `wits-demo.tape`; it needs `vhs`, `gum` and `ttyd`
-(`make install` covers the first two).
+every GIF in `assets/` from the `*.tape` files; it needs `vhs`, `gum` and `ttyd`
+(`make install` covers the first two). The tapes seed a throwaway repository
+with `demo-seed.sh` first, because `wits` reads a `.wits` directory and a source
+checkout has none.
 
 `coverage.out` and `coverage.html` are ignored from source control.
 
