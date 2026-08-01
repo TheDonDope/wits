@@ -57,15 +57,20 @@ func writeStatus(out io.Writer, state *ledger.State) {
 		if b == nil {
 			continue
 		}
+		// Against what the cycle started with, carry-over included: grinding
+		// down last month's remainder must not read as more than 100% left.
 		fmt.Fprintf(w, "%s\t%.2fg\t%.2fg\t%.2fg\t%s\n",
-			product, b.Storage, b.Stash, b.AVB, percent(b.Storage, purchasedOf(cycle, product, state)))
+			product, b.Storage, b.Stash, b.AVB, percent(b.Storage, heldOf(cycle, product, state)))
 	}
 	fmt.Fprintf(w, "\t\t\t\t\n")
-	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", cycle.Remaining(), percent(cycle.Remaining(), cycle.Purchased))
+	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", cycle.Remaining(), percent(cycle.Remaining(), cycle.Held()))
 	w.Flush()
 
 	fmt.Fprintf(out, "\n%.2fg of %.2fg left over %s, %d of them with an entry\n",
-		cycle.Remaining(), cycle.Purchased, plural(stats.ElapsedDays, "day"), stats.ActiveDays)
+		cycle.Remaining(), cycle.Held(), plural(stats.ElapsedDays, "day"), stats.ActiveDays)
+	if cycle.Carried > 0 {
+		fmt.Fprintf(out, "%.2fg of that was carried over from the cycle before\n", cycle.Carried)
+	}
 	if stats.PerActiveDay > 0 {
 		fmt.Fprintf(out, "%.2fg per active day, %.2fg median, %.2fg per elapsed day\n",
 			stats.PerActiveDay, stats.MedianPerDay, stats.PerElapsedDay)
@@ -76,19 +81,15 @@ func writeStatus(out io.Writer, state *ledger.State) {
 	}
 }
 
-// purchasedOf returns how many grams of a product the cycle started with, so
-// that a per-product percentage has something to be a percentage of.
-func purchasedOf(cycle *ledger.Cycle, product string, state *ledger.State) float64 {
-	var grams float64
-	for _, e := range cycle.Events {
-		if e.Product == product && e.Type == "purchase" {
-			grams += e.Grams
-		}
+// heldOf returns the grams of a product the cycle started with, so that a
+// per-product percentage has something to be a percentage of. A product this
+// cycle never bought and never carried falls back to what is held now, rather
+// than showing a dash for a jar that is plainly on the shelf.
+func heldOf(cycle *ledger.Cycle, product string, state *ledger.State) float64 {
+	if grams := cycle.HeldOf(product); grams > 0 {
+		return grams
 	}
-	if grams == 0 {
-		return state.Held(product)
-	}
-	return grams
+	return state.Held(product)
 }
 
 // percent formats a share as a percentage, or a dash when there is nothing to
@@ -100,7 +101,14 @@ func percent(have, of float64) string {
 	return fmt.Sprintf("%.0f%%", have/of*100)
 }
 
-// daysSince returns the number of days from t until today, counting today.
+// daysSince returns the number of days from t until today, counting today. It
+// counts calendar days, the way the interface does, so the two never disagree
+// about what day of the cycle it is around midnight.
 func daysSince(t time.Time) int {
-	return int(time.Since(t).Hours()/24) + 1
+	now := time.Now()
+	ty, tm, td := t.Date()
+	ny, nm, nd := now.Date()
+	from := time.Date(ty, tm, td, 0, 0, 0, 0, time.UTC)
+	to := time.Date(ny, nm, nd, 0, 0, 0, 0, time.UTC)
+	return int(to.Sub(from).Hours()/24) + 1
 }

@@ -48,7 +48,7 @@ func TestFold(t *testing.T) {
 		})
 
 		b := s.Balances["wedding-cake"]
-		assert.Equal(t, 20.0, round(b.Storage+b.Stash+b.Consumed+b.AVB), "Should account for every purchased gram")
+		assert.Equal(t, 20.0, Round(b.Storage+b.Stash+b.Consumed+b.AVB), "Should account for every purchased gram")
 	})
 
 	t.Run("KeepsTinsSeparate", func(t *testing.T) {
@@ -230,6 +230,28 @@ func TestCycleGap(t *testing.T) {
 		assert.Equal(t, day(30), s.Cycles[0].End, "Should close when the next fill arrived")
 		assert.False(t, s.Cycles[0].Open(), "Should be closed by its successor")
 		assert.Equal(t, 20.0, s.Cycles[1].Purchased, "Should not carry the leftover into the new cycle's total")
+		assert.Equal(t, 5.0, s.Cycles[1].Carried, "Should record the leftover as carried into the new cycle")
+		assert.Equal(t, 5.0, s.Cycles[1].Opening["wedding-cake"], "Should know which product carried over")
+		assert.Equal(t, 25.0, s.Cycles[1].Held(), "Should hold the fill plus the carry-over")
+	})
+
+	t.Run("GrindingDownACarryOverDoesNotOverspendTheFill", func(t *testing.T) {
+		// The second cycle grinds more than its own fill, drawing on the first
+		// cycle's remainder. Without the carry-over that read as a negative
+		// remainder and a product more than 100% "left".
+		s := Fold([]journal.Event{
+			event(journal.Purchase, "wedding-cake", 10, day(0)),
+			event(journal.Grind, "wedding-cake", 4, day(5)),
+			event(journal.Purchase, "wedding-cake", 10, day(30)),
+			event(journal.Grind, "wedding-cake", 12, day(35)),
+		})
+
+		require.Len(t, s.Cycles, 2)
+		c := s.Cycles[1]
+		assert.Equal(t, 6.0, c.Carried, "Should carry the first cycle's remainder")
+		assert.Equal(t, 4.0, c.Remaining(), "Should count the carry-over before calling anything overspent")
+		assert.InDelta(t, 0.25, c.RemainingPct(), 1e-9, "Should stay between zero and one")
+		assert.Equal(t, 16.0, c.HeldOf("wedding-cake"), "Should give a product its fill plus its carry-over")
 	})
 
 	t.Run("SameDayFillsStayTogether", func(t *testing.T) {
