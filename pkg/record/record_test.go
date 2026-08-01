@@ -192,6 +192,27 @@ func TestAmend(t *testing.T) {
 	assert.Len(t, rec.State().Events, 4, "Should keep the original, the undo and the replacement")
 }
 
+func TestAmendRefusesBeforeReverting(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
+	require.NoError(t, err)
+	grind, err := rec.Grind("wedding", 7.5, time.Now())
+	require.NoError(t, err)
+
+	// Amending up to more than storage can cover must fail whole: the revert
+	// and the re-record are two appends, and refusing between them would leave
+	// the entry silently undone.
+	_, err = rec.Amend(grind.Hash, 25, "")
+
+	assert.ErrorContains(t, err, "cannot amend", "Should refuse an amount storage cannot cover")
+	assert.Len(t, rec.State().Events, 2, "Should write nothing when it refuses")
+	assert.Equal(t, 7.5, rec.Available("wcake-221", journal.Stash), "The tin should be untouched")
+
+	_, err = rec.Amend(grind.Hash, 0, "")
+	assert.ErrorContains(t, err, "positive", "Should refuse a zero amount before writing anything")
+	assert.Len(t, rec.State().Events, 2, "Should write nothing for a zero amount either")
+}
+
 func TestReverted(t *testing.T) {
 	rec := recorder(t)
 	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())

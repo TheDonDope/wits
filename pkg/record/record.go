@@ -149,9 +149,12 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 	if have >= grams {
 		return nil
 	}
-	where := "in storage"
-	if account == journal.Stash {
-		where = "in the tin"
+	// The same names the reconcile forms use, so an account is called one
+	// thing everywhere. Undoing an avb-collect used to complain about
+	// "storage", which is not where the grams were.
+	where := "in " + string(account)
+	if name, ok := reconcilable[account]; ok {
+		where = "in " + name
 	}
 	return fmt.Errorf("only %.2fg of %s %s, cannot take %.2fg", have, slug, where, grams)
 }
@@ -210,10 +213,25 @@ func (r *Recorder) Revert(hash string, reason string) (journal.Event, error) {
 
 // Amend corrects the amount of an earlier entry, by reverting it and recording
 // it again as it should have been.
+//
+// The two appends are not a transaction, so everything that could refuse the
+// second one is checked before the first is written. Reverting and then
+// failing to re-record would leave the entry silently undone, which is worse
+// than either refusing outright or recording the correction.
 func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event, error) {
 	original, err := r.Find(hash)
 	if err != nil {
 		return journal.Event{}, err
+	}
+	if grams <= 0 {
+		return journal.Event{}, fmt.Errorf("grams must be positive, got %v", grams)
+	}
+	// The revert frees the original amount back into the source account, so
+	// only the difference beyond it has to be there already.
+	if extra := round(grams - original.Grams); extra > 0 {
+		if err := r.check(original.Product, extra, original.From); err != nil {
+			return journal.Event{}, fmt.Errorf("cannot amend %s to %.2fg: %w", short(hash), grams, err)
+		}
 	}
 	if _, err := r.Revert(hash, "amended"); err != nil {
 		return journal.Event{}, err
@@ -351,8 +369,8 @@ func (r *Recorder) Difference(ref string, account journal.Account, weighed float
 	return expected, round(weighed - expected), nil
 }
 
-// round trims to centigrams, the precision a jeweller's scale reads.
-func round(g float64) float64 { return math.Round(g*100) / 100 }
+// round trims to centigrams, the way the whole ledger does.
+func round(g float64) float64 { return ledger.Round(g) }
 
 // Rename changes what a product is called, and nothing else.
 //
