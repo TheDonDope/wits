@@ -1,14 +1,15 @@
-// Package version is used to store the version of the server during runtime.
-// The values are set during runtime in the main package.
+// Package version holds the build information of the running binary. The
+// values are injected through ldflags at build time and copied here by the
+// main package, so any other package can report them without importing main.
 package version
 
 var (
-	// Version is the version of the server.
+	// Version is the version of the build, from the most recent git tag.
 	Version = ""
 
-	// CommitSHA is the commit SHA of the server.
+	// CommitSHA is the commit the build was made from.
 	CommitSHA = ""
 
-	// CommitDate is the commit date of the server.
+	// CommitDate is the date of that commit.
 	CommitDate = ""
 )

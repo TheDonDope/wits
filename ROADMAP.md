@@ -138,6 +138,13 @@ The charts are drawn in-tree. The terminal charting libraries still target Bubbl
 Tea v1, and mixing the majors puts two renderers and two colour-profile detectors
 in one binary, which shows on screen as inconsistent colour.
 
+Daily amounts are drawn as a braille area chart — two days per cell, four times
+the vertical resolution of a block — with a seven-day average over it. The
+longer analysis scopes add a calendar heatmap, one cell per day in GitHub's
+contribution greens. The dashboard's cycle bar shades from green into the
+colour the remaining fraction has earned, and its thirty-day columns tint
+heavier days hotter.
+
 ### Correcting entries
 
 `wits revert`, and `e` / `d` in the journal view. An entry is undone by moving the

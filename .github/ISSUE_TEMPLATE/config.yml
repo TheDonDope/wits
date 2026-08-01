@@ -1,0 +1,7 @@
+# Features, bugs and refactorings are tracked in ROADMAP.md rather than in
+# GitHub Issues, so the plan and the code stay in one place. See CONTRIBUTING.md.
+blank_issues_enabled: false
+contact_links:
+  - name: The roadmap
+    url: https://github.com/TheDonDope/wits/blob/main/ROADMAP.md
+    about: Check whether it is already known, then open a pull request adding it — or fixing it.
