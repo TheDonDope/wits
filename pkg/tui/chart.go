@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"image/color"
 	"math"
 	"strings"
 
@@ -38,6 +39,53 @@ func Gauge(width int, fraction float64, fill tint, track lipgloss.Style) string 
 		return filled + track.Render(strings.Repeat("─", rest))
 	}
 	return filled
+}
+
+// GradientGauge is Gauge with the fill shaded from one colour to another along
+// its length. The dashboard uses it for the cycle bar, running from the
+// comfortable green into whatever colour the remaining fraction has earned, so
+// a draining cycle looks like one.
+func GradientGauge(width int, fraction float64, from, to tint, track lipgloss.Style) string {
+	if width <= 0 {
+		return ""
+	}
+	fraction = clamp(fraction, 0, 1)
+	exact := fraction * float64(width)
+	full := int(exact)
+	rem := exact - float64(full)
+
+	var b strings.Builder
+	cells := full
+	partial := ' '
+	if full < width {
+		if eighth := int(rem*8 + 0.5); eighth > 0 {
+			partial = blocks[eighth]
+			cells++
+		}
+	}
+	for i := 0; i < cells; i++ {
+		r := "█"
+		if i == cells-1 && partial != ' ' {
+			r = string(partial)
+		}
+		shade := lerp(from, to, float64(i)/math.Max(float64(cells-1), 1))
+		b.WriteString(lipgloss.NewStyle().Foreground(shade).Render(r))
+	}
+	if rest := width - cells; rest > 0 {
+		b.WriteString(track.Render(strings.Repeat("─", rest)))
+	}
+	return b.String()
+}
+
+// lerp blends two colours. The blend is in plain RGB, which is crude next to a
+// perceptual space but indistinguishable at the dozen steps a terminal bar has.
+func lerp(from, to tint, t float64) tint {
+	fr, fg, fb, _ := from.RGBA()
+	tr, tg, tb, _ := to.RGBA()
+	mix := func(a, b uint32) uint8 {
+		return uint8(uint32(float64(a>>8)*(1-t)+float64(b>>8)*t) & 0xFF)
+	}
+	return color.RGBA{R: mix(fr, tr), G: mix(fg, tg), B: mix(fb, tb), A: 0xFF}
 }
 
 // Sparkline renders a series as a single line of block characters. It is used
@@ -112,10 +160,13 @@ func BarChart(bars []Bar, width int, t *Theme) string {
 	return strings.Join(rows, "\n")
 }
 
-// Column is one bar of a vertical chart.
+// Column is one bar of a vertical chart. A column may carry its own colour —
+// the dashboard tints heavier days hotter — and falls back to the chart's fill
+// when it does not.
 type Column struct {
 	Value float64
 	Label string
+	Color tint
 }
 
 // ColumnChart renders a vertical bar chart, which is how a run of daily amounts
@@ -133,7 +184,14 @@ func ColumnChart(cols []Column, height int, t *Theme, fill tint) string {
 		return t.Dim.Render("nothing logged in this range")
 	}
 
-	style := lipgloss.NewStyle().Foreground(fill)
+	styles := make([]lipgloss.Style, len(cols))
+	for i, c := range cols {
+		colour := c.Color
+		if colour == nil {
+			colour = fill
+		}
+		styles[i] = lipgloss.NewStyle().Foreground(colour)
+	}
 	grid := make([][]string, height)
 	for row := range grid {
 		grid[row] = make([]string, len(cols))
@@ -142,6 +200,7 @@ func ColumnChart(cols []Column, height int, t *Theme, fill tint) string {
 		upper := float64(height-row) / float64(height)
 		lower := float64(height-row-1) / float64(height)
 		for i, c := range cols {
+			style := styles[i]
 			fraction := c.Value / peak
 			switch {
 			case fraction >= upper:
