@@ -7,7 +7,9 @@
 package record
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -261,3 +263,78 @@ func short(h string) string {
 	}
 	return h
 }
+
+// ErrNothingToReconcile is returned when the scale agrees with the ledger.
+var ErrNothingToReconcile = errors.New("the ledger already matches the scale")
+
+// reconcilable are the accounts that hold something you can put on a scale.
+// Consumed is not one of them: it is what has gone through a device and is on
+// its way to becoming AVB, and there is no jar of it to weigh.
+var reconcilable = map[journal.Account]string{
+	journal.Storage: "storage",
+	journal.Stash:   "the tin",
+	journal.AVB:     "the AVB jar",
+}
+
+// Reconcile records the difference between what the ledger believes an account
+// holds and what the scale actually reads.
+//
+// Ledgers drift: a little is spilled, a session goes unlogged, a scale is read
+// wrong. The honest repair is not to edit the past — nobody knows which entry
+// was wrong — but to record that the account is now known to hold a different
+// amount, and by how much. The difference becomes an adjustment, which the fold
+// applies like any other transfer.
+func (r *Recorder) Reconcile(ref string, account journal.Account, weighed float64, note string) (journal.Event, error) {
+	where, ok := reconcilable[account]
+	if !ok {
+		return journal.Event{}, fmt.Errorf("%s cannot be weighed", account)
+	}
+	product, err := r.products.Find(ref)
+	if err != nil {
+		return journal.Event{}, err
+	}
+	if weighed < 0 {
+		return journal.Event{}, fmt.Errorf("a weight cannot be negative, got %.2f", weighed)
+	}
+
+	expected := r.Available(product.Slug, account)
+	difference := round(weighed - expected)
+	if difference == 0 {
+		return journal.Event{}, fmt.Errorf("%w: %.2f g in %s", ErrNothingToReconcile, expected, where)
+	}
+
+	// Grams that are there but unaccounted for come in from outside the system;
+	// grams the ledger has but the jar does not have gone out of it. Either way
+	// the entry is a transfer, so the accounts still balance afterwards.
+	from, to := journal.External, account
+	if difference < 0 {
+		from, to = account, journal.External
+	}
+	if note == "" {
+		note = fmt.Sprintf("reconciled %s: %.2f g weighed, %.2f g expected", where, weighed, expected)
+	}
+	return r.append(journal.Event{
+		Type:       journal.Adjust,
+		Product:    product.Slug,
+		Grams:      math.Abs(difference),
+		From:       from,
+		To:         to,
+		OccurredAt: time.Now(),
+		Note:       note,
+	})
+}
+
+// Difference reports what reconciling an account to a weighed amount would
+// change, without recording anything. A screen can show it before it is
+// committed to.
+func (r *Recorder) Difference(ref string, account journal.Account, weighed float64) (expected, difference float64, err error) {
+	product, err := r.products.Find(ref)
+	if err != nil {
+		return 0, 0, err
+	}
+	expected = r.Available(product.Slug, account)
+	return expected, round(weighed - expected), nil
+}
+
+// round trims to centigrams, the precision a jeweller's scale reads.
+func round(g float64) float64 { return math.Round(g*100) / 100 }

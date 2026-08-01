@@ -86,8 +86,8 @@ rows, so its average depended on how far ahead it had been filled in.
 
 ### The commands
 
-`init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `device`, `temps`,
-`import`, `export`, `bundle`, `restore`. Only the parts of git's vocabulary with
+`init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `reconcile`, `device`,
+`temps`, `import`, `export`, `bundle`, `restore`. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
 prescription and are absent.
 
@@ -146,6 +146,18 @@ The log shows what currently stands; `v` reveals the corrections behind it. They
 are hidden rather than removed — that is the difference between a record that can
 be audited and one that cannot.
 
+### Products and reconciliation
+
+A products screen listing what is on the shelf — storage, tin, AVB and grams
+ground, with the potency and how much of the fill is still held. It lists what is
+held by default and everything ever dispensed on `a`, because a catalog
+remembering four years of prescriptions is a history rather than a shelf.
+
+`wits reconcile`, and `r` in the interface, record the difference between what
+the ledger believes an account holds and what it actually weighs. Nothing in the
+past is edited: the difference becomes an adjustment, which is a transfer like
+any other, so the accounts still balance afterwards.
+
 ### Temperatures and devices
 
 Every cannabinoid and terpene with its boiling point, so a setting on a dial reads
@@ -166,15 +178,10 @@ range is checked when it is typed rather than later when a session is refused.
   recorded grinding. Nothing was invented to fill that gap, so the stash balance
   of a product recurring across cycles reads high until it is worked down.
 
-### 🔹 A products screen
+### 🔹 Editing a product, and splitting ones the slug merged
 
 - **Status**: Planned
-- Devices have one; products do not. Wanted: browsing the catalog, correcting a
-  parsed name, and merging two products the slug split or joined.
-
-### 🔹 Splitting products the slug merged
-
-- **Status**: Planned
+- The products screen lists and weighs; it cannot yet correct a parsed name.
 - `Slugify` drops the THC ratio, so the same cultivar from one manufacturer at two
   potencies becomes one product. The importer reports these rather than doing it
   quietly, but there is no way to split them afterwards.

@@ -12,6 +12,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
 )
 
@@ -34,6 +35,8 @@ func (k entryKind) String() string {
 		return "Amend entry"
 	case entryUndo:
 		return "Undo entry"
+	case entryReconcile:
+		return "Weigh and reconcile"
 	default:
 		return "Grind"
 	}
@@ -210,7 +213,7 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	at := time.Now()
 
 	var grams float64
-	if f.kind != entryUndo {
+	if f.kind != entryUndo && f.kind != entryReconcile {
 		var err error
 		if grams, err = parseGrams(f.amount); err != nil {
 			return journal.Event{}, err
@@ -218,6 +221,13 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	}
 
 	switch f.kind {
+	case entryReconcile:
+		weighed, err := strconv.ParseFloat(
+			strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(f.amount), "g")), ",", ".", 1), 64)
+		if err != nil {
+			return journal.Event{}, err
+		}
+		return rec.Reconcile(f.product, journal.Account(f.device), weighed, strings.TrimSpace(f.note))
 	case entryUndo:
 		if !f.confirm {
 			return journal.Event{}, errCancelled
@@ -305,4 +315,52 @@ func newUndoForm(e *journal.Event, a *App) *entryForm {
 func describe(e *journal.Event, a *App) string {
 	return fmt.Sprintf("%s  %.2f g  %s  ·  %s",
 		e.Type, e.Grams, a.data.ProductName(e.Product), e.OccurredAt.Format("Mon 02 Jan 2006"))
+}
+
+// entryReconcile makes an account agree with the scale.
+const entryReconcile entryKind = iota + 200
+
+// newReconcileForm asks what an account actually weighs.
+//
+// The ledger's own figure is put in front of the field rather than left to be
+// remembered, because the point of weighing is to compare, and a number typed
+// from memory is not a reconciliation.
+func newReconcileForm(slug string, a *App) *entryForm {
+	f := &entryForm{kind: entryReconcile, product: slug}
+	b := a.data.State.Balances[slug]
+	if b == nil {
+		b = &ledger.Balance{}
+	}
+
+	accounts := []huh.Option[string]{
+		huh.NewOption(fmt.Sprintf("Storage — ledger says %.2f g", b.Storage), string(journal.Storage)),
+		huh.NewOption(fmt.Sprintf("The tin — ledger says %.2f g", b.Stash), string(journal.Stash)),
+	}
+	if b.AVB > 0 {
+		accounts = append(accounts,
+			huh.NewOption(fmt.Sprintf("AVB — ledger says %.2f g", b.AVB), string(journal.AVB)))
+	}
+	f.device = string(journal.Storage) // reused as the account, defaulting to storage
+
+	f.form = huh.NewForm(huh.NewGroup(
+		huh.NewNote().Title(a.data.ProductName(slug)).
+			Description("Nothing in the past is edited. The difference is recorded\nas an adjustment, and the account agrees with the jar again."),
+		huh.NewSelect[string]().Title("Weigh which").Options(accounts...).Value(&f.device),
+		huh.NewInput().Title("On the scale").Description("Grams").
+			Value(&f.amount).Validate(nonNegativeGrams),
+		huh.NewInput().Title("Why").Description("Optional — spilled, unlogged, misread").Value(&f.note),
+	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	return f
+}
+
+// nonNegativeGrams accepts zero, because an empty jar is a real reading.
+func nonNegativeGrams(s string) error {
+	v, err := strconv.ParseFloat(strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(s), "g")), ",", ".", 1), 64)
+	if err != nil {
+		return fmt.Errorf("not a weight in grams")
+	}
+	if v < 0 {
+		return fmt.Errorf("a weight cannot be negative")
+	}
+	return nil
 }

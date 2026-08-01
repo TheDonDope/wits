@@ -56,6 +56,7 @@ func init() {
 		commands.Temps,
 		commands.Status,
 		commands.Log,
+		commands.Reconcile,
 		commands.Restore,
 		commands.Revert,
 		commands.Export,
