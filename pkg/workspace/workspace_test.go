@@ -117,3 +117,55 @@ func TestReadEmptyRepository(t *testing.T) {
 	assert.Nil(t, ws.Cycle(), "Should report no cycle")
 	assert.NotNil(t, ws.Recorder, "and should still be ready to record the first entry")
 }
+
+func TestHere(t *testing.T) {
+	t.Run("OpensTheRepositoryAroundTheWorkingDirectory", func(t *testing.T) {
+		r := filled(t)
+		nested := filepath.Join(r.WorkTree(), "notes")
+		require.NoError(t, os.MkdirAll(nested, 0700))
+		t.Chdir(nested)
+
+		ws, err := Here()
+		require.NoError(t, err)
+
+		assert.Equal(t, r.Root(), ws.Repo.Root(), "Should find the repository from where it is run")
+		assert.Len(t, ws.Events(), 2, "and should have read it")
+	})
+
+	t.Run("WithoutARepository", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+
+		_, err := Here()
+
+		assert.ErrorIs(t, err, repo.ErrNotARepo, "Should say there is no repository here")
+	})
+}
+
+func TestJournalIsTheRepositoryJournal(t *testing.T) {
+	r := filled(t)
+	ws, err := Read(r)
+	require.NoError(t, err)
+
+	assert.Equal(t, r.Journal().Path(), ws.Journal().Path(), "Should hand out the repository's own journal")
+	assert.NoError(t, ws.Journal().Verify(), "which should verify")
+}
+
+func TestReadRefusesABrokenCatalog(t *testing.T) {
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(r.ProductsPath(), []byte("products: [oh dear\n"), 0600))
+
+	_, err = Read(r)
+
+	assert.Error(t, err, "Should refuse to open rather than quietly treat a broken catalog as empty")
+}
+
+func TestReadRefusesABrokenJournal(t *testing.T) {
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(r.Journal().Path(), []byte("not json\n"), 0600))
+
+	_, err = Read(r)
+
+	assert.Error(t, err, "Should refuse to open rather than fold a journal it could not read")
+}
