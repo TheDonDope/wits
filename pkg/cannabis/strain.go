@@ -1,50 +1,5 @@
 package cannabis
 
-import (
-	"fmt"
-	"strings"
-	"time"
-
-	"github.com/google/uuid"
-)
-
-// Strain is the type for a cannabis strain.
-type Strain struct {
-	ID           uuid.UUID   // The unique identifier
-	Strain       string      // The product name
-	Cultivar     string      // The breed
-	Manufacturer string      // The producer / importer
-	Country      string      // The country of origin
-	Genetic      GeneticType // The genetic type
-	Radiated     bool        // If the strain was radiation treated
-	THC          float64     // The THC content in %
-	CBD          float64     // The CBD content in %
-	Terpenes     []*Terpene  // The terpenes in the strain
-	Amount       float64     // The amount in grams
-	CreatedAt    time.Time   // The creation timestamp
-	UpdatedAt    time.Time   // The last update timestamp
-}
-
-// String returns a formatted string representation of a Strain.
-func (s Strain) String() string {
-	var terpeneNames []string
-	for _, t := range s.Terpenes {
-		terpeneNames = append(terpeneNames, t.Name)
-	}
-
-	return fmt.Sprintf(
-		"ID: %s \nStrain: %s (%s)\nManufacturer: %s (%s)\nGenetic: %s | Radiated: %t\nTHC: %.2f%% | CBD: %.2f%%\nTerpenes: %s\nAmount: %.2fg\nCreatedAt: %s | UpdatedAt: %s\n",
-		s.ID.String(),
-		s.Strain, s.Cultivar,
-		s.Manufacturer, s.Country,
-		Genetics[s.Genetic], s.Radiated,
-		s.THC, s.CBD,
-		strings.Join(terpeneNames, ", "),
-		s.Amount,
-		s.CreatedAt.Format(time.RFC3339), s.UpdatedAt.Format(time.RFC3339),
-	)
-}
-
 // GeneticType is the enum for the genetic types
 type GeneticType int
 
