@@ -220,46 +220,66 @@ func CheckSlug(slug string) error {
 // a person would abbreviate it to themselves, preferring the cultivar over the
 // manufacturer, because the cultivar is what distinguishes one jar from the next.
 func NewHandle(p *Product, existing []string) string {
-	taken := func(candidate string) bool {
+	free := notNear(existing)
+	words := handleBasis(p)
+
+	for _, candidate := range handleCandidates(words) {
+		if len(candidate) >= minHandle && len(candidate) <= maxHandle && free(candidate) {
+			return candidate
+		}
+	}
+	return numberedHandle(words, free)
+}
+
+// notNear reports whether a candidate is far enough from every slug already in
+// use.
+//
+// Not merely different: a handle that is a prefix of another, or has another as
+// its prefix, is one keystroke from the wrong jar, and references are resolved
+// by prefix. wcake and wcak must not both exist.
+func notNear(existing []string) func(string) bool {
+	return func(candidate string) bool {
 		for _, slug := range existing {
-			// Not merely equal: a handle that is a prefix of another, or has
-			// another as its prefix, is one keystroke from the wrong jar, and
-			// references are resolved by prefix. wcake and wcak must not both
-			// exist.
 			if strings.HasPrefix(candidate, slug) || strings.HasPrefix(slug, candidate) {
-				return true
+				return false
 			}
 		}
-		return false
+		return true
 	}
+}
+
+// handleBasis reduces a product to the words worth abbreviating, preferring the
+// cultivar, since that is what distinguishes one jar from the next.
+func handleBasis(p *Product) []string {
 	basis := p.Cultivar
 	if strings.TrimSpace(basis) == "" {
 		basis = p.Name
 	}
 	words := handleWords(basis)
-	if full := handleWords(p.Name); len(words) == 0 {
-		words = full
-	} else if len(words) == 1 && len(words[0]) < minHandle {
+	full := handleWords(p.Name)
+	switch {
+	case len(words) == 0:
+		return full
+	case len(words) == 1 && len(words[0]) < minHandle:
 		// One short word on its own has nothing to shorten; the rest of the
 		// name is what is left to borrow from.
-		words = append(words, full...)
+		return append(words, full...)
+	default:
+		return words
 	}
+}
 
-	for _, candidate := range handleCandidates(words) {
-		if len(candidate) >= minHandle && len(candidate) <= maxHandle && !taken(candidate) {
-			return candidate
-		}
-	}
-	// Everything memorable was taken, so number it: the point is that it is
-	// short and unique, and a person who has three Wedding Cakes open at once
-	// needs telling them apart more than they need a mnemonic.
+// numberedHandle is the last resort, when everything memorable is taken. The
+// point is then to be short and unique: somebody with three Wedding Cakes open
+// at once needs to tell them apart more than they need a mnemonic.
+//
+// Shorter stems come first within each number so the digit stays visible: wedd
+// being taken gives wed2, not wedd2 — which the nearness rule rejects anyway.
+func numberedHandle(words []string, free func(string) bool) string {
 	stem := "p"
 	if len(words) > 0 {
 		stem = words[0]
 	}
-	// Shorter stems first within each number, so the digit stays visible:
-	// wedd is taken, so wed2 rather than wedd2 — which the prefix rule would
-	// reject anyway — and certainly rather than wed10.
 	for n := 2; ; n++ {
 		suffix := strconv.Itoa(n)
 		for keep := maxHandle - len(suffix); keep >= minHandle-len(suffix); keep-- {
@@ -267,7 +287,7 @@ func NewHandle(p *Product, existing []string) string {
 				continue
 			}
 			candidate := stem[:keep] + suffix
-			if len(candidate) >= minHandle && len(candidate) <= maxHandle && !taken(candidate) {
+			if len(candidate) >= minHandle && len(candidate) <= maxHandle && free(candidate) {
 				return candidate
 			}
 		}
