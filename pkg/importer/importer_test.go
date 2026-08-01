@@ -311,3 +311,24 @@ func TestCommit(t *testing.T) {
 		assert.Equal(t, before.ModTime(), after.ModTime(), "Should not touch the workbook it reads")
 	})
 }
+
+func TestSpan(t *testing.T) {
+	t.Run("FirstAndLastEntry", func(t *testing.T) {
+		s := twoProducts()
+		s.entries = []entry{{5, "WC", 1}, {1, "WC", 1}, {9, "WC", 1}}
+
+		result, err := Read(build(t, s))
+		require.NoError(t, err)
+
+		first, last := result.Span()
+		assert.Equal(t, 1, int(last.Sub(first).Hours()/24/8), "Should span the eight days between them")
+		assert.True(t, first.Before(last), "Should report them in order")
+	})
+
+	t.Run("EmptyResult", func(t *testing.T) {
+		first, last := (&Result{}).Span()
+
+		assert.True(t, first.IsZero(), "Should have no first entry")
+		assert.True(t, last.IsZero(), "Should have no last entry")
+	})
+}
