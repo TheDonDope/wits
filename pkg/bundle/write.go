@@ -6,8 +6,8 @@ import (
 	"io"
 	"sort"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
 )
 
 // Contents is everything a bundle carries.

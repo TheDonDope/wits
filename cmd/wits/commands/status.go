@@ -6,7 +6,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/spf13/cobra"
 )
 

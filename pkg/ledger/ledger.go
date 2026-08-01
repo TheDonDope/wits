@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/journal"
 )
 
 // Balance is how many grams of one product sit in each account.

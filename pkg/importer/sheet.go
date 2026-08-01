@@ -9,7 +9,7 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/catalog"
 )
 
 // dateHeaders are the labels that mark the start of the daily table. Early

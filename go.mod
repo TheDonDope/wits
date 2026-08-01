@@ -1,4 +1,4 @@
-module github.com/TheDonDope/wits-tui
+module github.com/TheDonDope/wits
 
 go 1.26.5
 

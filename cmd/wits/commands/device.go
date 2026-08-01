@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"text/tabwriter"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/spf13/cobra"
 )
 

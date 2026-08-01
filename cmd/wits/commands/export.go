@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/spf13/cobra"
 )
 

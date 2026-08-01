@@ -7,9 +7,9 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/repo"
 )
 
 // Result is everything a run of the importer found. It holds no repository and

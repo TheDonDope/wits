@@ -17,7 +17,7 @@ build:
 	  -v \
 	  -ldflags "-X main.Version=$(VERSION) -X main.CommitSHA=$(COMMIT_SHA) -X main.CommitDate=$(COMMIT_DATE)" \
 	  -o ./bin/wits \
-	  ./cmd/wits/main.go
+	  ./cmd/wits
 
 build-windows:
 	GOOS=windows \
@@ -26,7 +26,7 @@ build-windows:
 	  -v \
 	  -ldflags "-X main.Version=$(VERSION) -X main.CommitSHA=$(COMMIT_SHA) -X main.CommitDate=$(COMMIT_DATE)" \
 	  -o ./bin/wits.exe \
-	  ./cmd/wits/main.go
+	  ./cmd/wits
 
 clean:
 	rm -f ./bin/wits

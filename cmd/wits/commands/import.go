@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/TheDonDope/wits-tui/pkg/importer"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/importer"
+	"github.com/TheDonDope/wits/pkg/journal"
 )
 
 var importCommit bool

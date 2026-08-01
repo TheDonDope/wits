@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/journal"
 )
 
 // Magic identifies a bundle, and Version is the format it is written in.

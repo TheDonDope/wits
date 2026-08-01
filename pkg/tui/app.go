@@ -11,8 +11,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/TheDonDope/wits-tui/pkg/repo"
-	"github.com/TheDonDope/wits-tui/pkg/workspace"
+	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
 // Data is what the screens read: a workspace snapshot, plus the moment it was

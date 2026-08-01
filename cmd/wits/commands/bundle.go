@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/TheDonDope/wits-tui/pkg/bundle"
+	"github.com/TheDonDope/wits/pkg/bundle"
 	"github.com/spf13/cobra"
 )
 

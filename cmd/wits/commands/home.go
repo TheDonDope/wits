@@ -1,4 +1,4 @@
-package home
+package commands
 
 import (
 	"fmt"
@@ -7,12 +7,12 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/TheDonDope/wits-tui/pkg/repo"
-	"github.com/TheDonDope/wits-tui/pkg/tui"
+	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/tui"
 )
 
-// Command launches the terminal interface.
-var Command = &cobra.Command{
+// Home launches the terminal interface. It is what `wits` on its own runs.
+var Home = &cobra.Command{
 	Use:   "home",
 	Short: "Launch the interface",
 	Args:  cobra.NoArgs,
