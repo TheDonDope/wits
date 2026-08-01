@@ -80,6 +80,7 @@ type keyMap struct {
 	PageUp, PgDown key.Binding
 	Top, Bottom    key.Binding
 	Help, Quit     key.Binding
+	New, Sesh, Buy key.Binding
 }
 
 func defaultKeys() keyMap {
@@ -92,6 +93,9 @@ func defaultKeys() keyMap {
 		PgDown: key.NewBinding(key.WithKeys("pgdown", "ctrl+f"), key.WithHelp("pgdn", "page down")),
 		Top:    key.NewBinding(key.WithKeys("home", "g"), key.WithHelp("g", "top")),
 		Bottom: key.NewBinding(key.WithKeys("end", "G"), key.WithHelp("G", "bottom")),
+		New:    key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "grind")),
+		Sesh:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sesh")),
+		Buy:    key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "buy")),
 		Help:   key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		Quit:   key.NewBinding(key.WithKeys("q", "ctrl+c", "esc"), key.WithHelp("q", "quit")),
 	}
@@ -99,7 +103,7 @@ func defaultKeys() keyMap {
 
 // ShortHelp implements help.KeyMap.
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Next, k.Up, k.Down, k.Help, k.Quit}
+	return []key.Binding{k.Next, k.New, k.Sesh, k.Buy, k.Help, k.Quit}
 }
 
 // FullHelp implements help.KeyMap.
@@ -108,6 +112,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Next, k.Prev},
 		{k.Up, k.Down, k.PageUp, k.PgDown},
 		{k.Top, k.Bottom},
+		{k.New, k.Sesh, k.Buy},
 		{k.Help, k.Quit},
 	}
 }
@@ -123,6 +128,12 @@ type App struct {
 
 	width, height int
 	showHelp      bool
+
+	// entry is the form in front, if any. While it is open it takes every key,
+	// so navigation cannot fire underneath a half-filled entry.
+	entry  *entryForm
+	notice string
+	failed bool
 
 	dashboard dashboard
 	journal   journalView
@@ -160,8 +171,46 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.BackgroundColorMsg:
 		a.theme = NewTheme(msg.IsDark())
 
+	case entryDoneMsg:
+		if msg.err != nil {
+			a.notice, a.failed = msg.err.Error(), true
+			return a, nil
+		}
+		a.notice, a.failed = fmt.Sprintf("recorded %s %.2fg %s",
+			msg.event.Type, msg.event.Grams, msg.event.Product), false
+		return a, a.reload()
+
+	case reloadedMsg:
+		if msg.err != nil {
+			a.notice, a.failed = msg.err.Error(), true
+			return a, nil
+		}
+		a.data = msg.data
+		return a, nil
+
 	case tea.KeyPressMsg:
+		// A form in front owns the keyboard.
+		if a.entry != nil {
+			// huh only aborts on ctrl+c, so esc is handled here rather than
+			// leaving the panel promising something that does not work.
+			if msg.String() == "esc" {
+				a.entry, a.notice = nil, ""
+				return a, nil
+			}
+			var cmd tea.Cmd
+			a.entry, cmd = a.entry.Update(msg, a)
+			return a, cmd
+		}
 		switch {
+		case msg.String() == "n":
+			a.entry, a.notice = newEntryForm(entryGrind, a), ""
+			return a, a.entry.form.Init()
+		case msg.String() == "s" && a.screen != analysisScreen:
+			a.entry, a.notice = newEntryForm(entrySesh, a), ""
+			return a, a.entry.form.Init()
+		case msg.String() == "b":
+			a.entry, a.notice = newEntryForm(entryBuy, a), ""
+			return a, a.entry.form.Init()
 		case key.Matches(msg, a.keys.Quit):
 			return a, tea.Quit
 		case key.Matches(msg, a.keys.Help):
@@ -174,6 +223,12 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.screen = screen((int(a.screen) - 1 + len(tabs)) % len(tabs))
 			return a, nil
 		}
+	}
+
+	if a.entry != nil {
+		var cmd tea.Cmd
+		a.entry, cmd = a.entry.Update(msg, a)
+		return a, cmd
 	}
 
 	// Whatever is left belongs to the screen in front. Each screen returns its
@@ -203,12 +258,19 @@ func (a *App) View() tea.View {
 	}
 	header := a.header()
 	footer := a.footer()
+	var body string
 	bodyHeight := a.height - lipgloss.Height(header) - lipgloss.Height(footer)
 	if bodyHeight < 1 {
 		bodyHeight = 1
 	}
 
-	var body string
+	if a.entry != nil {
+		body = lipgloss.NewStyle().Padding(1, 1).Render(a.entry.View(a, a.width))
+		view.SetContent(lipgloss.NewStyle().MaxWidth(a.width).MaxHeight(a.height).
+			Render(lipgloss.JoinVertical(lipgloss.Left, header, body, footer)))
+		return view
+	}
+
 	switch a.screen {
 	case dashboardScreen:
 		body = a.dashboard.View(a, bodyHeight)
@@ -263,8 +325,40 @@ func (a *App) header() string {
 	return lipgloss.JoinVertical(lipgloss.Left, " "+line, t.Rule("", a.width))
 }
 
-// footer draws the key hints.
+// reloadedMsg carries a freshly folded repository.
+type reloadedMsg struct {
+	data Data
+	err  error
+}
+
+// reload re-reads the journal after something has been written to it, so every
+// screen sees the new entry at once.
+func (a *App) reload() tea.Cmd {
+	repository := a.data.Repo
+	return func() tea.Msg {
+		data, err := Load(repository)
+		return reloadedMsg{data: data, err: err}
+	}
+}
+
+// footer draws the key hints, or the outcome of the last entry.
 func (a *App) footer() string {
+	if a.notice != "" && a.entry == nil {
+		style := a.theme.Positive
+		mark := "✓ "
+		if a.failed {
+			style, mark = a.theme.Negative, "✗ "
+		}
+		return lipgloss.JoinVertical(lipgloss.Left,
+			a.theme.Rule("", a.width),
+			" "+style.Render(mark+a.notice),
+		)
+	}
+	return a.helpFooter()
+}
+
+// helpFooter draws the key hints.
+func (a *App) helpFooter() string {
 	a.help.Styles.ShortKey = a.theme.Key
 	a.help.Styles.ShortDesc = a.theme.Help
 	a.help.Styles.FullKey = a.theme.Key

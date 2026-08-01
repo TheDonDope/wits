@@ -16,16 +16,19 @@ import (
 	"github.com/TheDonDope/wits-tui/pkg/catalog"
 	"github.com/TheDonDope/wits-tui/pkg/journal"
 	"github.com/TheDonDope/wits-tui/pkg/ledger"
+	"github.com/TheDonDope/wits-tui/pkg/record"
 	"github.com/TheDonDope/wits-tui/pkg/repo"
 )
 
 // session bundles the repository, its catalog and the folded journal, which is
 // what nearly every command needs before it can do anything.
 type session struct {
-	repo    *repo.Repo
-	catalog *catalog.Catalog
-	journal *journal.Journal
-	state   *ledger.State
+	repo     *repo.Repo
+	catalog  *catalog.Catalog
+	devices  *catalog.Devices
+	journal  *journal.Journal
+	state    *ledger.State
+	recorder *record.Recorder
 }
 
 // open discovers the repository from the working directory and replays its
@@ -48,7 +51,15 @@ func open() (*session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &session{repo: r, catalog: c, journal: j, state: ledger.Fold(events)}, nil
+	devices, err := catalog.LoadDevices(r.DevicesPath())
+	if err != nil {
+		return nil, err
+	}
+	state := ledger.Fold(events)
+	return &session{
+		repo: r, catalog: c, journal: j, state: state, devices: devices,
+		recorder: record.New(r, c, devices, state),
+	}, nil
 }
 
 // parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".

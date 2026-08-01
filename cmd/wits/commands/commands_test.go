@@ -84,7 +84,7 @@ func TestBuyAndGrind(t *testing.T) {
 
 		_, err = run(t, dir, Grind, "wedding", "5")
 
-		assert.ErrorContains(t, err, "cannot grind", "Should not let the balance go negative")
+		assert.ErrorContains(t, err, "cannot take", "Should not let the balance go negative")
 	})
 
 	t.Run("RefusesAnUnknownProduct", func(t *testing.T) {
