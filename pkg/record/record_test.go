@@ -38,14 +38,14 @@ func TestBuy(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, added, "Should register a product it has not seen")
-	assert.Equal(t, "wcake", p.Slug, "Should slug the name")
+	assert.Equal(t, "wcake-221", p.Slug, "Should slug the name")
 	assert.Equal(t, journal.Purchase, e.Type, "Should record a purchase")
-	assert.Equal(t, 20.0, rec.Available("wcake", journal.Storage), "Should land in storage")
+	assert.Equal(t, 20.0, rec.Available("wcake-221", journal.Storage), "Should land in storage")
 
 	_, _, added, err = rec.Buy("Enua 22/1 Wedding Cake", "", 10, time.Now())
 	require.NoError(t, err)
 	assert.False(t, added, "Should reuse the product the second time")
-	assert.Equal(t, 30.0, rec.Available("wcake", journal.Storage), "Should top up storage")
+	assert.Equal(t, 30.0, rec.Available("wcake-221", journal.Storage), "Should top up storage")
 }
 
 func TestGrind(t *testing.T) {
@@ -57,15 +57,15 @@ func TestGrind(t *testing.T) {
 		_, err := rec.Grind("wedding", 0.75, time.Now())
 		require.NoError(t, err)
 
-		assert.Equal(t, 19.25, rec.Available("wcake", journal.Storage), "Should leave storage short")
-		assert.Equal(t, 0.75, rec.Available("wcake", journal.Stash), "Should fill the tin")
+		assert.Equal(t, 19.25, rec.Available("wcake-221", journal.Storage), "Should leave storage short")
+		assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "Should fill the tin")
 	})
 
 	t.Run("RefusesToOverdraw", func(t *testing.T) {
 		_, err := rec.Grind("wedding", 500, time.Now())
 
 		assert.ErrorContains(t, err, "cannot take", "Should refuse rather than go negative")
-		assert.Equal(t, 19.25, rec.Available("wcake", journal.Storage), "Should not have recorded anything")
+		assert.Equal(t, 19.25, rec.Available("wcake-221", journal.Storage), "Should not have recorded anything")
 	})
 
 	t.Run("UnknownProduct", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestSession(t *testing.T) {
 
 		assert.Equal(t, journal.Sesh, e.Type, "Should record a session")
 		assert.Equal(t, "evening", e.Note, "Should keep the note")
-		assert.Equal(t, 0.6, rec.Available("wcake", journal.Stash), "Should empty the tin by that much")
+		assert.Equal(t, 0.6, rec.Available("wcake-221", journal.Stash), "Should empty the tin by that much")
 	})
 
 	t.Run("RefusesMoreThanTheTinHolds", func(t *testing.T) {
@@ -135,8 +135,8 @@ func TestRevert(t *testing.T) {
 		fix, err := rec.Revert(grind.Hash, "")
 		require.NoError(t, err)
 
-		assert.Equal(t, 20.0, rec.Available("wcake", journal.Storage), "Should restore storage")
-		assert.Zero(t, rec.Available("wcake", journal.Stash), "Should empty the tin again")
+		assert.Equal(t, 20.0, rec.Available("wcake-221", journal.Storage), "Should restore storage")
+		assert.Zero(t, rec.Available("wcake-221", journal.Stash), "Should empty the tin again")
 		assert.Equal(t, grind.Hash, fix.Reverts, "The correction should name what it undid")
 		assert.Len(t, rec.State().Events, 3, "Should keep the original and add the correction")
 	})
@@ -187,8 +187,8 @@ func TestAmend(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 0.75, corrected.Grams, "Should record the corrected amount")
-	assert.Equal(t, 0.75, rec.Available("wcake", journal.Stash), "The tin should hold the corrected amount")
-	assert.Equal(t, 19.25, rec.Available("wcake", journal.Storage), "Storage should reflect the correction")
+	assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "The tin should hold the corrected amount")
+	assert.Equal(t, 19.25, rec.Available("wcake-221", journal.Storage), "Storage should reflect the correction")
 	assert.Len(t, rec.State().Events, 4, "Should keep the original, the undo and the replacement")
 }
 
@@ -231,7 +231,7 @@ func TestReconcile(t *testing.T) {
 		assert.InDelta(t, 0.40, e.Grams, 0.001, "Should record the difference, not the weight")
 		assert.Equal(t, journal.Storage, e.From, "Should take the grams out of storage")
 		assert.Equal(t, journal.External, e.To, "and out of the system")
-		assert.InDelta(t, 17.60, rec.Available("wcake", journal.Storage), 0.001,
+		assert.InDelta(t, 17.60, rec.Available("wcake-221", journal.Storage), 0.001,
 			"Storage should now agree with the scale")
 	})
 
@@ -244,7 +244,7 @@ func TestReconcile(t *testing.T) {
 		assert.InDelta(t, 0.50, e.Grams, 0.001, "Should record the difference")
 		assert.Equal(t, journal.External, e.From, "Should bring the grams in from outside")
 		assert.Equal(t, journal.Storage, e.To, "and into storage")
-		assert.InDelta(t, 18.50, rec.Available("wcake", journal.Storage), 0.001,
+		assert.InDelta(t, 18.50, rec.Available("wcake-221", journal.Storage), 0.001,
 			"Storage should now agree with the scale")
 	})
 
@@ -254,9 +254,9 @@ func TestReconcile(t *testing.T) {
 		_, err := rec.Reconcile("wedding", journal.Stash, 1.75, "")
 		require.NoError(t, err)
 
-		assert.InDelta(t, 1.75, rec.Available("wcake", journal.Stash), 0.001,
+		assert.InDelta(t, 1.75, rec.Available("wcake-221", journal.Stash), 0.001,
 			"Should reconcile the tin as readily as storage")
-		assert.InDelta(t, 18.0, rec.Available("wcake", journal.Storage), 0.001,
+		assert.InDelta(t, 18.0, rec.Available("wcake-221", journal.Storage), 0.001,
 			"and should leave the other accounts alone")
 	})
 
@@ -276,7 +276,7 @@ func TestReconcile(t *testing.T) {
 		_, err := rec.Reconcile("wedding", journal.Storage, 0, "an empty jar")
 		require.NoError(t, err)
 
-		assert.Zero(t, rec.Available("wcake", journal.Storage),
+		assert.Zero(t, rec.Available("wcake-221", journal.Storage),
 			"An empty jar is a legitimate reading, and should empty the account")
 	})
 
@@ -320,7 +320,7 @@ func TestReconcile(t *testing.T) {
 
 		// An adjustment is a transfer, so the fold still accounts for every gram
 		// that came in, including the ones that left again.
-		b := rec.State().Balances["wcake"]
+		b := rec.State().Balances["wcake-221"]
 		assert.InDelta(t, 19.60, b.Storage+b.Stash+b.Consumed+b.AVB, 0.001,
 			"20 g bought, 0.40 g adjusted out")
 	})
@@ -344,7 +344,7 @@ func TestBuyWithASlug(t *testing.T) {
 		_, p, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
 		require.NoError(t, err)
 
-		assert.Equal(t, "wcake", p.Slug, "Should abbreviate the cultivar")
+		assert.Equal(t, "wcake-221", p.Slug, "Should abbreviate the cultivar")
 		assert.NoError(t, catalog.CheckSlug(p.Slug), "and produce something usable")
 	})
 
@@ -395,17 +395,17 @@ func TestRenameAndDescribe(t *testing.T) {
 	t.Run("CorrectsTheName", func(t *testing.T) {
 		rec := stocked(t)
 
-		p, err := rec.Rename("wcake", "Enua 22/1 Wedding Cake (Batch 2)")
+		p, err := rec.Rename("wcake-221", "Enua 22/1 Wedding Cake (Batch 2)")
 		require.NoError(t, err)
 
 		assert.Equal(t, "Enua 22/1 Wedding Cake (Batch 2)", p.Name, "Should read as asked")
-		assert.Equal(t, "wcake", p.Slug, "and keep the slug the journal refers to")
+		assert.Equal(t, "wcake-221", p.Slug, "and keep the slug the journal refers to")
 	})
 
 	t.Run("RefusesAnEmptyName", func(t *testing.T) {
 		rec := stocked(t)
 
-		_, err := rec.Rename("wcake", "   ")
+		_, err := rec.Rename("wcake-221", "   ")
 
 		assert.ErrorContains(t, err, "needs a name", "Should refuse to leave it nameless")
 	})
@@ -413,25 +413,25 @@ func TestRenameAndDescribe(t *testing.T) {
 	t.Run("DescribeReplacesTheParsedDetails", func(t *testing.T) {
 		rec := stocked(t)
 
-		p, err := rec.Describe("wcake", catalog.Product{
+		p, err := rec.Describe("wcake-221", catalog.Product{
 			Name: "Wedding Cake", Manufacturer: "Enua", Cultivar: "Wedding Cake", THC: 21.5, CBD: 0.8,
 		})
 		require.NoError(t, err)
 
 		assert.Equal(t, "Enua", p.Manufacturer, "Should correct the manufacturer")
 		assert.InDelta(t, 21.5, p.THC, 0.001, "and the potency the parser guessed at")
-		assert.Equal(t, "wcake", p.Slug, "without touching the slug")
+		assert.Equal(t, "wcake-221", p.Slug, "without touching the slug")
 	})
 
 	t.Run("EntriesStillResolveAfterwards", func(t *testing.T) {
 		rec := stocked(t)
-		_, err := rec.Rename("wcake", "Something Else Entirely")
+		_, err := rec.Rename("wcake-221", "Something Else Entirely")
 		require.NoError(t, err)
 
 		// The journal refers to the slug, so a rename cannot orphan anything.
-		_, err = rec.Grind("wcake", 1, time.Now())
+		_, err = rec.Grind("wcake-221", 1, time.Now())
 		assert.NoError(t, err, "Should still take entries against the renamed product")
-		assert.InDelta(t, 17.0, rec.Available("wcake", journal.Storage), 0.001,
+		assert.InDelta(t, 17.0, rec.Available("wcake-221", journal.Storage), 0.001,
 			"and its balances should be unchanged")
 	})
 }

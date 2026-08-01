@@ -41,7 +41,7 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 		purchased, ground := result.Grams()
 
 		assert.Len(t, result.Sheets, 29, "one worksheet is one prescription cycle")
-		assert.Len(t, result.Products, 48, "48 distinct products, after two pairs merge on their slug")
+		assert.Len(t, result.Products, 50, "50 distinct products, two pairs of them differing only in strength")
 		assert.InDelta(t, 1184.01, purchased, 0.005, "grams dispensed, per the sheet headers")
 		assert.InDelta(t, 1116.97, ground, 0.005, "grams the daily rows account for")
 
@@ -76,7 +76,7 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 			slugs = append(slugs, p.Slug)
 		}
 		assert.Equal(t,
-			[]string{"420-evolution-ice-cream-cake", "enua-citrus-slap", "cantourage-mac1"},
+			[]string{"420-evolution-ice-cream-cake-271", "enua-citrus-slap-361", "cantourage-mac1-251"},
 			slugs, "the header names the products, not the dropdown")
 		assert.Positive(t, sheet.Products[0].Ground, "and grams reached the first of them")
 	})
@@ -93,14 +93,23 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 		assert.Contains(t, anomalies[2], "2.40 g", "grams logged against no product")
 	})
 
-	t.Run("ReportsProductsMergedByTheirSlug", func(t *testing.T) {
-		// The slug drops the THC ratio, so one cultivar from one maker at two
-		// potencies becomes one product. Said out loud rather than done quietly.
-		require.Len(t, result.Merged, 2)
-		assert.Equal(t, "420-evolution-ca-mac-mac1", result.Merged[0].Slug)
-		assert.Len(t, result.Merged[0].Names, 2)
-		assert.Equal(t, "all-nations-lemon-tartz", result.Merged[1].Slug)
-		assert.Len(t, result.Merged[1].Names, 2)
+	// Two cultivars in these records were dispensed at two strengths, and each
+	// pair used to collapse into a single product because the slug dropped the
+	// ratio. The ratio is now the end of the slug, so they stand apart and their
+	// grams are no longer added together.
+	t.Run("KeepsTheTwoStrengthsOfACultivarApart", func(t *testing.T) {
+		assert.Empty(t, result.Merged, "nothing in these records is one product spelled two ways")
+
+		held := map[string]bool{}
+		for _, p := range result.Products {
+			held[p.Slug] = true
+		}
+		for _, slug := range []string{
+			"420-evolution-ca-mac-mac1-221", "420-evolution-ca-mac-mac1-251",
+			"all-nations-lemon-tartz-211", "all-nations-lemon-tartz-251",
+		} {
+			assert.True(t, held[slug], "%s should be a product of its own", slug)
+		}
 	})
 
 	t.Run("EntriesAreChronological", func(t *testing.T) {

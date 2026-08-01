@@ -147,8 +147,8 @@ func TestRead(t *testing.T) {
 				byProduct[e.Product] += e.Grams
 			}
 		}
-		assert.Equal(t, 2.0, byProduct["enua-wedding-cake"], "WW should credit the first header product")
-		assert.Equal(t, 3.0, byProduct["cannamedical-lemon-cookie"], "FLA should credit the second")
+		assert.Equal(t, 2.0, byProduct["enua-wedding-cake-221"], "WW should credit the first header product")
+		assert.Equal(t, 3.0, byProduct["cannamedical-lemon-cookie-281"], "FLA should credit the second")
 		assert.Empty(t, result.Anomalies(),
 			"A stale label is not a problem in itself, because the sheet still adds up")
 	})
@@ -217,16 +217,37 @@ func TestRead(t *testing.T) {
 		a := twoProducts()
 		b := twoProducts()
 		b.sheet = "2026-08"
-		// The same cultivar from the same maker at a different potency: the slug
-		// drops the ratio, so these become one product.
-		b.products[0] = header{"Enua 25/1 Wedding Cake (g)", 20}
+		// The same product at the same strength, punctuated differently. These
+		// really are one product, and merging them is the right answer.
+		b.products[0] = header{"Enua 22/1: Wedding Cake. (g)", 20}
 
 		result, err := Read(build(t, a, b))
 		require.NoError(t, err)
 
 		require.Len(t, result.Merged, 1, "Should notice the two spellings became one product")
-		assert.Equal(t, "enua-wedding-cake", result.Merged[0].Slug)
+		assert.Equal(t, "enua-wedding-cake-221", result.Merged[0].Slug)
 		assert.Len(t, result.Merged[0].Names, 2, "and should list both spellings")
+	})
+
+	// The counterpart: one cultivar from one maker at two strengths is two
+	// prescriptions, and the ratio in the slug is what keeps them apart. Without
+	// it their grams were added together and the balances of both were wrong.
+	t.Run("KeepsOneStrengthApartFromAnother", func(t *testing.T) {
+		a := twoProducts()
+		b := twoProducts()
+		b.sheet = "2026-08"
+		b.products[0] = header{"Enua 25/1 Wedding Cake (g)", 20}
+
+		result, err := Read(build(t, a, b))
+		require.NoError(t, err)
+
+		assert.Empty(t, result.Merged, "Two strengths are two products, not one spelled twice")
+		slugs := map[string]bool{}
+		for _, p := range result.Products {
+			slugs[p.Slug] = true
+		}
+		assert.True(t, slugs["enua-wedding-cake-221"], "Should keep the 22/1")
+		assert.True(t, slugs["enua-wedding-cake-251"], "and the 25/1 beside it")
 	})
 
 	t.Run("EventsAreChronological", func(t *testing.T) {
@@ -278,8 +299,8 @@ func TestCommit(t *testing.T) {
 
 		// The sheet grinds 0.75 and 0.50 of the Wedding Cake, out of 20 g.
 		state := ledger.Fold(events)
-		assert.Equal(t, 18.75, state.Balances["enua-wedding-cake"].Storage, "Storage should match the sheet")
-		assert.Equal(t, 1.25, state.Balances["enua-wedding-cake"].Stash, "and so should the tin")
+		assert.Equal(t, 18.75, state.Balances["enua-wedding-cake-221"].Storage, "Storage should match the sheet")
+		assert.Equal(t, 1.25, state.Balances["enua-wedding-cake-221"].Stash, "and so should the tin")
 	})
 
 	t.Run("RefusesARepositoryThatAlreadyHasEntries", func(t *testing.T) {

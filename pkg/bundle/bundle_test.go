@@ -44,12 +44,12 @@ func fill(t *testing.T, events []journal.Event) (*journal.Journal, []journal.Eve
 func sample() []journal.Event {
 	at := time.Date(2026, time.July, 9, 10, 30, 0, 0, berlin)
 	return []journal.Event{
-		{Type: journal.Purchase, Product: "enua-wedding-cake", Grams: 20, OccurredAt: at},
-		{Type: journal.Purchase, Product: "cannamedical-lemon-cookie", Grams: 10, OccurredAt: at},
-		{Type: journal.Grind, Product: "enua-wedding-cake", Grams: 0.75, OccurredAt: at.AddDate(0, 0, 1)},
-		{Type: journal.Sesh, Product: "enua-wedding-cake", Grams: 0.3, OccurredAt: at.AddDate(0, 0, 1),
+		{Type: journal.Purchase, Product: "enua-wedding-cake-221", Grams: 20, OccurredAt: at},
+		{Type: journal.Purchase, Product: "cannamedical-lemon-cookie-281", Grams: 10, OccurredAt: at},
+		{Type: journal.Grind, Product: "enua-wedding-cake-221", Grams: 0.75, OccurredAt: at.AddDate(0, 0, 1)},
+		{Type: journal.Sesh, Product: "enua-wedding-cake-221", Grams: 0.3, OccurredAt: at.AddDate(0, 0, 1),
 			Device: "volcano-hybrid", Temperature: 185, Note: "evening, with a space"},
-		{Type: journal.Grind, Product: "cannamedical-lemon-cookie", Grams: 1.25,
+		{Type: journal.Grind, Product: "cannamedical-lemon-cookie-281", Grams: 1.25,
 			OccurredAt: at.AddDate(0, 0, 2), RecordedAt: at.AddDate(0, 0, 3)},
 	}
 }
@@ -110,7 +110,7 @@ func TestRoundTrip(t *testing.T) {
 		got, err := Read(&buf)
 		require.NoError(t, err)
 
-		p, err := got.Products.Find("enua-wedding-cake")
+		p, err := got.Products.Find("enua-wedding-cake-221")
 		require.NoError(t, err)
 		assert.Equal(t, "Enua 22/1 Wedding Cake", p.Name, "Should keep the display name")
 		assert.Equal(t, "Enua", p.Manufacturer, "Should keep the manufacturer")

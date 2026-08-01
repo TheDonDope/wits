@@ -71,8 +71,8 @@ func TestBuyAndGrind(t *testing.T) {
 
 		out, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 		require.NoError(t, err)
-		assert.Contains(t, out, "refer to it as wcake",
-			"Should register the product and say what to call it")
+		assert.Contains(t, out, "refer to it as wcake-221\n",
+			"Should register the product and say what to call it, ratio and all")
 
 		out, err = run(t, dir, Grind, "wedding", "0.75", "--date", "2026-07-02")
 		require.NoError(t, err)
@@ -129,6 +129,22 @@ func TestStatusCommand(t *testing.T) {
 		assert.Contains(t, out, "On cycle 1", "Should report the cycle")
 		assert.Contains(t, out, "18.00g", "Should report what is left in storage")
 		assert.Contains(t, out, "days left at that rate", "Should estimate the supply")
+	})
+
+	// A cycle opened today is what every new repository shows, so its wording is
+	// the first anyone reads.
+	t.Run("CountsTheFirstDayInTheSingular", func(t *testing.T) {
+		dir := repository(t)
+		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+		require.NoError(t, err)
+		_, err = run(t, dir, Grind, "wedding", "0.75")
+		require.NoError(t, err)
+
+		out, err := run(t, dir, Status)
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "left over 1 day,", "Should not report a cycle as being 1 days old")
+		assert.NotContains(t, out, "1 days", "Should not report any count of one in the plural")
 	})
 
 	t.Run("EmptyRepository", func(t *testing.T) {

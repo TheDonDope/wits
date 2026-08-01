@@ -141,7 +141,8 @@ var (
 // dispensed, not what it was, so they are not part of the product's identity.
 var labelPrefixes = []string{"quantity delivered", "quantity", "liefermenge"}
 
-// Slugify turns a display name into a stable, typeable identifier.
+// Slugify turns a display name into a stable, typeable identifier, ending in
+// the THC/CBD ratio.
 func Slugify(name string) string {
 	s := strings.ToLower(name)
 	s = strings.TrimSuffix(strings.TrimSpace(s), "(g)")
@@ -152,9 +153,51 @@ func Slugify(name string) string {
 			break
 		}
 	}
+	// The ratio comes off wherever it was written and goes back on the end, so
+	// that a name carrying it in the middle and one carrying it at the end
+	// still slug the same way.
+	potency := potencyIn(s)
 	s = ratio.ReplaceAllString(s, "")
 	s = nonAlphanumeric.ReplaceAllString(s, "-")
-	return strings.Trim(s, "-")
+	return withPotency(strings.Trim(s, "-"), potency)
+}
+
+// potencyIn reads a THC/CBD ratio out of a name as the digits a slug carries:
+// "25/1" becomes "251".
+func potencyIn(name string) string {
+	m := ratio.FindStringSubmatch(name)
+	if m == nil {
+		return ""
+	}
+	return decimalPoints.Replace(m[1]) + decimalPoints.Replace(m[2])
+}
+
+// potencyOf is potencyIn for a product that has already been parsed.
+func potencyOf(p *Product) string {
+	if p == nil || (p.THC == 0 && p.CBD == 0) {
+		return ""
+	}
+	return decimalPoints.Replace(strconv.FormatFloat(p.THC, 'f', -1, 64)) +
+		decimalPoints.Replace(strconv.FormatFloat(p.CBD, 'f', -1, 64))
+}
+
+// decimalPoints strips the separator out of a ratio, so that 22,5/1 reads as
+// 2251 rather than growing a dash in the middle of the suffix.
+var decimalPoints = strings.NewReplacer(".", "", ",", "")
+
+// withPotency appends the potency suffix, which is what keeps one cultivar from
+// one manufacturer at two strengths from collapsing into a single product. Two
+// of those were found in four years of real records, and each was a pair of
+// genuinely different prescriptions.
+func withPotency(slug, potency string) string {
+	switch {
+	case potency == "":
+		return slug
+	case slug == "":
+		return potency
+	default:
+		return slug + "-" + potency
+	}
 }
 
 // Parse makes a best effort at pulling structure out of a dispensed product
@@ -213,22 +256,32 @@ func CheckSlug(slug string) error {
 }
 
 // NewHandle returns a short, typeable slug for a product: three to five
-// characters, and not one already taken.
+// characters naming the cultivar, then the THC/CBD ratio.
 //
-// The long form derived from a display name — enua-wedding-cake — is precise but
-// nobody wants to type it every evening. This produces something closer to what
-// a person would abbreviate it to themselves, preferring the cultivar over the
-// manufacturer, because the cultivar is what distinguishes one jar from the next.
+// The long form derived from a display name — enua-wedding-cake-221 — is precise
+// but nobody wants to type it every evening. This produces something closer to
+// what a person would abbreviate it to themselves, preferring the cultivar over
+// the manufacturer, because the cultivar is what distinguishes one jar from the
+// next.
+//
+// The ratio rides along because the same cultivar at two strengths is two
+// prescriptions: wcake-221 and wcake-251 are legible as a pair, where the
+// numbering that would otherwise separate them — wcake and wcak2 — is not.
 func NewHandle(p *Product, existing []string) string {
-	free := notNear(existing)
+	potency := potencyOf(p)
+	// The length bounds are on the memorable part. The suffix is carried on top
+	// of it, and the nearness rule judges the whole slug, since that is what
+	// gets typed and resolved by prefix.
+	near := notNear(existing)
+	free := func(base string) bool { return near(withPotency(base, potency)) }
 	words := handleBasis(p)
 
 	for _, candidate := range handleCandidates(words) {
 		if len(candidate) >= minHandle && len(candidate) <= maxHandle && free(candidate) {
-			return candidate
+			return withPotency(candidate, potency)
 		}
 	}
-	return numberedHandle(words, free)
+	return withPotency(numberedHandle(words, free), potency)
 }
 
 // notNear reports whether a candidate is far enough from every slug already in
