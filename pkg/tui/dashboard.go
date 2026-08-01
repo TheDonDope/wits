@@ -36,6 +36,8 @@ func (d dashboard) View(a *App, height int) string {
 	sections := []string{
 		d.headline(a, cycle, stats, width),
 		"",
+		d.actions(a, width),
+		"",
 		t.Rule("Supply", width),
 		d.products(a, cycle, width),
 		"",
@@ -83,6 +85,35 @@ func (d dashboard) headline(a *App, c *ledger.Cycle, stats ledger.Stats, width i
 		lipgloss.NewStyle().Foreground(t.Level(fraction)).Render(fmt.Sprintf("%.0f%%", fraction*100)),
 	)
 	return lipgloss.JoinVertical(lipgloss.Left, cols, "", bar, scale)
+}
+
+// actions is the row of things worth doing from here, spelled out rather than
+// left in the help line. Recording the day's grind is the whole point of opening
+// this, and a key hint at the bottom of the screen is easy to never read.
+func (d dashboard) actions(a *App, width int) string {
+	t := a.theme
+	type action struct{ key, label string }
+	actions := []action{
+		{"n", "grind"},
+		{"s", "sesh"},
+		{"b", "fill"},
+		{"r", "weigh"},
+	}
+
+	cells := make([]string, 0, len(actions))
+	for _, act := range actions {
+		cells = append(cells, lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).BorderForeground(t.Line).
+			Padding(0, 1).Render(
+			lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(act.key)+
+				t.Dim.Render("  "+act.label)))
+	}
+	row := lipgloss.JoinHorizontal(lipgloss.Top, cells...)
+	if lipgloss.Width(row) > width {
+		// Too narrow for the boxes; the help line still carries the same keys.
+		return ""
+	}
+	return row
 }
 
 // products shows each product of this cycle as a stacked bar: what is still

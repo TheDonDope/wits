@@ -255,3 +255,7 @@ func axisLabels(t *Theme, left, right string, width int) string {
 	}
 	return t.Dim.Render(left) + strings.Repeat(" ", gap) + t.Dim.Render(right)
 }
+
+// round trims to centigrams, matching what the ledger stores and what a
+// jeweller's scale reads.
+func round(g float64) float64 { return math.Round(g*100) / 100 }

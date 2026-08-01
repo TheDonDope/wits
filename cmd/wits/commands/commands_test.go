@@ -257,3 +257,70 @@ func TestHomeCommand(t *testing.T) {
 			"and should have got as far as launching")
 	})
 }
+
+func TestReconcileCommand(t *testing.T) {
+	stocked := func(t *testing.T) string {
+		t.Helper()
+		dir := repository(t)
+		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+		require.NoError(t, err)
+		_, err = run(t, dir, Grind, "wedding", "2")
+		require.NoError(t, err)
+		return dir
+	}
+
+	t.Run("RecordsTheDifference", func(t *testing.T) {
+		dir := stocked(t)
+
+		out, err := run(t, dir, Reconcile, "wedding", "17.6")
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "0.40g", "Should record the difference, not the weight")
+		assert.Contains(t, out, "out of storage", "Should say which way the grams went")
+		assert.Contains(t, out, "now 17.60g", "and what the account holds now")
+	})
+
+	t.Run("DryRunWritesNothing", func(t *testing.T) {
+		dir := stocked(t)
+		defer func() { reconcileDryRun = false }()
+
+		out, err := run(t, dir, Reconcile, "wedding", "17.6", "--dry-run")
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "-0.40g", "Should show the signed difference")
+		assert.Contains(t, out, "Dry run", "Should say it wrote nothing")
+
+		status, err := run(t, dir, Status)
+		require.NoError(t, err)
+		assert.Contains(t, status, "18.00g", "and storage should be untouched")
+	})
+
+	t.Run("TheTin", func(t *testing.T) {
+		dir := stocked(t)
+		defer func() { reconcileStash = false }()
+
+		out, err := run(t, dir, Reconcile, "wedding", "1.75", "--stash")
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "out of stash", "Should weigh the tin when asked to")
+	})
+
+	t.Run("NothingToReconcile", func(t *testing.T) {
+		dir := stocked(t)
+
+		_, err := run(t, dir, Reconcile, "wedding", "18")
+
+		assert.ErrorContains(t, err, "already matches the scale",
+			"Should say so rather than record a zero-gram adjustment")
+	})
+
+	t.Run("RefusesTwoAccountsAtOnce", func(t *testing.T) {
+		dir := stocked(t)
+		defer func() { reconcileStash, reconcileAVB = false, false }()
+
+		_, err := run(t, dir, Reconcile, "wedding", "1", "--stash", "--avb")
+
+		assert.ErrorContains(t, err, "one account at a time",
+			"Should refuse rather than silently pick one")
+	})
+}

@@ -181,3 +181,11 @@ func TestEventLineHidesAMeaninglessTime(t *testing.T) {
 	assert.Contains(t, stripANSI(th.EventLine(evening, "X", 80, false)), "21:30",
 		"A real time should be shown")
 }
+
+// emptyData is a repository with nothing in it.
+func emptyData(t *testing.T) Data {
+	t.Helper()
+	return Data{Workspace: &workspace.Workspace{
+		Products: &catalog.Catalog{}, Devices: &catalog.Devices{}, State: ledger.Fold(nil),
+	}, Now: time.Now()}
+}

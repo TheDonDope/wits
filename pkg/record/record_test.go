@@ -207,3 +207,132 @@ func TestReverted(t *testing.T) {
 	assert.True(t, hidden[fix.Hash], "and so should the correction itself")
 	assert.Len(t, hidden, 2, "but nothing else")
 }
+
+// stocked returns a recorder holding 20 g of one product, 2 g of it ground.
+func stocked(t *testing.T) *Recorder {
+	t.Helper()
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", 20, time.Now())
+	require.NoError(t, err)
+	_, err = rec.Grind("wedding", 2, time.Now())
+	require.NoError(t, err)
+	return rec
+}
+
+func TestReconcile(t *testing.T) {
+	t.Run("LessOnTheScaleThanInTheLedger", func(t *testing.T) {
+		rec := stocked(t)
+
+		// 17.60 weighed against 18.00 expected: 0.40 g went somewhere unlogged.
+		e, err := rec.Reconcile("wedding", journal.Storage, 17.60, "")
+		require.NoError(t, err)
+
+		assert.Equal(t, journal.Adjust, e.Type, "Should record an adjustment")
+		assert.InDelta(t, 0.40, e.Grams, 0.001, "Should record the difference, not the weight")
+		assert.Equal(t, journal.Storage, e.From, "Should take the grams out of storage")
+		assert.Equal(t, journal.External, e.To, "and out of the system")
+		assert.InDelta(t, 17.60, rec.Available("enua-wedding-cake", journal.Storage), 0.001,
+			"Storage should now agree with the scale")
+	})
+
+	t.Run("MoreOnTheScaleThanInTheLedger", func(t *testing.T) {
+		rec := stocked(t)
+
+		e, err := rec.Reconcile("wedding", journal.Storage, 18.50, "")
+		require.NoError(t, err)
+
+		assert.InDelta(t, 0.50, e.Grams, 0.001, "Should record the difference")
+		assert.Equal(t, journal.External, e.From, "Should bring the grams in from outside")
+		assert.Equal(t, journal.Storage, e.To, "and into storage")
+		assert.InDelta(t, 18.50, rec.Available("enua-wedding-cake", journal.Storage), 0.001,
+			"Storage should now agree with the scale")
+	})
+
+	t.Run("TheTin", func(t *testing.T) {
+		rec := stocked(t)
+
+		_, err := rec.Reconcile("wedding", journal.Stash, 1.75, "")
+		require.NoError(t, err)
+
+		assert.InDelta(t, 1.75, rec.Available("enua-wedding-cake", journal.Stash), 0.001,
+			"Should reconcile the tin as readily as storage")
+		assert.InDelta(t, 18.0, rec.Available("enua-wedding-cake", journal.Storage), 0.001,
+			"and should leave the other accounts alone")
+	})
+
+	t.Run("NothingToDo", func(t *testing.T) {
+		rec := stocked(t)
+		before := len(rec.State().Events)
+
+		_, err := rec.Reconcile("wedding", journal.Storage, 18.00, "")
+
+		assert.ErrorIs(t, err, ErrNothingToReconcile, "Should say so rather than record a zero")
+		assert.Len(t, rec.State().Events, before, "and should record nothing")
+	})
+
+	t.Run("WeighingToNothing", func(t *testing.T) {
+		rec := stocked(t)
+
+		_, err := rec.Reconcile("wedding", journal.Storage, 0, "an empty jar")
+		require.NoError(t, err)
+
+		assert.Zero(t, rec.Available("enua-wedding-cake", journal.Storage),
+			"An empty jar is a legitimate reading, and should empty the account")
+	})
+
+	t.Run("RecordsWhyByDefault", func(t *testing.T) {
+		rec := stocked(t)
+
+		e, err := rec.Reconcile("wedding", journal.Storage, 17.60, "")
+		require.NoError(t, err)
+
+		assert.Contains(t, e.Note, "17.60", "Should note what was weighed")
+		assert.Contains(t, e.Note, "18.00", "and what was expected, since the entry itself only carries the difference")
+	})
+
+	t.Run("KeepsAGivenReason", func(t *testing.T) {
+		rec := stocked(t)
+
+		e, err := rec.Reconcile("wedding", journal.Storage, 17.60, "spilled on the desk")
+		require.NoError(t, err)
+
+		assert.Equal(t, "spilled on the desk", e.Note, "Should keep what was actually said")
+	})
+
+	t.Run("Refusals", func(t *testing.T) {
+		rec := stocked(t)
+
+		_, err := rec.Reconcile("wedding", journal.Storage, -1, "")
+		assert.ErrorContains(t, err, "cannot be negative", "Should refuse a negative weight")
+
+		_, err = rec.Reconcile("wedding", journal.Consumed, 1, "")
+		assert.ErrorContains(t, err, "cannot be weighed",
+			"Should refuse an account with no jar to put on a scale")
+
+		_, err = rec.Reconcile("blueberry", journal.Storage, 1, "")
+		assert.Error(t, err, "Should refuse a product it has never seen")
+	})
+
+	t.Run("MassStillBalancesAfterwards", func(t *testing.T) {
+		rec := stocked(t)
+		_, err := rec.Reconcile("wedding", journal.Storage, 17.60, "")
+		require.NoError(t, err)
+
+		// An adjustment is a transfer, so the fold still accounts for every gram
+		// that came in, including the ones that left again.
+		b := rec.State().Balances["enua-wedding-cake"]
+		assert.InDelta(t, 19.60, b.Storage+b.Stash+b.Consumed+b.AVB, 0.001,
+			"20 g bought, 0.40 g adjusted out")
+	})
+}
+
+func TestDifference(t *testing.T) {
+	rec := stocked(t)
+
+	expected, difference, err := rec.Difference("wedding", journal.Storage, 17.60)
+	require.NoError(t, err)
+
+	assert.InDelta(t, 18.00, expected, 0.001, "Should report what the ledger believes")
+	assert.InDelta(t, -0.40, difference, 0.001, "and the signed difference")
+	assert.Len(t, rec.State().Events, 2, "without recording anything")
+}

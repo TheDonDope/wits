@@ -45,11 +45,12 @@ const (
 	dashboardScreen screen = iota
 	journalScreen
 	analysisScreen
+	productsScreen
 	devicesScreen
 )
 
 // tabs are the screen names, in order.
-var tabs = []string{"Dashboard", "Journal", "Analysis", "Devices"}
+var tabs = []string{"Dashboard", "Journal", "Analysis", "Products", "Devices"}
 
 // keyMap is the global key bindings. Screens add their own on top.
 type keyMap struct {
@@ -59,6 +60,7 @@ type keyMap struct {
 	Top, Bottom    key.Binding
 	Help, Quit     key.Binding
 	New, Sesh, Buy key.Binding
+	Weigh          key.Binding
 }
 
 func defaultKeys() keyMap {
@@ -74,6 +76,7 @@ func defaultKeys() keyMap {
 		New:    key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "grind")),
 		Sesh:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sesh")),
 		Buy:    key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "buy")),
+		Weigh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "weigh")),
 		Help:   key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		Quit:   key.NewBinding(key.WithKeys("q", "ctrl+c", "esc"), key.WithHelp("q", "quit")),
 	}
@@ -81,7 +84,7 @@ func defaultKeys() keyMap {
 
 // ShortHelp implements help.KeyMap.
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Next, k.New, k.Sesh, k.Buy, k.Help, k.Quit}
+	return []key.Binding{k.Next, k.New, k.Sesh, k.Buy, k.Weigh, k.Help, k.Quit}
 }
 
 // FullHelp implements help.KeyMap.
@@ -90,7 +93,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Next, k.Prev},
 		{k.Up, k.Down, k.PageUp, k.PgDown},
 		{k.Top, k.Bottom},
-		{k.New, k.Sesh, k.Buy},
+		{k.New, k.Sesh, k.Buy, k.Weigh},
 		{k.Help, k.Quit},
 	}
 }
@@ -116,6 +119,7 @@ type App struct {
 	dashboard dashboard
 	journal   journalView
 	analysis  analysisView
+	products  productsView
 	devices   devicesView
 	device    *deviceForm
 }
@@ -131,6 +135,7 @@ func New(data Data) *App {
 	a.dashboard = newDashboard()
 	a.journal = newJournalView()
 	a.analysis = newAnalysisView()
+	a.products = newProductsView()
 	a.devices = newDevicesView()
 	return a
 }
@@ -220,6 +225,13 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.String() == "a" && a.screen == devicesScreen:
 			a.device, a.notice = newDeviceForm(nil, a), ""
 			return a, a.device.form.Init()
+		case msg.String() == "r" && a.screen != journalScreen:
+			if slug := a.weighable(); slug != "" {
+				a.entry, a.notice = newReconcileForm(slug, a), ""
+				return a, a.entry.form.Init()
+			}
+			a.notice, a.failed = "nothing on the shelf to weigh", true
+			return a, nil
 		case msg.String() == "e" && a.screen == devicesScreen:
 			if d := a.devices.Selected(a); d != nil {
 				a.device, a.notice = newDeviceForm(d, a), ""
@@ -280,6 +292,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.journal, cmd = a.journal.Update(msg, a)
 	case analysisScreen:
 		a.analysis, cmd = a.analysis.Update(msg, a)
+	case productsScreen:
+		a.products, cmd = a.products.Update(msg, a)
 	case devicesScreen:
 		a.devices, cmd = a.devices.Update(msg, a)
 	}
@@ -324,6 +338,8 @@ func (a *App) View() tea.View {
 		body = a.journal.View(a, bodyHeight)
 	case analysisScreen:
 		body = a.analysis.View(a, bodyHeight)
+	case productsScreen:
+		body = a.products.View(a, bodyHeight)
 	case devicesScreen:
 		body = a.devices.View(a, bodyHeight)
 	}
@@ -427,11 +443,35 @@ func (a *App) screenKeys() help.KeyMap {
 		return a.journal.keys(a.keys)
 	case analysisScreen:
 		return a.analysis.keys(a.keys)
+	case productsScreen:
+		return a.products.keys(a.keys)
 	case devicesScreen:
 		return a.devices.keys(a.keys)
 	default:
 		return a.keys
 	}
+}
+
+// weighable returns the product r should weigh: the one under the cursor on the
+// products screen, or otherwise whichever of the current cycle's products has
+// the most left, since that is the jar most worth checking.
+func (a *App) weighable() string {
+	if a.screen == productsScreen {
+		if r := a.products.Selected(a); r != nil {
+			return r.Slug
+		}
+	}
+	best, most := "", -1.0
+	cycle := a.data.Cycle()
+	if cycle == nil {
+		return ""
+	}
+	for _, slug := range cycle.Products {
+		if b := a.data.State.Balances[slug]; b != nil && b.Total() > most {
+			best, most = slug, b.Total()
+		}
+	}
+	return best
 }
 
 // inner returns the width available inside the frame.

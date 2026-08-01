@@ -88,8 +88,8 @@ About 24 days left at that rate
 
 `wits` on its own opens the interface: a dashboard of what is left and how long
 it will last, the journal, an analysis view scoping from the current cycle out to
-the whole history, and the devices. Entries can be recorded there too — `n` to
-grind, `s` for a session, `b` for a fill.
+the whole history, the products and the devices. Entries can be recorded there
+too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
 
 ## Commands
 
@@ -102,6 +102,7 @@ grind, `s` for a session, `b` for a fill.
 | `wits status` | What is left, and how long it will last |
 | `wits log` | The journal, newest first |
 | `wits revert <entry>` | Undo an entry by recording a correction |
+| `wits reconcile <product> <weight>` | Make an account agree with the scale |
 | `wits device add <name>` | Register a vaporizer |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet |
@@ -123,6 +124,25 @@ wits revert 8297238 --reason "misread the scale"
 
 In the interface, `e` amends an amount and `d` undoes an entry. The log shows what
 currently stands; `v` reveals the corrections behind it.
+
+## When the ledger and the scale disagree
+
+Ledgers drift. A little is spilled, a session goes unlogged, a scale is read
+wrong. The past is not edited to hide it, because nobody knows which entry was
+wrong — instead the difference is recorded, and the account agrees with the jar
+again:
+
+```console
+$ wits reconcile wedding-cake 17.6 --dry-run
+storage holds 18.00g by the ledger and 17.60g on the scale: -0.40g
+
+$ wits reconcile wedding-cake 17.6 --reason "spilled on the desk"
+[21ee6ae] adjusted 0.40g out of storage, now 17.60g
+```
+
+`--stash` weighs the tin instead, `--avb` the already vaped bud. In the interface
+this is `r`, on any screen — it offers the jar under the cursor on the products
+screen, or otherwise the fullest one, since that is the one worth checking.
 
 ## The repository
 
