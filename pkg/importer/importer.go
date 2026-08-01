@@ -131,78 +131,102 @@ func importSheet(f *excelize.File, name string) (*Sheet, error) {
 	labels, anomalies := labelBindings(f, name, header, byRow)
 	sheet.Anomalies = append(sheet.Anomalies, anomalies...)
 
-	// Grinds first, so that the fill can be dated from the earliest of them.
-	type grind struct {
-		at      time.Time
-		product *Product
-		grams   float64
+	scan := scanRows(rows, header, labels)
+	for label, grams := range scan.unattributed {
+		sheet.Anomalies = append(sheet.Anomalies,
+			fmt.Sprintf("%.2fg logged against %q, which no balance column matches, so it was never subtracted", grams, label))
 	}
-	var grinds []grind
-	var earliest time.Time
-	unattributed := map[string]float64{}
+	if scan.earliest.IsZero() {
+		return nil, nil
+	}
 
+	sheet.Events = buildEvents(sheet.Products, scan, name)
+	sheet.Anomalies = append(sheet.Anomalies, checkSheet(sheet, name, scan.years())...)
+	return sheet, nil
+}
+
+// grind is one daily entry, resolved to the product it belongs to.
+type grind struct {
+	at      time.Time
+	product *Product
+	grams   float64
+}
+
+// scan is what reading the daily table produced.
+type scan struct {
+	grinds   []grind
+	earliest time.Time
+	// unattributed holds grams logged against a label no balance column
+	// matches, which means the spreadsheet never subtracted them either.
+	unattributed map[string]float64
+}
+
+// years counts how many entries fall in each calendar year.
+func (s scan) years() map[int]int {
+	years := map[int]int{}
+	for _, g := range s.grinds {
+		years[g.at.Year()]++
+	}
+	return years
+}
+
+// scanRows reads the daily table below the header, resolving each entry to a
+// product through the label bindings. It also notes the earliest date on the
+// sheet, which is when the fill it describes was collected.
+func scanRows(rows [][]string, header int, labels map[string]*Product) scan {
+	s := scan{unattributed: map[string]float64{}}
 	for i := header + 1; i < len(rows); i++ {
 		row := rows[i]
 		at, ok := cellDate(row, 0)
 		if !ok {
 			continue
 		}
-		if earliest.IsZero() || at.Before(earliest) {
-			earliest = at
+		if s.earliest.IsZero() || at.Before(s.earliest) {
+			s.earliest = at
 		}
 		grams := cellFloat(row, 2)
 		if grams <= 0 {
 			continue
 		}
-		label := strings.TrimSpace(cellString(row, 1))
-		product, ok := labels[label]
+		product, ok := labels[strings.TrimSpace(cellString(row, 1))]
 		if !ok {
-			// The grams are real but no balance column claims them, so the
-			// spreadsheet never subtracted them from anything either.
-			unattributed[label] += grams
+			s.unattributed[strings.TrimSpace(cellString(row, 1))] += grams
 			continue
 		}
 		product.Ground += grams
-		grinds = append(grinds, grind{at: at, product: product, grams: grams})
+		s.grinds = append(s.grinds, grind{at: at, product: product, grams: grams})
 	}
+	return s
+}
 
-	for label, grams := range unattributed {
-		sheet.Anomalies = append(sheet.Anomalies,
-			fmt.Sprintf("%.2fg logged against %q, which no balance column matches, so it was never subtracted", grams, label))
-	}
-	if earliest.IsZero() {
-		return nil, nil
-	}
-
-	for _, p := range sheet.Products {
-		sheet.Events = append(sheet.Events, journal.Event{
+// buildEvents turns a sheet's products and daily entries into journal events.
+// The fill is dated from the earliest entry, because the sheet does not record
+// a purchase date of its own.
+func buildEvents(products []*Product, s scan, sheet string) []journal.Event {
+	events := make([]journal.Event, 0, len(products)+len(s.grinds))
+	for _, p := range products {
+		events = append(events, journal.Event{
 			Type:       journal.Purchase,
 			Product:    p.Slug,
 			Grams:      p.Purchased,
-			OccurredAt: earliest,
-			Note:       "imported from " + name,
+			OccurredAt: s.earliest,
+			Note:       "imported from " + sheet,
 		})
 	}
-	for _, g := range grinds {
-		sheet.Events = append(sheet.Events, journal.Event{
+	for _, g := range s.grinds {
+		events = append(events, journal.Event{
 			Type:       journal.Grind,
 			Product:    g.product.Slug,
 			Grams:      g.grams,
 			OccurredAt: g.at,
-			Note:       "imported from " + name,
+			Note:       "imported from " + sheet,
 		})
 	}
-	years := map[int]int{}
-	for _, g := range grinds {
-		years[g.at.Year()]++
+	for i := range events {
+		from, to, _ := journal.Flow(events[i].Type)
+		events[i].From, events[i].To = from, to
 	}
-	sheet.Anomalies = append(sheet.Anomalies, checkSheet(sheet, name, years)...)
-
-	for i := range sheet.Events {
-		from, to, _ := journal.Flow(sheet.Events[i].Type)
-		sheet.Events[i].From, sheet.Events[i].To = from, to
-	}
-	return sheet, nil
+	return events
 }
 
 // labelBindings reads the running-balance formulas to learn which strain label

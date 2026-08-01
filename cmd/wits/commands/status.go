@@ -18,7 +18,7 @@ var Status = &cobra.Command{
 		"product is in storage and in its tin, how far through the current cycle\n" +
 		"you are, and how long the remainder will last at the observed rate.",
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err
