@@ -29,7 +29,13 @@ func Load(r *repo.Repo) (Data, error) {
 	if err != nil {
 		return Data{}, err
 	}
-	return Data{Workspace: ws, Now: ws.OpenedAt}, nil
+	return From(ws), nil
+}
+
+// From wraps an already-open workspace, so a caller that has one does not read
+// the repository a second time.
+func From(ws *workspace.Workspace) Data {
+	return Data{Workspace: ws, Now: ws.OpenedAt}
 }
 
 // screen is one of the views the tab bar switches between.

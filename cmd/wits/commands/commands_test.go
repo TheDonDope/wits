@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -228,4 +229,31 @@ func TestParseDate(t *testing.T) {
 // indexOf returns the position of sub in s, or -1.
 func indexOf(s, sub string) int {
 	return bytes.Index([]byte(s), []byte(sub))
+}
+
+func TestHomeCommand(t *testing.T) {
+	t.Run("OutsideARepository", func(t *testing.T) {
+		// It must fail on discovery, before it reaches for a terminal: a error
+		// about a missing repository is useful, one about /dev/tty is not.
+		_, err := run(t, t.TempDir(), Home)
+
+		assert.ErrorContains(t, err, "not a wits repository",
+			"Should say there is no repository rather than fail opening a terminal")
+	})
+
+	t.Run("FindsTheRepositoryTheSameWayEveryOtherCommandDoes", func(t *testing.T) {
+		dir := repository(t)
+		nested := filepath.Join(dir, "notes")
+		require.NoError(t, os.MkdirAll(nested, 0700))
+
+		// From a subdirectory it gets past discovery and fails only for want of a
+		// terminal, which is as far as a test can drive an interactive program.
+		_, err := run(t, nested, Home)
+
+		require.Error(t, err)
+		assert.NotContains(t, err.Error(), "not a wits repository",
+			"Should have walked up to the repository")
+		assert.Contains(t, err.Error(), "running the interface",
+			"and should have got as far as launching")
+	})
 }
