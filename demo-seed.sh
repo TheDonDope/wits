@@ -17,6 +17,32 @@ wits init . >/dev/null
 wits device add 'Volcano Hybrid' --kind desktop --min 40 --max 230 --default 185 >/dev/null
 wits device add 'Mighty+' --kind portable --min 40 --max 210 --default 180 >/dev/null
 
+# An earlier, finished cycle, so the analysis view has history to scope out to:
+# the rhythm heatmap and the cycle comparison only appear past the current one.
+wits buy 'Enua 22/1 Wedding Cake' 10g --date 2026-06-09 >/dev/null
+wits buy 'Cannamedical 28/1 Lemon Cookie' 10g --date 2026-06-09 >/dev/null
+
+while read -r day verb product amount rest; do
+  # shellcheck disable=SC2086 # rest carries optional flags and is meant to split
+  wits "$verb" "$product" "$amount" --date "2026-06-$day" $rest >/dev/null
+done <<'ENTRIES'
+10 grind wcake 0.85
+11 grind lcook 1.10
+12 grind wcake 0.70
+14 grind lcook 1.35
+15 grind wcake 0.95
+17 grind lcook 0.80
+18 grind wcake 1.20
+20 grind lcook 1.00
+21 grind wcake 0.75
+23 grind lcook 1.25
+24 grind wcake 0.90
+26 grind lcook 1.15
+27 grind wcake 1.05
+29 grind lcook 0.85
+30 grind wcake 0.80
+ENTRIES
+
 wits buy 'Enua 22/1 Wedding Cake' 20g --date 2026-07-09 >/dev/null
 wits buy 'Cannamedical 28/1 Lemon Cookie' 20g --date 2026-07-09 >/dev/null
 wits buy 'Cantourage 25/1 MAC1+' 20g --date 2026-07-09 >/dev/null
