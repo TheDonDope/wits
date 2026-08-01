@@ -2,12 +2,10 @@ package commands
 
 import (
 	"fmt"
-	"os"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/tui"
 )
 
@@ -17,19 +15,13 @@ var Home = &cobra.Command{
 	Short: "Launch the interface",
 	Args:  cobra.NoArgs,
 	RunE: func(_ *cobra.Command, _ []string) error {
-		wd, err := os.Getwd()
+		// The same way every other command finds a repository, rather than a
+		// second copy of the discovery this one used to carry.
+		s, err := open()
 		if err != nil {
 			return err
 		}
-		r, err := repo.Discover(wd)
-		if err != nil {
-			return err
-		}
-		data, err := tui.Load(r)
-		if err != nil {
-			return err
-		}
-		if _, err := tea.NewProgram(tui.New(data)).Run(); err != nil {
+		if _, err := tea.NewProgram(tui.New(tui.From(s.Workspace))).Run(); err != nil {
 			return fmt.Errorf("running the interface: %w", err)
 		}
 		return nil
