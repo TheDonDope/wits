@@ -19,7 +19,7 @@ type Balance struct {
 
 // Total returns the grams of this product still held, that is everything that
 // has not yet gone through a device.
-func (b Balance) Total() float64 { return round(b.Storage + b.Stash) }
+func (b Balance) Total() float64 { return Round(b.Storage + b.Stash) }
 
 // State is the result of replaying a journal.
 type State struct {
@@ -51,24 +51,51 @@ type Cycle struct {
 	Start     time.Time
 	End       time.Time // zero while the cycle is still open
 	Purchased float64
+	Carried   float64 // grams already in storage when the fill arrived
 	Ground    float64
 	Leftover  float64 // grams still in storage when the next fill arrived
 	Products  []string
 	Events    []journal.Event
+
+	// Opening is the storage balance each product carried into the cycle.
+	// Without it, grinding down last month's remainder reads as overspending
+	// this month's fill, and a product's "left" would run past 100%.
+	Opening map[string]float64
 }
 
 // Open reports whether the cycle still has product in storage.
 func (c Cycle) Open() bool { return c.End.IsZero() }
 
+// Held returns the grams the cycle started with: the fill itself plus
+// whatever the previous cycle left in storage.
+func (c Cycle) Held() float64 { return Round(c.Purchased + c.Carried) }
+
 // Remaining returns the grams of the cycle still in storage.
-func (c Cycle) Remaining() float64 { return round(c.Purchased - c.Ground) }
+func (c Cycle) Remaining() float64 { return Round(c.Held() - c.Ground) }
 
 // RemainingPct returns how much of the cycle is left, from 0 to 1.
 func (c Cycle) RemainingPct() float64 {
-	if c.Purchased == 0 {
+	if c.Held() == 0 {
 		return 0
 	}
-	return c.Remaining() / c.Purchased
+	return c.Remaining() / c.Held()
+}
+
+// PurchasedOf returns how many grams of one product the cycle's fill brought.
+func (c Cycle) PurchasedOf(slug string) float64 {
+	var grams float64
+	for _, e := range c.Events {
+		if e.Product == slug && e.Type == journal.Purchase {
+			grams += e.Grams
+		}
+	}
+	return Round(grams)
+}
+
+// HeldOf returns the grams of one product the cycle started with, carry-over
+// included, which is what a per-product percentage has to be a percentage of.
+func (c Cycle) HeldOf(slug string) float64 {
+	return Round(c.PurchasedOf(slug) + c.Opening[slug])
 }
 
 // Fold replays the events and returns the state they describe. Events are
@@ -91,16 +118,33 @@ func Fold(events []journal.Event) *State {
 					s.Cycles[cur].End = e.OccurredAt
 					s.Cycles[cur].Leftover = s.Cycles[cur].Remaining()
 				}
-				s.Cycles = append(s.Cycles, Cycle{Start: e.OccurredAt})
+				// The purchase itself has already been applied above, so the
+				// snapshot backs it out again: what was carried in is what sat
+				// in storage before this fill arrived.
+				opening := map[string]float64{}
+				carried := 0.0
+				for slug, bal := range s.Balances {
+					held := bal.Storage
+					if slug == e.Product {
+						held = Round(held - e.Grams)
+					}
+					if held > 0 {
+						opening[slug] = held
+						carried += held
+					}
+				}
+				s.Cycles = append(s.Cycles, Cycle{
+					Start: e.OccurredAt, Opening: opening, Carried: Round(carried),
+				})
 				cur = len(s.Cycles) - 1
 			}
-			s.Cycles[cur].Purchased = round(s.Cycles[cur].Purchased + e.Grams)
+			s.Cycles[cur].Purchased = Round(s.Cycles[cur].Purchased + e.Grams)
 			if !contains(s.Cycles[cur].Products, e.Product) {
 				s.Cycles[cur].Products = append(s.Cycles[cur].Products, e.Product)
 			}
 		case journal.Grind:
 			if cur != -1 {
-				s.Cycles[cur].Ground = round(s.Cycles[cur].Ground + e.Grams)
+				s.Cycles[cur].Ground = Round(s.Cycles[cur].Ground + e.Grams)
 			}
 		}
 		if cur != -1 {
@@ -168,7 +212,7 @@ func (st Stats) DaysLeft(grams float64) float64 {
 	if st.PerActiveDay <= 0 {
 		return 0
 	}
-	return round(grams / st.PerActiveDay)
+	return Round(grams / st.PerActiveDay)
 }
 
 // Summarise returns the statistics for the grind events among the given events.
@@ -182,8 +226,8 @@ func Summarise(events []journal.Event) Stats {
 			continue
 		}
 		day := e.OccurredAt.Format(time.DateOnly)
-		perDay[day] = round(perDay[day] + e.Grams)
-		st.Ground = round(st.Ground + e.Grams)
+		perDay[day] = Round(perDay[day] + e.Grams)
+		st.Ground = Round(st.Ground + e.Grams)
 		if st.First.IsZero() || e.OccurredAt.Before(st.First) {
 			st.First = e.OccurredAt
 		}
@@ -205,11 +249,11 @@ func Summarise(events []journal.Event) Stats {
 		st.ElapsedDays = int(st.Last.Sub(st.First).Hours()/24) + 1
 	}
 	if st.ActiveDays > 0 {
-		st.PerActiveDay = round(st.Ground / float64(st.ActiveDays))
+		st.PerActiveDay = Round(st.Ground / float64(st.ActiveDays))
 		st.MedianPerDay = median(amounts)
 	}
 	if st.ElapsedDays > 0 {
-		st.PerElapsedDay = round(st.Ground / float64(st.ElapsedDays))
+		st.PerElapsedDay = Round(st.Ground / float64(st.ElapsedDays))
 	}
 	return st
 }
@@ -219,13 +263,13 @@ func Summarise(events []journal.Event) Stats {
 func apply(b *Balance, account journal.Account, grams float64) {
 	switch account {
 	case journal.Storage:
-		b.Storage = round(b.Storage + grams)
+		b.Storage = Round(b.Storage + grams)
 	case journal.Stash:
-		b.Stash = round(b.Stash + grams)
+		b.Stash = Round(b.Stash + grams)
 	case journal.Consumed:
-		b.Consumed = round(b.Consumed + grams)
+		b.Consumed = Round(b.Consumed + grams)
 	case journal.AVB:
-		b.AVB = round(b.AVB + grams)
+		b.AVB = Round(b.AVB + grams)
 	}
 }
 
@@ -238,12 +282,13 @@ func median(sorted []float64) float64 {
 	if n%2 == 1 {
 		return sorted[n/2]
 	}
-	return round((sorted[n/2-1] + sorted[n/2]) / 2)
+	return Round((sorted[n/2-1] + sorted[n/2]) / 2)
 }
 
-// round trims a value to centigrams, which is the precision a jeweller's scale
-// gives and the precision the source spreadsheet recorded.
-func round(g float64) float64 { return math.Round(g*100) / 100 }
+// Round trims a value to centigrams, which is the precision a jeweller's scale
+// gives and the precision the source spreadsheet recorded. It is exported so
+// that everything handling grams rounds them the same one way.
+func Round(g float64) float64 { return math.Round(g*100) / 100 }
 
 // contains reports whether s holds v.
 func contains(s []string, v string) bool {

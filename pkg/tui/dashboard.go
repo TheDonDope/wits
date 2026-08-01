@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -58,7 +57,7 @@ func (d dashboard) headline(a *App, c *ledger.Cycle, stats ledger.Stats, width i
 
 	left := t.Metric("remaining",
 		fmt.Sprintf("%.2f g", remaining),
-		fmt.Sprintf("of %.0f g", c.Purchased))
+		fmt.Sprintf("of %.0f g", c.Held()))
 
 	rate := t.Metric("per active day",
 		fmt.Sprintf("%.2f g", stats.PerActiveDay),
@@ -81,7 +80,7 @@ func (d dashboard) headline(a *App, c *ledger.Cycle, stats ledger.Stats, width i
 	bar := GradientGauge(width, fraction, t.Good, t.Level(fraction), t.Dim)
 	scale := lipgloss.JoinHorizontal(lipgloss.Left,
 		t.Dim.Render(c.Start.Format("02 Jan")),
-		strings.Repeat(" ", maxInt(width-12-lipgloss.Width(fmt.Sprintf("%.0f%%", fraction*100)), 1)),
+		strings.Repeat(" ", max(width-12-lipgloss.Width(fmt.Sprintf("%.0f%%", fraction*100)), 1)),
 		lipgloss.NewStyle().Foreground(t.Level(fraction)).Render(fmt.Sprintf("%.0f%%", fraction*100)),
 	)
 	return lipgloss.JoinVertical(lipgloss.Left, cols, "", bar, scale)
@@ -123,7 +122,7 @@ func (d dashboard) products(a *App, c *ledger.Cycle, width int) string {
 
 	labelW := 0
 	for _, slug := range c.Products {
-		labelW = maxInt(labelW, len(truncate(data.ProductName(slug), 28)))
+		labelW = max(labelW, len(truncate(data.ProductName(slug), 28)))
 	}
 
 	var rows []string
@@ -132,12 +131,14 @@ func (d dashboard) products(a *App, c *ledger.Cycle, width int) string {
 		if b == nil {
 			continue
 		}
-		purchased := purchasedOf(c, slug)
+		// Carry-over included, so grinding down last month's remainder does
+		// not push a product past 100%.
+		held := c.HeldOf(slug)
 		fraction := 0.0
-		if purchased > 0 {
-			fraction = b.Storage / purchased
+		if held > 0 {
+			fraction = b.Storage / held
 		}
-		barW := maxInt(width-labelW-24, 8)
+		barW := max(width-labelW-24, 8)
 
 		rows = append(rows,
 			lipgloss.JoinHorizontal(lipgloss.Left,
@@ -147,7 +148,7 @@ func (d dashboard) products(a *App, c *ledger.Cycle, width int) string {
 					{Value: b.Storage, Color: t.StorageC},
 					{Value: b.Stash, Color: t.StashC},
 					{Value: b.AVB, Color: t.AVBC},
-				}, purchased, t),
+				}, held, t),
 				" ",
 				t.Grams(b.Storage),
 				" ",
@@ -196,27 +197,6 @@ func (d dashboard) recent(a *App, _ int) string {
 	chart := ColumnChart(cols, 6, t, t.StashC)
 	return lipgloss.JoinVertical(lipgloss.Left, chart,
 		axisLabels(t, end.AddDate(0, 0, -span+1).Format("02 Jan"), end.Format("02 Jan"), span))
-}
-
-// purchasedOf returns how many grams of a product a cycle began with.
-func purchasedOf(c *ledger.Cycle, slug string) float64 {
-	var grams float64
-	for _, e := range c.Events {
-		if e.Product == slug && e.Type == journal.Purchase {
-			grams += e.Grams
-		}
-	}
-	return grams
-}
-
-// sortedSlugs returns product slugs in a stable order.
-func sortedSlugs(m map[string]float64) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Slice(out, func(i, j int) bool { return m[out[i]] > m[out[j]] })
-	return out
 }
 
 // clip trims rendered content to a number of lines.
