@@ -121,6 +121,12 @@ it will last, the journal, an analysis view scoping from the current cycle out t
 the whole history, the products and the devices. Entries can be recorded there
 too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
 
+The analysis view draws the daily amounts as a braille area chart with a
+seven-day average riding over it, and the longer scopes as a calendar heatmap —
+one cell per day, colour carrying the amount — so a year of habit reads the way
+a contribution graph does: the heavy weeks, the pauses, whether weekends
+differ.
+
 ## Commands
 
 | | |
@@ -297,7 +303,8 @@ in one binary, which shows up on screen as inconsistent colour.
 ## Development
 
 ```sh
-make            # build ./bin/wits
+make build      # build ./bin/wits
+make run        # build it and run it
 make test       # test with coverage
 make cover      # coverage as HTML
 make vet
