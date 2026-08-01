@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"io"
+	"math"
 	"text/tabwriter"
 	"time"
 
@@ -63,12 +64,13 @@ func writeStatus(out io.Writer, state *ledger.State) {
 	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", cycle.Remaining(), percent(cycle.Remaining(), cycle.Purchased))
 	w.Flush()
 
-	fmt.Fprintf(out, "\n%.2fg of %.2fg left over %d days, %d of them with an entry\n",
-		cycle.Remaining(), cycle.Purchased, stats.ElapsedDays, stats.ActiveDays)
+	fmt.Fprintf(out, "\n%.2fg of %.2fg left over %s, %d of them with an entry\n",
+		cycle.Remaining(), cycle.Purchased, plural(stats.ElapsedDays, "day"), stats.ActiveDays)
 	if stats.PerActiveDay > 0 {
 		fmt.Fprintf(out, "%.2fg per active day, %.2fg median, %.2fg per elapsed day\n",
 			stats.PerActiveDay, stats.MedianPerDay, stats.PerElapsedDay)
-		fmt.Fprintf(out, "About %.0f days left at that rate\n", stats.DaysLeft(cycle.Remaining()))
+		fmt.Fprintf(out, "About %s left at that rate\n",
+			plural(int(math.Round(stats.DaysLeft(cycle.Remaining()))), "day"))
 	} else {
 		fmt.Fprintln(out, "Nothing ground yet this cycle, so there is no rate to extrapolate from")
 	}

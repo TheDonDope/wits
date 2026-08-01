@@ -69,6 +69,16 @@ func shortHash(h string) string {
 	return h
 }
 
+// plural renders a count with its noun. The first day of a cycle is the one a
+// new repository spends all of its time in, so "left over 1 days" is the
+// reading most likely to be someone's first.
+func plural(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
+}
+
 // completeProduct offers the products that hold something in the given account,
 // so tab completion on a grind offers what can actually be ground and not four
 // years of empty jars.

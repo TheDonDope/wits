@@ -23,7 +23,31 @@ func TestDevices(t *testing.T) {
 		d := &Devices{}
 		require.NoError(t, d.Add(&Device{Name: "Volcano Hybrid"}))
 
-		assert.ErrorIs(t, d.Add(&Device{Name: "Volcano Hybrid"}), ErrDuplicate, "Should not shadow an existing device")
+		assert.ErrorIs(t, d.Add(&Device{Name: "Volcano Hybrid"}), ErrDeviceDuplicate, "Should not shadow an existing device")
+	})
+
+	// A device that cannot be resolved has to say so as a device. Reusing the
+	// product errors here sent `wits sesh wcake 0.3 --device volcano` in a
+	// repository with no devices to "no product matches that reference", which
+	// names a product that does exist and hides the device that does not.
+	t.Run("FailuresNameTheDeviceCatalog", func(t *testing.T) {
+		d := &Devices{}
+		require.NoError(t, d.Add(&Device{Name: "Volcano Hybrid"}))
+		require.NoError(t, d.Add(&Device{Name: "Volcano Classic"}))
+
+		_, unknown := d.Find("mighty")
+		_, empty := d.Find("")
+		_, ambiguous := d.Find("volcano")
+
+		for name, err := range map[string]error{"unknown": unknown, "empty": empty, "ambiguous": ambiguous} {
+			require.Error(t, err, "Should not resolve a %s reference", name)
+			assert.NotContains(t, err.Error(), "product",
+				"Should not blame the product catalog for a %s device reference", name)
+			assert.Contains(t, err.Error(), "device", "Should name the device catalog for a %s reference", name)
+		}
+		assert.ErrorIs(t, unknown, ErrNoDevice, "Should report an unknown device")
+		assert.ErrorIs(t, empty, ErrNoDevice, "Should not match everything on an empty reference")
+		assert.ErrorIs(t, ambiguous, ErrDeviceAmbiguous, "Should report an ambiguous device")
 	})
 
 	t.Run("RoundTrip", func(t *testing.T) {

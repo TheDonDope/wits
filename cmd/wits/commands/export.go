@@ -57,7 +57,7 @@ var Export = &cobra.Command{
 		writeMarkdown(out, cycles, s.Products)
 
 		if exportOut != "" {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Wrote %d cycle(s) to %s\n", len(cycles), exportOut)
+			fmt.Fprintf(cmd.ErrOrStderr(), "Wrote %s to %s\n", plural(len(cycles), "cycle"), exportOut)
 		}
 		return nil
 	},

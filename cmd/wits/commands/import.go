@@ -71,7 +71,12 @@ func writeReport(out io.Writer, result *importer.Result) {
 	}
 
 	if len(result.Merged) > 0 {
-		fmt.Fprintf(out, "\n%d product(s) were named more than one way and become one:\n\n", len(result.Merged))
+		was, becomes := "were", "become"
+		if len(result.Merged) == 1 {
+			was, becomes = "was", "becomes"
+		}
+		fmt.Fprintf(out, "\n%s %s named more than one way and %s one:\n\n",
+			plural(len(result.Merged), "product"), was, becomes)
 		for _, m := range result.Merged {
 			fmt.Fprintf(out, "  %s\n", m.Slug)
 			for _, n := range m.Names {
@@ -85,7 +90,7 @@ func writeReport(out io.Writer, result *importer.Result) {
 		fmt.Fprintln(out, "\nNothing in the spreadsheet looks wrong.")
 		return
 	}
-	fmt.Fprintf(out, "\n%d thing(s) worth checking in the spreadsheet:\n\n", len(anomalies))
+	fmt.Fprintf(out, "\n%s worth checking in the spreadsheet:\n\n", plural(len(anomalies), "thing"))
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	for _, a := range anomalies {
 		fmt.Fprintf(w, "  %s\n", a)

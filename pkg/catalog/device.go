@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -8,6 +9,19 @@ import (
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
 	"gopkg.in/yaml.v3"
+)
+
+// Devices carry their own errors rather than borrowing the product ones. These
+// read back to whoever typed the reference, and a mistyped `--device volcanoo`
+// answering "no product matches that reference" sends them to the wrong
+// catalog looking for a fault that is not there.
+var (
+	// ErrNoDevice is returned when no device matches a reference.
+	ErrNoDevice = errors.New("no device matches that reference")
+	// ErrDeviceAmbiguous is returned when a reference matches more than one device.
+	ErrDeviceAmbiguous = errors.New("that reference matches more than one device")
+	// ErrDeviceDuplicate is returned when adding a device that is already known.
+	ErrDeviceDuplicate = errors.New("a device with that slug already exists")
 )
 
 // Device is a vaporizer, with the temperature range it can be set to.
@@ -62,7 +76,7 @@ func (d *Devices) Add(device *Device) error {
 	}
 	for _, existing := range d.Devices {
 		if existing.Slug == device.Slug {
-			return fmt.Errorf("%w: %s", ErrDuplicate, device.Slug)
+			return fmt.Errorf("%w: %s", ErrDeviceDuplicate, device.Slug)
 		}
 	}
 	d.Devices = append(d.Devices, device)
@@ -73,7 +87,7 @@ func (d *Devices) Add(device *Device) error {
 // either.
 func (d *Devices) Find(ref string) (*Device, error) {
 	if ref == "" {
-		return nil, ErrNotFound
+		return nil, ErrNoDevice
 	}
 	needle := strings.ToLower(ref)
 
@@ -91,7 +105,7 @@ func (d *Devices) Find(ref string) (*Device, error) {
 	}
 	switch len(matches) {
 	case 0:
-		return nil, fmt.Errorf("%w: %q", ErrNotFound, ref)
+		return nil, fmt.Errorf("%w: %q", ErrNoDevice, ref)
 	case 1:
 		return matches[0], nil
 	default:
@@ -99,7 +113,7 @@ func (d *Devices) Find(ref string) (*Device, error) {
 		for _, device := range matches {
 			names = append(names, device.Slug)
 		}
-		return nil, fmt.Errorf("%w: %q matches %s", ErrAmbiguous, ref, strings.Join(names, ", "))
+		return nil, fmt.Errorf("%w: %q matches %s", ErrDeviceAmbiguous, ref, strings.Join(names, ", "))
 	}
 }
 
