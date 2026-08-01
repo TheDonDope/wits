@@ -73,6 +73,12 @@ func (t *Theme) Day(d time.Time, now time.Time) string {
 // drawn as one: time, glyph, verb, amount, product, and whatever detail the
 // entry carries. Everything optional is dimmed, so the eye falls on the amount.
 func (t *Theme) EventLine(e journal.Event, name string, width int, selected bool) string {
+	return t.entryLine(e, name, width, selected, false, false)
+}
+
+// entryLine renders one journal entry, marking it if it has been corrected or
+// is itself a correction.
+func (t *Theme) entryLine(e journal.Event, name string, width int, selected, corrected, isFix bool) string {
 	colour := t.eventColor(e.Type)
 
 	marker := " "
@@ -87,16 +93,28 @@ func (t *Theme) EventLine(e journal.Event, name string, width int, selected bool
 		clock = e.OccurredAt.Format("15:04")
 	}
 
+	glyph := glyphs[e.Type]
+	verb := verbs[e.Type]
+	value := t.Value
+	if isFix {
+		glyph, verb, colour = "↩", "undo", t.Muted
+	}
+	if corrected {
+		// A superseded entry is shown struck through rather than removed, so the
+		// correction reads as something that happened to it.
+		value = t.Dim.Strikethrough(true)
+	}
+
 	parts := []string{
 		marker,
 		t.Dim.Render(clock),
 		" ",
-		lipgloss.NewStyle().Foreground(colour).Render(glyphs[e.Type]),
+		lipgloss.NewStyle().Foreground(colour).Render(glyph),
 		" ",
-		t.Label.Width(10).Render(verbs[e.Type]),
-		t.Grams(e.Grams),
+		t.Label.Width(10).Render(verb),
+		value.Render(fmt.Sprintf("%6.2f", e.Grams)) + t.Unit.Render("g"),
 		"  ",
-		t.Value.Render(name),
+		value.Render(name),
 	}
 	line := lipgloss.JoinHorizontal(lipgloss.Left, parts...)
 

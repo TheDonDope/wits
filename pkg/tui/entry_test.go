@@ -11,6 +11,7 @@ import (
 	"github.com/TheDonDope/wits-tui/pkg/catalog"
 	"github.com/TheDonDope/wits-tui/pkg/journal"
 	"github.com/TheDonDope/wits-tui/pkg/ledger"
+	"github.com/TheDonDope/wits-tui/pkg/record"
 	"github.com/TheDonDope/wits-tui/pkg/repo"
 )
 
@@ -58,12 +59,11 @@ func send(m tea.Model, msg tea.Msg) (tea.Model, []tea.Msg) {
 		if !ok || out == nil {
 			continue
 		}
+		// Record it for the test to assert on, and still deliver it: an outcome
+		// message is what makes the app reload, so swallowing it here would
+		// leave the assertions looking at stale data.
 		produced = append(produced, out)
-		// Anything the app itself raises is reported rather than re-delivered,
-		// so a test can assert on it.
-		if _, ours := out.(entryDoneMsg); !ours {
-			queue = append(queue, out)
-		}
+		queue = append(queue, out)
 	}
 	return m, produced
 }
@@ -90,6 +90,22 @@ func runCmd(cmd tea.Cmd) (tea.Msg, bool) {
 	case <-time.After(50 * time.Millisecond):
 		return nil, false
 	}
+}
+
+// confirmThrough presses enter until the form reports an outcome, or gives up.
+// A form has as many fields as it has, and a test should not have to know how
+// many enters that is.
+func confirmThrough(m tea.Model, presses int) (tea.Model, []tea.Msg) {
+	var all []tea.Msg
+	for i := 0; i < presses; i++ {
+		var msgs []tea.Msg
+		m, msgs = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+		all = append(all, msgs...)
+		if _, done := findDone(all); done {
+			break
+		}
+	}
+	return m, all
 }
 
 // findDone returns the entry outcome among a batch of messages.
@@ -205,3 +221,151 @@ type assertError struct{}
 func (assertError) Error() string { return "nope" }
 
 var _ = ledger.Fold
+
+func TestUndoDefaultsToKeeping(t *testing.T) {
+	app := liveApp(t)
+	rec := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State)
+	_, err := rec.Grind("wedding", 2, time.Now())
+	require.NoError(t, err)
+	app.data, err = Load(app.data.Repo)
+	require.NoError(t, err)
+
+	var m tea.Model = app
+	app.screen = journalScreen
+	app.journal.rows = app.journal.build(app)
+	app.journal.cursor = app.journal.firstEntry(0, +1)
+	m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
+	require.NotNil(t, app.entry)
+
+	// Pressing through without choosing must not undo anything.
+	_, msgs := confirmThrough(m, 6)
+	done, ok := findDone(msgs)
+	require.True(t, ok)
+	assert.ErrorIs(t, done.err, errCancelled, "Should default to keeping the entry")
+
+	events, err := app.data.Repo.Journal().Events()
+	require.NoError(t, err)
+	assert.Len(t, events, 2, "Should not have recorded a correction")
+}
+
+func TestUndoFromTheJournal(t *testing.T) {
+	app := liveApp(t)
+	var m tea.Model = app
+	m, _ = send(m, tea.KeyPressMsg{Code: 'n', Text: "n"})
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	m = typeText(m, "2")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	require.Equal(t, 2.0, app.data.State.Balances["enua-wedding-cake"].Stash)
+
+	// Move to the journal, put the cursor on the grind, and undo it.
+	m, _ = send(m, tea.KeyPressMsg{Code: 'l', Text: "l"})
+	require.Equal(t, journalScreen, app.screen)
+	app.journal.rows = app.journal.build(app)
+	app.journal.cursor = app.journal.firstEntry(0, +1)
+	require.NotNil(t, app.journal.Selected(), "the cursor should be on an entry")
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
+	require.NotNil(t, app.entry, "d should open the undo form")
+
+	// The form opens on the confirm, since a note takes no focus. It defaults to
+	// keeping the entry, which is the right default for something destructive,
+	// so undoing has to be chosen.
+	m, _ = send(m, tea.KeyPressMsg{Code: 'y', Text: "y"})
+	_, msgs := confirmThrough(m, 6)
+
+	done, ok := findDone(msgs)
+	require.True(t, ok, "Should report the outcome, got %v", msgs)
+	require.NoError(t, done.err)
+
+	assert.Zero(t, app.data.State.Balances["enua-wedding-cake"].Stash, "The grams should be back in storage")
+	events, err := app.data.Repo.Journal().Events()
+	require.NoError(t, err)
+	assert.Len(t, events, 3, "Nothing should have been removed: the correction is appended")
+	assert.NotEmpty(t, events[2].Reverts, "and it should name the entry it undid")
+}
+
+func TestJournalHidesCorrectedEntries(t *testing.T) {
+	app := liveApp(t)
+	rec := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State)
+	grind, err := rec.Grind("wedding", 2, time.Now())
+	require.NoError(t, err)
+	_, err = rec.Revert(grind.Hash, "")
+	require.NoError(t, err)
+	app.data, err = Load(app.data.Repo)
+	require.NoError(t, err)
+
+	v := newJournalView()
+	assert.Equal(t, 1, countEvents(v.build(app)),
+		"A corrected entry and its correction should both be out of the way, leaving the fill")
+
+	v.showAll = true
+	assert.Equal(t, 3, countEvents(v.build(app)), "and v should bring them back")
+}
+
+func TestJournalCursorSkipsHeadings(t *testing.T) {
+	app := liveApp(t)
+	rec := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State)
+	_, err := rec.Grind("wedding", 1, time.Now().AddDate(0, 0, -1))
+	require.NoError(t, err)
+	app.data, err = Load(app.data.Repo)
+	require.NoError(t, err)
+
+	v := newJournalView()
+	v.rows = v.build(app)
+	v.cursor = v.firstEntry(0, +1)
+
+	for i := 0; i < len(v.rows); i++ {
+		require.False(t, v.rows[v.cursor].heading, "the cursor should never land on a day heading")
+		v.cursor = v.step(+1)
+	}
+}
+
+func TestDeviceForm(t *testing.T) {
+	app := liveApp(t)
+	var m tea.Model = app
+	app.screen = devicesScreen
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'a', Text: "a"})
+	require.NotNil(t, app.device, "a should open the device form")
+
+	m = typeText(m, "Volcano Hybrid")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // name -> kind
+	m = typeText(m, "desktop")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // kind -> min
+	m = typeText(m, "40")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // min -> max
+	m = typeText(m, "230")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // max -> default
+	m = typeText(m, "185")
+	_, msgs := send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	var saved bool
+	for _, msg := range msgs {
+		if d, ok := msg.(deviceDoneMsg); ok {
+			require.NoError(t, d.err)
+			saved = true
+		}
+	}
+	require.True(t, saved, "Should have saved the device, got %v", msgs)
+
+	devices, err := catalog.LoadDevices(app.data.Repo.DevicesPath())
+	require.NoError(t, err)
+	require.Len(t, devices.Devices, 1)
+	assert.Equal(t, "Volcano Hybrid", devices.Devices[0].Name, "Should have written it to the catalog")
+	assert.Equal(t, 230, devices.Devices[0].MaxTemp, "Should keep the range")
+	assert.Equal(t, 185, devices.Devices[0].DefaultTemp, "Should keep the default")
+}
+
+func TestDeviceTemperaturesAreChecked(t *testing.T) {
+	for name, d := range map[string]*catalog.Device{
+		"MinAboveMax":     {Name: "x", MinTemp: 220, MaxTemp: 200},
+		"DefaultAboveMax": {Name: "x", MaxTemp: 200, DefaultTemp: 250},
+		"DefaultBelowMin": {Name: "x", MinTemp: 100, DefaultTemp: 40},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Error(t, validTemps(d), "Should refuse a range that cannot be set")
+		})
+	}
+	assert.NoError(t, validTemps(&catalog.Device{Name: "x", MinTemp: 40, MaxTemp: 230, DefaultTemp: 185}),
+		"Should accept a sensible range")
+}

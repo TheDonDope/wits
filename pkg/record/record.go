@@ -8,6 +8,7 @@ package record
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/TheDonDope/wits-tui/pkg/catalog"
@@ -151,3 +152,112 @@ func (r *Recorder) append(e journal.Event) (journal.Event, error) {
 
 // State returns the folded state, including anything this recorder appended.
 func (r *Recorder) State() *ledger.State { return r.state }
+
+// Revert records the correction of an earlier entry.
+//
+// Nothing is removed. The journal is append-only and hash chained, which is what
+// lets a bundle be verified against the repository it came from, so an entry is
+// undone by moving the same grams back the way they came. The correction names
+// the entry it reverses, so the pair can be recognised and hidden from a view
+// that wants to show only what currently stands.
+func (r *Recorder) Revert(hash string, reason string) (journal.Event, error) {
+	original, err := r.Find(hash)
+	if err != nil {
+		return journal.Event{}, err
+	}
+	if original.Type == journal.Adjust {
+		return journal.Event{}, fmt.Errorf("%s is already a correction", short(hash))
+	}
+	if r.RevertOf(original.Hash) != nil {
+		return journal.Event{}, fmt.Errorf("%s has already been corrected", short(hash))
+	}
+	// Putting the grams back must not overdraw the account they went into: if
+	// they have since been ground on or used, the later entries have to go first.
+	if err := r.check(original.Product, original.Grams, original.To); err != nil {
+		return journal.Event{}, fmt.Errorf("cannot undo %s: %w", short(hash), err)
+	}
+	if reason == "" {
+		reason = "reverts " + short(hash)
+	}
+	return r.append(journal.Event{
+		Type:       journal.Adjust,
+		Product:    original.Product,
+		Grams:      original.Grams,
+		From:       original.To,
+		To:         original.From,
+		OccurredAt: time.Now(),
+		Reverts:    original.Hash,
+		Note:       reason,
+	})
+}
+
+// Amend corrects the amount of an earlier entry, by reverting it and recording
+// it again as it should have been.
+func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event, error) {
+	original, err := r.Find(hash)
+	if err != nil {
+		return journal.Event{}, err
+	}
+	if _, err := r.Revert(hash, "amended"); err != nil {
+		return journal.Event{}, err
+	}
+	corrected := original
+	corrected.Grams = grams
+	corrected.Hash, corrected.Prev, corrected.Seq = "", "", 0
+	corrected.RecordedAt = time.Time{}
+	if note != "" {
+		corrected.Note = note
+	}
+	return r.append(corrected)
+}
+
+// Find returns the event with the given hash, which may be abbreviated.
+func (r *Recorder) Find(hash string) (journal.Event, error) {
+	if hash == "" {
+		return journal.Event{}, fmt.Errorf("no entry given")
+	}
+	var found *journal.Event
+	for i := range r.state.Events {
+		if strings.HasPrefix(r.state.Events[i].Hash, hash) {
+			if found != nil {
+				return journal.Event{}, fmt.Errorf("%s matches more than one entry", hash)
+			}
+			found = &r.state.Events[i]
+		}
+	}
+	if found == nil {
+		return journal.Event{}, fmt.Errorf("no entry matches %s", hash)
+	}
+	return *found, nil
+}
+
+// RevertOf returns the correction of an entry, if it has been corrected.
+func (r *Recorder) RevertOf(hash string) *journal.Event {
+	for i := range r.state.Events {
+		if r.state.Events[i].Reverts == hash {
+			return &r.state.Events[i]
+		}
+	}
+	return nil
+}
+
+// Reverted returns the hashes of every entry that has been corrected, along with
+// the corrections themselves, so a view can leave the pair out.
+func Reverted(events []journal.Event) map[string]bool {
+	out := map[string]bool{}
+	for _, e := range events {
+		if e.Reverts != "" {
+			out[e.Reverts] = true
+			out[e.Hash] = true
+		}
+	}
+	return out
+}
+
+// short abbreviates a hash the way a commit is abbreviated.
+func short(h string) string {
+	if len(h) > 7 {
+		return h[:7]
+	}
+	return h
+}
