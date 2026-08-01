@@ -3,7 +3,6 @@ package repo
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -41,31 +40,33 @@ var (
 
 // Config holds the repository settings. It replaces the environment variables
 // the application used to require in a .env file.
+//
+// A log_level once sat beside log_file and was read by nothing — the same
+// dead setting the old .env had, moved to a new home. It is gone; a yaml
+// field nothing reads is a promise the program does not keep.
 type Config struct {
-	Version  int    `yaml:"version"`
-	LogLevel string `yaml:"log_level"`
-	LogFile  string `yaml:"log_file"`
+	Version int    `yaml:"version"`
+	LogFile string `yaml:"log_file"`
 }
 
 // DefaultConfig returns the configuration a freshly initialised repository gets.
 func DefaultConfig() Config {
 	return Config{
-		Version:  Version,
-		LogLevel: "INFO",
-		LogFile:  "wits.log",
+		Version: Version,
+		LogFile: "wits.log",
 	}
 }
 
 // Repo is an initialised .wits repository.
 type Repo struct {
-	root   string
-	Config Config
+	root    string
+	Config  Config
+	journal *journal.Journal
 }
 
 // Init creates a repository under dir and returns it. It refuses to touch an
 // existing repository rather than overwriting one.
 func Init(dir string) (*Repo, error) {
-	log.Printf("💬 🗄️  (pkg/repo/repo.go) Init(dir string: %v) \n", dir)
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,6 @@ func Init(dir string) (*Repo, error) {
 		}
 	}
 
-	log.Printf("✅ 🗄️  (pkg/repo/repo.go) Init() -> root: %v \n", root)
 	return r, nil
 }
 
@@ -155,8 +155,15 @@ func (r *Repo) DevicesPath() string { return filepath.Join(r.root, devicesFile) 
 // JournalPath returns the path of the event journal.
 func (r *Repo) JournalPath() string { return filepath.Join(r.root, journalFile) }
 
-// Journal returns the repository's event journal.
-func (r *Repo) Journal() *journal.Journal { return journal.Open(r.JournalPath()) }
+// Journal returns the repository's event journal. The same instance is
+// returned every time: the journal's mutex and its cached tip only mean
+// something if every caller in the process appends through one value.
+func (r *Repo) Journal() *journal.Journal {
+	if r.journal == nil {
+		r.journal = journal.Open(r.JournalPath())
+	}
+	return r.journal
+}
 
 // writeConfig persists the configuration.
 func (r *Repo) writeConfig() error {

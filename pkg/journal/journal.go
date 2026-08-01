@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"sync"
 	"time"
@@ -31,6 +30,15 @@ var ErrBrokenChain = errors.New("journal hash chain is broken")
 type Journal struct {
 	mu   sync.Mutex
 	path string
+
+	// The tip of the chain, cached so that a run of appends — a restore is a
+	// thousand of them — does not re-read the whole file for every line. The
+	// file size pins the cache: another process may append between two of
+	// ours, and a size that no longer matches means the tip must be re-read.
+	seq    int
+	tip    string
+	size   int64
+	primed bool
 }
 
 // lockPath is the file the cross-process lock is taken on. It is separate from
@@ -80,17 +88,12 @@ func (j *Journal) Append(e Event) (Event, error) {
 		return Event{}, err
 	}
 
-	events, err := j.read()
-	if err != nil {
+	if err := j.prime(); err != nil {
 		return Event{}, err
 	}
-	var prev string
-	if n := len(events); n > 0 {
-		prev = events[n-1].Hash
-	}
-	e.Seq = len(events) + 1
-	e.Prev = prev
-	if e.Hash, err = e.sum(prev); err != nil {
+	e.Seq = j.seq + 1
+	e.Prev = j.tip
+	if e.Hash, err = e.sum(j.tip); err != nil {
 		return Event{}, err
 	}
 
@@ -99,10 +102,42 @@ func (j *Journal) Append(e Event) (Event, error) {
 		return Event{}, err
 	}
 	if err := j.write(line); err != nil {
+		// The cache no longer describes the file for certain; the next append
+		// re-reads rather than chaining onto a tip that may not exist.
+		j.primed = false
 		return Event{}, err
 	}
-	log.Printf("✅ 📓  (pkg/journal/journal.go) Append() -> %v \n", e)
+	j.seq, j.tip = e.Seq, e.Hash
+	j.size += int64(len(line)) + 1
 	return e, nil
+}
+
+// prime brings the cached tip in line with the file. Callers must hold both
+// locks. The size check is what keeps the cache honest across processes: our
+// own appends grow the file by exactly what was written, so a size that does
+// not match means somebody else appended and the tip has moved.
+func (j *Journal) prime() error {
+	var size int64
+	if st, err := os.Stat(j.path); err == nil {
+		size = st.Size()
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if j.primed && size == j.size {
+		return nil
+	}
+	events, err := j.read()
+	if err != nil {
+		return err
+	}
+	j.seq = len(events)
+	j.tip = ""
+	if n := len(events); n > 0 {
+		j.tip = events[n-1].Hash
+	}
+	j.size = size
+	j.primed = true
+	return nil
 }
 
 // withDefaults fills in the fields a caller may leave to the journal: the
