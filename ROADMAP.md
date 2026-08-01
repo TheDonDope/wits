@@ -161,7 +161,8 @@ routinely overlap, because a new sheet gets started before the old one is finish
 
 - **Tasks**:
   - [x] `init`, `buy`, `grind`, `status`, `log`
-  - [ ] `show`, `revert` (compensating event, never a rewrite)
+  - [x] `revert` (compensating event, never a rewrite)
+  - [ ] `show`
   - [x] `sesh` with a device and a temperature
   - [ ] Short aliases per product for fast daily entry
 - **Relevant Commits**: tbd
@@ -248,8 +249,9 @@ routinely overlap, because a new sheet gets started before the old one is finish
   - [x] Dashboard, journal and analysis screens
   - [x] Charts drawn in-tree, sharing one colour per account with the log
   - [x] Grind, session and fill forms, applying the same checks as the commands
-  - [ ] Products and devices screens
-  - [ ] Editing and reverting an entry from the journal view
+  - [x] Devices screen, with add, edit and remove
+  - [x] Amending and undoing an entry from the journal view
+  - [ ] Products screen
 - **Relevant Commits**: tbd
 
 ### 🔹 Statistics with inline plots

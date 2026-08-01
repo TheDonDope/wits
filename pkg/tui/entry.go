@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -29,6 +30,10 @@ func (k entryKind) String() string {
 		return "Session"
 	case entryBuy:
 		return "Prescription fill"
+	case entryAmend:
+		return "Amend entry"
+	case entryUndo:
+		return "Undo entry"
 	default:
 		return "Grind"
 	}
@@ -49,6 +54,10 @@ type entryForm struct {
 	temp    string
 	note    string
 	name    string
+	confirm bool
+
+	// target is the entry being corrected, for the amend and undo forms.
+	target *journal.Event
 
 	err error
 }
@@ -200,12 +209,22 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
 	at := time.Now()
 
-	grams, err := parseGrams(f.amount)
-	if err != nil {
-		return journal.Event{}, err
+	var grams float64
+	if f.kind != entryUndo {
+		var err error
+		if grams, err = parseGrams(f.amount); err != nil {
+			return journal.Event{}, err
+		}
 	}
 
 	switch f.kind {
+	case entryUndo:
+		if !f.confirm {
+			return journal.Event{}, errCancelled
+		}
+		return rec.Revert(f.target.Hash, strings.TrimSpace(f.note))
+	case entryAmend:
+		return rec.Amend(f.target.Hash, grams, strings.TrimSpace(f.note))
 	case entryBuy:
 		e, _, _, err := rec.Buy(strings.TrimSpace(f.name), grams, at)
 		return e, err
@@ -233,6 +252,10 @@ func (f *entryForm) View(a *App, width int) string {
 	return t.Panel.Width(minInt(width-2, 74)).Render(panel)
 }
 
+// errCancelled reports a form the user answered in the negative, which is not a
+// failure and should not be shown as one.
+var errCancelled = errors.New("cancelled")
+
 // parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".
 func parseGrams(s string) (float64, error) {
 	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(s)), "g"))
@@ -244,4 +267,42 @@ func parseGrams(s string) (float64, error) {
 		return 0, fmt.Errorf("amount must be positive, got %v", grams)
 	}
 	return grams, nil
+}
+
+// entryAmend and entryUndo correct an entry that is already in the journal.
+const (
+	entryAmend entryKind = iota + 100
+	entryUndo
+)
+
+// newAmendForm asks for the amount an entry should have had.
+func newAmendForm(e *journal.Event, a *App) *entryForm {
+	f := &entryForm{kind: entryAmend, target: e, amount: fmt.Sprintf("%.2f", e.Grams)}
+	f.form = huh.NewForm(huh.NewGroup(
+		huh.NewNote().Title(describe(e, a)).
+			Description("The original stays in the journal. Amending records a\ncorrection alongside it."),
+		huh.NewInput().Title("Corrected amount").Description("Grams").
+			Value(&f.amount).Validate(validGrams),
+		huh.NewInput().Title("Why").Description("Optional").Value(&f.note),
+	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	return f
+}
+
+// newUndoForm confirms undoing an entry.
+func newUndoForm(e *journal.Event, a *App) *entryForm {
+	f := &entryForm{kind: entryUndo, target: e}
+	f.form = huh.NewForm(huh.NewGroup(
+		huh.NewNote().Title(describe(e, a)).
+			Description("Nothing is deleted. Undoing moves the grams back the way\nthey came and records that alongside the original."),
+		huh.NewConfirm().Title("Undo this entry?").Affirmative("Undo").Negative("Keep").
+			Value(&f.confirm),
+		huh.NewInput().Title("Why").Description("Optional").Value(&f.note),
+	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	return f
+}
+
+// describe summarises the entry being corrected.
+func describe(e *journal.Event, a *App) string {
+	return fmt.Sprintf("%s  %.2f g  %s  ·  %s",
+		e.Type, e.Grams, a.data.ProductName(e.Product), e.OccurredAt.Format("Mon 02 Jan 2006"))
 }

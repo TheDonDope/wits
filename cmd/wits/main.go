@@ -15,7 +15,6 @@ import (
 	"github.com/TheDonDope/wits-tui/pkg/repo"
 	"github.com/TheDonDope/wits-tui/pkg/version"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -58,6 +57,7 @@ func init() {
 		commands.Status,
 		commands.Log,
 		commands.Restore,
+		commands.Revert,
 		commands.Export,
 	)
 
@@ -81,7 +81,6 @@ func init() {
 
 func main() {
 	ctx := context.Background()
-	loadEnvironment()
 	closeLog := openLog()
 	defer closeLog()
 	log.Println("🚀 🖥️  (cmd/wits/main.go) main()")
@@ -89,16 +88,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "🚨 %v\n", err)
 		os.Exit(1)
 	}
-}
-
-// loadEnvironment reads a .env file if there is one. Configuration lives in
-// .wits/config.yml now, so a missing .env is not a problem: it used to be fatal,
-// which meant the binary only ran from the directory that happened to have one.
-func loadEnvironment() {
-	if err := godotenv.Load(); err != nil {
-		return
-	}
-	log.Println("✅ 🖥️  (cmd/wits/main.go) loadEnvironment()")
 }
 
 // openLog sends log output to a file inside the repository when there is one,

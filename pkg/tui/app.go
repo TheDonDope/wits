@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -68,10 +69,11 @@ const (
 	dashboardScreen screen = iota
 	journalScreen
 	analysisScreen
+	devicesScreen
 )
 
 // tabs are the screen names, in order.
-var tabs = []string{"Dashboard", "Journal", "Analysis"}
+var tabs = []string{"Dashboard", "Journal", "Analysis", "Devices"}
 
 // keyMap is the global key bindings. Screens add their own on top.
 type keyMap struct {
@@ -138,6 +140,8 @@ type App struct {
 	dashboard dashboard
 	journal   journalView
 	analysis  analysisView
+	devices   devicesView
+	device    *deviceForm
 }
 
 // New returns the root model for a repository.
@@ -151,6 +155,7 @@ func New(data Data) *App {
 	a.dashboard = newDashboard()
 	a.journal = newJournalView()
 	a.analysis = newAnalysisView()
+	a.devices = newDevicesView()
 	return a
 }
 
@@ -172,12 +177,28 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.theme = NewTheme(msg.IsDark())
 
 	case entryDoneMsg:
+		if errors.Is(msg.err, errCancelled) {
+			a.notice = ""
+			return a, nil
+		}
 		if msg.err != nil {
 			a.notice, a.failed = msg.err.Error(), true
 			return a, nil
 		}
 		a.notice, a.failed = fmt.Sprintf("recorded %s %.2fg %s",
 			msg.event.Type, msg.event.Grams, msg.event.Product), false
+		return a, a.reload()
+
+	case deviceDoneMsg:
+		if errors.Is(msg.err, errCancelled) {
+			a.notice = ""
+			return a, nil
+		}
+		if msg.err != nil {
+			a.notice, a.failed = msg.err.Error(), true
+			return a, nil
+		}
+		a.notice, a.failed = fmt.Sprintf("saved device %s", msg.name), false
 		return a, a.reload()
 
 	case reloadedMsg:
@@ -189,6 +210,15 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, nil
 
 	case tea.KeyPressMsg:
+		if a.device != nil {
+			if msg.String() == "esc" {
+				a.device, a.notice = nil, ""
+				return a, nil
+			}
+			var cmd tea.Cmd
+			a.device, cmd = a.device.Update(msg, a)
+			return a, cmd
+		}
 		// A form in front owns the keyboard.
 		if a.entry != nil {
 			// huh only aborts on ctrl+c, so esc is handled here rather than
@@ -211,6 +241,33 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.String() == "b":
 			a.entry, a.notice = newEntryForm(entryBuy, a), ""
 			return a, a.entry.form.Init()
+		case msg.String() == "a" && a.screen == devicesScreen:
+			a.device, a.notice = newDeviceForm(nil, a), ""
+			return a, a.device.form.Init()
+		case msg.String() == "e" && a.screen == devicesScreen:
+			if d := a.devices.Selected(a); d != nil {
+				a.device, a.notice = newDeviceForm(d, a), ""
+				return a, a.device.form.Init()
+			}
+			return a, nil
+		case msg.String() == "d" && a.screen == devicesScreen:
+			if d := a.devices.Selected(a); d != nil {
+				a.device, a.notice = newDeviceRemoveForm(d, a), ""
+				return a, a.device.form.Init()
+			}
+			return a, nil
+		case msg.String() == "e" && a.screen == journalScreen:
+			if e := a.journal.Selected(); e != nil {
+				a.entry, a.notice = newAmendForm(e, a), ""
+				return a, a.entry.form.Init()
+			}
+			return a, nil
+		case msg.String() == "d" && a.screen == journalScreen:
+			if e := a.journal.Selected(); e != nil {
+				a.entry, a.notice = newUndoForm(e, a), ""
+				return a, a.entry.form.Init()
+			}
+			return a, nil
 		case key.Matches(msg, a.keys.Quit):
 			return a, tea.Quit
 		case key.Matches(msg, a.keys.Help):
@@ -225,6 +282,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if a.device != nil {
+		var cmd tea.Cmd
+		a.device, cmd = a.device.Update(msg, a)
+		return a, cmd
+	}
 	if a.entry != nil {
 		var cmd tea.Cmd
 		a.entry, cmd = a.entry.Update(msg, a)
@@ -242,6 +304,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.journal, cmd = a.journal.Update(msg, a)
 	case analysisScreen:
 		a.analysis, cmd = a.analysis.Update(msg, a)
+	case devicesScreen:
+		a.devices, cmd = a.devices.Update(msg, a)
 	}
 	return a, cmd
 }
@@ -264,8 +328,14 @@ func (a *App) View() tea.View {
 		bodyHeight = 1
 	}
 
-	if a.entry != nil {
-		body = lipgloss.NewStyle().Padding(1, 1).Render(a.entry.View(a, a.width))
+	if a.entry != nil || a.device != nil {
+		panel := ""
+		if a.entry != nil {
+			panel = a.entry.View(a, a.width)
+		} else {
+			panel = a.device.View(a, a.width)
+		}
+		body = lipgloss.NewStyle().Padding(1, 1).Render(panel)
 		view.SetContent(lipgloss.NewStyle().MaxWidth(a.width).MaxHeight(a.height).
 			Render(lipgloss.JoinVertical(lipgloss.Left, header, body, footer)))
 		return view
@@ -278,6 +348,8 @@ func (a *App) View() tea.View {
 		body = a.journal.View(a, bodyHeight)
 	case analysisScreen:
 		body = a.analysis.View(a, bodyHeight)
+	case devicesScreen:
+		body = a.devices.View(a, bodyHeight)
 	}
 
 	// Clamp the finished frame. Inner layout tries to fit, but a narrow terminal
@@ -343,7 +415,7 @@ func (a *App) reload() tea.Cmd {
 
 // footer draws the key hints, or the outcome of the last entry.
 func (a *App) footer() string {
-	if a.notice != "" && a.entry == nil {
+	if a.notice != "" && a.entry == nil && a.device == nil {
 		style := a.theme.Positive
 		mark := "✓ "
 		if a.failed {
@@ -379,6 +451,8 @@ func (a *App) screenKeys() help.KeyMap {
 		return a.journal.keys(a.keys)
 	case analysisScreen:
 		return a.analysis.keys(a.keys)
+	case devicesScreen:
+		return a.devices.keys(a.keys)
 	default:
 		return a.keys
 	}

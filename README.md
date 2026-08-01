@@ -2,70 +2,161 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/582a945a5bf24ec79fc6b3894b24544d)](https://app.codacy.com/gh/TheDonDope/wits-tui/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Codecov Badge](https://codecov.io/gh/TheDonDope/wits-tui/graph/badge.svg?token=9sWIVhEeIX)](https://codecov.io/gh/TheDonDope/wits-tui)
 
-Wits aims to help cannabis patients and users to manage and monitor their cannabis consumption and inventory.
+Wits helps cannabis patients track what they were dispensed, what they have used
+and what is left.
 
-![Wits Demo Video](./vhs-output/wits-demo.gif)
+It is a **ledger**. Everything it shows is derived by replaying an append-only log
+of events, so nothing is ever edited in place: a mistake is corrected by recording
+a correction, the way `git revert` adds a commit rather than rewriting one. The
+data is a multi-year medical record, and that is how a medical record should
+behave.
 
-## Notable technologies used
+## The model
 
-Wits is built with the help of the following:
+Grams move through four accounts. Every entry is a transfer between two of them,
+so nothing is lost track of between the pharmacy and the ashes.
 
-<div align="center">
-  <p>
-  <a href="https://github.com/charmbracelet/bubbletea">
-    <img src="https://github.com/user-attachments/assets/a600b1be-9b1a-48e8-a2a4-3f3917240db1" alt="Bubbletea Logo" width="100" style="margin:25px">
-  </a>
-  <a href="https://github.com/charmbracelet/bubbles">
-    <img src="https://stuff.charm.sh/bubbles/bubbles-github.png" alt="Bubbles Logo" width="100" style="margin:25px">
-  </a>
-  <a href="https://github.com/charmbracelet/gum">
-    <img src="https://stuff.charm.sh/gum/gum.png" alt="Gum Logo" width="100" style="margin:25px">
-  </a>
-  <a href="https://github.com/charmbracelet/huh">
-    <img src="https://stuff.charm.sh/huh/glenn.png" alt="Glenn Logo" width="100" style="margin:25px">
-  </a>
-  <a href="https://github.com/charmbracelet/lipgloss">
-    <img src="https://github.com/charmbracelet/lipgloss/assets/25087/147cadb1-4254-43ec-ae6b-8d6ca7b029a1" alt="Lipgloss Logo" width="100" style="margin:25px">
-  </a>
-  <a href="https://github.com/charmbracelet/vhs">
-    <img src="https://user-images.githubusercontent.com/42545625/198402537-12ca2f6c-0779-4eb8-a67c-8db9cb3df13c.png#gh-dark-mode-only" alt="VHS Logo" width="100" style="margin:25px">
-  </a>
-  <a href="https://github.com/spf13/cobra">
-    <img src="https://github.com/user-attachments/assets/cbc3adf8-0dff-46e9-a88d-5e2d971c169e" alt="Cobra Logo" width="100" style="margin:25px">
-  </a>
-  </p>
-</div>
+```text
+   pharmacy / prescription
+        │  buy
+        ▼
+  ┌───────────┐        grind          ┌───────────┐
+  │  STORAGE  │ ────────────────────▶ │   STASH   │
+  │  sealed,  │                       │  ground,  │
+  │ per product                       │  one tin per product
+  └───────────┘                       └─────┬─────┘
+                                            │  sesh (device + temperature)
+                                            ▼
+                                      ┌───────────┐
+                                      │ CONSUMED  │
+                                      └─────┬─────┘
+                                            │  weighed after collection
+                                            ▼
+                                      ┌───────────┐
+                                      │    AVB    │ ──────▶ edibles / tincture
+                                      └───────────┘
+```
+
+A **cycle** is one prescription fill, running until the next one. It is not a
+calendar month, which is why a fill that lasts six weeks, a month with two fills,
+and a month with none all work without special cases.
+
+## Getting started
+
+A repository is created the way a git one is, and commands find it by walking up
+from the working directory.
+
+```sh
+mkdir -p ~/wits && cd ~/wits
+wits init .
+```
+
+Then record a prescription fill and use it:
+
+```sh
+wits buy "Enua 22/1 Wedding Cake" 20g
+wits grind wedding-cake 0.75
+wits sesh wedding-cake 0.3 --device volcano --temp 185
+wits status
+```
+
+Anything can be backdated with `--date 2026-07-29`, which is what makes a
+forgotten evening loggable the next morning without pretending it was entered
+then.
+
+`wits` on its own opens the interface: a dashboard of what is left and how long
+it will last, the journal, and an analysis view scoping from the current cycle out
+to the whole history. Entries can be recorded there too.
+
+## Commands
+
+| Command | |
+| --- | --- |
+| `wits init [dir]` | Create a repository |
+| `wits buy <product> <amount>` | Record a prescription fill into storage |
+| `wits grind <product> <amount>` | Move product from storage into its tin |
+| `wits sesh <product> <amount>` | Record a session, drawing on the tin |
+| `wits status` | What is left, and how long it will last |
+| `wits log` | The journal, newest first |
+| `wits device add <name>` | Register a vaporizer |
+| `wits temps <celsius>` | What a temperature is hot enough to release |
+| `wits export` | Markdown, for reading or publishing |
+| `wits bundle` | The whole repository as one compact file |
+| `wits restore <file>` | Rebuild a repository from a bundle |
+
+## The repository
+
+```text
+.wits/
+  config.yml      # settings
+  products.yml    # the catalog
+  devices.yml     # vaporizers and their temperature ranges
+  journal.ndjson  # append-only, one event per line, never rewritten
+  index/          # cached fold — disposable
+```
+
+The journal is only ever appended to, and each entry is chained to the one before
+it with a SHA-256 hash, so an edit made outside Wits is detectable. The directory
+is created `0700` and its files `0600`.
+
+## Bundles
+
+`wits bundle` writes the catalogs and every event to a single file that
+`wits restore` reads back, reproducing the journal exactly, hash chain included.
+It is plain text, so the record stays legible with nothing but a text editor and
+diffs cleanly in git.
+
+It is small regardless, because most of what the journal stores is derivable and
+is therefore left out — sequence numbers, account pairs and the hash chain are all
+recomputed on restore. Four years of real history, 1986 events across 50 products:
+
+| | bytes | |
+| --- | ---: | --- |
+| journal | 822,472 | |
+| `xz -9` of the journal | 140,560 | 5.9× |
+| **bundle** | **37,650** | **21×** |
+| bundle, gzipped | 8,159 | 100× |
+
+## Temperatures
+
+Wits knows the boiling point of each cannabinoid and terpene, so a number on a
+dial can be read as what it actually does — including the point at which it starts
+producing benzene.
+
+```sh
+$ wits temps 210
+COMPOUND         BOILS AT  EFFECTS
+Δ-9-THC          157°C     psychoactive, anti-inflammatory, anti-emetic, …
+CBD              165°C     non-psychoactive, anti-inflammatory, anti-anxiety
+…
+⚠️  210°C is at or above the 205°C boiling point of Benzene.
+```
+
+## Built with
 
 - [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea): A powerful little TUI framework 🏗
 - [charmbracelet/bubbles](https://github.com/charmbracelet/bubbles): TUI components for Bubble Tea 🫧
-- [charmbracelet/gum](https://github.com/charmbracelet/gum): A tool for glamorous shell scripts 🎀
 - [charmbracelet/huh](https://github.com/charmbracelet/huh): Build terminal forms and prompts 🤷
 - [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss): Style definitions for nice terminal layouts 👄
 - [charmbracelet/vhs](https://github.com/charmbracelet/vhs): Your CLI home video recorder 📼
-- [NimbleMarkets/ntcharts](https://github.com/NimbleMarkets/ntcharts): Nimble Terminal Charts for the Golang BubbleTea framework and your TUIs
 - [spf13/cobra](https://github.com/spf13/cobra): A Commander for modern Go CLI interactions
+
+All on the v2 line, which lives under `charm.land/…` import paths rather than
+`github.com/charmbracelet/…`.
+
+The charts are drawn in-tree rather than pulled in. The terminal charting
+libraries still target Bubble Tea v1, and mixing the majors would put two
+renderers and two colour-profile detectors in one binary, which shows up on screen
+as inconsistent colour.
 
 ## Changelog & Roadmap
 
-A detailed changelog can be found in the [CHANGELOG.md](./CHANGELOG.md) and the current development progress is tracked in the [ROADMAP.md](./ROADMAP.md). We do not use GitHub Issues but instead track our features, bugfixes and refactorings there.
+A detailed changelog can be found in the [CHANGELOG.md](./CHANGELOG.md) and the
+current development progress is tracked in the [ROADMAP.md](./ROADMAP.md). We do
+not use GitHub Issues but instead track our features, bugfixes and refactorings
+there.
 
-## Configuring the Application & Required Environment Variables
-
-Wits can be configured through environment variables, detailed here:
-
-| Environment Variable | Description                                                                 |
-| -------------------- | --------------------------------------------------------------------------- |
-| `LOG_LEVEL`          | The level at which to log (one of: `DEBUG`, `INFO`, `WARN`, `ERROR`, `OFF`) |
-| `LOG_DIR`            | The path to the directory for the application logs                          |
-| `LOG_FILE`           | The name of the file for the application logs (within `LOG_DIR`)            |
-| `WITS_DIR`           | The directory where the application stores its data (defaults to `.wits`)   |
-| `STORAGE_MODE`       | The persistance type to use (either `in-memory` or `yml-file`)              |
-
-A minimum viable `.env` file can be found at [.env.example](.env.example). Simply rename it to `.env` to be able to run the application with a yaml file based storage.
-
-![Env Example Source](./env.example.svg)
-
-## Building & Running the Application
+## Building & Running
 
 Building the binary and running it requires only a simple invocation to `make`:
 
@@ -75,9 +166,8 @@ make
 
 ![Wits Make Video](./vhs-output/wits-make.gif)
 
-## Building the Binary for Windows
-
-For windows, the `wits.exe` can be built by invoking the `make build-windows` command:
+For windows, the `wits.exe` can be built by invoking the `make build-windows`
+command:
 
 ```sh
 make build-windows
@@ -111,4 +201,5 @@ make show-cover
 
 ![Wits Make Show Cover Video](./vhs-output/wits-make-show-cover.gif)
 
-Both the `coverage.out` as well as the `coverage.html` are explicitly ignored from source control (see [.gitignore](.gitignore)).
+Both the `coverage.out` as well as the `coverage.html` are explicitly ignored from
+source control (see [.gitignore](.gitignore)).
