@@ -133,7 +133,7 @@ func (d dashboard) products(a *App, c *ledger.Cycle, width int) string {
 
 // recent draws the last 30 days as columns, so the rhythm of the month is
 // visible: the heavy days, the gaps, the trend.
-func (d dashboard) recent(a *App, width int) string {
+func (d dashboard) recent(a *App, _ int) string {
 	t, data := a.theme, a.data
 
 	const span = 30

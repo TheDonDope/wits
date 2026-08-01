@@ -80,6 +80,7 @@ to the whole history. Entries can be recorded there too.
 | `wits log` | The journal, newest first |
 | `wits device add <name>` | Register a vaporizer |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
+| `wits import <file.xlsx>` | Import a tracking spreadsheet (dry run unless `--commit`) |
 | `wits export` | Markdown, for reading or publishing |
 | `wits bundle` | The whole repository as one compact file |
 | `wits restore <file>` | Rebuild a repository from a bundle |
@@ -108,14 +109,14 @@ diffs cleanly in git.
 
 It is small regardless, because most of what the journal stores is derivable and
 is therefore left out — sequence numbers, account pairs and the hash chain are all
-recomputed on restore. Four years of real history, 1986 events across 50 products:
+recomputed on restore. Nearly three years of real history, 1369 entries across 48
+products:
 
 | | bytes | |
 | --- | ---: | --- |
-| journal | 822,472 | |
-| `xz -9` of the journal | 140,560 | 5.9× |
-| **bundle** | **37,650** | **21×** |
-| bundle, gzipped | 8,159 | 100× |
+| journal | 500,729 | |
+| **bundle** | **27,510** | **18×** |
+| bundle, gzipped | 6,297 | 79× |
 
 ## Temperatures
 

@@ -180,6 +180,27 @@ routinely overlap, because a new sheet gets started before the old one is finish
   - [ ] JSON/CSV through the same interface
 - **Relevant Commits**: tbd
 
+### 🔹 Spreadsheet importer
+
+- **Status**: Implemented (unreleased)
+- **Description**: Reads the tracking spreadsheet Wits grew out of, turning each
+  worksheet into a prescription fill and the daily grinds that followed it.
+- **Products are resolved by position, not by name.** The strain column holds
+  dropdown values that were not always renamed as products changed, so in later
+  sheets they are stale — a sheet headed "Ice Cream Cake" still says "WW" in every
+  row. Each running-balance column binds a label to a header row by formula
+  (`=IF(B6="WW",B1-C6,B1)`), so reading that binding inherits the spreadsheet's own
+  arithmetic rather than second-guessing it, and it is self-checking.
+- **Nothing is written without `--commit`,** and a repository that already holds
+  entries is refused: importing the same workbook twice would double every gram in
+  it, and a re-import cannot be told from a genuine second helping of the same
+  product on the same day.
+- **Tasks**:
+  - [x] Fills and grinds, with the header row detected per sheet
+  - [x] Bindings read from the balance formulas
+  - [x] Dry run by default, reporting anomalies and merged product names
+  - [ ] An interactive pass to split products the slug merged
+
 ### 🔹 Repository bundles
 
 - **Status**: Implemented (unreleased)

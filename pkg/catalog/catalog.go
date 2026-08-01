@@ -86,6 +86,10 @@ func (c *Catalog) Add(p *Product) error {
 	if p.AddedAt.IsZero() {
 		p.AddedAt = time.Now()
 	}
+	// To the second, like the journal's timestamps: a bundle stores this as
+	// whole seconds, so keeping nanoseconds here would mean a catalog did not
+	// survive a round trip through one unchanged.
+	p.AddedAt = p.AddedAt.Truncate(time.Second)
 	c.Products = append(c.Products, p)
 	return nil
 }

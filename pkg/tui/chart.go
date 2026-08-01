@@ -47,8 +47,8 @@ func Sparkline(values []float64, width int, style lipgloss.Style) string {
 		return ""
 	}
 	values = fit(values, width)
-	max := maxOf(values)
-	if max <= 0 {
+	peak := maxOf(values)
+	if peak <= 0 {
 		return style.Render(strings.Repeat("·", len(values)))
 	}
 	var b strings.Builder
@@ -59,7 +59,7 @@ func Sparkline(values []float64, width int, style lipgloss.Style) string {
 			b.WriteRune('·')
 			continue
 		}
-		i := int(math.Round(v / max * float64(len(sparks)-1)))
+		i := int(math.Round(v / peak * float64(len(sparks)-1)))
 		b.WriteRune(sparks[i])
 	}
 	return style.Render(b.String())
@@ -80,11 +80,11 @@ func BarChart(bars []Bar, width int, t *Theme) string {
 	if len(bars) == 0 {
 		return t.Dim.Render("nothing to show yet")
 	}
-	labelW, noteW, max := 0, 0, 0.0
+	labelW, noteW, peak := 0, 0, 0.0
 	for _, b := range bars {
 		labelW = maxInt(labelW, lipgloss.Width(b.Label))
 		noteW = maxInt(noteW, lipgloss.Width(b.Note))
-		max = math.Max(max, b.Value)
+		peak = math.Max(peak, b.Value)
 	}
 	barW := width - labelW - noteW - 3
 	if barW < 4 {
@@ -94,8 +94,8 @@ func BarChart(bars []Bar, width int, t *Theme) string {
 	var rows []string
 	for _, b := range bars {
 		fraction := 0.0
-		if max > 0 {
-			fraction = b.Value / max
+		if peak > 0 {
+			fraction = b.Value / peak
 		}
 		colour := b.Color
 		if colour == nil {
@@ -125,11 +125,11 @@ func ColumnChart(cols []Column, height int, t *Theme, fill tint) string {
 	if len(cols) == 0 || height <= 0 {
 		return t.Dim.Render("nothing to show yet")
 	}
-	max := 0.0
+	peak := 0.0
 	for _, c := range cols {
-		max = math.Max(max, c.Value)
+		peak = math.Max(peak, c.Value)
 	}
-	if max <= 0 {
+	if peak <= 0 {
 		return t.Dim.Render("nothing logged in this range")
 	}
 
@@ -142,7 +142,7 @@ func ColumnChart(cols []Column, height int, t *Theme, fill tint) string {
 		upper := float64(height-row) / float64(height)
 		lower := float64(height-row-1) / float64(height)
 		for i, c := range cols {
-			fraction := c.Value / max
+			fraction := c.Value / peak
 			switch {
 			case fraction >= upper:
 				grid[row][i] = style.Render("█")
