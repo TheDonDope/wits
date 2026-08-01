@@ -155,6 +155,8 @@ routinely overlap, because a new sheet gets started before the old one is finish
   wits show <ref>
   wits revert <ref>
   wits export --format markdown
+  wits bundle --out history.wits
+  wits restore history.wits
   ```
 
 - **Tasks**:
@@ -177,26 +179,36 @@ routinely overlap, because a new sheet gets started before the old one is finish
   - [ ] JSON/CSV through the same interface
 - **Relevant Commits**: tbd
 
-### 🔹 Spreadsheet importer
+### 🔹 Repository bundles
 
 - **Status**: Implemented (unreleased)
-- **Description**: One-time backfill of `Tracking 2022.xlsx` — 47 worksheets,
-  2022-04 through 2026-07, **1503.93 g across 47 cycles**, imported as 1986
-  events. Without it, meaningful statistics are years away.
-- **Known data quirks**:
-  - Product headers follow `{Manufacturer} {THC}/{CBD} {Cultivar} (g)` most of the
-    time, but not reliably: the cultivar sometimes precedes the ratio, product lines
-    are inlined (`Cannamedical Hybrid Ultra DK 28/1 …`), and there are loose codes
-    (`CA`, `DNK`, `PT Ku.`, `DAB`, `T01`, `GM`).
-  - The 2022 sheets are in German (`Liefermenge`, `Datum`, `Sorte`) and track by
-    genetic type, not by product — there is no product identity to recover there.
-  - Row codes froze as `WW` / `FLA` / `MAC1+` in 2025-01 and no longer match the
-    products in the sheet headers. They are positional slots, not identities.
+- **Description**: `wits bundle` writes the catalogs and every event to a single
+  file, and `wits restore` reads it back into an empty repository. It is to a Wits
+  repository what `git bundle` is to a git one: a portable copy of the history for
+  backup, for moving to another machine, or for keeping beside the Markdown export
+  in a published repository.
+- **Round trip**: restoring reproduces the journal exactly, hash chain included,
+  which is what makes a bundle worth trusting as a backup. This is why the event
+  schema has no identifier of its own — the hash names the event, as a commit hash
+  names a commit — and why timestamps are kept to second precision.
+- **Format**: plain text, line oriented. The journal is a medical record that may
+  outlive this program, so an archive of it should be legible with nothing but a
+  text editor, and should diff cleanly in git. It is small regardless, because
+  most of what the journal stores is derivable and is therefore left out:
+
+  | | bytes | |
+  | --- | ---: | --- |
+  | journal (1986 events, 4 years) | 822,472 | |
+  | `xz -9` of the journal | 140,560 | 5.9× |
+  | **bundle** | **37,650** | **21×** |
+  | bundle, gzipped | 8,159 | 100× |
+
 - **Tasks**:
-  - [x] Parse worksheets into purchase and grind events
-  - [x] Resolve products from the balance-column formulas, not the stale dropdown labels
-  - [x] Dry-run by default, with a report of everything that does not add up
-  - [ ] Interactive review of the imported products, to merge near-duplicates
+  - [x] Compact text encoding with dictionaries for products, devices and notes
+  - [x] Deltas for timestamps and amounts, with zone offsets carried explicitly
+  - [x] Exact round trip, proven byte for byte against four years of real history
+  - [x] `--gzip` for transport
+  - [ ] Merge on restore, if two machines ever need reconciling
 - **Relevant Commits**: tbd
 
 ### 🔹 Devices
@@ -304,21 +316,22 @@ model above rather than fixed in place:
 
 ---
 
-## 🩺 Findings from the first import
+## 🩺 Findings from the one-off spreadsheet import
 
-Running the importer over `Tracking 2022.xlsx` surfaced things in the source
-data that are worth correcting at the source rather than in Wits:
+The tracking spreadsheet was imported once, in v1, and the importer has since
+been removed: the history now lives in the journal, which is the only thing that
+needs reading. These are the things the import turned up in the source data,
+kept because they describe the imported records rather than the tool:
 
 - **`2025-03` is dated a year early.** All 32 of its entries fall in March 2024.
-- **`2025-10` has 2.40 g with no product selected**, on 24 and 26 November. The
-  spreadsheet never subtracted those grams from anything, so they are missing
-  from that cycle's arithmetic too.
-- **`2025-06` lists Ghost Train Haze at 0.01 g**, where the other two products
-  are 10 g. Either a typo for 10 g or a deliberate "trace left" marker.
+- **`2025-10` has 2.40 g with no product selected**, on 24 and 26 November, which
+  the spreadsheet never subtracted from anything either. Those grams are missing
+  from the imported history for the same reason.
+- **`2025-06` lists Ghost Train Haze at 0.01 g** against 10 g for the others.
 - **`cantourage-mac-1` and `cantourage-mac1` are the same product**, spelled
-  "MAC 1+" in one header and "MAC1+" in another.
+  "MAC 1+" in one sheet header and "MAC1+" in another.
 
-Imported history holds no `sesh` events, because the spreadsheet never recorded
-consumption — only grinding. Nothing is invented to fill that gap, so the stash
-balance of any product that recurs across cycles reads high until it is worked
-down. Past sessions can be entered by hand with `wits sesh --date`.
+Imported history holds no `sesh` events, because the spreadsheet only recorded
+grinding. Nothing was invented to fill that gap, so the stash balance of a
+product that recurs across cycles reads high until it is worked down. Past
+sessions can still be entered by hand with `wits sesh --date`.

@@ -49,14 +49,15 @@ func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
 	rootCmd.AddCommand(
 		commands.Init,
+		commands.Bundle,
 		commands.Buy,
 		commands.Grind,
 		commands.Sesh,
 		commands.Device,
-		commands.Import,
 		commands.Temps,
 		commands.Status,
 		commands.Log,
+		commands.Restore,
 		commands.Export,
 	)
 

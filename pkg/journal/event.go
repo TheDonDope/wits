@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Account is one of the places grams can sit. Every event moves grams between
@@ -74,12 +72,17 @@ func Types() []Type {
 //
 // OccurredAt is when the grams actually moved, RecordedAt is when it was typed
 // in. They differ whenever an entry is backdated, which keeps a late entry
-// honest about being late.
+// honest about being late. Both are kept to second precision: nanoseconds are
+// noise in a log measured in grams per day, and the extra digits would have to
+// be carried through every export to keep the hashes reproducible.
+//
+// An event has no identifier of its own. Its hash names it, the way a commit
+// hash names a commit, which is what lets a bundle be restored into a journal
+// that verifies against the one it came from.
 //
 // Field order is significant: the hash is taken over the JSON encoding, and
 // encoding/json emits fields in declaration order.
 type Event struct {
-	ID          uuid.UUID `json:"id"`
 	Seq         int       `json:"seq"`
 	Type        Type      `json:"type"`
 	OccurredAt  time.Time `json:"occurred_at"`
@@ -144,3 +147,8 @@ func (e Event) String() string {
 	}
 	return fmt.Sprintf("%s %s %-11s %.2fg %s", short, at, e.Type, e.Grams, e.Product)
 }
+
+// Marshal encodes the event exactly as it is stored in the journal. It exists
+// so that a restored journal can be compared byte for byte against the one it
+// was bundled from.
+func Marshal(e Event) ([]byte, error) { return json.Marshal(e) }

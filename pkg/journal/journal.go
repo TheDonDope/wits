@@ -10,8 +10,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // ErrBrokenChain is returned when a journal's hash chain does not verify, which
@@ -74,18 +72,21 @@ func (j *Journal) Append(e Event) (Event, error) {
 	return e, nil
 }
 
-// withDefaults fills in the fields a caller may leave to the journal: an
-// identity, the timestamps, and the accounts implied by the event type.
+// withDefaults fills in the fields a caller may leave to the journal: the
+// timestamps and the accounts implied by the event type.
+//
+// Timestamps are truncated to the second. Sub-second precision says nothing
+// useful about when something was ground, and dropping it here means an event
+// survives a round trip through a bundle unchanged, hash included.
 func withDefaults(e Event) Event {
-	if e.ID == uuid.Nil {
-		e.ID = uuid.New()
-	}
 	if e.RecordedAt.IsZero() {
 		e.RecordedAt = time.Now()
 	}
 	if e.OccurredAt.IsZero() {
 		e.OccurredAt = e.RecordedAt
 	}
+	e.RecordedAt = e.RecordedAt.Truncate(time.Second)
+	e.OccurredAt = e.OccurredAt.Truncate(time.Second)
 	if from, to, ok := Flow(e.Type); ok && e.From == "" && e.To == "" {
 		e.From, e.To = from, to
 	}
