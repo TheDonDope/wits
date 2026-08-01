@@ -10,11 +10,12 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
+	tea "charm.land/bubbletea/v2"
+	"github.com/spf13/cobra"
+
 	"github.com/TheDonDope/wits/cmd/wits/commands"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/version"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -85,7 +86,6 @@ func main() {
 	ctx := context.Background()
 	closeLog := openLog()
 	defer closeLog()
-	log.Println("🚀 🖥️  (cmd/wits/main.go) main()")
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		fmt.Fprintf(os.Stderr, "🚨 %v\n", err)
 		os.Exit(1)
