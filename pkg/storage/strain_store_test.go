@@ -3,7 +3,7 @@ package storage
 import (
 	"io"
 	"log"
-    "os"
+	"os"
 	"testing"
 	"time"
 

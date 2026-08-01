@@ -15,9 +15,9 @@ type mockModel struct {
 	view string
 }
 
-func (m mockModel) Init() tea.Cmd                       { return nil }
+func (m mockModel) Init() tea.Cmd                           { return nil }
 func (m mockModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return m, nil }
-func (m mockModel) View() string                         { return m.view }
+func (m mockModel) View() string                            { return m.view }
 
 func TestInitialHomeModel(t *testing.T) {
 	model := initialHomeModel()
@@ -123,19 +123,19 @@ func TestBreadcrumbTitle(t *testing.T) {
 }
 
 func TestStyles(t *testing.T) {
-    renderer := lipgloss.DefaultRenderer()
-    styles := NewStyles(renderer)
+	renderer := lipgloss.DefaultRenderer()
+	styles := NewStyles(renderer)
 
-    t.Run("BaseStyle", func(t *testing.T) {
-        // Get all 4 padding values
-        top, right, bottom, left := styles.Base.GetPadding()
-        assert.Equal(t, "1 4 0 1", fmt.Sprintf("%d %d %d %d", top, right, bottom, left))
-    })
+	t.Run("BaseStyle", func(t *testing.T) {
+		// Get all 4 padding values
+		top, right, bottom, left := styles.Base.GetPadding()
+		assert.Equal(t, "1 4 0 1", fmt.Sprintf("%d %d %d %d", top, right, bottom, left))
+	})
 
-    t.Run("HeaderText", func(t *testing.T) {
-        assert.True(t, styles.HeaderText.GetBold())
-        assert.Equal(t, indigo, styles.HeaderText.GetForeground())
-    })
+	t.Run("HeaderText", func(t *testing.T) {
+		assert.True(t, styles.HeaderText.GetBold())
+		assert.Equal(t, indigo, styles.HeaderText.GetForeground())
+	})
 }
 
 func TestHomeModelBuilder(t *testing.T) {

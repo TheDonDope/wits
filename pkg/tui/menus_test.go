@@ -53,4 +53,3 @@ func TestMenuViewHeader(t *testing.T) {
 		t.Error("Expected view to contain header with 'Wits'")
 	}
 }
-
