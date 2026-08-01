@@ -59,7 +59,7 @@ var deviceList = &cobra.Command{
 	Use:   "list",
 	Short: "List your devices",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err

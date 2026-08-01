@@ -27,7 +27,7 @@ var Export = &cobra.Command{
 	Example: "  wits export > cycle.md\n" +
 		"  wits export --all --out history.md",
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		if exportFormat != "markdown" && exportFormat != "md" {
 			return fmt.Errorf("unknown format %q, only markdown is supported so far", exportFormat)
 		}

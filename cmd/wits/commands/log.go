@@ -24,7 +24,7 @@ var Log = &cobra.Command{
 		"commits. Nothing here can be edited: a mistake is corrected by\n" +
 		"appending a compensating event.",
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err

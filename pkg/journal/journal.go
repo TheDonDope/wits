@@ -44,18 +44,7 @@ func (j *Journal) Append(e Event) (Event, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
-	if e.ID == uuid.Nil {
-		e.ID = uuid.New()
-	}
-	if e.RecordedAt.IsZero() {
-		e.RecordedAt = time.Now()
-	}
-	if e.OccurredAt.IsZero() {
-		e.OccurredAt = e.RecordedAt
-	}
-	if from, to, ok := Flow(e.Type); ok && e.From == "" && e.To == "" {
-		e.From, e.To = from, to
-	}
+	e = withDefaults(e)
 	if err := e.Validate(); err != nil {
 		return Event{}, err
 	}
@@ -78,20 +67,44 @@ func (j *Journal) Append(e Event) (Event, error) {
 	if err != nil {
 		return Event{}, err
 	}
-
-	f, err := os.OpenFile(j.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return Event{}, err
-	}
-	defer f.Close()
-	if _, err := f.Write(append(line, '\n')); err != nil {
-		return Event{}, err
-	}
-	if err := f.Sync(); err != nil {
+	if err := j.write(line); err != nil {
 		return Event{}, err
 	}
 	log.Printf("✅ 📓  (pkg/journal/journal.go) Append() -> %v \n", e)
 	return e, nil
+}
+
+// withDefaults fills in the fields a caller may leave to the journal: an
+// identity, the timestamps, and the accounts implied by the event type.
+func withDefaults(e Event) Event {
+	if e.ID == uuid.Nil {
+		e.ID = uuid.New()
+	}
+	if e.RecordedAt.IsZero() {
+		e.RecordedAt = time.Now()
+	}
+	if e.OccurredAt.IsZero() {
+		e.OccurredAt = e.RecordedAt
+	}
+	if from, to, ok := Flow(e.Type); ok && e.From == "" && e.To == "" {
+		e.From, e.To = from, to
+	}
+	return e
+}
+
+// write appends one line to the journal and flushes it to disk. The file is
+// only ever opened for appending, so a failed write can add a bad line but can
+// never destroy an existing one.
+func (j *Journal) write(line []byte) error {
+	f, err := os.OpenFile(j.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err := f.Write(append(line, '\n')); err != nil {
+		return err
+	}
+	return f.Sync()
 }
 
 // Events returns every event in the journal, oldest first.
