@@ -44,7 +44,7 @@ changelog:
 	git-chglog -o CHANGELOG.md
 
 render-tapes:
-	rm -rf ./vhs-output/*
+	rm -rf ./assets/*
 	./render-vhs-tapes.sh 
 
 test:

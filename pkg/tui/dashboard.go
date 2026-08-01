@@ -151,12 +151,8 @@ func (d dashboard) recent(a *App, _ int) string {
 	}
 
 	chart := ColumnChart(cols, 6, t, t.StashC)
-	axis := lipgloss.JoinHorizontal(lipgloss.Left,
-		t.Dim.Render(end.AddDate(0, 0, -span+1).Format("02 Jan")),
-		strings.Repeat(" ", maxInt(span-12, 1)),
-		t.Dim.Render(end.Format("02 Jan")),
-	)
-	return lipgloss.JoinVertical(lipgloss.Left, chart, axis)
+	return lipgloss.JoinVertical(lipgloss.Left, chart,
+		axisLabels(t, end.AddDate(0, 0, -span+1).Format("02 Jan"), end.Format("02 Jan"), span))
 }
 
 // purchasedOf returns how many grams of a product a cycle began with.

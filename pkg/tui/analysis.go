@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/help"
@@ -162,12 +161,8 @@ func (v analysisView) perDay(a *App, events []journal.Event, width int) string {
 	}
 
 	chart := ColumnChart(cols, 8, t, t.StashC)
-	axis := lipgloss.JoinHorizontal(lipgloss.Left,
-		t.Dim.Render(first.Format("02 Jan 06")),
-		strings.Repeat(" ", maxInt(len(cols)-20, 1)),
-		t.Dim.Render(last.Format("02 Jan 06")),
-	)
-	return lipgloss.JoinVertical(lipgloss.Left, chart, axis)
+	return lipgloss.JoinVertical(lipgloss.Left, chart,
+		axisLabels(t, first.Format("02 Jan 06"), last.Format("02 Jan 06"), len(cols)))
 }
 
 // byProduct ranks the products by how much of them was ground.

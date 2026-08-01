@@ -1,367 +1,242 @@
 # 🥦 Wits Roadmap 🏗️
 
-Instead of overly complicating the development process with GitHub Issues,
-we will keep it simple and list features and planned changes in this file.
+Features, bugs and refactorings are tracked here rather than in GitHub Issues, so
+that the plan and the code stay in one place. A detailed changelog is in
+[CHANGELOG.md](./CHANGELOG.md).
 
-## 🚀 Tracking Features and Changes
-
-Each feature or change is tracked with:
-
-- **Status**: Planned | In Progress | Implemented (since `<commitSha or tag>`)
-- **Relevant Commits**: `<commitSha1>, <commitSha2>, ...`
-- **Description**: A brief explanation of the feature or change.
-
-## Detailed Changelog
-
-A detailed changelog with all commits can be found in the [CHANGELOG.md](./CHANGELOG.md).
+Everything below is checked against the code rather than remembered.
 
 ---
 
-## 🧭 The Model
+## 🧭 The model
 
-Wits is a **ledger**, not a database of current values. Everything the app shows is
-derived by replaying an append-only journal of events. This is deliberate: the data
-is a multi-year medical record, so history is never rewritten — a mistake is
-corrected with a compensating event, exactly like a `git revert`.
+Wits is a **ledger**. Nothing it shows is stored; it is all derived by replaying
+an append-only journal. History is never rewritten, because the data is a
+multi-year medical record: a mistake is corrected by appending a correction, the
+way `git revert` adds a commit.
 
 ### The four accounts
 
-Material moves through four accounts. Every event is a transfer between two of them
-(or an inflow from outside), so grams are conserved end to end.
+Grams move between accounts, and every entry is a transfer, so mass is conserved
+from the pharmacy through to the ash.
 
-```text
-   pharmacy / prescription
-        │
-        │  purchase
-        ▼
-  ┌───────────┐        grind          ┌───────────┐
-  │  STORAGE  │ ────────────────────▶ │   STASH   │
-  │  sealed,  │                       │  ground,  │
-  │ per product                       │  one tin per product
-  └───────────┘                       └─────┬─────┘
-                                            │  sesh (device + temperature)
-                                            ▼
-                                      ┌───────────┐
-                                      │ CONSUMED  │
-                                      └─────┬─────┘
-                                            │  avb-collect (weighed, not estimated)
-                                            ▼
-                                      ┌───────────┐      avb-use
-                                      │    AVB    │ ─────────────▶ edibles / tincture
-                                      └───────────┘
-```
+| Entry | From | To | Carries |
+| --- | --- | --- | --- |
+| `purchase` | — | storage | product, grams |
+| `grind` | storage | stash | product, grams |
+| `sesh` | stash | consumed | product, grams, device, temperature |
+| `avb-collect` | consumed | avb | product, grams **as weighed** |
+| `avb-use` | avb | — | grams, purpose |
+| `adjust` | any | any | grams, reason — corrections are these |
 
-**Three tins, not one.** The stash is kept per product, so every gram stays
-attributable to a single product from purchase through to AVB. No blend maths,
-no proportional estimates.
+**Three tins, not one.** The stash is per product, so every gram stays
+attributable to a single product end to end. No blends, no proportional guessing.
 
-A **session** (`sesh`) is the act of drawing ground product out of a tin and
-putting it through a device. Its residue becomes AVB once weighed.
+### Cycles are derived
 
-### Event types
+A cycle runs from one prescription fill to the next. Ending it when storage
+reaches zero sounds tidier but does not survive real data: 13 of 47 historical
+cycles ended with a remainder between 0.01 g and 4.84 g, and consecutive cycles
+overlap because a new sheet was started before the old one finished. See
+`ledger.CycleGap`.
 
-| Event         | From      | To        | Carries                                  |
-| ------------- | --------- | --------- | ---------------------------------------- |
-| `purchase`    | —         | storage   | product, grams, prescription reference   |
-| `grind`       | storage   | stash     | product, grams                           |
-| `sesh`        | stash     | consumed  | product, grams, device, temperature      |
-| `avb-collect` | consumed  | avb       | product, grams **as weighed**            |
-| `avb-use`     | avb       | —         | grams, purpose                           |
-| `adjust`      | any       | any       | grams, reason (spill, scale correction)  |
+### Entries carry two timestamps
 
-Events are immutable and carry both an **occurred-at** and a **recorded-at**
-timestamp, so a forgotten evening can be logged the next morning with `--date`
-without lying about when it was entered.
+**Occurred-at** and **recorded-at**, so a backdated entry is honest about being
+late. Both are kept to second precision: nanoseconds say nothing about when
+something was ground, and would have to be carried through every export to keep
+hashes reproducible.
 
-### Cycles are derived, never stored
-
-A cycle runs from one prescription fill to the next. It is not a calendar month,
-which removes three problems the spreadsheet had: months with two prescriptions,
-months with none, and cycles that run longer than 30 days.
-
-Ending a cycle when storage reaches zero sounds tidier and usually amounts to the
-same thing, but it does not survive the real data — see `ledger.CycleGap`. Cycles
-routinely overlap, because a new sheet gets started before the old one is finished.
+An entry has **no identifier of its own** — its hash names it, the way a commit
+hash names a commit. That is what lets a bundle restore into a journal that
+verifies against the one it came from.
 
 ---
 
-## 📌 Planned Features
+## ✅ Built
 
-### 🔹 `wits init` and the `.wits` repository
+### The repository — `wits init`
 
-- **Status**: Implemented (unreleased)
-- **Description**: `wits init .` creates a `.wits` directory the way `git init .`
-  creates `.git`. This replaces the current hard dependency on a `.env` file in the
-  working directory.
-- **Layout**:
+`.wits` is created the way `git init` creates `.git`, and every command finds it
+by walking up from the working directory. Configuration lives in `config.yml`;
+there is no `.env` and no environment to set. The directory is `0700` and its
+files `0600`, because it is health data.
 
-  ```text
-  .wits/
-    config.yml      # settings; replaces .env
-    products.yml    # the catalog
-    devices.yml     # vaporizers and their temperature ranges
-    journal.ndjson  # append-only, one event per line, never rewritten
-    index/          # cached fold — disposable, rebuilt by `wits reindex`
-  ```
+### The journal
 
-- **Tasks**:
-  - [x] `wits init` with repository discovery from the current directory upwards
-  - [x] `config.yml` replacing `.env` and `godotenv`
-  - [x] `0700` on the directory and `0600` on its files — this is health data
-- **Relevant Commits**: tbd
+Newline-delimited JSON, opened `O_APPEND`, never rewritten — so a failed write
+can add a bad line but cannot destroy an existing one. Each entry is chained to
+the previous by SHA-256, so an edit made outside Wits is detectable.
 
-### 🔹 Append-only journal
+Appending takes an **advisory file lock** as well as a mutex. It is a
+read-then-write — the tip is read to chain onto — and the mutex only holds within
+one process. Two writers reading the same tip would append entries claiming the
+same predecessor and fork the chain. That matters as soon as anything other than
+a single command talks to a repository.
 
-- **Status**: Implemented (unreleased)
-- **Description**: NDJSON, one event per line, opened `O_APPEND`. Appending cannot
-  clobber existing data, which structurally removes the whole-file-rewrite data-loss
-  path in the current `StrainStoreYMLFile`.
-- **Tasks**:
-  - [x] Event types and their (de)serialisation
-  - [x] Append-only writer, streaming reader
-  - [x] Hash chaining so tampering and truncation are detectable
-  - [ ] `wits fsck` to expose `Verify` on the command line
-- **Relevant Commits**: tbd
+### The fold — `pkg/ledger`
 
-### 🔹 Fold engine
+Balances per account and product, cycles, and the figures the spreadsheet used to
+maintain by hand: average and median per day, and how long the remainder will
+last.
 
-- **Status**: Implemented (unreleased)
-- **Description**: Replay the journal to derive everything the spreadsheet computes
-  by hand: per-product balances in each account, remaining percentage, therapy days,
-  average and median per day, and estimated days of supply left.
-- **Note**: The spreadsheet's `# therapy days` counts *elapsed* days because the date
-  column is pre-filled with zero rows. Wits should report both, and label them:
-  days elapsed vs. days with actual consumption.
-- **Tasks**:
-  - [x] Balance fold per account and product
-  - [x] Cycle detection (fill to fill — see `ledger.CycleGap` for why not "to zero")
-  - [x] Statistics: avg/day, median/day, estimated days remaining
-  - [ ] Disposable index cache with `wits reindex` (1986 events fold in ~0.2s, so not yet needed)
-- **Relevant Commits**: tbd
+Days-with-an-entry and days-elapsed are reported **separately and labelled**. The
+spreadsheet conflated them, because its date column was pre-filled with zero
+rows, so its average depended on how far ahead it had been filled in.
 
-### 🔹 Git-shaped command surface
+### The commands
 
-- **Status**: Implemented (unreleased)
-- **Description**: Take the parts of git's vocabulary that have a real referent here
-  and stop. Branches and merges do not map onto this domain and will not be forced.
+`init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `device`, `temps`,
+`import`, `export`, `bundle`, `restore`. Only the parts of git's vocabulary with
+a real referent were borrowed; branching and merging mean nothing for a
+prescription and are absent.
 
-  ```text
-  wits init .
-  wits buy "Enua 22/1 Wedding Cake" 20g
-  wits grind wedding-cake 0.75 [--date 2026-07-29]
-  wits sesh wedding-cake 0.3 --device volcano --temp 185
-  wits status
-  wits log [--oneline] [--product X] [--cycle current]
-  wits show <ref>
-  wits revert <ref>
-  wits export --format markdown
-  wits bundle --out history.wits
-  wits restore history.wits
-  ```
+Grinding or seshing more than an account holds is refused. The journal would
+record it happily, but a negative balance means the log has stopped describing
+the tin on the table.
 
-- **Tasks**:
-  - [x] `init`, `buy`, `grind`, `status`, `log`
-  - [x] `revert` (compensating event, never a rewrite)
-  - [ ] `show`
-  - [x] `sesh` with a device and a temperature
-  - [ ] Short aliases per product for fast daily entry
-- **Relevant Commits**: tbd
+### Bundles — `wits bundle` / `wits restore`
 
-### 🔹 Markdown export
+The whole repository as one plain-text file, restoring to a journal identical
+**byte for byte**, hash chain included. 1369 entries: 500,729 bytes as a journal,
+27,510 as a bundle, 6,299 gzipped.
 
-- **Status**: Implemented (unreleased)
-- **Description**: Export the journal to plain Markdown, so the record is readable
-  and portable without Wits — printable for a doctor's appointment, diffable in git,
-  and durable if the app is ever abandoned.
-- **Tasks**:
-  - [x] `wits export --format markdown` for a cycle or all cycles
-  - [x] Summary header table plus the event log
-  - [ ] A date range rather than whole cycles
-  - [ ] JSON/CSV through the same interface
-- **Relevant Commits**: tbd
+Plain text and line-oriented on purpose: the record may outlive this program, and
+it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
+saved a few percent and cost the legibility that justifies a text format at all.
 
-### 🔹 Spreadsheet importer
+### The spreadsheet importer — `wits import`
 
-- **Status**: Implemented (unreleased)
-- **Description**: Reads the tracking spreadsheet Wits grew out of, turning each
-  worksheet into a prescription fill and the daily grinds that followed it.
-- **Products are resolved by position, not by name.** The strain column holds
-  dropdown values that were not always renamed as products changed, so in later
-  sheets they are stale — a sheet headed "Ice Cream Cake" still says "WW" in every
-  row. Each running-balance column binds a label to a header row by formula
-  (`=IF(B6="WW",B1-C6,B1)`), so reading that binding inherits the spreadsheet's own
-  arithmetic rather than second-guessing it, and it is self-checking.
-- **Nothing is written without `--commit`,** and a repository that already holds
-  entries is refused: importing the same workbook twice would double every gram in
-  it, and a re-import cannot be told from a genuine second helping of the same
-  product on the same day.
-- **Tasks**:
-  - [x] Fills and grinds, with the header row detected per sheet
-  - [x] Bindings read from the balance formulas
-  - [x] Dry run by default, reporting anomalies and merged product names
-  - [ ] An interactive pass to split products the slug merged
+Turns each worksheet into a fill and the grinds that followed it. Products are
+resolved **by position**, through the bindings in the running-balance formulas,
+not by the label in the strain column — those labels are dropdown values that
+were not always renamed as products changed.
 
-### 🔹 Repository bundles
+Nothing is written without `--commit`, and a repository that already holds entries
+is refused: a second import would double every gram, and it cannot be told from a
+genuine second helping of the same product on the same day.
 
-- **Status**: Implemented (unreleased)
-- **Description**: `wits bundle` writes the catalogs and every event to a single
-  file, and `wits restore` reads it back into an empty repository. It is to a Wits
-  repository what `git bundle` is to a git one: a portable copy of the history for
-  backup, for moving to another machine, or for keeping beside the Markdown export
-  in a published repository.
-- **Round trip**: restoring reproduces the journal exactly, hash chain included,
-  which is what makes a bundle worth trusting as a backup. This is why the event
-  schema has no identifier of its own — the hash names the event, as a commit hash
-  names a commit — and why timestamps are kept to second precision.
-- **Format**: plain text, line oriented. The journal is a medical record that may
-  outlive this program, so an archive of it should be legible with nothing but a
-  text editor, and should diff cleanly in git. It is small regardless, because
-  most of what the journal stores is derivable and is therefore left out:
+### The interface
 
-  | | bytes | |
-  | --- | ---: | --- |
-  | journal (1986 events, 4 years) | 822,472 | |
-  | `xz -9` of the journal | 140,560 | 5.9× |
-  | **bundle** | **37,650** | **21×** |
-  | bundle, gzipped | 8,159 | 100× |
+Built on Bubble Tea v2. Four screens — dashboard, journal, analysis, devices —
+reading from the ledger and nothing else, so the figures on screen and the
+figures in `wits status` are the same figures by construction.
 
-- **Tasks**:
-  - [x] Compact text encoding with dictionaries for products, devices and notes
-  - [x] Deltas for timestamps and amounts, with zone offsets carried explicitly
-  - [x] Exact round trip, proven byte for byte against four years of real history
-  - [x] `--gzip` for transport
-  - [ ] Merge on restore, if two machines ever need reconciling
-- **Relevant Commits**: tbd
+Entries are recorded with huh v2 forms embedded as models. Nothing calls
+`form.Run()`, which is what the previous interface did inside `Update` and why it
+blocked the event loop.
 
-### 🔹 Devices
+The charts are drawn in-tree. The terminal charting libraries still target Bubble
+Tea v1, and mixing the majors puts two renderers and two colour-profile detectors
+in one binary, which shows on screen as inconsistent colour.
 
-- **Status**: Implemented (unreleased)
-- **Description**: Vaporizers as first-class entities so `consume` can record which
-  device and which temperature. This is what makes the existing cannabinoid and
-  terpene boiling-point tables in `pkg/cannabis` actionable rather than decorative.
-- **Tasks**:
-  - [x] Device catalog in `devices.yml`, via `wits device add`
-  - [x] Temperature on session events, bounded by the device's own maximum
-  - [x] `wits temps <celsius>` reports what a setting releases, and warns at 205 °C
-- **Relevant Commits**: tbd
+### Correcting entries
+
+`wits revert`, and `e` / `d` in the journal view. An entry is undone by moving the
+same grams back the way they came and recording that alongside the original.
+Undoing is refused if the grams have since moved on, and the confirmation defaults
+to keeping the entry.
+
+The log shows what currently stands; `v` reveals the corrections behind it. They
+are hidden rather than removed — that is the difference between a record that can
+be audited and one that cannot.
+
+### Temperatures and devices
+
+Every cannabinoid and terpene with its boiling point, so a setting on a dial reads
+as what it releases, and warns at the 205 °C where benzene starts. A device's
+range is checked when it is typed rather than later when a session is refused.
+
+---
+
+## 📌 Planned
 
 ### 🔹 AVB tracking
 
 - **Status**: Planned
-- **Description**: Already-vaped bud is decarbed and reusable. Track it as a real
-  account fed by weighed `avb-collect` events, and drawn down by `avb-use`. The
-  event types and the account exist; the commands do not yet.
-- **Tasks**:
-  - [ ] `avb-collect` / `avb-use`
-  - [ ] Per-product AVB balances
-  - [ ] Observed yield ratio (input grams vs. collected grams) over time
-- **Relevant Commits**: tbd
+- The event types and the account exist and the fold handles them; there are no
+  commands yet. Wanted: `avb collect` recording what is actually weighed out of a
+  device, `avb use` drawing it down, and the observed yield ratio over time.
+- Imported history holds no sessions at all, because the spreadsheet only ever
+  recorded grinding. Nothing was invented to fill that gap, so the stash balance
+  of a product recurring across cycles reads high until it is worked down.
 
-### 🔹 The interface
+### 🔹 A products screen
 
-- **Status**: Implemented (unreleased)
-- **Description**: Rebuilt on Bubble Tea v2 as a reader over the ledger, replacing
-  the interface that sat on the storage and service layers. Three screens: a
-  dashboard of what is left and how long it will last, the journal, and an
-  analysis view scoping from the current cycle out to all four years. Entries are
-  made with huh v2 forms embedded as models — never by calling `Run`, which is what
-  the previous version did and why it blocked the event loop.
-- **Tasks**:
-  - [x] Dashboard, journal and analysis screens
-  - [x] Charts drawn in-tree, sharing one colour per account with the log
-  - [x] Grind, session and fill forms, applying the same checks as the commands
-  - [x] Devices screen, with add, edit and remove
-  - [x] Amending and undoing an entry from the journal view
-  - [ ] Products screen
-- **Relevant Commits**: tbd
+- **Status**: Planned
+- Devices have one; products do not. Wanted: browsing the catalog, correcting a
+  parsed name, and merging two products the slug split or joined.
 
-### 🔹 Statistics with inline plots
+### 🔹 Splitting products the slug merged
 
-- **Status**: Implemented (unreleased)
-- **Description**: Charts are drawn in-tree rather than pulled in.
-  [NimbleMarkets/ntcharts](https://github.com/NimbleMarkets/ntcharts) is still on
-  the Bubble Tea v1 line, and mixing the majors would put two renderers and two
-  colour-profile detectors in one binary, which shows up on screen as inconsistent
-  colour. The README still lists it and should be corrected.
-- **Tasks**:
-  - [x] Gauge, column chart, stacked bar and sparkline primitives
-  - [x] Grams per day across a cycle, a year, or the whole history
-  - [x] Per-product and per-cycle breakdowns
-- **Relevant Commits**: tbd
+- **Status**: Planned
+- `Slugify` drops the THC ratio, so the same cultivar from one manufacturer at two
+  potencies becomes one product. The importer reports these rather than doing it
+  quietly, but there is no way to split them afterwards.
+
+### 🔹 `wits show` and `wits fsck`
+
+- **Status**: Planned
+- `show` for one entry in full. `fsck` to expose `journal.Verify` and check mass
+  conservation on the command line — the chain is already verified on restore.
+
+### 🔹 A cached fold
+
+- **Status**: Planned
+- `wits init` creates `.wits/index/` and **nothing writes to it**. Replaying the
+  journal on every open is milliseconds at 1369 entries, so it does not matter
+  yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
+  must stay disposable.
+
+### 🔹 `log_level` is dead configuration
+
+- **Status**: Planned
+- `config.yml` carries `log_level` and nothing reads it — the same dead setting
+  the old `.env` had, moved to a new home. Wire it up or drop it.
+
+### 🔹 Markdown export for publishing
+
+- **Status**: In Progress
+- `wits export` writes one Markdown file. For GitHub Pages it needs site
+  structure: a page per cycle, an index, and something to link them.
+
+### 🔹 A date range for export
+
+- **Status**: Planned
+- Export takes whole cycles or everything. A range would be more use for an
+  appointment.
+
+### 🔹 `wits-server` and `wits-ui`
+
+- **Status**: Planned
+- A REST API and an Angular interface. `pkg/workspace` is what a request handler
+  would open a repository with, and cross-process appends are already safe, so the
+  seam exists. The layout has room for both: `cmd/wits-server/` and `wits-ui/`.
+- One module rather than one per component, because the domain is shared and a
+  boundary between a server and the ledger it serves would mean versioning the
+  ledger against itself.
 
 ---
 
-## 🔧 Improvements & Refactoring
+## 🩺 Findings in the imported records
 
-### 🔹 File permissions on health data
+The tracking spreadsheet was imported once. These describe the records rather
+than the tool, and are worth correcting at the source:
 
-- **Status**: Planned
-- **Description**: `strains.yml` is written `0644` and the `.wits` directory is
-  created with `os.ModePerm` (0777). A multi-year medical record should be `0600`
-  inside a `0700` directory.
-- **Relevant Commits**: tbd
-
-### 🔹 Superseded by the ledger design
-
-These earlier roadmap items are kept for traceability but are resolved by the
-model above rather than fixed in place:
-
-- *Persistent Local Storage for Strains* — becomes the append-only journal.
-  The YAML store's whole-file rewrite on every add, and its silent fallback to an
-  empty store when the file cannot be read or parsed, are removed rather than
-  patched.
-- *Refactor `strain_store.go`* — the in-memory and YAML implementations are ~95%
-  duplicated. Both go away; there is one journal with a disposable index.
-- *Reading/Writing of Configuration & Settings* — becomes `.wits/config.yml`,
-  written by `wits init`.
-- *`Strain.Amount`* — deleted. An amount is a fold over the journal, not a field on
-  a product. A product is catalog data that outlives any single purchase.
-- *`LOG_LEVEL`* — documented in the README and `.env.example` but never read by any
-  code. Either wire it up in `config.yml` or drop it.
+- **`2025-03` is dated a year early.** All 32 of its entries fall in March 2024.
+- **`2025-10` has 2.40 g with no product selected**, on 24 and 26 November. The
+  spreadsheet never subtracted those grams from anything either, so they are
+  missing from that cycle's arithmetic too.
+- **`2025-06` lists Ghost Train Haze at 0.01 g** where the other two products are
+  10 g. Either a typo or a deliberate "trace left" marker.
+- **Two products were named more than one way** and became one, because the slug
+  drops the THC ratio: `420 Evolution 22/1 CA MAC: MAC1` with its 25/1 spelling,
+  and `All Nations 21/1 Lemon Tartz` with its 25/1.
 
 ---
-
-### 🔹 Toward a server and a web interface
-
-- **Status**: Planned
-- **Description**: A `wits-server` exposing a REST API, and a `wits-ui` in Angular.
-  The domain packages are already shared by the commands and the interface, and
-  `pkg/workspace` is what a request handler would open a repository with, so the
-  seam exists. Two things do not yet:
-  - **Concurrency.** Appending is a read-then-write: the tip is read to chain
-    onto. That is now guarded by an advisory file lock as well as a mutex, so two
-    processes cannot fork the chain, but a long-lived server should also cache the
-    fold rather than replay the journal per request.
-  - **Layout.** Done: the module is `github.com/TheDonDope/wits`, with `cmd/wits`
-    today and room for `cmd/wits-server` and `wits-ui/` beside it. One module
-    rather than one per component, because the domain is shared and a boundary
-    between a server and the ledger it serves would mean versioning the ledger
-    against itself.
 
 ## 📜 Notes
 
-- Changes will be updated as development progresses.
-- Feature status will be marked as **Implemented** once merged into `main`.
-- Commits are referenced for traceability and rollback if needed.
-
----
-
-## 🩺 Findings from the one-off spreadsheet import
-
-The tracking spreadsheet was imported once, in v1, and the importer has since
-been removed: the history now lives in the journal, which is the only thing that
-needs reading. These are the things the import turned up in the source data,
-kept because they describe the imported records rather than the tool:
-
-- **`2025-03` is dated a year early.** All 32 of its entries fall in March 2024.
-- **`2025-10` has 2.40 g with no product selected**, on 24 and 26 November, which
-  the spreadsheet never subtracted from anything either. Those grams are missing
-  from the imported history for the same reason.
-- **`2025-06` lists Ghost Train Haze at 0.01 g** against 10 g for the others.
-- **`cantourage-mac-1` and `cantourage-mac1` are the same product**, spelled
-  "MAC 1+" in one sheet header and "MAC1+" in another.
-
-Imported history holds no `sesh` events, because the spreadsheet only recorded
-grinding. Nothing was invented to fill that gap, so the stash balance of a
-product that recurs across cycles reads high until it is worked down. Past
-sessions can still be entered by hand with `wits sesh --date`.
+- Status is **Planned**, **In Progress**, or listed under Built.
+- Anything under Built is in `v2` and can be read in the code; the sections above
+  say why it is the way it is, which the code cannot.

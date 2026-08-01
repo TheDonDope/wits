@@ -244,3 +244,14 @@ func maxInt(a, b int) int {
 func clamp(v, lo, hi float64) float64 {
 	return math.Min(math.Max(v, lo), hi)
 }
+
+// axisLabels puts the start and end of a range at either end of a chart, or on
+// one line together when the chart is too narrow to separate them. A fixed gap
+// would bunch them up under a short range and read as one date.
+func axisLabels(t *Theme, left, right string, width int) string {
+	gap := width - lipgloss.Width(left) - lipgloss.Width(right)
+	if gap < 1 {
+		return t.Dim.Render(left + " → " + right)
+	}
+	return t.Dim.Render(left) + strings.Repeat(" ", gap) + t.Dim.Render(right)
+}
