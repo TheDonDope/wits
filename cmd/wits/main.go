@@ -44,7 +44,8 @@ var (
 )
 
 func init() {
-	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+	// The completion command stays visible: tab completion offers the product
+	// slugs, which is most of what makes short slugs worth having.
 	rootCmd.AddCommand(
 		commands.Init,
 		commands.Bundle,

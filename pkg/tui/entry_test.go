@@ -24,11 +24,11 @@ func liveApp(t *testing.T) *App {
 	require.NoError(t, err)
 
 	products := &catalog.Catalog{}
-	require.NoError(t, products.Add(catalog.Parse("Enua 22/1 Wedding Cake")))
+	require.NoError(t, products.Add(product("Enua 22/1 Wedding Cake", "wcake")))
 	require.NoError(t, products.Save(r.ProductsPath()))
 
 	_, err = r.Journal().Append(journal.Event{
-		Type: journal.Purchase, Product: "enua-wedding-cake", Grams: 20,
+		Type: journal.Purchase, Product: "wcake", Grams: 20,
 		From: journal.External, To: journal.Storage, OccurredAt: time.Now(),
 	})
 	require.NoError(t, err)
@@ -207,7 +207,7 @@ func TestNoticeAfterAnEntry(t *testing.T) {
 	app := liveApp(t)
 	var m tea.Model = app
 
-	m.Update(entryDoneMsg{event: journal.Event{Type: journal.Grind, Grams: 0.75, Product: "enua-wedding-cake"}})
+	m.Update(entryDoneMsg{event: journal.Event{Type: journal.Grind, Grams: 0.75, Product: "wcake"}})
 
 	assert.Contains(t, app.notice, "0.75", "Should confirm what was recorded")
 	assert.False(t, app.failed, "Should not read as a failure")
@@ -256,7 +256,7 @@ func TestUndoFromTheJournal(t *testing.T) {
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = typeText(m, "2")
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
-	require.Equal(t, 2.0, app.data.State.Balances["enua-wedding-cake"].Stash)
+	require.Equal(t, 2.0, app.data.State.Balances["wcake"].Stash)
 
 	// Move to the journal, put the cursor on the grind, and undo it.
 	m, _ = send(m, tea.KeyPressMsg{Code: 'l', Text: "l"})
@@ -278,7 +278,7 @@ func TestUndoFromTheJournal(t *testing.T) {
 	require.True(t, ok, "Should report the outcome, got %v", msgs)
 	require.NoError(t, done.err)
 
-	assert.Zero(t, app.data.State.Balances["enua-wedding-cake"].Stash, "The grams should be back in storage")
+	assert.Zero(t, app.data.State.Balances["wcake"].Stash, "The grams should be back in storage")
 	events, err := app.data.Repo.Journal().Events()
 	require.NoError(t, err)
 	assert.Len(t, events, 3, "Nothing should have been removed: the correction is appended")

@@ -30,7 +30,8 @@ var Sesh = &cobra.Command{
 		"benzene.",
 	Example: "  wits sesh wedding-cake 0.3 --device volcano --temp 185\n" +
 		"  wits sesh lemon 0.2 --date 2026-07-29",
-	Args: cobra.ExactArgs(2),
+	Args:              cobra.ExactArgs(2),
+	ValidArgsFunction: completeProduct(journal.Stash),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {

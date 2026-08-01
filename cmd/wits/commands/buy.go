@@ -6,7 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var buyDate string
+var (
+	buyDate string
+	buySlug string
+)
 
 // Buy is the `wits buy` command.
 var Buy = &cobra.Command{
@@ -18,7 +21,8 @@ var Buy = &cobra.Command{
 		"follows the usual convention; anything it gets wrong can be corrected in\n" +
 		".wits/products.yml.",
 	Example: "  wits buy \"Enua 22/1 Wedding Cake\" 20g\n" +
-		"  wits buy \"Cannamedical 28/1 Lemon Cookie\" 10g --date 2026-07-09",
+		"  wits buy \"Cannamedical 28/1 Lemon Cookie\" 10g --slug lemon\n" +
+		"  wits buy \"Cantourage 25/1 MAC1+\" 20g --date 2026-07-09",
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
@@ -33,12 +37,15 @@ var Buy = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		e, product, added, err := s.Recorder.Buy(args[0], grams, at)
+		e, product, added, err := s.Recorder.Buy(args[0], buySlug, grams, at)
 		if err != nil {
 			return err
 		}
 		if added {
-			fmt.Fprintf(cmd.OutOrStdout(), "New product %s (%s)\n", product.Slug, product.Name)
+			// The slug is what every later command refers to, so it is said
+			// plainly rather than left to be discovered in products.yml.
+			fmt.Fprintf(cmd.OutOrStdout(), "New product %s — refer to it as %s\n",
+				product.Name, product.Slug)
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "[%s] purchase %.2fg %s into storage\n",
 			shortHash(e.Hash), e.Grams, product.Slug)
@@ -48,4 +55,5 @@ var Buy = &cobra.Command{
 
 func init() {
 	Buy.Flags().StringVar(&buyDate, "date", "", "the date the fill happened, defaults to now")
+	Buy.Flags().StringVar(&buySlug, "slug", "", "what to call it from now on; made up if not given")
 }

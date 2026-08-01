@@ -11,6 +11,7 @@ import (
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
@@ -37,6 +38,8 @@ func (k entryKind) String() string {
 		return "Undo entry"
 	case entryReconcile:
 		return "Weigh and reconcile"
+	case entryDescribe:
+		return "Edit product"
 	default:
 		return "Grind"
 	}
@@ -213,7 +216,7 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	at := time.Now()
 
 	var grams float64
-	if f.kind != entryUndo && f.kind != entryReconcile {
+	if f.kind != entryUndo && f.kind != entryReconcile && f.kind != entryDescribe {
 		var err error
 		if grams, err = parseGrams(f.amount); err != nil {
 			return journal.Event{}, err
@@ -221,6 +224,18 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	}
 
 	switch f.kind {
+	case entryDescribe:
+		p, err := rec.Describe(f.product, catalog.Product{
+			Name:         f.name,
+			Manufacturer: f.device,
+			Cultivar:     f.note,
+			THC:          parseFloatOrZero(f.amount),
+			CBD:          parseFloatOrZero(f.temp),
+		})
+		if err != nil {
+			return journal.Event{}, err
+		}
+		return journal.Event{Product: p.Slug, Note: p.Name}, nil
 	case entryReconcile:
 		weighed, err := strconv.ParseFloat(
 			strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(f.amount), "g")), ",", ".", 1), 64)
@@ -236,7 +251,7 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	case entryAmend:
 		return rec.Amend(f.target.Hash, grams, strings.TrimSpace(f.note))
 	case entryBuy:
-		e, _, _, err := rec.Buy(strings.TrimSpace(f.name), grams, at)
+		e, _, _, err := rec.Buy(strings.TrimSpace(f.name), strings.TrimSpace(f.device), grams, at)
 		return e, err
 	case entryGrind:
 		return rec.Grind(f.product, grams, at)
@@ -363,4 +378,67 @@ func nonNegativeGrams(s string) error {
 		return fmt.Errorf("a weight cannot be negative")
 	}
 	return nil
+}
+
+// entryDescribe corrects what a product is called and what is known about it.
+const entryDescribe entryKind = iota + 300
+
+// newDescribeForm edits a product's details.
+//
+// The slug is shown but not offered for editing. It is the name every entry in
+// the journal refers to, and changing it would leave those entries pointing at
+// a product that no longer exists. What a jar is called can be corrected; which
+// jar it is cannot.
+func newDescribeForm(slug string, a *App) *entryForm {
+	f := &entryForm{kind: entryDescribe, product: slug}
+
+	p, err := a.data.Products.Find(slug)
+	if err != nil {
+		p = &catalog.Product{Slug: slug, Name: slug}
+	}
+	f.name = p.Name
+	f.device = p.Manufacturer // reused for the manufacturer
+	f.note = p.Cultivar       // and for the cultivar
+	f.amount = trimZero(p.THC)
+	f.temp = trimZero(p.CBD)
+
+	f.form = huh.NewForm(huh.NewGroup(
+		huh.NewNote().Title(slug).
+			Description("The slug stays as it is: every entry in the journal refers\nto it, and renaming it would orphan them."),
+		huh.NewInput().Title("Name").Description("As it should read").
+			Value(&f.name).Validate(required("a name")),
+		huh.NewInput().Title("Manufacturer").Value(&f.device),
+		huh.NewInput().Title("Cultivar").Value(&f.note),
+		huh.NewInput().Title("THC %").Value(&f.amount).Validate(optionalFloat),
+		huh.NewInput().Title("CBD %").Value(&f.temp).Validate(optionalFloat),
+	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	return f
+}
+
+// trimZero renders a percentage, or nothing when it is unset.
+func trimZero(f float64) string {
+	if f == 0 {
+		return ""
+	}
+	return strconv.FormatFloat(f, 'g', -1, 64)
+}
+
+// optionalFloat accepts a percentage or nothing at all.
+func optionalFloat(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	if _, err := strconv.ParseFloat(strings.Replace(strings.TrimSpace(s), ",", ".", 1), 64); err != nil {
+		return fmt.Errorf("not a percentage")
+	}
+	return nil
+}
+
+// parseFloatOrZero reads a percentage, treating anything unreadable as unset.
+func parseFloatOrZero(s string) float64 {
+	v, err := strconv.ParseFloat(strings.Replace(strings.TrimSpace(s), ",", ".", 1), 64)
+	if err != nil {
+		return 0
+	}
+	return v
 }

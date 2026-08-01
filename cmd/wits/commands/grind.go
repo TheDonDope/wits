@@ -19,7 +19,8 @@ var Grind = &cobra.Command{
 		"name, so a daily entry stays short.",
 	Example: "  wits grind wedding-cake 0.75\n" +
 		"  wits grind lemon 1.2 --date 2026-07-29",
-	Args: cobra.ExactArgs(2),
+	Args:              cobra.ExactArgs(2),
+	ValidArgsFunction: completeProduct(journal.Storage),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {

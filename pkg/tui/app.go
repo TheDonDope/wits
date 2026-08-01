@@ -166,6 +166,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.notice, a.failed = msg.err.Error(), true
 			return a, nil
 		}
+		if msg.event.Type == "" {
+			// A product was edited rather than an entry recorded.
+			a.notice, a.failed = fmt.Sprintf("renamed %s to %s", msg.event.Product, msg.event.Note), false
+			return a, a.reload()
+		}
 		a.notice, a.failed = fmt.Sprintf("recorded %s %.2fg %s",
 			msg.event.Type, msg.event.Grams, msg.event.Product), false
 		return a, a.reload()
@@ -225,6 +230,12 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.String() == "a" && a.screen == devicesScreen:
 			a.device, a.notice = newDeviceForm(nil, a), ""
 			return a, a.device.form.Init()
+		case msg.String() == "e" && a.screen == productsScreen:
+			if r := a.products.Selected(a); r != nil {
+				a.entry, a.notice = newDescribeForm(r.Slug, a), ""
+				return a, a.entry.form.Init()
+			}
+			return a, nil
 		case msg.String() == "r" && a.screen != journalScreen:
 			if slug := a.weighable(); slug != "" {
 				a.entry, a.notice = newReconcileForm(slug, a), ""

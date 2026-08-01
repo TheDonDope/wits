@@ -59,12 +59,36 @@ wits init .
 
 Record a fill, then use it:
 
+```console
+$ wits buy "Enua 22/1 Wedding Cake" 20g
+New product Enua 22/1 Wedding Cake — refer to it as wcake
+[029efe8] purchase 20.00g wcake into storage
+```
+
+Every product gets a short handle — three to five characters, made up from the
+cultivar and guaranteed not to be one keystroke from another, since references
+are resolved by prefix. Pass `--slug lemon` to choose your own. It is settled
+when the product first appears and never changes, because it is the name every
+later entry refers to.
+
 ```sh
-wits buy "Enua 22/1 Wedding Cake" 20g
-wits grind wedding-cake 0.75
-wits sesh wedding-cake 0.3 --device volcano --temp 185
+wits grind wcake 0.75
+wits sesh wcake 0.3 --device volcano --temp 185
 wits status
 ```
+
+Tab completion offers the handles, with the full name and how much is left
+beside each — and only the ones the command can act on, so `sesh` offers what is
+in a tin rather than everything ever dispensed:
+
+```console
+$ wits grind <TAB>
+lcook   10.00 g · Cannamedical 28/1 Lemon Cookie
+mac1    15.00 g · Cantourage 25/1 MAC1+
+wcake   18.00 g · Enua 22/1 Wedding Cake
+```
+
+Install it with `wits completion bash` (or `zsh`, `fish`).
 
 Anything can be backdated with `--date 2026-07-29`, which is what makes a
 forgotten evening loggable the next morning without pretending it was entered
@@ -96,7 +120,7 @@ too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
 | | |
 | --- | --- |
 | `wits init [dir]` | Create a repository |
-| `wits buy <product> <amount>` | Record a prescription fill into storage |
+| `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it |
 | `wits grind <product> <amount>` | Move product from storage into its tin |
 | `wits sesh <product> <amount>` | Record a session, drawing on the tin |
 | `wits status` | What is left, and how long it will last |
@@ -122,7 +146,8 @@ wits log --oneline -n 1
 wits revert 8297238 --reason "misread the scale"
 ```
 
-In the interface, `e` amends an amount and `d` undoes an entry. The log shows what
+On the products screen, `e` corrects a name and `r` weighs a jar. In the journal,
+`e` amends an amount and `d` undoes an entry. The log shows what
 currently stands; `v` reveals the corrections behind it.
 
 ## When the ledger and the scale disagree
