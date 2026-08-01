@@ -43,9 +43,13 @@ doc:
 changelog:
 	git-chglog -o CHANGELOG.md
 
+# Only the renders are cleared. `rm -rf ./assets/*` would also take
+# Tracking.2022.cleaned.xlsx, which is committed and is what the importer
+# integration tests read — and they skip rather than fail when it is missing,
+# so it would have gone quiet rather than red.
 render-tapes:
-	rm -rf ./assets/*
-	./render-vhs-tapes.sh 
+	rm -f ./assets/*.gif
+	./render-vhs-tapes.sh
 
 test:
 	go test -race -v ./... -coverprofile coverage.out
