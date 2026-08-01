@@ -15,7 +15,9 @@ Set FontSize 18
 # every character with a gap beside it.
 Set FontFamily "Hack"
 Set Width 1500
-Set Height 760
+# Tall enough for the year-scoped analysis: the rhythm calendar is seven rows
+# plus its legend, and the analysis screen clips rather than scrolls.
+Set Height 900
 Set Padding 20
 Set TypingSpeed 35ms
 
@@ -32,8 +34,11 @@ Sleep 4s
 # Journal.
 Tab
 Sleep 3500ms
-# Analysis.
+# Analysis: the cycle first, then scoped out to the year, where the rhythm
+# heatmap and the cycle comparison appear.
 Tab
+Sleep 4s
+Type "s"
 Sleep 4s
 # Products.
 Tab
