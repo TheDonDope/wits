@@ -62,6 +62,14 @@ type entryForm struct {
 	name    string
 	confirm bool
 
+	// The fields below belong to single forms. They used to be borrowed from
+	// the ones above — the account rode in device, the CBD in temp — which
+	// worked until anyone had to read commit and say what device meant there.
+	account      string // reconcile: which account is on the scale
+	manufacturer string // describe
+	cultivar     string // describe
+	thc, cbd     string // describe
+
 	// target is the entry being corrected, for the amend and undo forms.
 	target *journal.Event
 
@@ -111,7 +119,7 @@ func newEntryForm(kind entryKind, a *App) *entryForm {
 		f.form = huh.NewForm(huh.NewGroup(fields...))
 	}
 
-	f.form = f.form.WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	f.form = f.form.WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 
@@ -227,10 +235,10 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	case entryDescribe:
 		p, err := rec.Describe(f.product, catalog.Product{
 			Name:         f.name,
-			Manufacturer: f.device,
-			Cultivar:     f.note,
-			THC:          parseFloatOrZero(f.amount),
-			CBD:          parseFloatOrZero(f.temp),
+			Manufacturer: f.manufacturer,
+			Cultivar:     f.cultivar,
+			THC:          parseFloatOrZero(f.thc),
+			CBD:          parseFloatOrZero(f.cbd),
 		})
 		if err != nil {
 			return journal.Event{}, err
@@ -242,7 +250,7 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 		if err != nil {
 			return journal.Event{}, err
 		}
-		return rec.Reconcile(f.product, journal.Account(f.device), weighed, strings.TrimSpace(f.note))
+		return rec.Reconcile(f.product, journal.Account(f.account), weighed, strings.TrimSpace(f.note))
 	case entryUndo:
 		if !f.confirm {
 			return journal.Event{}, errCancelled
@@ -251,7 +259,9 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 	case entryAmend:
 		return rec.Amend(f.target.Hash, grams, strings.TrimSpace(f.note))
 	case entryBuy:
-		e, _, _, err := rec.Buy(strings.TrimSpace(f.name), strings.TrimSpace(f.device), grams, at)
+		// The interface never asks for a slug: a generated handle is the
+		// point, and `wits buy --slug` exists for anyone who wants their own.
+		e, _, _, err := rec.Buy(strings.TrimSpace(f.name), "", grams, at)
 		return e, err
 	case entryGrind:
 		return rec.Grind(f.product, grams, at)
@@ -274,7 +284,7 @@ func (f *entryForm) View(a *App, width int) string {
 		"",
 		body,
 	)
-	return t.Panel.Width(minInt(width-2, 74)).Render(panel)
+	return t.Panel.Width(min(width-2, 74)).Render(panel)
 }
 
 // errCancelled reports a form the user answered in the negative, which is not a
@@ -309,7 +319,7 @@ func newAmendForm(e *journal.Event, a *App) *entryForm {
 		huh.NewInput().Title("Corrected amount").Description("Grams").
 			Value(&f.amount).Validate(validGrams),
 		huh.NewInput().Title("Why").Description("Optional").Value(&f.note),
-	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 
@@ -322,7 +332,7 @@ func newUndoForm(e *journal.Event, a *App) *entryForm {
 		huh.NewConfirm().Title("Undo this entry?").Affirmative("Undo").Negative("Keep").
 			Value(&f.confirm),
 		huh.NewInput().Title("Why").Description("Optional").Value(&f.note),
-	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 
@@ -355,16 +365,16 @@ func newReconcileForm(slug string, a *App) *entryForm {
 		accounts = append(accounts,
 			huh.NewOption(fmt.Sprintf("AVB — ledger says %.2f g", b.AVB), string(journal.AVB)))
 	}
-	f.device = string(journal.Storage) // reused as the account, defaulting to storage
+	f.account = string(journal.Storage)
 
 	f.form = huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(a.data.ProductName(slug)).
 			Description("Nothing in the past is edited. The difference is recorded\nas an adjustment, and the account agrees with the jar again."),
-		huh.NewSelect[string]().Title("Weigh which").Options(accounts...).Value(&f.device),
+		huh.NewSelect[string]().Title("Weigh which").Options(accounts...).Value(&f.account),
 		huh.NewInput().Title("On the scale").Description("Grams").
 			Value(&f.amount).Validate(nonNegativeGrams),
 		huh.NewInput().Title("Why").Description("Optional — spilled, unlogged, misread").Value(&f.note),
-	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 
@@ -397,21 +407,21 @@ func newDescribeForm(slug string, a *App) *entryForm {
 		p = &catalog.Product{Slug: slug, Name: slug}
 	}
 	f.name = p.Name
-	f.device = p.Manufacturer // reused for the manufacturer
-	f.note = p.Cultivar       // and for the cultivar
-	f.amount = trimZero(p.THC)
-	f.temp = trimZero(p.CBD)
+	f.manufacturer = p.Manufacturer
+	f.cultivar = p.Cultivar
+	f.thc = trimZero(p.THC)
+	f.cbd = trimZero(p.CBD)
 
 	f.form = huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(slug).
 			Description("The slug stays as it is: every entry in the journal refers\nto it, and renaming it would orphan them."),
 		huh.NewInput().Title("Name").Description("As it should read").
 			Value(&f.name).Validate(required("a name")),
-		huh.NewInput().Title("Manufacturer").Value(&f.device),
-		huh.NewInput().Title("Cultivar").Value(&f.note),
-		huh.NewInput().Title("THC %").Value(&f.amount).Validate(optionalFloat),
-		huh.NewInput().Title("CBD %").Value(&f.temp).Validate(optionalFloat),
-	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+		huh.NewInput().Title("Manufacturer").Value(&f.manufacturer),
+		huh.NewInput().Title("Cultivar").Value(&f.cultivar),
+		huh.NewInput().Title("THC %").Value(&f.thc).Validate(optionalFloat),
+		huh.NewInput().Title("CBD %").Value(&f.cbd).Validate(optionalFloat),
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 

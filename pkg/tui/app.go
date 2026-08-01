@@ -52,7 +52,9 @@ const (
 // tabs are the screen names, in order.
 var tabs = []string{"Dashboard", "Journal", "Analysis", "Products", "Devices"}
 
-// keyMap is the global key bindings. Screens add their own on top.
+// keyMap is the global key bindings. Screens add their own on top, borrowing
+// from here where the key is shared, so that a binding is declared once and
+// the help line can never advertise a key the dispatch does not honour.
 type keyMap struct {
 	Next, Prev     key.Binding
 	Up, Down       key.Binding
@@ -61,6 +63,8 @@ type keyMap struct {
 	Help, Quit     key.Binding
 	New, Sesh, Buy key.Binding
 	Weigh          key.Binding
+	Edit, Delete   key.Binding
+	Add            key.Binding
 }
 
 func defaultKeys() keyMap {
@@ -77,9 +81,18 @@ func defaultKeys() keyMap {
 		Sesh:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sesh")),
 		Buy:    key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "buy")),
 		Weigh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "weigh")),
+		Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
+		Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
+		Add:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
 		Help:   key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		Quit:   key.NewBinding(key.WithKeys("q", "ctrl+c", "esc"), key.WithHelp("q", "quit")),
 	}
+}
+
+// withHelp is a binding with its description reworded for one screen: the same
+// key, declared once, read differently where the action has a better name.
+func withHelp(b key.Binding, desc string) key.Binding {
+	return key.NewBinding(key.WithKeys(b.Keys()...), key.WithHelp(b.Help().Key, desc))
 }
 
 // ShortHelp implements help.KeyMap.
@@ -218,50 +231,50 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, cmd
 		}
 		switch {
-		case msg.String() == "n":
+		case key.Matches(msg, a.keys.New):
 			a.entry, a.notice = newEntryForm(entryGrind, a), ""
 			return a, a.entry.form.Init()
-		case msg.String() == "s" && a.screen != analysisScreen:
+		case key.Matches(msg, a.keys.Sesh) && a.screen != analysisScreen:
 			a.entry, a.notice = newEntryForm(entrySesh, a), ""
 			return a, a.entry.form.Init()
-		case msg.String() == "b":
+		case key.Matches(msg, a.keys.Buy):
 			a.entry, a.notice = newEntryForm(entryBuy, a), ""
 			return a, a.entry.form.Init()
-		case msg.String() == "a" && a.screen == devicesScreen:
+		case key.Matches(msg, a.keys.Add) && a.screen == devicesScreen:
 			a.device, a.notice = newDeviceForm(nil, a), ""
 			return a, a.device.form.Init()
-		case msg.String() == "e" && a.screen == productsScreen:
+		case key.Matches(msg, a.keys.Edit) && a.screen == productsScreen:
 			if r := a.products.Selected(a); r != nil {
 				a.entry, a.notice = newDescribeForm(r.Slug, a), ""
 				return a, a.entry.form.Init()
 			}
 			return a, nil
-		case msg.String() == "r" && a.screen != journalScreen:
+		case key.Matches(msg, a.keys.Weigh) && a.screen != journalScreen:
 			if slug := a.weighable(); slug != "" {
 				a.entry, a.notice = newReconcileForm(slug, a), ""
 				return a, a.entry.form.Init()
 			}
 			a.notice, a.failed = "nothing on the shelf to weigh", true
 			return a, nil
-		case msg.String() == "e" && a.screen == devicesScreen:
+		case key.Matches(msg, a.keys.Edit) && a.screen == devicesScreen:
 			if d := a.devices.Selected(a); d != nil {
 				a.device, a.notice = newDeviceForm(d, a), ""
 				return a, a.device.form.Init()
 			}
 			return a, nil
-		case msg.String() == "d" && a.screen == devicesScreen:
+		case key.Matches(msg, a.keys.Delete) && a.screen == devicesScreen:
 			if d := a.devices.Selected(a); d != nil {
 				a.device, a.notice = newDeviceRemoveForm(d, a), ""
 				return a, a.device.form.Init()
 			}
 			return a, nil
-		case msg.String() == "e" && a.screen == journalScreen:
+		case key.Matches(msg, a.keys.Edit) && a.screen == journalScreen:
 			if e := a.journal.Selected(); e != nil {
 				a.entry, a.notice = newAmendForm(e, a), ""
 				return a, a.entry.form.Init()
 			}
 			return a, nil
-		case msg.String() == "d" && a.screen == journalScreen:
+		case key.Matches(msg, a.keys.Delete) && a.screen == journalScreen:
 			if e := a.journal.Selected(); e != nil {
 				a.entry, a.notice = newUndoForm(e, a), ""
 				return a, a.entry.form.Init()
@@ -486,4 +499,4 @@ func (a *App) weighable() string {
 }
 
 // inner returns the width available inside the frame.
-func (a *App) inner() int { return maxInt(a.width-2, 10) }
+func (a *App) inner() int { return max(a.width-2, 10) }

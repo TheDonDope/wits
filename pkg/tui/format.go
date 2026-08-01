@@ -173,7 +173,7 @@ func (t *Theme) Metric(label, value, note string) string {
 // Rule draws a horizontal line, optionally with a title set into it.
 func (t *Theme) Rule(title string, width int) string {
 	if title == "" {
-		return t.Dim.Render(strings.Repeat("─", maxInt(width, 0)))
+		return t.Dim.Render(strings.Repeat("─", max(width, 0)))
 	}
 	head := t.PanelTitle.Render(title)
 	rest := width - lipgloss.Width(head) - 2

@@ -25,7 +25,6 @@ type Theme struct {
 	// Chrome
 	Title, Subtitle   lipgloss.Style
 	Tab, TabActive    lipgloss.Style
-	TabGap            lipgloss.Style
 	Panel, PanelTitle lipgloss.Style
 	Help, Key         lipgloss.Style
 
@@ -83,7 +82,6 @@ func NewTheme(dark bool) *Theme {
 	t.Tab = lipgloss.NewStyle().Foreground(t.Muted).Padding(0, 2)
 	t.TabActive = lipgloss.NewStyle().Bold(true).Foreground(t.Accent).
 		Padding(0, 2).Underline(true)
-	t.TabGap = lipgloss.NewStyle().Foreground(t.Line)
 	t.Panel = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).BorderForeground(t.Line).Padding(0, 1)
 	t.PanelTitle = lipgloss.NewStyle().Bold(true).Foreground(t.Alt)

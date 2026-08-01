@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/help"
@@ -17,7 +18,8 @@ import (
 // analysisView is the long view: how this cycle is going, how it compares to
 // the ones before it, and where the grams actually went.
 type analysisView struct {
-	scope int // 0 this cycle, 1 this year, 2 all time
+	scope  int // 0 this cycle, 1 this year, 2 all time
+	scroll int // lines scrolled past, since the long scopes overrun a screen
 }
 
 func newAnalysisView() analysisView { return analysisView{} }
@@ -29,6 +31,9 @@ type analysisKeys struct {
 	Scope key.Binding
 }
 
+// scopeKey is declared once so the help line and the dispatch cannot drift.
+var scopeKey = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "scope"))
+
 func (k analysisKeys) ShortHelp() []key.Binding {
 	return []key.Binding{k.Next, k.Scope, k.Help, k.Quit}
 }
@@ -38,15 +43,26 @@ func (k analysisKeys) FullHelp() [][]key.Binding {
 }
 
 func (v analysisView) keys(base keyMap) help.KeyMap {
-	return analysisKeys{
-		keyMap: base,
-		Scope:  key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "scope")),
-	}
+	return analysisKeys{keyMap: base, Scope: scopeKey}
 }
 
-func (v analysisView) Update(msg tea.Msg, _ *App) (analysisView, tea.Cmd) {
-	if msg, ok := msg.(tea.KeyPressMsg); ok && msg.String() == "s" {
-		v.scope = (v.scope + 1) % len(scopes)
+func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
+	if msg, ok := msg.(tea.KeyPressMsg); ok {
+		switch {
+		case key.Matches(msg, scopeKey):
+			v.scope = (v.scope + 1) % len(scopes)
+			v.scroll = 0
+		case key.Matches(msg, a.keys.Up):
+			v.scroll = max(v.scroll-1, 0)
+		case key.Matches(msg, a.keys.Down):
+			v.scroll++
+		case key.Matches(msg, a.keys.PageUp):
+			v.scroll = max(v.scroll-10, 0)
+		case key.Matches(msg, a.keys.PgDown):
+			v.scroll += 10
+		case key.Matches(msg, a.keys.Top):
+			v.scroll = 0
+		}
 	}
 	return v, nil
 }
@@ -74,8 +90,22 @@ func (v analysisView) View(a *App, height int) string {
 			"", t.Rule("Rhythm", width), v.rhythm(a, events, width),
 			"", t.Rule("Cycles", width), v.cycles(a, width))
 	}
-	return lipgloss.NewStyle().Padding(1, 1).Render(
-		clip(lipgloss.JoinVertical(lipgloss.Left, sections...), height-2))
+	// The long scopes overrun a screen, so the view scrolls rather than
+	// silently cutting the calendar off at whatever height the terminal has.
+	lines := strings.Split(lipgloss.JoinVertical(lipgloss.Left, sections...), "\n")
+	visible := max(height-2, 1)
+	offset := min(v.scroll, max(len(lines)-visible, 0))
+	show := visible
+	more := offset+visible < len(lines)
+	if more {
+		// The hint takes the last visible row, so the frame never overruns.
+		show = max(visible-1, 1)
+	}
+	body := strings.Join(lines[offset:min(offset+show, len(lines))], "\n")
+	if more {
+		body += "\n" + t.Dim.Render("↓ more")
+	}
+	return lipgloss.NewStyle().Padding(1, 1).Render(body)
 }
 
 // events returns the events in the selected scope.

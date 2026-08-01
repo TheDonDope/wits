@@ -40,9 +40,9 @@ func (k productKeys) FullHelp() [][]key.Binding {
 func (v productsView) keys(base keyMap) help.KeyMap {
 	return productKeys{
 		keyMap:    base,
-		Reconcile: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "weigh")),
-		Edit:      key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
-		All:       key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "all/held")),
+		Reconcile: base.Weigh,
+		Edit:      base.Edit,
+		All:       withHelp(base.Add, "all/held"),
 	}
 }
 
@@ -66,14 +66,14 @@ func (v productsView) Update(msg tea.Msg, a *App) (productsView, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, a.keys.Up):
-			v.cursor = maxInt(v.cursor-1, 0)
+			v.cursor = max(v.cursor-1, 0)
 		case key.Matches(msg, a.keys.Down):
-			v.cursor = minInt(v.cursor+1, maxInt(len(rows)-1, 0))
+			v.cursor = min(v.cursor+1, max(len(rows)-1, 0))
 		case key.Matches(msg, a.keys.Top):
 			v.cursor = 0
 		case key.Matches(msg, a.keys.Bottom):
-			v.cursor = maxInt(len(rows)-1, 0)
-		case msg.String() == "a":
+			v.cursor = max(len(rows)-1, 0)
+		case key.Matches(msg, a.keys.Add):
 			v.allTime = !v.allTime
 			v.cursor = 0
 		}
@@ -246,7 +246,7 @@ func (v productsView) detail(a *App, r productRow, width int) string {
 	if r.Bought > 0 {
 		remaining = clamp(r.Held()/r.Bought, 0, 1)
 	}
-	bar := Gauge(maxInt(width-46, 10), remaining, t.Level(remaining), t.Dim)
+	bar := Gauge(max(width-46, 10), remaining, t.Level(remaining), t.Dim)
 
 	return lipgloss.JoinVertical(lipgloss.Left,
 		"  "+t.Dim.Render(strings.Join(facts, " · ")),
