@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -368,4 +369,175 @@ func TestDeviceTemperaturesAreChecked(t *testing.T) {
 	}
 	assert.NoError(t, validTemps(&catalog.Device{Name: "x", MinTemp: 40, MaxTemp: 230, DefaultTemp: 185}),
 		"Should accept a sensible range")
+}
+
+// withDevices adds two devices to a live app and reloads it.
+func withDevices(t *testing.T, app *App) *App {
+	t.Helper()
+	devices := &catalog.Devices{}
+	require.NoError(t, devices.Add(&catalog.Device{Name: "Volcano Hybrid", Kind: "desktop", MinTemp: 40, MaxTemp: 230, DefaultTemp: 185}))
+	require.NoError(t, devices.Add(&catalog.Device{Name: "Mighty+", Kind: "portable", MinTemp: 40, MaxTemp: 210, DefaultTemp: 180}))
+	require.NoError(t, devices.Save(app.data.Repo.DevicesPath()))
+
+	data, err := Load(app.data.Repo)
+	require.NoError(t, err)
+	app.data = data
+	return app
+}
+
+func TestDevicesScreen(t *testing.T) {
+	app := withDevices(t, liveApp(t))
+	app.screen = devicesScreen
+	var m tea.Model = app
+
+	out := stripANSI(m.View().Content)
+
+	assert.Contains(t, out, "Volcano Hybrid", "Should list the devices")
+	assert.Contains(t, out, "40–230°C", "Should show the range")
+	assert.Contains(t, out, "185°C", "Should show the default")
+	assert.Contains(t, out, "0 sessions", "Should say how much a device is used")
+	assert.NotContains(t, out, "1 sessions", "and should say it in English")
+	assert.Contains(t, out, "Δ-9-THC", "Should show what the selected device's default releases")
+}
+
+func TestDevicesScreenWarnsAboutBenzene(t *testing.T) {
+	app := liveApp(t)
+	devices := &catalog.Devices{}
+	require.NoError(t, devices.Add(&catalog.Device{Name: "Too hot", MaxTemp: 250, DefaultTemp: 220}))
+	require.NoError(t, devices.Save(app.data.Repo.DevicesPath()))
+	data, err := Load(app.data.Repo)
+	require.NoError(t, err)
+	app.data = data
+	app.screen = devicesScreen
+
+	var m tea.Model = app
+	out := stripANSI(m.View().Content)
+
+	assert.Contains(t, out, "Benzene", "Should warn when a default setting reaches benzene")
+}
+
+func TestDevicesNavigation(t *testing.T) {
+	app := withDevices(t, liveApp(t))
+	app.screen = devicesScreen
+	var m tea.Model = app
+
+	first := app.devices.Selected(app)
+	require.NotNil(t, first)
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'j', Text: "j"})
+	second := app.devices.Selected(app)
+	require.NotNil(t, second)
+	assert.NotEqual(t, first.Slug, second.Slug, "Should move to the next device")
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'k', Text: "k"})
+	assert.Equal(t, first.Slug, app.devices.Selected(app).Slug, "Should move back")
+
+	// And it must not run off either end.
+	for i := 0; i < 10; i++ {
+		m, _ = send(m, tea.KeyPressMsg{Code: 'k', Text: "k"})
+	}
+	assert.Equal(t, first.Slug, app.devices.Selected(app).Slug, "Should stop at the top")
+	for i := 0; i < 10; i++ {
+		m, _ = send(m, tea.KeyPressMsg{Code: 'j', Text: "j"})
+	}
+	assert.NotNil(t, app.devices.Selected(app), "Should stop at the bottom rather than run off it")
+}
+
+func TestDeviceEditAndRemove(t *testing.T) {
+	app := withDevices(t, liveApp(t))
+	app.screen = devicesScreen
+	var m tea.Model = app
+
+	t.Run("Edit", func(t *testing.T) {
+		m, _ = send(m, tea.KeyPressMsg{Code: 'e', Text: "e"})
+		require.NotNil(t, app.device, "e should open the edit form")
+		assert.Contains(t, stripANSI(app.device.View(app, 92)), "Edit device", "Should say it is editing")
+
+		// The name is prefilled, so appending is enough to change it.
+		m = typeText(m, " II")
+		_, msgs := confirmThrough(m, 8)
+
+		var saved bool
+		for _, msg := range msgs {
+			if d, ok := msg.(deviceDoneMsg); ok {
+				require.NoError(t, d.err)
+				saved = true
+			}
+		}
+		require.True(t, saved, "Should have saved, got %v", msgs)
+
+		devices, err := catalog.LoadDevices(app.data.Repo.DevicesPath())
+		require.NoError(t, err)
+		var found bool
+		for _, d := range devices.Devices {
+			if strings.HasSuffix(d.Name, " II") {
+				found = true
+			}
+		}
+		assert.True(t, found, "Should have written the edited name")
+	})
+
+	t.Run("Remove", func(t *testing.T) {
+		before := len(app.deviceList())
+		require.Positive(t, before)
+
+		m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
+		require.NotNil(t, app.device, "d should open the remove form")
+
+		// Accepting is also submitting here: the confirm is the last field, so
+		// the outcome arrives on this keypress rather than a later enter.
+		m, msgs := send(m, tea.KeyPressMsg{Code: 'y', Text: "y"})
+		var more []tea.Msg
+		m, more = confirmThrough(m, 4)
+		msgs = append(msgs, more...)
+
+		var removed bool
+		for _, msg := range msgs {
+			if d, ok := msg.(deviceDoneMsg); ok {
+				require.NoError(t, d.err)
+				removed = true
+			}
+		}
+		require.True(t, removed, "Should have removed it, got %v", msgs)
+
+		devices, err := catalog.LoadDevices(app.data.Repo.DevicesPath())
+		require.NoError(t, err)
+		assert.Len(t, devices.Devices, before-1, "Should have written the shorter catalog")
+	})
+}
+
+func TestDeviceRemoveDefaultsToKeeping(t *testing.T) {
+	app := withDevices(t, liveApp(t))
+	app.screen = devicesScreen
+	var m tea.Model = app
+	before := len(app.deviceList())
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
+	require.NotNil(t, app.device)
+	_, msgs := confirmThrough(m, 6)
+
+	for _, msg := range msgs {
+		if d, ok := msg.(deviceDoneMsg); ok {
+			assert.ErrorIs(t, d.err, errCancelled, "Should default to keeping the device")
+		}
+	}
+	devices, err := catalog.LoadDevices(app.data.Repo.DevicesPath())
+	require.NoError(t, err)
+	assert.Len(t, devices.Devices, before, "Should not have removed anything")
+}
+
+func TestDevicesScreenKeys(t *testing.T) {
+	app := withDevices(t, liveApp(t))
+	app.screen = devicesScreen
+
+	keys := app.screenKeys()
+
+	require.NotEmpty(t, keys.ShortHelp(), "Should offer hints")
+	assert.NotEmpty(t, keys.FullHelp(), "Should offer a full listing")
+	var help string
+	for _, b := range keys.ShortHelp() {
+		help += b.Help().Key + " " + b.Help().Desc + " "
+	}
+	assert.Contains(t, help, "add", "Should mention adding")
+	assert.Contains(t, help, "remove", "Should mention removing")
 }
