@@ -4,11 +4,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 
+	"github.com/TheDonDope/wits-tui/cmd/wits/commands"
 	"github.com/TheDonDope/wits-tui/cmd/wits/home"
+	"github.com/TheDonDope/wits-tui/pkg/repo"
 	"github.com/TheDonDope/wits-tui/pkg/version"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/joho/godotenv"
@@ -33,6 +37,8 @@ var (
 		Short:        "A tui for cannabis patients and users",
 		Long:         "Wits is the weed information tracking system, aimed to help cannabis patients and users.",
 		SilenceUsage: true,
+		// main reports the error itself, so cobra should not print it too.
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return home.Command.RunE(cmd, args)
 		},
@@ -41,6 +47,18 @@ var (
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+	rootCmd.AddCommand(
+		commands.Init,
+		commands.Buy,
+		commands.Grind,
+		commands.Sesh,
+		commands.Device,
+		commands.Import,
+		commands.Temps,
+		commands.Status,
+		commands.Log,
+		commands.Export,
+	)
 
 	if len(CommitSHA) >= 7 {
 		vt := rootCmd.VersionTemplate()
@@ -61,29 +79,45 @@ func init() {
 }
 
 func main() {
-	log.Println("🚀 🖥️  (cmd/wits/main.go) main()")
 	ctx := context.Background()
 	loadEnvironment()
-	ensureWitsFolders()
-	f, err := tea.LogToFile(fmt.Sprintf("%s/%s/%s", os.Getenv("WITS_DIR"), os.Getenv("LOG_DIR"), os.Getenv("LOG_FILE")), "debug")
-	if err != nil {
-		log.Fatalf("🚨 🖥️  (cmd/wits/main.go) ❓ 🗒️  Failed setting the debug log file: %v \n", err)
-	}
-	defer f.Close()
+	closeLog := openLog()
+	defer closeLog()
+	log.Println("🚀 🖥️  (cmd/wits/main.go) main()")
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "🚨 %v\n", err)
 		os.Exit(1)
 	}
-
 }
 
+// loadEnvironment reads a .env file if there is one. Configuration lives in
+// .wits/config.yml now, so a missing .env is not a problem: it used to be fatal,
+// which meant the binary only ran from the directory that happened to have one.
 func loadEnvironment() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("🚨 🖥️  (cmd/wits/main.go) ❓ 🗒️  Failed to load configuration from environment: %v \n", err)
+		return
 	}
 	log.Println("✅ 🖥️  (cmd/wits/main.go) loadEnvironment()")
 }
 
-func ensureWitsFolders() error {
-	log.Println("✅ 🖥️  (cmd/wits/main.go) ensureWitsFolders()")
-	return os.MkdirAll(fmt.Sprintf("%s/%s", os.Getenv("WITS_DIR"), os.Getenv("LOG_DIR")), os.ModePerm)
+// openLog sends log output to a file inside the repository when there is one,
+// so that log lines never scribble over the TUI. Without a repository, logging
+// is discarded rather than dumped on the terminal.
+func openLog() func() {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.SetOutput(io.Discard)
+		return func() {}
+	}
+	r, err := repo.Discover(wd)
+	if err != nil {
+		log.SetOutput(io.Discard)
+		return func() {}
+	}
+	f, err := tea.LogToFile(filepath.Join(r.Root(), r.Config.LogFile), "debug")
+	if err != nil {
+		log.SetOutput(io.Discard)
+		return func() {}
+	}
+	return func() { f.Close() }
 }
