@@ -33,7 +33,7 @@ var Buy = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		e, product, added, err := s.recorder.Buy(args[0], grams, at)
+		e, product, added, err := s.Recorder.Buy(args[0], grams, at)
 		if err != nil {
 			return err
 		}

@@ -78,12 +78,26 @@ to the whole history. Entries can be recorded there too.
 | `wits sesh <product> <amount>` | Record a session, drawing on the tin |
 | `wits status` | What is left, and how long it will last |
 | `wits log` | The journal, newest first |
+| `wits revert <entry>` | Undo an entry by recording a correction |
 | `wits device add <name>` | Register a vaporizer |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet (dry run unless `--commit`) |
 | `wits export` | Markdown, for reading or publishing |
 | `wits bundle` | The whole repository as one compact file |
 | `wits restore <file>` | Rebuild a repository from a bundle |
+
+## Correcting a mistake
+
+Nothing is edited in place. An entry is undone by recording a correction that
+moves the same grams back the way they came, so both stay in the log:
+
+```sh
+wits log --oneline -n 1        # find the entry
+wits revert 8297238 --reason "misread the scale"
+```
+
+In the interface, `e` amends an amount and `d` undoes an entry. The log shows
+what currently stands; `v` reveals the corrections behind it.
 
 ## The repository
 
@@ -116,7 +130,7 @@ products:
 | --- | ---: | --- |
 | journal | 500,729 | |
 | **bundle** | **27,510** | **18×** |
-| bundle, gzipped | 6,297 | 79× |
+| bundle, gzipped | 6,299 | 79× |
 
 ## Temperatures
 
@@ -127,8 +141,9 @@ producing benzene.
 ```sh
 $ wits temps 210
 COMPOUND         BOILS AT  EFFECTS
-Δ-9-THC          157°C     psychoactive, anti-inflammatory, anti-emetic, …
-CBD              165°C     non-psychoactive, anti-inflammatory, anti-anxiety
+THCA             120°C     anti-inflammatory, anti-epileptic, anti-proliferic
+CBDA             130°C     anti-inflammatory, anti-proliferic
+β-Caryophyllene  130°C     anti-malarial, cytoprotective, anti-inflammatory
 …
 ⚠️  210°C is at or above the 205°C boiling point of Benzene.
 ```

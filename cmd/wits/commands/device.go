@@ -33,10 +33,7 @@ var deviceAdd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		devices, err := catalog.LoadDevices(s.repo.DevicesPath())
-		if err != nil {
-			return err
-		}
+		devices := s.Devices
 		device := &catalog.Device{
 			Name:        args[0],
 			Kind:        deviceKind,
@@ -47,7 +44,7 @@ var deviceAdd = &cobra.Command{
 		if err := devices.Add(device); err != nil {
 			return err
 		}
-		if err := devices.Save(s.repo.DevicesPath()); err != nil {
+		if err := devices.Save(s.Repo.DevicesPath()); err != nil {
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Added device %s (%s)\n", device.Slug, device.Name)
@@ -64,10 +61,7 @@ var deviceList = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		devices, err := catalog.LoadDevices(s.repo.DevicesPath())
-		if err != nil {
-			return err
-		}
+		devices := s.Devices
 		out := cmd.OutOrStdout()
 		if len(devices.Devices) == 0 {
 			fmt.Fprintln(out, "No devices yet. Add one with `wits device add`.")

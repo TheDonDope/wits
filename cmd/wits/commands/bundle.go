@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/TheDonDope/wits-tui/pkg/bundle"
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
 	"github.com/spf13/cobra"
 )
 
@@ -37,11 +36,6 @@ var Bundle = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		devices, err := catalog.LoadDevices(s.repo.DevicesPath())
-		if err != nil {
-			return err
-		}
-
 		var out io.Writer = cmd.OutOrStdout()
 		if bundleOut != "" {
 			f, err := os.OpenFile(bundleOut, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
@@ -58,14 +52,14 @@ var Bundle = &cobra.Command{
 		}
 
 		if err := bundle.Write(out, bundle.Contents{
-			Products: s.catalog,
-			Devices:  devices,
-			Events:   s.state.Events,
+			Products: s.Products,
+			Devices:  s.Devices,
+			Events:   s.State.Events,
 		}); err != nil {
 			return err
 		}
 		if bundleOut != "" {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Bundled %d events into %s\n", len(s.state.Events), bundleOut)
+			fmt.Fprintf(cmd.ErrOrStderr(), "Bundled %d events into %s\n", len(s.State.Events), bundleOut)
 		}
 		return nil
 	},
@@ -88,7 +82,7 @@ var Restore = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if n := len(s.state.Events); n > 0 {
+		if n := len(s.State.Events); n > 0 {
 			return fmt.Errorf("journal already holds %d events; restore into an empty repository", n)
 		}
 
@@ -114,21 +108,21 @@ var Restore = &cobra.Command{
 		}
 
 		if contents.Products != nil && len(contents.Products.Products) > 0 {
-			if err := contents.Products.Save(s.repo.ProductsPath()); err != nil {
+			if err := contents.Products.Save(s.Repo.ProductsPath()); err != nil {
 				return err
 			}
 		}
 		if contents.Devices != nil && len(contents.Devices.Devices) > 0 {
-			if err := contents.Devices.Save(s.repo.DevicesPath()); err != nil {
+			if err := contents.Devices.Save(s.Repo.DevicesPath()); err != nil {
 				return err
 			}
 		}
 		for i, e := range contents.Events {
-			if _, err := s.journal.Append(e); err != nil {
+			if _, err := s.Journal().Append(e); err != nil {
 				return fmt.Errorf("restoring event %d: %w", i+1, err)
 			}
 		}
-		if err := s.journal.Verify(); err != nil {
+		if err := s.Journal().Verify(); err != nil {
 			return fmt.Errorf("the restored journal does not verify: %w", err)
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Restored %d products, %d devices and %d events.\n",

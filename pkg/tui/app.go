@@ -11,55 +11,25 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
 	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits-tui/pkg/workspace"
 )
 
-// Data is everything the screens read. It is loaded once and replaced whole
-// when the journal changes, so no screen can drift from another.
+// Data is what the screens read: a workspace snapshot, plus the moment it was
+// taken, so that nothing on screen calls time.Now for itself and disagrees with
+// the rest of the frame.
 type Data struct {
-	Repo     *repo.Repo
-	Products *catalog.Catalog
-	Devices  *catalog.Devices
-	State    *ledger.State
-	Now      time.Time
-}
-
-// Cycle returns the cycle in progress, or nil.
-func (d Data) Cycle() *ledger.Cycle { return d.State.CurrentCycle() }
-
-// ProductName resolves a slug to its display name, falling back to the slug.
-func (d Data) ProductName(slug string) string {
-	if d.Products != nil {
-		if p, err := d.Products.Find(slug); err == nil {
-			return p.Name
-		}
-	}
-	return slug
+	*workspace.Workspace
+	Now time.Time
 }
 
 // Load reads a repository into a Data.
 func Load(r *repo.Repo) (Data, error) {
-	products, err := catalog.Load(r.ProductsPath())
+	ws, err := workspace.Read(r)
 	if err != nil {
 		return Data{}, err
 	}
-	devices, err := catalog.LoadDevices(r.DevicesPath())
-	if err != nil {
-		return Data{}, err
-	}
-	events, err := r.Journal().Events()
-	if err != nil {
-		return Data{}, err
-	}
-	return Data{
-		Repo:     r,
-		Products: products,
-		Devices:  devices,
-		State:    ledger.Fold(events),
-		Now:      time.Now(),
-	}, nil
+	return Data{Workspace: ws, Now: ws.OpenedAt}, nil
 }
 
 // screen is one of the views the tab bar switches between.

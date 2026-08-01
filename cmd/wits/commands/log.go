@@ -30,16 +30,16 @@ var Log = &cobra.Command{
 			return err
 		}
 
-		events := s.state.Events
+		events := s.State.Events
 		if logCurrent {
-			if cycle := s.state.CurrentCycle(); cycle != nil {
+			if cycle := s.State.CurrentCycle(); cycle != nil {
 				events = cycle.Events
 			} else {
 				events = nil
 			}
 		}
 		if logProduct != "" {
-			product, err := s.catalog.Find(logProduct)
+			product, err := s.Products.Find(logProduct)
 			if err != nil {
 				return err
 			}

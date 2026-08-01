@@ -8,58 +8,26 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
-	"github.com/TheDonDope/wits-tui/pkg/record"
-	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits-tui/pkg/workspace"
 )
 
-// session bundles the repository, its catalog and the folded journal, which is
-// what nearly every command needs before it can do anything.
+// session is the workspace a command runs against, named for what a command
+// does with it.
 type session struct {
-	repo     *repo.Repo
-	catalog  *catalog.Catalog
-	devices  *catalog.Devices
-	journal  *journal.Journal
-	state    *ledger.State
-	recorder *record.Recorder
+	*workspace.Workspace
 }
 
-// open discovers the repository from the working directory and replays its
-// journal.
+// open reads the repository containing the working directory.
 func open() (*session, error) {
-	wd, err := os.Getwd()
+	ws, err := workspace.Here()
 	if err != nil {
 		return nil, err
 	}
-	r, err := repo.Discover(wd)
-	if err != nil {
-		return nil, err
-	}
-	c, err := catalog.Load(r.ProductsPath())
-	if err != nil {
-		return nil, err
-	}
-	j := r.Journal()
-	events, err := j.Events()
-	if err != nil {
-		return nil, err
-	}
-	devices, err := catalog.LoadDevices(r.DevicesPath())
-	if err != nil {
-		return nil, err
-	}
-	state := ledger.Fold(events)
-	return &session{
-		repo: r, catalog: c, journal: j, state: state, devices: devices,
-		recorder: record.New(r, c, devices, state),
-	}, nil
+	return &session{Workspace: ws}, nil
 }
 
 // parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".

@@ -21,9 +21,36 @@ var ErrBrokenChain = errors.New("journal hash chain is broken")
 // The file is only ever opened for appending. Wits never rewrites it, so a
 // failed or partial write can add a bad line but can never destroy an existing
 // one.
+//
+// Appending is guarded twice over. The mutex serialises writers inside this
+// process; an advisory lock on a file beside the journal serialises them across
+// processes. Both are needed, because appending is a read-then-write: the tip is
+// read to chain onto, and two writers that read the same tip would append two
+// entries claiming the same predecessor and fork the chain. That matters as soon
+// as anything other than a single command talks to a repository.
 type Journal struct {
 	mu   sync.Mutex
 	path string
+}
+
+// lockPath is the file the cross-process lock is taken on. It is separate from
+// the journal so that taking it never opens the journal for writing.
+func (j *Journal) lockPath() string { return j.path + ".lock" }
+
+// lock takes the cross-process append lock, returning the release function.
+func (j *Journal) lock() (func(), error) {
+	f, err := os.OpenFile(j.lockPath(), os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		return nil, err
+	}
+	if err := lockFile(f); err != nil {
+		f.Close()
+		return nil, err
+	}
+	return func() {
+		unlockFile(f)
+		f.Close()
+	}, nil
 }
 
 // Open returns the journal stored at path. The file is created on the first
@@ -41,6 +68,12 @@ func (j *Journal) Path() string { return j.path }
 func (j *Journal) Append(e Event) (Event, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
+
+	release, err := j.lock()
+	if err != nil {
+		return Event{}, err
+	}
+	defer release()
 
 	e = withDefaults(e)
 	if err := e.Validate(); err != nil {

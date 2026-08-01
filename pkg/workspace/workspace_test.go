@@ -1,0 +1,119 @@
+package workspace
+
+import (
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits-tui/pkg/repo"
+)
+
+// TestMain handles global test setup
+func TestMain(m *testing.M) {
+	// Disable log output during tests
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
+}
+
+// filled returns a repository holding one fill and one grind.
+func filled(t *testing.T) *repo.Repo {
+	t.Helper()
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+
+	ws, err := Read(r)
+	require.NoError(t, err)
+	_, _, _, err = ws.Recorder.Buy("Enua 22/1 Wedding Cake", 20, time.Now())
+	require.NoError(t, err)
+	_, err = ws.Recorder.Grind("wedding", 0.75, time.Now())
+	require.NoError(t, err)
+	return r
+}
+
+func TestRead(t *testing.T) {
+	ws, err := Read(filled(t))
+	require.NoError(t, err)
+
+	assert.Len(t, ws.Events(), 2, "Should have read the journal")
+	assert.Len(t, ws.Products.Products, 1, "Should have read the catalog")
+	assert.NotNil(t, ws.Devices, "Should have read the devices, even when there are none")
+	assert.Equal(t, 19.25, ws.State.Balances["enua-wedding-cake"].Storage, "Should have folded the journal")
+	assert.NotNil(t, ws.Recorder, "Should be ready to record")
+	assert.False(t, ws.OpenedAt.IsZero(), "Should stamp when the snapshot was taken")
+}
+
+func TestOpenFindsTheRepositoryFromBelow(t *testing.T) {
+	r := filled(t)
+	nested := filepath.Join(r.WorkTree(), "a", "b")
+	require.NoError(t, os.MkdirAll(nested, 0700))
+
+	ws, err := Open(nested)
+	require.NoError(t, err)
+
+	assert.Equal(t, r.Root(), ws.Repo.Root(), "Should walk up to the repository")
+}
+
+func TestOpenWithoutARepository(t *testing.T) {
+	_, err := Open(t.TempDir())
+
+	assert.ErrorIs(t, err, repo.ErrNotARepo, "Should report a missing repository rather than inventing one")
+}
+
+func TestSnapshotDoesNotMoveUnderneath(t *testing.T) {
+	r := filled(t)
+	ws, err := Read(r)
+	require.NoError(t, err)
+	before := len(ws.Events())
+
+	// Something else writes to the same repository.
+	_, err = r.Journal().Append(journal.Event{
+		Type: journal.Grind, Product: "enua-wedding-cake", Grams: 0.5,
+		From: journal.Storage, To: journal.Stash, OccurredAt: time.Now(),
+	})
+	require.NoError(t, err)
+
+	assert.Len(t, ws.Events(), before,
+		"A snapshot should not change under a screen that is drawing from it")
+
+	fresh, err := ws.Reload()
+	require.NoError(t, err)
+	assert.Len(t, fresh.Events(), before+1, "and Reload should pick the new entry up")
+}
+
+func TestProductName(t *testing.T) {
+	ws, err := Read(filled(t))
+	require.NoError(t, err)
+
+	assert.Equal(t, "Enua 22/1 Wedding Cake", ws.ProductName("enua-wedding-cake"),
+		"Should resolve a slug to its display name")
+	assert.Equal(t, "not-in-the-catalog", ws.ProductName("not-in-the-catalog"),
+		"and should fall back to the slug, so an orphaned entry still reads sensibly")
+}
+
+func TestCycle(t *testing.T) {
+	ws, err := Read(filled(t))
+	require.NoError(t, err)
+
+	cycle := ws.Cycle()
+	require.NotNil(t, cycle, "Should report the cycle in progress")
+	assert.Equal(t, 20.0, cycle.Purchased, "Should be the fill that opened it")
+}
+
+func TestReadEmptyRepository(t *testing.T) {
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+
+	ws, err := Read(r)
+	require.NoError(t, err)
+
+	assert.Empty(t, ws.Events(), "Should read as empty rather than failing")
+	assert.Nil(t, ws.Cycle(), "Should report no cycle")
+	assert.NotNil(t, ws.Recorder, "and should still be ready to record the first entry")
+}

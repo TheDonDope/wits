@@ -2,9 +2,13 @@
 
 ## **Did you find a bug?**
 
-- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/TheDonDope/wits-tui/issues).
+- **Ensure it is not already known** by reading the [ROADMAP.md](./ROADMAP.md). We
+  do not use GitHub Issues: features, bugs and refactorings are tracked there, so
+  that the plan and the code stay in one place.
 
-- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/TheDonDope/wits-tui/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
+- If it is not there, open a pull request adding it to the roadmap, or one fixing
+  it. Include what you expected to happen, what happened instead, and enough to
+  reproduce it.
 
 ## **Did you write a patch that fixes a bug?**
 

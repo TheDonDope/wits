@@ -44,13 +44,13 @@ var Sesh = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		e, err := s.recorder.Session(args[0], grams, at, seshDevice, seshTemp, seshNote)
+		e, err := s.Recorder.Session(args[0], grams, at, seshDevice, seshTemp, seshNote)
 		if err != nil {
 			return err
 		}
 		out := cmd.OutOrStdout()
 		fmt.Fprintf(out, "[%s] sesh %.2fg %s, %.2fg left in the tin\n",
-			shortHash(e.Hash), e.Grams, e.Product, s.recorder.Available(e.Product, journal.Stash))
+			shortHash(e.Hash), e.Grams, e.Product, s.Recorder.Available(e.Product, journal.Stash))
 		if e.Temperature > 0 {
 			writeReleased(out, e.Temperature)
 		}
