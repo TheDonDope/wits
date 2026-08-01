@@ -286,3 +286,29 @@ func TestAppendIsSafeAcrossProcesses(t *testing.T) {
 		seqs[e.Seq] = true
 	}
 }
+
+func TestAppendToAnUnwritableRepository(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("running as root, permissions are not enforced")
+	}
+	dir := t.TempDir()
+	j := Open(filepath.Join(dir, "journal.ndjson"))
+	require.NoError(t, os.Chmod(dir, 0500))
+	t.Cleanup(func() { os.Chmod(dir, 0700) })
+
+	_, err := j.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 1})
+
+	assert.Error(t, err, "Should fail plainly rather than appear to have recorded something")
+}
+
+func TestVerifyReportsAnUnreadableJournal(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("running as root, permissions are not enforced")
+	}
+	path := filepath.Join(t.TempDir(), "journal.ndjson")
+	require.NoError(t, os.WriteFile(path, []byte("{}\n"), 0000))
+
+	err := Open(path).Verify()
+
+	assert.Error(t, err, "Should not report a journal it cannot read as verified")
+}
