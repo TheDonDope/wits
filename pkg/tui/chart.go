@@ -130,8 +130,8 @@ func BarChart(bars []Bar, width int, t *Theme) string {
 	}
 	labelW, noteW, peak := 0, 0, 0.0
 	for _, b := range bars {
-		labelW = maxInt(labelW, lipgloss.Width(b.Label))
-		noteW = maxInt(noteW, lipgloss.Width(b.Note))
+		labelW = max(labelW, lipgloss.Width(b.Label))
+		noteW = max(noteW, lipgloss.Width(b.Note))
 		peak = math.Max(peak, b.Value)
 	}
 	barW := width - labelW - noteW - 3
@@ -245,7 +245,7 @@ func Stack(width int, parts []Bar, total float64, t *Theme) string {
 	for _, p := range parts {
 		w := int(p.Value / total * float64(width))
 		if w <= 0 || used+w > width {
-			w = minInt(w, width-used)
+			w = min(w, width-used)
 		}
 		if w <= 0 {
 			continue
@@ -291,13 +291,6 @@ func maxOf(values []float64) float64 {
 		m = math.Max(m, v)
 	}
 	return m
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 func clamp(v, lo, hi float64) float64 {

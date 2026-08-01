@@ -39,9 +39,9 @@ func (k deviceKeys) FullHelp() [][]key.Binding {
 func (v devicesView) keys(base keyMap) help.KeyMap {
 	return deviceKeys{
 		keyMap: base,
-		Add:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
-		Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
-		Remove: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "remove")),
+		Add:    base.Add,
+		Edit:   base.Edit,
+		Remove: withHelp(base.Delete, "remove"),
 	}
 }
 
@@ -50,9 +50,9 @@ func (v devicesView) Update(msg tea.Msg, a *App) (devicesView, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, a.keys.Up):
-			v.cursor = maxInt(v.cursor-1, 0)
+			v.cursor = max(v.cursor-1, 0)
 		case key.Matches(msg, a.keys.Down):
-			v.cursor = minInt(v.cursor+1, maxInt(count-1, 0))
+			v.cursor = min(v.cursor+1, max(count-1, 0))
 		}
 	}
 	return v, nil
@@ -207,7 +207,7 @@ func newDeviceForm(d *catalog.Device, a *App) *deviceForm {
 		huh.NewInput().Title("Highest temperature").Description("°C").Value(&f.max).Validate(optionalInt),
 		huh.NewInput().Title("Default temperature").Description("°C, used when a session gives none").
 			Value(&f.def).Validate(optionalInt),
-	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 
@@ -225,7 +225,7 @@ func newDeviceRemoveForm(d *catalog.Device, a *App) *deviceForm {
 		huh.NewNote().Title(d.Name).Description(note),
 		huh.NewConfirm().Title("Remove this device?").Affirmative("Remove").Negative("Keep").
 			Value(&f.confirm),
-	)).WithShowHelp(true).WithWidth(minInt(a.inner(), 72))
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
 	return f
 }
 
@@ -319,7 +319,7 @@ func (f *deviceForm) View(a *App, width int) string {
 	case f.editing != nil:
 		title = "Edit device"
 	}
-	return t.Panel.Width(minInt(width-2, 74)).Render(lipgloss.JoinVertical(lipgloss.Left,
+	return t.Panel.Width(min(width-2, 74)).Render(lipgloss.JoinVertical(lipgloss.Left,
 		t.PanelTitle.Render(title),
 		t.Dim.Render("enter to move on · esc to cancel"),
 		"",

@@ -51,11 +51,11 @@ func AreaChart(values, average []float64, width, height int, t *Theme, fill, lin
 	lineDot := make([]int, points)
 	for i, v := range vals {
 		if v > 0 {
-			fillTop[i] = maxInt(int(math.Round(v/peak*float64(subH))), 1)
+			fillTop[i] = max(int(math.Round(v/peak*float64(subH))), 1)
 		}
 		lineDot[i] = -1
 		if avg != nil && avg[i] > 0 {
-			lineDot[i] = minInt(maxInt(int(math.Round(avg[i]/peak*float64(subH))), 1), subH) - 1
+			lineDot[i] = min(max(int(math.Round(avg[i]/peak*float64(subH))), 1), subH) - 1
 		}
 	}
 
@@ -111,7 +111,7 @@ func movingAverage(values []float64, window int) []float64 {
 		if i >= window {
 			sum -= values[i-window]
 		}
-		out[i] = sum / float64(minInt(i+1, window))
+		out[i] = sum / float64(min(i+1, window))
 	}
 	return out
 }

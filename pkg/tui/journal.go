@@ -46,15 +46,22 @@ func (k journalKeys) FullHelp() [][]key.Binding {
 func (v journalView) keys(base keyMap) help.KeyMap {
 	return journalKeys{
 		keyMap: base,
-		Filter: key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "filter")),
-		Reveal: key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "corrections")),
-		Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "amend")),
-		Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "undo")),
+		Filter: filterKey,
+		Reveal: revealKey,
+		Edit:   withHelp(base.Edit, "amend"),
+		Delete: withHelp(base.Delete, "undo"),
 	}
 }
 
 // filters is the cycle the f key steps through.
 var filters = []journal.Type{"", journal.Purchase, journal.Grind, journal.Sesh}
+
+// filterKey and revealKey are declared once, shared by the help line and the
+// dispatch, so neither can drift from the other.
+var (
+	filterKey = key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "filter"))
+	revealKey = key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "corrections"))
+)
 
 // row is a rendered line: either a day heading or an entry.
 type row struct {
@@ -86,7 +93,7 @@ func (v journalView) Update(msg tea.Msg, a *App) (journalView, tea.Cmd) {
 			v.cursor = v.firstEntry(0, +1)
 		case key.Matches(msg, a.keys.Bottom):
 			v.cursor = v.firstEntry(len(v.rows)-1, -1)
-		case msg.String() == "f":
+		case key.Matches(msg, filterKey):
 			for i, f := range filters {
 				if f == v.filter {
 					v.filter = filters[(i+1)%len(filters)]
@@ -95,7 +102,7 @@ func (v journalView) Update(msg tea.Msg, a *App) (journalView, tea.Cmd) {
 			}
 			v.rows = v.build(a)
 			v.cursor = v.firstEntry(0, +1)
-		case msg.String() == "v":
+		case key.Matches(msg, revealKey):
 			v.showAll = !v.showAll
 			v.rows = v.build(a)
 			v.cursor = v.firstEntry(0, +1)
@@ -178,8 +185,8 @@ func (v journalView) View(a *App, height int) string {
 		return lipgloss.NewStyle().Padding(1, 1).Render(
 			t.Subtitle.Render("Nothing logged yet.  Press n to record a grind."))
 	}
-	if v.cursor >= len(v.rows) || v.rows[minInt(v.cursor, len(v.rows)-1)].heading {
-		v.cursor = v.firstEntry(minInt(v.cursor, len(v.rows)-1), +1)
+	if v.cursor >= len(v.rows) || v.rows[min(v.cursor, len(v.rows)-1)].heading {
+		v.cursor = v.firstEntry(min(v.cursor, len(v.rows)-1), +1)
 	}
 
 	var lines []string
@@ -196,7 +203,7 @@ func (v journalView) View(a *App, height int) string {
 		}
 	}
 
-	body := maxInt(height-2, 1)
+	body := max(height-2, 1)
 	v.view.SetWidth(width)
 	v.view.SetHeight(body)
 	v.view.SetContent(strings.Join(lines, "\n"))
@@ -215,7 +222,7 @@ func scrollTo(line, offset, height, total int) int {
 	if line >= offset+height {
 		offset = line - height + 1
 	}
-	return maxInt(0, minInt(offset, maxInt(total-height, 0)))
+	return max(0, min(offset, max(total-height, 0)))
 }
 
 // status is the one-line summary above the log.
@@ -254,11 +261,4 @@ func countEvents(rows []row) int {
 		}
 	}
 	return n
-}
-
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
