@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/journal"
 	"gopkg.in/yaml.v3"
 )
 

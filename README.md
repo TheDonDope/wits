@@ -1,6 +1,6 @@
 # Wits - The 🥦 Information Tracking System
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/582a945a5bf24ec79fc6b3894b24544d)](https://app.codacy.com/gh/TheDonDope/wits-tui/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Codecov Badge](https://codecov.io/gh/TheDonDope/wits-tui/graph/badge.svg?token=9sWIVhEeIX)](https://codecov.io/gh/TheDonDope/wits-tui)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/582a945a5bf24ec79fc6b3894b24544d)](https://app.codacy.com/gh/TheDonDope/wits/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Codecov Badge](https://codecov.io/gh/TheDonDope/wits/graph/badge.svg?token=9sWIVhEeIX)](https://codecov.io/gh/TheDonDope/wits)
 
 Wits helps cannabis patients track what they were dispensed, what they have used
 and what is left.
@@ -98,6 +98,35 @@ wits revert 8297238 --reason "misread the scale"
 
 In the interface, `e` amends an amount and `d` undoes an entry. The log shows
 what currently stands; `v` reveals the corrections behind it.
+
+## Layout
+
+One Go module, several commands, and a web interface beside them. A module per
+component would mean a boundary between a server and the ledger it serves, and so
+versioning the ledger against itself on every change; the domain is shared, so it
+stays in one module.
+
+```text
+wits/                     module github.com/TheDonDope/wits
+  cmd/
+    wits/                 the terminal interface and the commands
+    wits-server/          the REST API                        (planned)
+  pkg/
+    journal/              the append-only log
+    ledger/               the fold: balances, cycles, statistics
+    repo/                 finding and creating a .wits directory
+    workspace/            opening a repository and holding its state
+    catalog/              products and devices
+    record/               applying entries, with the checks that guard them
+    bundle/               the portable archive format
+    importer/             reading the tracking spreadsheet
+    cannabis/             cannabinoids, terpenes and their boiling points
+    tui/                  the screens
+  wits-ui/                the web interface, in Angular       (planned)
+```
+
+`pkg/journal` depends on nothing else here, and everything above it depends
+downwards only. A server is another caller of `pkg/workspace`, not a new layer.
 
 ## The repository
 

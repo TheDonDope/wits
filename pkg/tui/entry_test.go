@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
-	"github.com/TheDonDope/wits-tui/pkg/record"
-	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/record"
+	"github.com/TheDonDope/wits/pkg/repo"
 )
 
 // liveApp returns an app backed by a real repository on disk, so that entries

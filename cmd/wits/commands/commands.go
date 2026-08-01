@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/workspace"
+	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
 // session is the workspace a command runs against, named for what a command

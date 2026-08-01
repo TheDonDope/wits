@@ -332,10 +332,11 @@ model above rather than fixed in place:
     onto. That is now guarded by an advisory file lock as well as a mutex, so two
     processes cannot fork the chain, but a long-lived server should also cache the
     fold rather than replay the journal per request.
-  - **Layout.** One Go module with several commands is the plan, rather than a
-    module per component: the domain is shared, and a module boundary between a
-    server and the ledger it serves would mean versioning the ledger against
-    itself. See the notes in the pull request that added this line.
+  - **Layout.** Done: the module is `github.com/TheDonDope/wits`, with `cmd/wits`
+    today and room for `cmd/wits-server` and `wits-ui/` beside it. One module
+    rather than one per component, because the domain is shared and a boundary
+    between a server and the ledger it serves would mean versioning the ledger
+    against itself.
 
 ## 📜 Notes
 

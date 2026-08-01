@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
-	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/repo"
 )
 
 // TestMain handles global test setup

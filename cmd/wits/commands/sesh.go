@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/spf13/cobra"
 )
 

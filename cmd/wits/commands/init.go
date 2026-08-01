@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/spf13/cobra"
 )
 

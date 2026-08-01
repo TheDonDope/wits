@@ -11,8 +11,8 @@ import (
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/record"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/record"
 )
 
 // entryKind is which entry the form is collecting.

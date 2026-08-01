@@ -10,10 +10,9 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
-	"github.com/TheDonDope/wits-tui/cmd/wits/commands"
-	"github.com/TheDonDope/wits-tui/cmd/wits/home"
-	"github.com/TheDonDope/wits-tui/pkg/repo"
-	"github.com/TheDonDope/wits-tui/pkg/version"
+	"github.com/TheDonDope/wits/cmd/wits/commands"
+	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/version"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
@@ -39,7 +38,7 @@ var (
 		// main reports the error itself, so cobra should not print it too.
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return home.Command.RunE(cmd, args)
+			return commands.Home.RunE(cmd, args)
 		},
 	}
 )

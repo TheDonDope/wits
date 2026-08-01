@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
-	"github.com/TheDonDope/wits-tui/pkg/workspace"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
 // TestMain handles global test setup

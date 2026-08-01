@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
-	"github.com/TheDonDope/wits-tui/pkg/ledger"
-	"github.com/TheDonDope/wits-tui/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/repo"
 )
 
 // Recorder appends entries to a repository's journal.

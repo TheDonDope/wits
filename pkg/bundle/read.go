@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	cannabis "github.com/TheDonDope/wits-tui/pkg/cannabis"
-	"github.com/TheDonDope/wits-tui/pkg/catalog"
-	"github.com/TheDonDope/wits-tui/pkg/journal"
+	cannabis "github.com/TheDonDope/wits/pkg/cannabis"
+	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
 )
 
 // can converts a stored integer back to a genetic type.

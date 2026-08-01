@@ -12,7 +12,7 @@
 Please report privately through [GitHub's security advisories][advisories] rather
 than in the open, since a repository holds a medical record.
 
-[advisories]: https://github.com/TheDonDope/wits-tui/security/advisories/new
+[advisories]: https://github.com/TheDonDope/wits/security/advisories/new
 
 ## What a repository contains
 

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	can "github.com/TheDonDope/wits-tui/pkg/cannabis"
+	can "github.com/TheDonDope/wits/pkg/cannabis"
 	"gopkg.in/yaml.v3"
 )
 
