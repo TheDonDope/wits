@@ -34,11 +34,26 @@ func New(r *repo.Repo, products *catalog.Catalog, devices *catalog.Devices, stat
 
 // Buy records a prescription fill, adding the product to the catalog if it is
 // not known yet. The product is returned along with whether it was new.
-func (r *Recorder) Buy(name string, grams float64, at time.Time) (journal.Event, *catalog.Product, bool, error) {
+//
+// A slug may be given for a new product; left empty, a short one is made up
+// that is not already taken. It is the name every later entry refers to, so it
+// is settled once, when the product first appears, and never afterwards.
+func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.Event, *catalog.Product, bool, error) {
 	product, err := r.products.Find(name)
 	added := false
 	if err != nil {
 		product = catalog.Parse(name)
+		if slug != "" {
+			if err := catalog.CheckSlug(slug); err != nil {
+				return journal.Event{}, nil, false, err
+			}
+			if r.products.Taken(slug) {
+				return journal.Event{}, nil, false, fmt.Errorf("the slug %q is already in use", slug)
+			}
+			product.Slug = slug
+		} else {
+			product.Slug = catalog.NewHandle(product, r.products.Handles())
+		}
 		if err := r.products.Add(product); err != nil {
 			return journal.Event{}, nil, false, err
 		}
@@ -338,3 +353,44 @@ func (r *Recorder) Difference(ref string, account journal.Account, weighed float
 
 // round trims to centigrams, the precision a jeweller's scale reads.
 func round(g float64) float64 { return math.Round(g*100) / 100 }
+
+// Rename changes what a product is called, and nothing else.
+//
+// The slug is left alone deliberately: it is the name every entry in the
+// journal refers to, and changing it would leave those entries pointing at a
+// product that no longer exists. What a jar is called can be corrected; what it
+// is remains what it was.
+func (r *Recorder) Rename(ref, name string) (*catalog.Product, error) {
+	product, err := r.products.Find(ref)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("a product needs a name")
+	}
+	product.Name = strings.TrimSpace(name)
+	if err := r.products.Save(r.repo.ProductsPath()); err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+
+// Describe replaces a product's parsed details, leaving its slug and its
+// entries alone.
+func (r *Recorder) Describe(ref string, p catalog.Product) (*catalog.Product, error) {
+	product, err := r.products.Find(ref)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(p.Name) == "" {
+		return nil, fmt.Errorf("a product needs a name")
+	}
+	product.Name = strings.TrimSpace(p.Name)
+	product.Manufacturer = strings.TrimSpace(p.Manufacturer)
+	product.Cultivar = strings.TrimSpace(p.Cultivar)
+	product.THC, product.CBD = p.THC, p.CBD
+	if err := r.products.Save(r.repo.ProductsPath()); err != nil {
+		return nil, err
+	}
+	return product, nil
+}

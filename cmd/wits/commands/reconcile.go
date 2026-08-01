@@ -30,7 +30,8 @@ var Reconcile = &cobra.Command{
 	Example: "  wits reconcile wedding-cake 17.6\n" +
 		"  wits reconcile wedding-cake 1.75 --stash --reason \"spilled on the desk\"\n" +
 		"  wits reconcile wedding-cake 17.6 --dry-run",
-	Args: cobra.ExactArgs(2),
+	Args:              cobra.ExactArgs(2),
+	ValidArgsFunction: completeProduct(""),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {

@@ -20,7 +20,8 @@ var Revert = &cobra.Command{
 		"The entry is named by its hash, abbreviated as `wits log` shows it.",
 	Example: "  wits revert 8297238\n" +
 		"  wits revert 8297238 --reason \"weighed the jar, not the herb\"",
-	Args: cobra.ExactArgs(1),
+	Args:              cobra.ExactArgs(1),
+	ValidArgsFunction: completeEntry,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {

@@ -3,6 +3,7 @@ package catalog
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -148,4 +149,98 @@ func TestLoadAndSave(t *testing.T) {
 
 		assert.Error(t, err, "Should not mistake a broken catalog for an empty one")
 	})
+}
+
+func TestNewHandle(t *testing.T) {
+	var free []string
+
+	t.Run("ReadsLikeSomeoneAbbreviatingIt", func(t *testing.T) {
+		for name, want := range map[string]string{
+			"Enua 22/1 Wedding Cake":             "wcake",
+			"Pedanios 22/1 DNK Ghost Train Haze": "dgth",
+			"Cantourage 25/1 MAC1+":              "mac1",
+			"Khiron 20/1 Munson":                 "muns",
+		} {
+			t.Run(name, func(t *testing.T) {
+				got := NewHandle(Parse(name), free)
+				assert.Equal(t, want, got, "Should abbreviate the cultivar, not the manufacturer")
+			})
+		}
+	})
+
+	t.Run("AlwaysThreeToFiveCharacters", func(t *testing.T) {
+		for _, name := range []string{
+			"Enua 22/1 Wedding Cake", "X 1/1 Ab", "Maker 20/1 A", "Nothing At All",
+			"Cansativa Vanilla Cake 26/1", "CNBS FK 30/1: Florida Kush.",
+		} {
+			h := NewHandle(Parse(name), free)
+			assert.GreaterOrEqual(t, len(h), minHandle, "%q gave %q", name, h)
+			assert.LessOrEqual(t, len(h), maxHandle, "%q gave %q", name, h)
+			assert.NoError(t, CheckSlug(h), "%q gave %q, which is not a usable slug", name, h)
+		}
+	})
+
+	t.Run("AvoidsWhatIsAlreadyTaken", func(t *testing.T) {
+		c := &Catalog{}
+		var handles []string
+		// The same product bought five times over, which is what a recurring
+		// prescription looks like.
+		for i := 0; i < 5; i++ {
+			p := Parse("Enua 22/1 Wedding Cake")
+			p.Slug = NewHandle(p, c.Handles())
+			require.NoError(t, c.Add(p))
+			handles = append(handles, p.Slug)
+		}
+
+		seen := map[string]bool{}
+		for _, h := range handles {
+			assert.False(t, seen[h], "%q was handed out twice", h)
+			assert.LessOrEqual(t, len(h), maxHandle, "%q outgrew the limit", h)
+			seen[h] = true
+		}
+		// And none of them is a keystroke from another, since references are
+		// resolved by prefix.
+		for i, a := range handles {
+			for j, b := range handles {
+				if i != j {
+					assert.False(t, strings.HasPrefix(a, b),
+						"%q has %q as a prefix; one typo lands on the wrong jar", a, b)
+				}
+			}
+		}
+	})
+
+	t.Run("SurvivesAWholeCatalogOfCollisions", func(t *testing.T) {
+		c := &Catalog{}
+		for i := 0; i < 60; i++ {
+			p := Parse("Maker 20/1 Same Name")
+			p.Slug = NewHandle(p, c.Handles())
+			require.NoError(t, c.Add(p), "collision at %d", i)
+		}
+		assert.Len(t, c.Products, 60, "every one should have got its own slug")
+	})
+
+	t.Run("FallsBackToTheNameWithoutACultivar", func(t *testing.T) {
+		h := NewHandle(&Product{Name: "Liefermenge Indica"}, free)
+
+		assert.NotEmpty(t, h, "Should still produce something")
+		assert.GreaterOrEqual(t, len(h), minHandle)
+	})
+}
+
+func TestCheckSlug(t *testing.T) {
+	for _, ok := range []string{"wc", "wcake", "mac1", "ghost-train", "a1"} {
+		assert.NoError(t, CheckSlug(ok), "%q should be usable", ok)
+	}
+	for _, bad := range []string{"", "w", "Wcake", "wc ake", "wc/ake", "-wc", strings.Repeat("a", 25)} {
+		assert.ErrorIs(t, CheckSlug(bad), ErrBadSlug, "%q should be refused", bad)
+	}
+}
+
+func TestTaken(t *testing.T) {
+	c := &Catalog{}
+	require.NoError(t, c.Add(&Product{Slug: "wcake", Name: "Wedding Cake"}))
+
+	assert.True(t, c.Taken("wcake"), "Should know what it holds")
+	assert.False(t, c.Taken("lcook"), "and what it does not")
 }

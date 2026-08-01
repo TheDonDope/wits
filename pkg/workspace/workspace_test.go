@@ -30,7 +30,7 @@ func filled(t *testing.T) *repo.Repo {
 
 	ws, err := Read(r)
 	require.NoError(t, err)
-	_, _, _, err = ws.Recorder.Buy("Enua 22/1 Wedding Cake", 20, time.Now())
+	_, _, _, err = ws.Recorder.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
 	require.NoError(t, err)
 	_, err = ws.Recorder.Grind("wedding", 0.75, time.Now())
 	require.NoError(t, err)
@@ -44,7 +44,7 @@ func TestRead(t *testing.T) {
 	assert.Len(t, ws.Events(), 2, "Should have read the journal")
 	assert.Len(t, ws.Products.Products, 1, "Should have read the catalog")
 	assert.NotNil(t, ws.Devices, "Should have read the devices, even when there are none")
-	assert.Equal(t, 19.25, ws.State.Balances["enua-wedding-cake"].Storage, "Should have folded the journal")
+	assert.Equal(t, 19.25, ws.State.Balances["wcake"].Storage, "Should have folded the journal")
 	assert.NotNil(t, ws.Recorder, "Should be ready to record")
 	assert.False(t, ws.OpenedAt.IsZero(), "Should stamp when the snapshot was taken")
 }
@@ -74,7 +74,7 @@ func TestSnapshotDoesNotMoveUnderneath(t *testing.T) {
 
 	// Something else writes to the same repository.
 	_, err = r.Journal().Append(journal.Event{
-		Type: journal.Grind, Product: "enua-wedding-cake", Grams: 0.5,
+		Type: journal.Grind, Product: "wcake", Grams: 0.5,
 		From: journal.Storage, To: journal.Stash, OccurredAt: time.Now(),
 	})
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestProductName(t *testing.T) {
 	ws, err := Read(filled(t))
 	require.NoError(t, err)
 
-	assert.Equal(t, "Enua 22/1 Wedding Cake", ws.ProductName("enua-wedding-cake"),
+	assert.Equal(t, "Enua 22/1 Wedding Cake", ws.ProductName("wcake"),
 		"Should resolve a slug to its display name")
 	assert.Equal(t, "not-in-the-catalog", ws.ProductName("not-in-the-catalog"),
 		"and should fall back to the slug, so an orphaned entry still reads sensibly")

@@ -26,21 +26,22 @@ func newProductsView() productsView { return productsView{} }
 
 type productKeys struct {
 	keyMap
-	Reconcile, All key.Binding
+	Reconcile, Edit, All key.Binding
 }
 
 func (k productKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Up, k.Down, k.Reconcile, k.All, k.Help, k.Quit}
+	return []key.Binding{k.Up, k.Down, k.Reconcile, k.Edit, k.All, k.Help, k.Quit}
 }
 
 func (k productKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Reconcile, k.All})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Reconcile, k.Edit, k.All})
 }
 
 func (v productsView) keys(base keyMap) help.KeyMap {
 	return productKeys{
 		keyMap:    base,
 		Reconcile: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "weigh")),
+		Edit:      key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 		All:       key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "all/held")),
 	}
 }
@@ -253,7 +254,8 @@ func (v productsView) detail(a *App, r productRow, width int) string {
 			"  ", bar, " ",
 			t.Dim.Render(fmt.Sprintf("%.2f g of %.2f g dispensed still held", r.Held(), r.Bought)),
 		),
-		"  "+t.Dim.Render("press ")+t.Key.Render("r")+t.Dim.Render(" to weigh it and make the ledger agree"),
+		"  "+t.Dim.Render("press ")+t.Key.Render("r")+t.Dim.Render(" to weigh it, ")+
+			t.Key.Render("e")+t.Dim.Render(" to correct its name"),
 		"",
 	)
 }

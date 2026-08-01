@@ -20,7 +20,7 @@ func shelved(t *testing.T) *App {
 	app := liveApp(t)
 	rec := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State)
 
-	_, _, _, err := rec.Buy("Cannamedical 28/1 Lemon Cookie", 10, time.Now().AddDate(0, 0, -2))
+	_, _, _, err := rec.Buy("Cannamedical 28/1 Lemon Cookie", "", 10, time.Now().AddDate(0, 0, -2))
 	require.NoError(t, err)
 	_, err = rec.Grind("lemon", 10, time.Now().AddDate(0, 0, -1))
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestWeighPicksTheFullestJarOffTheProductsScreen(t *testing.T) {
 	// with the most left — the one most worth checking.
 	slug := app.weighable()
 
-	assert.Equal(t, "enua-wedding-cake", slug, "Should pick the fullest jar of the cycle")
+	assert.Equal(t, "wcake", slug, "Should pick the fullest jar of the cycle")
 }
 
 func TestReconcileFromTheInterface(t *testing.T) {
@@ -129,7 +129,7 @@ func TestReconcileFromTheInterface(t *testing.T) {
 	app.screen = productsScreen
 	var m tea.Model = app
 
-	before := app.data.State.Balances["enua-wedding-cake"].Storage
+	before := app.data.State.Balances["wcake"].Storage
 	require.InDelta(t, 18.0, before, 0.001)
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
@@ -146,7 +146,7 @@ func TestReconcileFromTheInterface(t *testing.T) {
 
 	assert.Equal(t, journal.Adjust, done.event.Type, "Should record an adjustment")
 	assert.InDelta(t, 0.40, done.event.Grams, 0.001, "of the difference, not the weight")
-	assert.InDelta(t, 17.6, app.data.State.Balances["enua-wedding-cake"].Storage, 0.001,
+	assert.InDelta(t, 17.6, app.data.State.Balances["wcake"].Storage, 0.001,
 		"and storage should now agree with the scale")
 }
 
@@ -175,4 +175,45 @@ func TestQuickActionsFoldAwayWhenNarrow(t *testing.T) {
 		assert.LessOrEqual(t, lipgloss.Width(line), 41,
 			"the boxes should not push the frame sideways: %q", line)
 	}
+}
+
+func TestEditProductFromTheScreen(t *testing.T) {
+	app := shelved(t)
+	app.screen = productsScreen
+	var m tea.Model = app
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'e', Text: "e"})
+	require.NotNil(t, app.entry, "e should open the edit form")
+	assert.Contains(t, stripANSI(app.entry.View(app, 92)), "Edit product", "Should say what it is")
+	assert.Contains(t, stripANSI(app.entry.View(app, 92)), "slug stays as it is",
+		"and why the slug is not on offer")
+
+	// The name is prefilled; appending to it is enough to change it.
+	m = typeText(m, " II")
+	_, msgs := confirmThrough(m, 10)
+
+	done, ok := findDone(msgs)
+	require.True(t, ok, "Should report the outcome, got %v", msgs)
+	require.NoError(t, done.err)
+
+	p, err := app.data.Products.Find("wcake")
+	require.NoError(t, err)
+	assert.True(t, strings.HasSuffix(p.Name, " II"), "Should have written the corrected name, got %q", p.Name)
+	assert.Equal(t, "wcake", p.Slug, "and left the slug the journal refers to alone")
+}
+
+func TestEditingAProductDoesNotOrphanItsEntries(t *testing.T) {
+	app := shelved(t)
+	before := len(app.data.State.Events)
+
+	rec := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State)
+	_, err := rec.Rename("wcake", "Renamed Entirely")
+	require.NoError(t, err)
+
+	reloaded, err := Load(app.data.Repo)
+	require.NoError(t, err)
+
+	assert.Len(t, reloaded.State.Events, before, "Renaming records nothing and loses nothing")
+	assert.Equal(t, "Renamed Entirely", reloaded.ProductName("wcake"),
+		"and the entries still resolve to the product, under its new name")
 }

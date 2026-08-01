@@ -8,10 +8,14 @@ package commands
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -63,4 +67,59 @@ func shortHash(h string) string {
 		return h[:7]
 	}
 	return h
+}
+
+// completeProduct offers the products that hold something in the given account,
+// so tab completion on a grind offers what can actually be ground and not four
+// years of empty jars.
+//
+// Each slug is offered with its display name after a tab, which is the shape a
+// shell shows as a description beside the candidate.
+func completeProduct(account journal.Account) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+	return func(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		s, err := open()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		var out []string
+		for _, slug := range s.State.Products() {
+			if !strings.HasPrefix(slug, prefix) {
+				continue
+			}
+			have := s.Recorder.Available(slug, account)
+			if account != "" && have <= 0 {
+				continue
+			}
+			out = append(out, fmt.Sprintf("%s\t%.2f g · %s", slug, have, s.ProductName(slug)))
+		}
+		sort.Strings(out)
+		return out, cobra.ShellCompDirectiveNoFileComp
+	}
+}
+
+// completeEntry offers the recent entries by their abbreviated hash, for the
+// commands that take one.
+func completeEntry(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	s, err := open()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	events := s.State.Events
+	var out []string
+	for i := len(events) - 1; i >= 0 && len(out) < 40; i-- {
+		e := events[i]
+		short := shortHash(e.Hash)
+		if !strings.HasPrefix(short, prefix) {
+			continue
+		}
+		out = append(out, fmt.Sprintf("%s\t%s %.2f g %s on %s",
+			short, e.Type, e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly)))
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
 }

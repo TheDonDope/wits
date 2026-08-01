@@ -71,7 +71,8 @@ func TestBuyAndGrind(t *testing.T) {
 
 		out, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 		require.NoError(t, err)
-		assert.Contains(t, out, "New product enua-wedding-cake", "Should register the product")
+		assert.Contains(t, out, "refer to it as wcake",
+			"Should register the product and say what to call it")
 
 		out, err = run(t, dir, Grind, "wedding", "0.75", "--date", "2026-07-02")
 		require.NoError(t, err)
@@ -156,7 +157,7 @@ func TestLogCommand(t *testing.T) {
 		out, err := run(t, dir, Log, "--product", "wedding")
 
 		require.NoError(t, err)
-		assert.Contains(t, out, "enua-wedding-cake", "Should show the product's events")
+		assert.Contains(t, out, "wcake", "Should show the product's events")
 	})
 }
 

@@ -153,6 +153,12 @@ ground, with the potency and how much of the fill is still held. It lists what i
 held by default and everything ever dispensed on `a`, because a catalog
 remembering four years of prescriptions is a history rather than a shelf.
 
+Every product gets a short handle when it is first bought — three to five
+characters from the cultivar, never one keystroke from another, since references
+resolve by prefix. `--slug` chooses one by hand. It is fixed once and never
+changes: it is the name every entry refers to, so `e` on the products screen
+corrects what a product is *called*, not which product it *is*.
+
 `wits reconcile`, and `r` in the interface, record the difference between what
 the ledger believes an account holds and what it actually weighs. Nothing in the
 past is edited: the difference becomes an adjustment, which is a transfer like
@@ -178,11 +184,10 @@ range is checked when it is typed rather than later when a session is refused.
   recorded grinding. Nothing was invented to fill that gap, so the stash balance
   of a product recurring across cycles reads high until it is worked down.
 
-### 🔹 Editing a product, and splitting ones the slug merged
+### 🔹 Splitting products the slug merged
 
 - **Status**: Planned
-- The products screen lists and weighs; it cannot yet correct a parsed name.
-- `Slugify` drops the THC ratio, so the same cultivar from one manufacturer at two
+- The importer's `Slugify` drops the THC ratio, so the same cultivar from one manufacturer at two
   potencies becomes one product. The importer reports these rather than doing it
   quietly, but there is no way to split them afterwards.
 

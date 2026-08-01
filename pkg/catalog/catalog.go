@@ -189,3 +189,168 @@ func parseFloat(s string) float64 {
 	}
 	return v
 }
+
+// Handle length bounds for a generated slug.
+const (
+	minHandle = 3
+	maxHandle = 5
+)
+
+// validHandle is what a slug given by hand is allowed to look like. Slugs are
+// typed daily and matched by prefix, so they stay lowercase and free of
+// anything that needs quoting on a command line.
+var validHandle = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{1,23}$`)
+
+// ErrBadSlug is returned for a slug that cannot be used.
+var ErrBadSlug = errors.New("a slug must be 2 to 24 characters of lowercase letters, digits or dashes")
+
+// CheckSlug reports whether a slug given by hand can be used.
+func CheckSlug(slug string) error {
+	if !validHandle.MatchString(slug) {
+		return fmt.Errorf("%w: %q", ErrBadSlug, slug)
+	}
+	return nil
+}
+
+// NewHandle returns a short, typeable slug for a product: three to five
+// characters, and not one already taken.
+//
+// The long form derived from a display name — enua-wedding-cake — is precise but
+// nobody wants to type it every evening. This produces something closer to what
+// a person would abbreviate it to themselves, preferring the cultivar over the
+// manufacturer, because the cultivar is what distinguishes one jar from the next.
+func NewHandle(p *Product, existing []string) string {
+	taken := func(candidate string) bool {
+		for _, slug := range existing {
+			// Not merely equal: a handle that is a prefix of another, or has
+			// another as its prefix, is one keystroke from the wrong jar, and
+			// references are resolved by prefix. wcake and wcak must not both
+			// exist.
+			if strings.HasPrefix(candidate, slug) || strings.HasPrefix(slug, candidate) {
+				return true
+			}
+		}
+		return false
+	}
+	basis := p.Cultivar
+	if strings.TrimSpace(basis) == "" {
+		basis = p.Name
+	}
+	words := handleWords(basis)
+	if full := handleWords(p.Name); len(words) == 0 {
+		words = full
+	} else if len(words) == 1 && len(words[0]) < minHandle {
+		// One short word on its own has nothing to shorten; the rest of the
+		// name is what is left to borrow from.
+		words = append(words, full...)
+	}
+
+	for _, candidate := range handleCandidates(words) {
+		if len(candidate) >= minHandle && len(candidate) <= maxHandle && !taken(candidate) {
+			return candidate
+		}
+	}
+	// Everything memorable was taken, so number it: the point is that it is
+	// short and unique, and a person who has three Wedding Cakes open at once
+	// needs telling them apart more than they need a mnemonic.
+	stem := "p"
+	if len(words) > 0 {
+		stem = words[0]
+	}
+	// Shorter stems first within each number, so the digit stays visible:
+	// wedd is taken, so wed2 rather than wedd2 — which the prefix rule would
+	// reject anyway — and certainly rather than wed10.
+	for n := 2; ; n++ {
+		suffix := strconv.Itoa(n)
+		for keep := maxHandle - len(suffix); keep >= minHandle-len(suffix); keep-- {
+			if keep <= 0 || keep > len(stem) {
+				continue
+			}
+			candidate := stem[:keep] + suffix
+			if len(candidate) >= minHandle && len(candidate) <= maxHandle && !taken(candidate) {
+				return candidate
+			}
+		}
+	}
+}
+
+// handleCandidates offers abbreviations in the order a person would reach for
+// them: the initials, then a contraction, then the beginning of the first word.
+func handleCandidates(words []string) []string {
+	if len(words) == 0 {
+		return nil
+	}
+	var out []string
+
+	initials := ""
+	for _, w := range words {
+		initials += w[:1]
+	}
+	out = append(out, initials)
+
+	if len(words) > 1 {
+		last := words[len(words)-1]
+		// One letter of the first word and the head of the last: "Wedding Cake"
+		// reads as wcake, which is what it gets called anyway.
+		for _, n := range []int{4, 3, 2} {
+			if len(last) >= n {
+				out = append(out, words[0][:1]+last[:n])
+			}
+		}
+	}
+	// Four characters before five: "muns" is how a word gets shortened by hand,
+	// "munso" is how a field gets truncated by a program.
+	for _, n := range []int{4, maxHandle, minHandle} {
+		if len(words[0]) >= n {
+			out = append(out, words[0][:n])
+		}
+	}
+	// A word too short to abbreviate borrows a letter rather than a number,
+	// which would otherwise read as though something had collided.
+	if len(words[0]) < minHandle {
+		if len(words) > 1 {
+			out = append(out, words[0]+words[1])
+		}
+		for _, w := range words[1:] {
+			out = append(out, words[0]+w[:1])
+		}
+	}
+	return out
+}
+
+// handleWords reduces a name to lowercase alphanumeric words, dropping the
+// THC/CBD ratio and anything too short to abbreviate from.
+func handleWords(s string) []string {
+	s = strings.ToLower(strings.TrimSuffix(strings.TrimSpace(s), "(g)"))
+	s = ratio.ReplaceAllString(s, " ")
+	var words []string
+	for _, w := range strings.FieldsFunc(s, func(r rune) bool {
+		return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'))
+	}) {
+		if w != "" {
+			words = append(words, w)
+		}
+	}
+	return words
+}
+
+// Handles returns every slug in the catalog.
+func (c *Catalog) Handles() []string {
+	out := make([]string, 0, len(c.Products))
+	for _, p := range c.Products {
+		out = append(out, p.Slug)
+	}
+	return out
+}
+
+// Taken reports whether a slug is already in the catalog. Unlike the check a
+// generated handle is held to, this is exact: a slug given by hand is the
+// caller's business as long as it is not literally somebody else's.
+func (c *Catalog) Taken(slug string) bool {
+	for _, p := range c.Products {
+		if p.Slug == slug {
+			return true
+		}
+	}
+	return false
+}

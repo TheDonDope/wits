@@ -38,16 +38,18 @@ func sample(t *testing.T) Data {
 		}
 	}
 	events := []journal.Event{
-		mk(journal.Purchase, "enua-wedding-cake", 20, 0),
-		mk(journal.Purchase, "cannamedical-lemon-cookie", 10, 0),
-		mk(journal.Grind, "enua-wedding-cake", 0.75, 1),
-		mk(journal.Grind, "cannamedical-lemon-cookie", 1.25, 1),
-		mk(journal.Sesh, "enua-wedding-cake", 0.30, 2),
-		mk(journal.Grind, "enua-wedding-cake", 1.10, 3),
+		mk(journal.Purchase, "wcake", 20, 0),
+		mk(journal.Purchase, "lcook", 10, 0),
+		mk(journal.Grind, "wcake", 0.75, 1),
+		mk(journal.Grind, "lcook", 1.25, 1),
+		mk(journal.Sesh, "wcake", 0.30, 2),
+		mk(journal.Grind, "wcake", 1.10, 3),
 	}
+	// Slugs are set to match the entries above: a catalog whose slugs disagree
+	// with the journal is not a fixture, it is a bug being tested.
 	products := &catalog.Catalog{}
-	require.NoError(t, products.Add(catalog.Parse("Enua 22/1 Wedding Cake")))
-	require.NoError(t, products.Add(catalog.Parse("Cannamedical 28/1 Lemon Cookie")))
+	require.NoError(t, products.Add(product("Enua 22/1 Wedding Cake", "wcake")))
+	require.NoError(t, products.Add(product("Cannamedical 28/1 Lemon Cookie", "lcook")))
 
 	return Data{
 		Workspace: &workspace.Workspace{
@@ -180,6 +182,13 @@ func TestEventLineHidesAMeaninglessTime(t *testing.T) {
 		"A backfilled entry has no time of day, and should not claim one")
 	assert.Contains(t, stripANSI(th.EventLine(evening, "X", 80, false)), "21:30",
 		"A real time should be shown")
+}
+
+// product parses a display name and pins its slug.
+func product(name, slug string) *catalog.Product {
+	p := catalog.Parse(name)
+	p.Slug = slug
+	return p
 }
 
 // emptyData is a repository with nothing in it.

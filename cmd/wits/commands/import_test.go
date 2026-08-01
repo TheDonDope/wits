@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xuri/excelize/v2"
+
+	"github.com/TheDonDope/wits/pkg/journal"
 )
 
 // workbook writes a small tracking spreadsheet, laid out like the real one:
@@ -123,5 +126,53 @@ func TestImportCommand(t *testing.T) {
 	t.Run("MissingFile", func(t *testing.T) {
 		_, err := run(t, repository(t), Import, filepath.Join(t.TempDir(), "nope.xlsx"))
 		assert.Error(t, err, "Should report a workbook it cannot open")
+	})
+}
+
+func TestCompletion(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+	require.NoError(t, err)
+	_, err = run(t, dir, Buy, "Cannamedical 28/1 Lemon Cookie", "10g")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wcake", "2")
+	require.NoError(t, err)
+	t.Chdir(dir)
+
+	t.Run("GrindOffersAnythingInStorage", func(t *testing.T) {
+		out, _ := completeProduct(journal.Storage)(nil, nil, "")
+
+		require.Len(t, out, 2, "both products have storage")
+		assert.Contains(t, strings.Join(out, "\n"), "wcake", "Should offer the slug")
+		assert.Contains(t, strings.Join(out, "\n"), "Enua 22/1 Wedding Cake",
+			"and the name beside it, since a slug alone is not recognisable")
+	})
+
+	t.Run("SeshOffersOnlyWhatIsInATin", func(t *testing.T) {
+		out, _ := completeProduct(journal.Stash)(nil, nil, "")
+
+		require.Len(t, out, 1, "only one product has been ground")
+		assert.Contains(t, out[0], "wcake",
+			"Should not offer a product that cannot be seshed")
+	})
+
+	t.Run("FiltersByWhatHasBeenTyped", func(t *testing.T) {
+		out, _ := completeProduct(journal.Storage)(nil, nil, "l")
+
+		require.Len(t, out, 1)
+		assert.Contains(t, out[0], "lcook", "Should narrow to the prefix")
+	})
+
+	t.Run("OffersNothingForTheSecondArgument", func(t *testing.T) {
+		out, _ := completeProduct(journal.Storage)(nil, []string{"wcake"}, "")
+
+		assert.Empty(t, out, "The amount is not a product")
+	})
+
+	t.Run("EntriesCompleteByHash", func(t *testing.T) {
+		out, _ := completeEntry(nil, nil, "")
+
+		require.NotEmpty(t, out)
+		assert.Contains(t, out[0], "grind", "Should describe the entry, newest first")
 	})
 }
