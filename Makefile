@@ -1,10 +1,17 @@
-VERSION = $(shell git describe --tags --abbrev=0)
+VERSION ?= $(shell git describe --tags --abbrev=0)
 COMMIT_SHA = $(shell git rev-parse --short HEAD)
 COMMIT_DATE = $(shell git --no-pager log -1 --pretty='format:%cd' --date='format:%Y-%m-%dT%H:%M:%S')
+
+.PHONY: run install build build-windows clean doc changelog render-tapes \
+	test test-ci cover show-cover vet release
+
+.DEFAULT_GOAL := build
 
 run: build
 	@./bin/wits
 
+# Developer tooling only. Nothing here is needed to build or test — CI does
+# not run this target.
 install:
 	go install golang.org/x/tools/cmd/godoc@latest
 	go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
@@ -31,7 +38,6 @@ build-windows:
 clean:
 	rm -f ./bin/wits
 	rm -f ./bin/wits.exe
-	rm -rf ./.wits/log
 	rm -f coverage.html
 	rm -f coverage.out
 	rm -rf tmp
@@ -54,9 +60,10 @@ render-tapes:
 test:
 	go test -race -v ./... -coverprofile coverage.out
 
+# The coverage upload is the workflow's job, through the pinned codecov
+# action, not a `curl | bash` here.
 test-ci:
 	go test -race -v ./... -coverprofile coverage.out -covermode=atomic
-	bash -c "bash <(curl -s https://codecov.io/bash)"
 
 cover: test
 	go tool cover -html coverage.out -o coverage.html
@@ -67,8 +74,11 @@ show-cover: cover
 vet:
 	go vet ./...
 
+# The guard checks where VERSION came from, not whether it is empty: it always
+# has a value here, because it defaults to the previous tag — and releasing
+# with the previous tag is exactly the accident to refuse.
 release:
-	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=vX.X.X"; exit 1; fi
+	@if [ "$(origin VERSION)" != "command line" ]; then echo "Usage: make release VERSION=vX.X.X"; exit 1; fi
 	git-chglog --next-tag $(VERSION) -o CHANGELOG.md
 	git add CHANGELOG.md
 	git commit -m "docs: update changelog for $(VERSION)"
