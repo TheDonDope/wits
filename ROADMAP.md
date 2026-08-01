@@ -74,6 +74,11 @@ one process. Two writers reading the same tip would append entries claiming the
 same predecessor and fork the chain. That matters as soon as anything other than
 a single command talks to a repository.
 
+The tip is cached between appends, pinned by the file size: a size that no
+longer matches means another process appended and the tip is re-read. That is
+what keeps restoring a thousand-entry bundle linear instead of re-reading the
+whole journal per line.
+
 ### The fold — `pkg/ledger`
 
 Balances per account and product, cycles, and the figures the spreadsheet used to
@@ -83,6 +88,11 @@ last.
 Days-with-an-entry and days-elapsed are reported **separately and labelled**. The
 spreadsheet conflated them, because its date column was pre-filled with zero
 rows, so its average depended on how far ahead it had been filled in.
+
+A cycle knows what it **carried over**: the storage each product brought in from
+the cycle before, kept apart from what the fill itself dispensed. Grinding down
+last month's remainder is not overspending this month's fill, and a product's
+"left" can no longer read as more than 100%.
 
 ### The commands
 
@@ -216,12 +226,6 @@ range is checked when it is typed rather than later when a session is refused.
   journal on every open is milliseconds at 1369 entries, so it does not matter
   yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
   must stay disposable.
-
-### 🔹 `log_level` is dead configuration
-
-- **Status**: Planned
-- `config.yml` carries `log_level` and nothing reads it — the same dead setting
-  the old `.env` had, moved to a new home. Wire it up or drop it.
 
 ### 🔹 Markdown export for publishing
 

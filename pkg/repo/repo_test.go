@@ -92,7 +92,21 @@ func TestDiscover(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, Version, r.Config.Version, "Should read the format version")
-		assert.Equal(t, "INFO", r.Config.LogLevel, "Should read the log level")
+		assert.Equal(t, "wits.log", r.Config.LogFile, "Should read the log file")
+	})
+
+	t.Run("IgnoresSettingsItNoLongerKnows", func(t *testing.T) {
+		// Repositories initialised by older builds carry log_level, which
+		// nothing ever read. Opening one must not fail over it.
+		dir := t.TempDir()
+		_, err := Init(dir)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, Dir, configFile),
+			[]byte("version: 1\nlog_level: INFO\nlog_file: wits.log\n"), filePerm))
+
+		r, err := Discover(dir)
+		require.NoError(t, err)
+		assert.Equal(t, "wits.log", r.Config.LogFile, "Should still read the settings it knows")
 	})
 
 	t.Run("RefusesAFutureFormatVersion", func(t *testing.T) {

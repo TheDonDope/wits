@@ -88,6 +88,26 @@ func TestAppend(t *testing.T) {
 		assert.NoError(t, j.Verify(), "Should verify")
 	})
 
+	t.Run("NoticesAnotherWriter", func(t *testing.T) {
+		// Two Journal values over the same file stand in for two processes.
+		// The first primes its tip cache, the second appends behind its back,
+		// and the first must notice — a stale tip would fork the chain.
+		j := testJournal(t)
+		other := Open(j.Path())
+
+		_, err := j.Append(Event{Type: Purchase, Product: "wedding-cake", Grams: 20})
+		require.NoError(t, err)
+		behind, err := other.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 0.75})
+		require.NoError(t, err)
+
+		third, err := j.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 1.0})
+		require.NoError(t, err)
+
+		assert.Equal(t, 3, third.Seq, "Should count the entry it did not write")
+		assert.Equal(t, behind.Hash, third.Prev, "Should chain onto the other writer's tip")
+		assert.NoError(t, j.Verify(), "Should verify with both writers' entries")
+	})
+
 	t.Run("KeepsABackdatedEntryHonest", func(t *testing.T) {
 		j := testJournal(t)
 		yesterday := time.Now().AddDate(0, 0, -1)
