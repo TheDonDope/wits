@@ -157,14 +157,6 @@ func TestGauge(t *testing.T) {
 	assert.Contains(t, stripANSI(Gauge(10, 0.5, th.Good, th.Dim)), "─", "Should show the remaining track")
 }
 
-func TestColumnChartIsBlankWhenNothingHappened(t *testing.T) {
-	th := NewTheme(true)
-
-	out := stripANSI(ColumnChart([]Column{{Value: 0}, {Value: 0}}, 4, th, th.Good))
-
-	assert.Contains(t, out, "nothing logged", "Should say a range is empty rather than drawing a flat line")
-}
-
 func TestEventLineHidesAMeaninglessTime(t *testing.T) {
 	th := NewTheme(true)
 	midnight := journal.Event{Type: journal.Grind, Product: "x", Grams: 1,

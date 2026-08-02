@@ -4,9 +4,10 @@
 TODAY=$(date "+%Y-%m-%d")
 HEADER="# Development Diary"
 
-# Check for existing entry
+# Check for existing entry. Confirming falls through to write a second one for
+# the day, to be merged by hand; declining stops here.
 if grep -q "## $TODAY" DEVDIARY.md; then
-    gum confirm "Entry for today already exists! Continue? (You will have to manually merge your entries afterwards)" && continue || exit 1
+    gum confirm "Entry for today already exists! Continue? (You will have to manually merge your entries afterwards)" || exit 1
 fi
 
 # Get user inputs

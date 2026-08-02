@@ -411,7 +411,7 @@ func day10(n int) time.Time {
 func TestStashHistory(t *testing.T) {
 	app := seshed(t)
 
-	stats := stashHistory(app)
+	stats := stashHistoryOf(app.data.State.Events)
 
 	lemon := stats["lemon"]
 	require.NotNil(t, lemon)
@@ -435,7 +435,7 @@ func TestStashHistoryRefillForgetsTheOldEnding(t *testing.T) {
 	app.data, err2 = Load(app.data.Repo)
 	require.NoError(t, err2)
 
-	stats := stashHistory(app)
+	stats := stashHistoryOf(app.data.State.Events)
 	assert.True(t, stats["lemon"].EmptiedAt.IsZero(), "A refilled stash is active again, not history")
 }
 
@@ -454,7 +454,7 @@ func TestStashScreenShowsBothTables(t *testing.T) {
 	assert.Contains(t, out, "2 sessions", "Should say how many sessions finished it")
 
 	// The finished stash is grouped under the day it was consumed.
-	ended := stashHistory(app)["lemon"].EmptiedAt.Format("Mon 02 Jan 2006")
+	ended := stashHistoryOf(app.data.State.Events)["lemon"].EmptiedAt.Format("Mon 02 Jan 2006")
 	assert.Contains(t, out, ended, "Should head the group with the day it was consumed")
 }
 

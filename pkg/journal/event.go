@@ -63,11 +63,6 @@ func Flow(t Type) (from, to Account, ok bool) {
 	return f[0], f[1], ok
 }
 
-// Types returns every known event type.
-func Types() []Type {
-	return []Type{Purchase, Grind, Sesh, AVBCollect, AVBUse, Adjust}
-}
-
 // Event is a single immutable entry in the journal.
 //
 // OccurredAt is when the grams actually moved, RecordedAt is when it was typed

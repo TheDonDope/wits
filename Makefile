@@ -2,6 +2,10 @@ VERSION ?= $(shell git describe --tags --abbrev=0)
 COMMIT_SHA = $(shell git rev-parse --short HEAD)
 COMMIT_DATE = $(shell git --no-pager log -1 --pretty='format:%cd' --date='format:%Y-%m-%dT%H:%M:%S')
 
+# The build stamps pkg/version, which is what every binary reports from.
+PKG = github.com/TheDonDope/wits/pkg/version
+LDFLAGS = -X $(PKG).Version=$(VERSION) -X $(PKG).CommitSHA=$(COMMIT_SHA) -X $(PKG).CommitDate=$(COMMIT_DATE)
+
 .PHONY: run install build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release
 
@@ -22,7 +26,7 @@ install:
 build:
 	go build \
 	  -v \
-	  -ldflags "-X main.Version=$(VERSION) -X main.CommitSHA=$(COMMIT_SHA) -X main.CommitDate=$(COMMIT_DATE)" \
+	  -ldflags "$(LDFLAGS)" \
 	  -o ./bin/wits \
 	  ./cmd/wits
 
@@ -31,7 +35,7 @@ build-windows:
 	GOARCH=amd64 \
 	go build \
 	  -v \
-	  -ldflags "-X main.Version=$(VERSION) -X main.CommitSHA=$(COMMIT_SHA) -X main.CommitDate=$(COMMIT_DATE)" \
+	  -ldflags "$(LDFLAGS)" \
 	  -o ./bin/wits.exe \
 	  ./cmd/wits
 

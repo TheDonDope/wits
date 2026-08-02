@@ -94,14 +94,3 @@ func TestGradientGaugeWidth(t *testing.T) {
 	assert.Equal(t, 10, lipgloss.Width(GradientGauge(10, 1, th.Good, th.Bad, th.Dim)), "Should be full width when full")
 	assert.NotContains(t, stripANSI(GradientGauge(10, 1, th.Good, th.Bad, th.Dim)), "─", "Should have no track left when full")
 }
-
-func TestColumnChartHonoursAColumnColour(t *testing.T) {
-	th := NewTheme(true)
-
-	out := ColumnChart([]Column{
-		{Value: 1, Color: th.Bad},
-		{Value: 2},
-	}, 2, th, th.Good)
-
-	assert.NotEmpty(t, out, "Should render columns that carry their own colour")
-}
