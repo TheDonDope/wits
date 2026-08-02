@@ -18,32 +18,34 @@ import (
 // analysisView is the long view: how this cycle is going, how it compares to
 // the ones before it, and where the grams actually went.
 type analysisView struct {
-	scope  int // 0 this cycle, 1 this year, 2 all time
+	scope  int // an index into scopes
 	scroll int // lines scrolled past, since the long scopes overrun a screen
+	sel    int // the day cursor, counted back from the last day of the scope
 }
 
 func newAnalysisView() analysisView { return analysisView{} }
 
-var scopes = []string{"this cycle", "last 12 months", "all time"}
+var scopes = []string{"this cycle", "last 30 days", "last 90 days", "last 12 months", "all time"}
 
 type analysisKeys struct {
 	keyMap
 	Scope key.Binding
+	Slide key.Binding
 }
 
 // scopeKey is declared once so the help line and the dispatch cannot drift.
 var scopeKey = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "scope"))
 
 func (k analysisKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Next, k.Scope, k.Help, k.Quit}
+	return []key.Binding{k.Slide, k.Next, k.Scope, k.Help, k.Quit}
 }
 
 func (k analysisKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Scope})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Scope, k.Slide})
 }
 
 func (v analysisView) keys(base keyMap) help.KeyMap {
-	return analysisKeys{keyMap: base, Scope: scopeKey}
+	return analysisKeys{keyMap: base, Scope: scopeKey, Slide: withHelp(slideKey, "day")}
 }
 
 func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
@@ -51,7 +53,15 @@ func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
 		switch {
 		case key.Matches(msg, scopeKey):
 			v.scope = (v.scope + 1) % len(scopes)
-			v.scroll = 0
+			v.scroll, v.sel = 0, 0
+		case key.Matches(msg, slideKey):
+			// Counted back from the last day: left walks into the past.
+			switch msg.String() {
+			case "left", "h":
+				v.sel = min(v.sel+1, max(v.spanDays(a)-1, 0))
+			default:
+				v.sel = max(v.sel-1, 0)
+			}
 		case key.Matches(msg, a.keys.Up):
 			v.scroll = max(v.scroll-1, 0)
 		case key.Matches(msg, a.keys.Down):
@@ -85,10 +95,12 @@ func (v analysisView) View(a *App, height int) string {
 		t.Rule("By product", width),
 		v.byProduct(a, events, width),
 	}
+	sections = append(sections, "", t.Rule("Product trails", width), v.trails(a, events, width))
 	if v.scope != 0 {
-		sections = append(sections,
-			"", t.Rule("Rhythm", width), v.rhythm(a, events, width),
-			"", t.Rule("Cycles", width), v.cycles(a, width))
+		sections = append(sections, "", t.Rule("Rhythm", width), v.rhythm(a, events, width))
+	}
+	if v.scope >= 3 {
+		sections = append(sections, "", t.Rule("Cycles", width), v.cycles(a, width))
 	}
 	// The long scopes overrun a screen, so the view scrolls rather than
 	// silently cutting the calendar off at whatever height the terminal has.
@@ -117,17 +129,46 @@ func (v analysisView) events(a *App) []journal.Event {
 		}
 		return nil
 	case 1:
-		cutoff := a.data.Now.AddDate(-1, 0, 0)
-		var out []journal.Event
-		for _, e := range a.data.State.Events {
-			if e.OccurredAt.After(cutoff) {
-				out = append(out, e)
-			}
-		}
-		return out
+		return since(a, a.data.Now.AddDate(0, 0, -30))
+	case 2:
+		return since(a, a.data.Now.AddDate(0, 0, -90))
+	case 3:
+		return since(a, a.data.Now.AddDate(-1, 0, 0))
 	default:
 		return a.data.State.Events
 	}
+}
+
+// spanDays is how many days the scope's grind chart covers, for clamping the
+// day cursor.
+func (v analysisView) spanDays(a *App) int {
+	var first, last time.Time
+	for _, e := range v.events(a) {
+		if e.Type != journal.Grind {
+			continue
+		}
+		if first.IsZero() || e.OccurredAt.Before(first) {
+			first = e.OccurredAt
+		}
+		if e.OccurredAt.After(last) {
+			last = e.OccurredAt
+		}
+	}
+	if first.IsZero() {
+		return 0
+	}
+	return daysBetween(first, last) + 1
+}
+
+// since returns the events that happened after the cutoff.
+func since(a *App, cutoff time.Time) []journal.Event {
+	var out []journal.Event
+	for _, e := range a.data.State.Events {
+		if e.OccurredAt.After(cutoff) {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // summary is the headline figures for the scope.
@@ -183,14 +224,24 @@ func (v analysisView) perDay(a *App, events []journal.Event, width int) string {
 	// resampled to the width, so a four-year scope keeps its shape rather than
 	// being cut off. The seven-day average rides over it as a line: the daily
 	// spikes are the record, the line is the habit.
-	chart := AreaChart(values, movingAverage(values, 7), width, 6, t, t.StashC, t.Alt)
+	chart := AreaWithAxis(values, movingAverage(values, 7), width, 6, t, t.StashC, t.Alt)
 	legend := lipgloss.JoinHorizontal(lipgloss.Left,
 		lipgloss.NewStyle().Foreground(t.StashC).Render("⣿"), t.Dim.Render(" daily   "),
 		lipgloss.NewStyle().Foreground(t.Alt).Render("⠒⠒"), t.Dim.Render(" 7-day average"),
+		t.Dim.Render("   ←/→ walks the days"),
 	)
-	return lipgloss.JoinVertical(lipgloss.Left, chart,
-		axisLabels(t, first.Format("02 Jan 06"), last.Format("02 Jan 06"), width),
-		legend)
+
+	// The day cursor: its figure above the chart, its date lit in the axis.
+	chartW := max(width-axisGutter, 12)
+	dayIdx := max(len(values)-1-v.sel, 0)
+	day := first.AddDate(0, 0, dayIdx)
+	col := min(dayIdx*(chartW*2)/max(len(values), 1)/2, chartW-1)
+	marker := strings.Repeat(" ", axisGutter) +
+		pointerRow(t, chartW, col, fmt.Sprintf("%.2f g · %s", values[dayIdx], day.Format("Mon 02 Jan")))
+	axis := strings.Repeat(" ", axisGutter) +
+		dateAxisCursor(t, first, last, chartW, col, day.Format("02 Jan"))
+
+	return lipgloss.JoinVertical(lipgloss.Left, marker, chart, axis, legend)
 }
 
 // rhythm draws the longer scopes as a calendar heatmap, one cell per day. The
@@ -218,34 +269,92 @@ func (v analysisView) rhythm(a *App, events []journal.Event, width int) string {
 	return Calendar(perDay, first, last, width, t)
 }
 
-// byProduct ranks the products by how much of them was ground.
+// byProduct ranks the products by how much of them was ground, each under its
+// full name — the name is what the jar is called, and the bars can shrink —
+// with the share, the active days and the rate alongside.
 func (v analysisView) byProduct(a *App, events []journal.Event, width int) string {
 	t, data := a.theme, a.data
 	totals := map[string]float64{}
+	days := map[string]map[string]bool{}
+	ground := 0.0
 	for _, e := range events {
-		if e.Type == journal.Grind {
-			totals[e.Product] += e.Grams
+		if e.Type != journal.Grind {
+			continue
 		}
+		totals[e.Product] += e.Grams
+		ground += e.Grams
+		if days[e.Product] == nil {
+			days[e.Product] = map[string]bool{}
+		}
+		days[e.Product][e.OccurredAt.Format(time.DateOnly)] = true
 	}
 	slugs := make([]string, 0, len(totals))
 	for s := range totals {
 		slugs = append(slugs, s)
 	}
 	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
-	if len(slugs) > 8 {
-		slugs = slugs[:8]
-	}
 
 	bars := make([]Bar, 0, len(slugs))
 	for _, s := range slugs {
+		active := len(days[s])
 		bars = append(bars, Bar{
-			Label: truncate(data.ProductName(s), 30),
+			Label: data.ProductName(s),
 			Value: totals[s],
-			Note:  fmt.Sprintf("%.1f g", totals[s]),
+			Note: fmt.Sprintf("%.1f g · %2.0f%% · %s · %.2f g/day",
+				totals[s], totals[s]/ground*100, plural(active, "day"),
+				totals[s]/float64(max(active, 1))),
 			Color: t.StashC,
 		})
 	}
 	return BarChart(bars, width, t)
+}
+
+// trails is the per-product breakdown over time: the heaviest products, each
+// with the shape of its own days across the scope.
+func (v analysisView) trails(a *App, events []journal.Event, width int) string {
+	t, data := a.theme, a.data
+	perProduct := map[string]map[string]float64{}
+	totals := map[string]float64{}
+	var first, last time.Time
+	for _, e := range events {
+		if e.Type != journal.Grind {
+			continue
+		}
+		if perProduct[e.Product] == nil {
+			perProduct[e.Product] = map[string]float64{}
+		}
+		perProduct[e.Product][e.OccurredAt.Format(time.DateOnly)] += e.Grams
+		totals[e.Product] += e.Grams
+		if first.IsZero() || e.OccurredAt.Before(first) {
+			first = e.OccurredAt
+		}
+		if e.OccurredAt.After(last) {
+			last = e.OccurredAt
+		}
+	}
+	if first.IsZero() {
+		return t.Dim.Render("nothing ground in this range")
+	}
+	slugs := make([]string, 0, len(totals))
+	for s := range totals {
+		slugs = append(slugs, s)
+	}
+	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
+	if len(slugs) > 4 {
+		slugs = slugs[:4]
+	}
+
+	var lines []string
+	for _, slug := range slugs {
+		var values []float64
+		for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
+			values = append(values, perProduct[slug][d.Format(time.DateOnly)])
+		}
+		lines = append(lines,
+			t.Value.Render(data.ProductName(slug))+t.Dim.Render(fmt.Sprintf("  %.1f g", totals[slug])),
+			Sparkline(values, width, lipgloss.NewStyle().Foreground(t.StashC)))
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
 // cycles compares whole cycles: how much was dispensed, how long it lasted, and

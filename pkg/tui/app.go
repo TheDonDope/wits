@@ -344,19 +344,26 @@ func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 		a.showHelp = !a.showHelp
 		return true, nil
 	case key.Matches(msg, a.keys.Next):
-		if a.screen == journalScreen && msg.String() != "tab" {
+		if a.slides() && msg.String() != "tab" {
 			return false, nil
 		}
 		a.screen = screen((int(a.screen) + 1) % len(tabs))
 		return true, nil
 	case key.Matches(msg, a.keys.Prev):
-		if a.screen == journalScreen && msg.String() != "shift+tab" {
+		if a.slides() && msg.String() != "shift+tab" {
 			return false, nil
 		}
 		a.screen = screen((int(a.screen) - 1 + len(tabs)) % len(tabs))
 		return true, nil
 	}
 	return false, nil
+}
+
+// slides reports whether the screen in front reads the horizontal keys for
+// itself — the journal's cover slider and the analysis day cursor — leaving
+// only tab and shift+tab to change screens.
+func (a *App) slides() bool {
+	return a.screen == journalScreen || a.screen == analysisScreen
 }
 
 // entryDone turns a finished entry form into the notice the footer shows.

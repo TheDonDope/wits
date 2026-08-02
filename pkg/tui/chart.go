@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"strings"
@@ -451,19 +452,20 @@ func Calendar(perDay map[string]float64, from, to time.Time, width int, t *Theme
 	return strings.Join(rows, "\n")
 }
 
-// monthLabels writes each month's name where it begins, so the columns can be
-// dated without an axis. A label is skipped when the previous one would still
-// be under it: a cramped chart with legible labels beats a complete ruler.
+// monthLabels writes each month's name and its two-digit year where the month
+// begins — "Jan 26", so two Januaries a year apart cannot be confused. A label
+// is skipped when the previous one would still be under it: a cramped chart
+// with legible labels beats a complete ruler.
 func monthLabels(start time.Time, weeks int) string {
 	months := make([]rune, weeks)
 	for i := range months {
 		months[i] = ' '
 	}
-	lastLabel := -3
+	lastLabel := -8
 	for week := 0; week < weeks; week++ {
 		monday := start.AddDate(0, 0, week*7)
-		if (week == 0 || monday.Day() <= 7) && week-lastLabel >= 3 {
-			for i, r := range monday.Format("Jan") {
+		if (week == 0 || monday.Day() <= 7) && week-lastLabel >= 8 {
+			for i, r := range monday.Format("Jan 06") {
 				if week+i < weeks {
 					months[week+i] = r
 				}
@@ -578,3 +580,111 @@ func axisLabels(t *Theme, left, right string, width int) string {
 // round trims to centigrams, matching what the ledger stores and what a
 // jeweller's scale reads.
 func round(g float64) float64 { return math.Round(g*100) / 100 }
+
+// dateAxis writes a run of dates under a chart, evenly spaced: the ends
+// anchored left and right, the middles centred, and any label that would
+// collide with its neighbour dropped rather than smudged. Two dates say how
+// long a chart is; four or five say where in it a spike lives.
+func dateAxis(t *Theme, first, last time.Time, width int) string {
+	return t.Dim.Render(string(dateAxisRunes(first, last, width)))
+}
+
+// dateAxisRunes is the unstyled tick row, shared by the plain axis and the
+// one carrying a cursor.
+func dateAxisRunes(first, last time.Time, width int) []rune {
+	span := int(last.Sub(first).Hours() / 24)
+	layout := "02 Jan"
+	if span > 270 {
+		layout = "Jan 06"
+	}
+	ticks := min(max(width/22, 2), 6)
+
+	row := []rune(strings.Repeat(" ", width))
+	place := func(label string, at int) {
+		for i, r := range label {
+			if p := at + i; p >= 0 && p < width && row[p] == ' ' &&
+				(p == 0 || row[p-1] == ' ' || i > 0) {
+				row[p] = r
+			} else if i == 0 {
+				return
+			}
+		}
+	}
+	for i := 0; i < ticks; i++ {
+		day := first.AddDate(0, 0, span*i/max(ticks-1, 1))
+		label := day.Format(layout)
+		at := (width - len(label)) * i / max(ticks-1, 1)
+		place(label, at)
+	}
+	return row
+}
+
+// dateAxisCursor is the tick row with the selected day written over it in the
+// accent, where the cursor stands.
+func dateAxisCursor(t *Theme, first, last time.Time, width, at int, label string) string {
+	row := dateAxisRunes(first, last, width)
+	start := min(max(at-len(label)/2, 0), max(width-len(label), 0))
+	end := min(start+len(label), width)
+	// Any tick the highlight touches goes entirely, not just the letters
+	// underneath: half a date is worse than none.
+	lo, hi := max(start-1, 0), min(end+1, width)
+	for lo > 0 && row[lo-1] != ' ' {
+		lo--
+	}
+	for hi < width && row[hi] != ' ' {
+		hi++
+	}
+	for i := lo; i < hi; i++ {
+		row[i] = ' '
+	}
+	return t.Dim.Render(string(row[:start])) +
+		lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(label) +
+		t.Dim.Render(string(row[end:]))
+}
+
+// pointerRow is the marker above a chart: the day's figure sitting on the
+// column the cursor points at.
+func pointerRow(t *Theme, width, at int, label string) string {
+	text := label + " ▾"
+	start := at - lipgloss.Width(text) + 1
+	if start < 0 {
+		text = "▾ " + label
+		start = at
+	}
+	start = min(max(start, 0), max(width-lipgloss.Width(text), 0))
+	return strings.Repeat(" ", start) +
+		lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(text)
+}
+
+// axisGutter is the width of the y-axis labels beside a scaled area chart.
+const axisGutter = 8
+
+// AreaWithAxis is AreaChart with a y-axis: the peak at the top, the midpoint
+// halfway down, zero on the baseline — so a spike has a size, not only a
+// shape. The date row under it should be indented by the same gutter.
+func AreaWithAxis(values, average []float64, width, height int, t *Theme, fill, line tint) string {
+	chartW := max(width-axisGutter, 12)
+	chart := AreaChart(values, average, chartW, height, t, fill, line)
+	peak := math.Max(maxOf(resample(values, chartW*2)), maxOf(resample(average, chartW*2)))
+	if peak <= 0 {
+		return chart
+	}
+
+	rows := strings.Split(chart, "\n")
+	label := func(v float64, joint string) string {
+		return t.Dim.Render(fmt.Sprintf("%6.1f %s", v, joint))
+	}
+	for i := range rows {
+		switch {
+		case i == 0:
+			rows[i] = label(peak, "┤") + rows[i]
+		case i == len(rows)-1:
+			rows[i] = label(0, "┴") + rows[i]
+		case i == (len(rows)-1)/2:
+			rows[i] = label(peak*float64(len(rows)-1-i)/float64(len(rows)-1), "┤") + rows[i]
+		default:
+			rows[i] = strings.Repeat(" ", axisGutter-1) + t.Dim.Render("│") + rows[i]
+		}
+	}
+	return strings.Join(rows, "\n")
+}
