@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"math"
 	"strings"
+	"time"
 
 	"charm.land/lipgloss/v2"
 )
@@ -192,41 +193,39 @@ func ColumnChart(cols []Column, height int, t *Theme, fill tint) string {
 		}
 		styles[i] = lipgloss.NewStyle().Foreground(colour)
 	}
-	grid := make([][]string, height)
-	for row := range grid {
-		grid[row] = make([]string, len(cols))
-		// Rows are filled from the top down, so this row represents the band
-		// between these two fractions of the maximum.
+	var b strings.Builder
+	for row := 0; row < height; row++ {
+		// Rows are filled from the top down, so each row represents the band
+		// between two fractions of the maximum.
 		upper := float64(height-row) / float64(height)
 		lower := float64(height-row-1) / float64(height)
 		for i, c := range cols {
-			style := styles[i]
-			fraction := c.Value / peak
-			switch {
-			case fraction >= upper:
-				grid[row][i] = style.Render("█")
-			case fraction <= lower:
-				grid[row][i] = " "
-			default:
-				eighth := int((fraction-lower)*float64(height)*8 + 0.5)
-				if eighth < 1 {
-					eighth = 1
-				}
-				if eighth > 8 {
-					eighth = 8
-				}
-				grid[row][i] = style.Render(string(sparks[eighth-1]))
-			}
+			b.WriteString(columnCell(c.Value/peak, upper, lower, height, styles[i]))
 		}
-	}
-
-	var b strings.Builder
-	for row := range grid {
-		b.WriteString(strings.Join(grid[row], ""))
 		b.WriteByte('\n')
 	}
 	b.WriteString(t.Dim.Render(strings.Repeat("─", len(cols))))
 	return b.String()
+}
+
+// columnCell renders one cell of a column: full, empty, or the partial band
+// where the column's top lands, in eighths of a cell.
+func columnCell(fraction, upper, lower float64, height int, style lipgloss.Style) string {
+	switch {
+	case fraction >= upper:
+		return style.Render("█")
+	case fraction <= lower:
+		return " "
+	default:
+		eighth := int((fraction-lower)*float64(height)*8 + 0.5)
+		if eighth < 1 {
+			eighth = 1
+		}
+		if eighth > 8 {
+			eighth = 8
+		}
+		return style.Render(string(sparks[eighth-1]))
+	}
 }
 
 // Stack renders one bar split between accounts, scaled against total rather
@@ -257,6 +256,274 @@ func Stack(width int, parts []Bar, total float64, t *Theme) string {
 		b.WriteString(t.Dim.Render(strings.Repeat("─", rest)))
 	}
 	return b.String()
+}
+
+// The area chart is drawn in braille rather than blocks. A braille cell is a
+// 2×4 grid of dots, so each column of text carries two points of the series at
+// four times the vertical resolution of a block character — enough for the
+// shape of a whole cycle to survive a narrow terminal.
+
+// brailleBits maps a dot at (row, column) inside one cell to its bit in the
+// braille block, rows top to bottom. The layout is historical rather than
+// obvious: dots 1–3 and 7 stack in the left column, 4–6 and 8 in the right.
+var brailleBits = [4][2]rune{
+	{0x01, 0x08},
+	{0x02, 0x10},
+	{0x04, 0x20},
+	{0x40, 0x80},
+}
+
+const brailleBlank = rune(0x2800)
+
+// AreaChart renders a series as a filled braille area, with an optional second
+// series — conventionally a moving average — drawn over it as a line. The two
+// are scaled together, so the line sits where it belongs against the fill.
+func AreaChart(values, average []float64, width, height int, t *Theme, fill, line tint) string {
+	if width <= 0 || height <= 0 || len(values) == 0 {
+		return t.Dim.Render("nothing to show yet")
+	}
+	points := width * 2
+	vals := resample(values, points)
+	var avg []float64
+	if len(average) > 0 {
+		avg = resample(average, points)
+	}
+	peak := math.Max(maxOf(vals), maxOf(avg))
+	if peak <= 0 {
+		return t.Dim.Render("nothing logged in this range")
+	}
+	fillTop, lineDot := brailleHeights(vals, avg, peak, height*4)
+
+	fillStyle := lipgloss.NewStyle().Foreground(fill)
+	lineStyle := lipgloss.NewStyle().Foreground(line)
+	var b strings.Builder
+	for row := 0; row < height; row++ {
+		for col := 0; col < width; col++ {
+			filled, lined := brailleCell(row, col, height, fillTop, lineDot)
+			switch {
+			case lined != 0:
+				// The cell belongs to the line where the two meet: the average
+				// is the annotation, and an annotation that vanishes into what
+				// it annotates is not one.
+				b.WriteString(lineStyle.Render(string(brailleBlank | lined | filled)))
+			case filled != 0:
+				b.WriteString(fillStyle.Render(string(brailleBlank | filled)))
+			default:
+				b.WriteByte(' ')
+			}
+		}
+		b.WriteByte('\n')
+	}
+	b.WriteString(t.Dim.Render(strings.Repeat("─", width)))
+	return b.String()
+}
+
+// brailleHeights turns the two series into dot heights from the chart floor. A
+// day with something logged is never rounded away entirely: one dot is the
+// difference between a light day and an absence, and the absence is the one
+// that must stay blank.
+func brailleHeights(vals, avg []float64, peak float64, subH int) (fillTop, lineDot []int) {
+	fillTop = make([]int, len(vals))
+	lineDot = make([]int, len(vals))
+	for i, v := range vals {
+		if v > 0 {
+			fillTop[i] = max(int(math.Round(v/peak*float64(subH))), 1)
+		}
+		lineDot[i] = -1
+		if avg != nil && avg[i] > 0 {
+			lineDot[i] = min(max(int(math.Round(avg[i]/peak*float64(subH))), 1), subH) - 1
+		}
+	}
+	return fillTop, lineDot
+}
+
+// brailleCell collects the dots of one cell: the bits of the area fill and the
+// bits of the average line crossing it.
+func brailleCell(row, col, height int, fillTop, lineDot []int) (filled, lined rune) {
+	for sub := 0; sub < 4; sub++ {
+		// The dot's height counted from the chart floor.
+		fromBottom := (height-1-row)*4 + (3 - sub)
+		for side := 0; side < 2; side++ {
+			i := col*2 + side
+			if fromBottom < fillTop[i] {
+				filled |= brailleBits[sub][side]
+			}
+			if fromBottom == lineDot[i] {
+				lined |= brailleBits[sub][side]
+			}
+		}
+	}
+	return filled, lined
+}
+
+// movingAverage smooths a series over a trailing window. The first days of a
+// range are averaged over what exists rather than padded with zeroes, which
+// would invent a ramp-up that never happened.
+func movingAverage(values []float64, window int) []float64 {
+	if window <= 1 || len(values) == 0 {
+		return values
+	}
+	out := make([]float64, len(values))
+	sum := 0.0
+	for i, v := range values {
+		sum += v
+		if i >= window {
+			sum -= values[i-window]
+		}
+		out[i] = sum / float64(min(i+1, window))
+	}
+	return out
+}
+
+// resample stretches or squeezes a series to exactly n points. Squeezing
+// averages the days a point covers, so a long history keeps its shape;
+// stretching repeats them, so a short one reads as steps rather than gaining
+// detail it does not have.
+func resample(values []float64, n int) []float64 {
+	if n <= 0 || len(values) == 0 {
+		return nil
+	}
+	out := make([]float64, n)
+	per := float64(len(values)) / float64(n)
+	for i := range out {
+		start := int(float64(i) * per)
+		end := int(float64(i+1) * per)
+		if end <= start {
+			end = start + 1
+		}
+		if end > len(values) {
+			end = len(values)
+		}
+		if start >= len(values) {
+			start = len(values) - 1
+		}
+		sum := 0.0
+		for _, v := range values[start:end] {
+			sum += v
+		}
+		out[i] = sum / float64(end-start)
+	}
+	return out
+}
+
+// Calendar renders a run of days as a heatmap: one column per week, one row
+// per weekday, colour carrying the amount. It is the shape a year of habit is
+// easiest to read in — the heavy weeks, the pauses, whether weekends differ
+// from weekdays — none of which a bar per day can say once the days outnumber
+// the columns of the terminal.
+func Calendar(perDay map[string]float64, from, to time.Time, width int, t *Theme) string {
+	const gutter = 4 // room for the weekday labels
+	if width <= gutter+1 || to.Before(from) {
+		return t.Dim.Render("nothing to show yet")
+	}
+
+	start := mondayOf(from)
+	weeks := daysBetween(start, to)/7 + 1
+	if room := width - gutter; weeks > room {
+		// Too long to fit: the most recent weeks win, since they are the ones
+		// a decision would be made from.
+		weeks = room
+		start = mondayOf(to).AddDate(0, 0, -7*(weeks-1))
+	}
+
+	peak := 0.0
+	for d := start; !d.After(to); d = d.AddDate(0, 0, 1) {
+		if v := perDay[d.Format(time.DateOnly)]; v > peak {
+			peak = v
+		}
+	}
+	if peak <= 0 {
+		return t.Dim.Render("nothing logged in this range")
+	}
+
+	rows := []string{strings.Repeat(" ", gutter) + t.Dim.Render(monthLabels(start, weeks))}
+	labels := map[int]string{0: "Mon", 2: "Wed", 4: "Fri"}
+	for weekday := 0; weekday < 7; weekday++ {
+		var b strings.Builder
+		b.WriteString(t.Dim.Render(padTo(labels[weekday], gutter)))
+		for week := 0; week < weeks; week++ {
+			day := start.AddDate(0, 0, week*7+weekday)
+			b.WriteString(calendarCell(t, perDay[day.Format(time.DateOnly)], peak, day, from, to))
+		}
+		rows = append(rows, b.String())
+	}
+	rows = append(rows, "", heatLegend(t))
+	return strings.Join(rows, "\n")
+}
+
+// monthLabels writes each month's name where it begins, so the columns can be
+// dated without an axis. A label is skipped when the previous one would still
+// be under it: a cramped chart with legible labels beats a complete ruler.
+func monthLabels(start time.Time, weeks int) string {
+	months := make([]rune, weeks)
+	for i := range months {
+		months[i] = ' '
+	}
+	lastLabel := -3
+	for week := 0; week < weeks; week++ {
+		monday := start.AddDate(0, 0, week*7)
+		if (week == 0 || monday.Day() <= 7) && week-lastLabel >= 3 {
+			for i, r := range monday.Format("Jan") {
+				if week+i < weeks {
+					months[week+i] = r
+				}
+			}
+			lastLabel = week
+		}
+	}
+	return string(months)
+}
+
+// calendarCell renders one day: blank outside the range, a dot for an absence,
+// and a heat-shaded block for anything logged.
+func calendarCell(t *Theme, v, peak float64, day, from, to time.Time) string {
+	switch {
+	case day.After(to) || day.Before(from):
+		return " "
+	case v <= 0:
+		return t.Dim.Render("·")
+	default:
+		return lipgloss.NewStyle().Foreground(heatAt(t, v/peak)).Render("■")
+	}
+}
+
+// heatLegend is the less-to-more ramp under the calendar.
+func heatLegend(t *Theme) string {
+	legend := t.Dim.Render("less ")
+	for _, shade := range t.Heat {
+		legend += lipgloss.NewStyle().Foreground(shade).Render("■")
+	}
+	return legend + t.Dim.Render(" more")
+}
+
+// heatAt picks the shade for a share of the peak, in even steps. The scale is
+// linear because the readings are: a 2 g day is twice a 1 g day, and the chart
+// should not editorialise beyond that.
+func heatAt(t *Theme, fraction float64) tint {
+	i := int(fraction * float64(len(t.Heat)))
+	if i >= len(t.Heat) {
+		i = len(t.Heat) - 1
+	}
+	if i < 0 {
+		i = 0
+	}
+	return t.Heat[i]
+}
+
+// mondayOf returns the Monday on or before a day, which is where a calendar
+// column starts.
+func mondayOf(d time.Time) time.Time {
+	shift := (int(d.Weekday()) + 6) % 7
+	y, m, day := d.AddDate(0, 0, -shift).Date()
+	return time.Date(y, m, day, 0, 0, 0, 0, d.Location())
+}
+
+// padTo extends a label with spaces to a fixed width.
+func padTo(s string, width int) string {
+	if len(s) >= width {
+		return s[:width]
+	}
+	return s + strings.Repeat(" ", width-len(s))
 }
 
 // fit reduces a series to at most width points by averaging neighbours, so a
