@@ -2,10 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.16.0"></a>
+## [v0.16.0] - 2026-08-02
+### Feat
+- **cannabis:** a fuller terpene set, with where each is found
+
+
 <a name="v0.15.0"></a>
 ## [v0.15.0] - 2026-08-02
 ### Build
 - **witsnap:** the camera and the tap
+
+### Docs
+- update changelog for v0.15.0
 
 
 <a name="v0.14.0"></a>
@@ -334,7 +343,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.16.0...HEAD
+[v0.16.0]: https://github.com/TheDonDope/wits/compare/v0.15.0...v0.16.0
 [v0.15.0]: https://github.com/TheDonDope/wits/compare/v0.14.0...v0.15.0
 [v0.14.0]: https://github.com/TheDonDope/wits/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/TheDonDope/wits/compare/v0.12.0...v0.13.0
