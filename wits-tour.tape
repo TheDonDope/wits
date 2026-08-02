@@ -40,12 +40,16 @@ Tab
 Sleep 4s
 Type "s"
 Sleep 4s
-# Products.
+# Storage: the shelf above, the history of finished jars below.
 Tab
 Sleep 3s
 Down
 Sleep 2s
+# Tick two jars; r would weigh them together.
+Space
+Sleep 1200ms
 Down
+Space
 Sleep 2500ms
 # Devices.
 Tab

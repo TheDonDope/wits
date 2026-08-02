@@ -118,7 +118,7 @@ About 24 days left at that rate
 
 `wits` on its own opens the interface: a dashboard of what is left and how long
 it will last, the journal, an analysis view scoping from the current cycle out to
-the whole history, the products and the devices. Entries can be recorded there
+the whole history, the storage and the devices. Entries can be recorded there
 too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
 
 The analysis view draws the daily amounts as a braille area chart with a
@@ -172,8 +172,13 @@ wits log --oneline -n 1
 wits revert 8297238 --reason "misread the scale"
 ```
 
-On the products screen, `e` corrects a name and `r` weighs a jar. In the journal,
-`e` amends an amount and `d` undoes an entry. The log shows what
+The storage screen is two tables: what still holds something, and the history
+of every jar weighed down to zero, newest first. Space ticks jars in either
+table and `r` weighs the ticked ones together; `e` corrects a name; `c` records
+stale stash remainders from earlier cycles as consumed, which is what four
+imported years of grind-only records leave behind. Product names are never
+abbreviated — the name column takes what the longest name needs. In the
+journal, `e` amends an amount and `d` undoes an entry. The log shows what
 currently stands; `v` reveals the corrections behind it.
 
 ## When the ledger and the scale disagree
@@ -197,8 +202,9 @@ For weighing day, `wits reconcile` on its own is interactive: pick storage or
 the stash, tick the jars to weigh — all of them by default — and each is asked
 for in turn, with the ledger's figure beside the prompt. A blank reading skips
 a jar; `wits reconcile stash` skips the first question. In the interface this
-is `r`, on any screen — it offers the jar under the cursor on the products
-screen, or otherwise the fullest one, since that is the one worth checking.
+is `r`, on any screen — it weighs the jars ticked on the storage screen, the
+one under the cursor, or otherwise the fullest one, since that is the one
+worth checking.
 
 ## The repository
 
