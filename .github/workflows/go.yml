@@ -39,12 +39,18 @@ jobs:
       - name: Test
         run: make test-ci
 
+      # The coverage uploads need repository secrets, which GitHub withholds
+      # from Dependabot and fork pull requests. Skipping them there keeps the
+      # build honest — a genuine code failure still fails — while a secret-less
+      # run does not show a false red for a token it was never given.
       - name: Upload coverage reports to Codecov
+        if: ${{ github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run codacy-coverage-reporter
+        if: ${{ github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         uses: codacy/codacy-coverage-reporter-action@6904bd01e29ada115135b5eca20125758ccae53b
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
