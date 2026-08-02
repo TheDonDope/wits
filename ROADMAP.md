@@ -193,6 +193,13 @@ the ledger believes an account holds and what it actually weighs. Nothing in the
 past is edited: the difference becomes an adjustment, which is a transfer like
 any other, so the accounts still balance afterwards.
 
+Run bare, reconcile is interactive: it asks which account is on the scale,
+offers the jars as a ticked checklist, and asks for each reading in turn with
+the ledger's figure beside the prompt — a blank reading skips a jar. Naming the
+account skips the first question, and `wits reconcile stash wcake-221 1.75` is
+the whole thing as one line. Nothing is written until every question is
+answered, so abandoning the forms halfway records nothing.
+
 ### Temperatures and devices
 
 Every cannabinoid and terpene with its boiling point, so a setting on a dial reads

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -339,5 +340,82 @@ func TestReconcileCommand(t *testing.T) {
 
 		assert.ErrorContains(t, err, "one account at a time",
 			"Should refuse rather than silently pick one")
+	})
+
+	t.Run("AccountFirstShorthand", func(t *testing.T) {
+		dir := stocked(t)
+
+		out, err := run(t, dir, Reconcile, "stash", "wedding", "1.75")
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "out of stash", "Should weigh the account named first")
+		assert.Contains(t, out, "wcake-221", "Should name the jar it adjusted")
+	})
+
+	t.Run("AnEmptyJarIsARealReading", func(t *testing.T) {
+		dir := stocked(t)
+
+		out, err := run(t, dir, Reconcile, "stash", "wedding", "0")
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "now 0.00g", "Should record a jar weighed at zero rather than refuse it")
+	})
+
+	t.Run("RefusesAnUnknownAccount", func(t *testing.T) {
+		dir := stocked(t)
+
+		_, err := run(t, dir, Reconcile, "shelf", "wedding", "1")
+
+		assert.ErrorContains(t, err, "not an account", "Should name the accounts that exist")
+	})
+
+	t.Run("AccountAndFlagTogetherAreRefused", func(t *testing.T) {
+		dir := stocked(t)
+		defer func() { reconcileStash = false }()
+
+		_, err := run(t, dir, Reconcile, "stash", "wedding", "1.75", "--stash")
+
+		assert.ErrorContains(t, err, "drop the flag", "Should not let the two forms disagree")
+	})
+
+	t.Run("AccountAndWeightWithoutAProduct", func(t *testing.T) {
+		dir := stocked(t)
+
+		_, err := run(t, dir, Reconcile, "stash", "1.75")
+
+		assert.ErrorContains(t, err, "which product", "Should say what is missing")
+	})
+
+	t.Run("InteractiveNeedsATerminal", func(t *testing.T) {
+		dir := stocked(t)
+
+		_, err := run(t, dir, Reconcile)
+
+		assert.ErrorContains(t, err, "needs a terminal",
+			"Should refuse under a pipe rather than hang on a form nobody can see")
+	})
+
+	t.Run("AppliesCollectedReadings", func(t *testing.T) {
+		// The interactive flow past the forms: what was typed gets applied,
+		// blanks skip, and a jar that matches is said to match.
+		dir := stocked(t)
+		t.Chdir(dir)
+		s, err := open()
+		require.NoError(t, err)
+
+		var out bytes.Buffer
+		require.NoError(t, applyReadings(&out, s, journal.Stash,
+			[]string{"wcake-221"}, []string{"1.75"}))
+		assert.Contains(t, out.String(), "out of stash of wcake-221", "Should record a typed reading")
+
+		out.Reset()
+		require.NoError(t, applyReadings(&out, s, journal.Stash,
+			[]string{"wcake-221"}, []string{""}))
+		assert.Contains(t, out.String(), "nothing to record", "Should treat a blank as a skip")
+
+		out.Reset()
+		require.NoError(t, applyReadings(&out, s, journal.Stash,
+			[]string{"wcake-221"}, []string{"1.75"}))
+		assert.Contains(t, out.String(), "already matches", "Should say when the scale agrees")
 	})
 }
