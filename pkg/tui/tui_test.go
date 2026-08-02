@@ -125,8 +125,13 @@ func TestNavigation(t *testing.T) {
 	m, _ = m.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
 	assert.Equal(t, journalScreen, app.screen, "Should move to the next tab")
 
+	// On the journal, the horizontal keys belong to the cover slider; only
+	// tab and shift+tab change screens from there.
 	m, _ = m.Update(tea.KeyPressMsg{Code: 'h', Text: "h"})
-	assert.Equal(t, dashboardScreen, app.screen, "Should move back")
+	assert.Equal(t, journalScreen, app.screen, "h should slide the cover, not leave the journal")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
+	assert.Equal(t, dashboardScreen, app.screen, "Should move back on shift+tab")
 
 	_, cmd := m.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
 	require.NotNil(t, cmd)
@@ -201,4 +206,32 @@ func emptyData(t *testing.T) Data {
 	return Data{Workspace: &workspace.Workspace{
 		Products: &catalog.Catalog{}, Devices: &catalog.Devices{}, State: ledger.Fold(nil),
 	}, Now: time.Now()}
+}
+
+func TestJournalCoverSlider(t *testing.T) {
+	out := render(t, sample(t), journalScreen, 96, 34)
+
+	assert.Contains(t, out, "of 6 · newer →", "Should say where the slider stands")
+	assert.Contains(t, out, "sesh", "Should tell the selected entry in full")
+
+	// Sliding left selects the older neighbour; the list cursor follows.
+	app := New(sample(t))
+	app.screen = journalScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 34})
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'g', Text: "g"})
+	before := app.journal.Selected()
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
+	after := app.journal.Selected()
+	require.NotNil(t, before)
+	require.NotNil(t, after)
+	assert.True(t, after.OccurredAt.Before(before.OccurredAt),
+		"Left should slide to the older entry")
+}
+
+func TestDashboardStorageCardListsProducts(t *testing.T) {
+	out := render(t, sample(t), dashboardScreen, 96, 44)
+
+	assert.Contains(t, out, "Enua 22/1 Wedding", "The storage card should bar each product")
+	assert.Contains(t, out, "Cannamedical 28/1", "all of them")
 }

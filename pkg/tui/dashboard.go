@@ -145,11 +145,42 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	if days := stats.DaysLeft(remaining); days > 0 {
 		runway = fmt.Sprintf("lasts ~%.0f days at %.2f g per active day", days, stats.PerActiveDay)
 	}
-	return lipgloss.JoinVertical(lipgloss.Left,
+	lines := []string{
 		headline,
 		bar,
 		t.Dim.Render(fmt.Sprintf("%s on the shelf · %s", plural(len(c.Products), "product"), runway)),
-	)
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, append(lines, d.storageRows(a, c, w)...)...)
+}
+
+// storageRows is one stacked bar per product of the cycle: sealed, ground and
+// AVB against what the product started with, so the card says not only how
+// much remains but whose jar it is in.
+func (d dashboard) storageRows(a *App, c *ledger.Cycle, w int) []string {
+	t, data := a.theme, a.data
+	labelW := min(w/2, 22)
+	rows := []string{""}
+	products := c.Products
+	if len(products) > 4 {
+		products = products[:4]
+	}
+	for _, slug := range products {
+		b := data.State.Balances[slug]
+		if b == nil {
+			continue
+		}
+		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Left,
+			t.Value.Width(labelW).Render(truncate(data.ProductName(slug), labelW)),
+			" ",
+			Stack(max(w-labelW-10, 6), []Bar{
+				{Value: b.Storage, Color: t.StorageC},
+				{Value: b.Stash, Color: t.StashC},
+				{Value: b.AVB, Color: t.AVBC},
+			}, c.HeldOf(slug), t),
+			t.Dim.Render(fmt.Sprintf(" %.2f g", b.Storage)),
+		))
+	}
+	return rows
 }
 
 // stashCard is the ground product: how much sits in the stashes, and where.
