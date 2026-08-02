@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.15.0"></a>
+## [v0.15.0] - 2026-08-02
+### Build
+- **witsnap:** the camera and the tap
+
+
 <a name="v0.14.0"></a>
 ## [v0.14.0] - 2026-08-02
+### Docs
+- update changelog for v0.14.0
+
 ### Feat
 - **tui:** the storage and stash screens replay too
 
@@ -325,7 +334,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.15.0...HEAD
+[v0.15.0]: https://github.com/TheDonDope/wits/compare/v0.14.0...v0.15.0
 [v0.14.0]: https://github.com/TheDonDope/wits/compare/v0.13.0...v0.14.0
 [v0.13.0]: https://github.com/TheDonDope/wits/compare/v0.12.0...v0.13.0
 [v0.12.0]: https://github.com/TheDonDope/wits/compare/v0.11.0...v0.12.0
