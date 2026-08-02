@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.17.0"></a>
+## [v0.17.0] - 2026-08-02
+### Chore
+- a cleanup round — dead code, version wiring, devops, renderings
+
+
 <a name="v0.16.0"></a>
 ## [v0.16.0] - 2026-08-02
+### Docs
+- update changelog for v0.16.0
+
 ### Feat
 - **cannabis:** a fuller terpene set, with where each is found
 
@@ -343,7 +352,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.17.0...HEAD
+[v0.17.0]: https://github.com/TheDonDope/wits/compare/v0.16.0...v0.17.0
 [v0.16.0]: https://github.com/TheDonDope/wits/compare/v0.15.0...v0.16.0
 [v0.15.0]: https://github.com/TheDonDope/wits/compare/v0.14.0...v0.15.0
 [v0.14.0]: https://github.com/TheDonDope/wits/compare/v0.13.0...v0.14.0
