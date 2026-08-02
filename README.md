@@ -317,7 +317,11 @@ make run        # build it and run it
 make test       # test with coverage
 make cover      # coverage as HTML
 make vet
+make preflight  # everything CI and the Codacy gate will say, said here first
 ```
+
+`./preflight.sh watch <pr>` polls a pull request's checks and reads the Codacy
+delta the way the gate does, so a red X never comes as a surprise.
 
 `make build-windows` cross-compiles `bin/wits.exe`. `make render-tapes` re-records
 every GIF in `assets/` from the `*.tape` files; it needs `vhs`, `gum` and `ttyd`

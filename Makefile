@@ -3,7 +3,7 @@ COMMIT_SHA = $(shell git rev-parse --short HEAD)
 COMMIT_DATE = $(shell git --no-pager log -1 --pretty='format:%cd' --date='format:%Y-%m-%dT%H:%M:%S')
 
 .PHONY: run install build build-windows clean doc changelog render-tapes \
-	test test-ci cover show-cover vet release
+	test test-ci cover show-cover vet preflight release
 
 .DEFAULT_GOAL := build
 
@@ -73,6 +73,10 @@ show-cover: cover
 
 vet:
 	go vet ./...
+
+# Everything the CI and the Codacy gate will say, said here first.
+preflight:
+	./preflight.sh
 
 # The guard checks where VERSION came from, not whether it is empty: it always
 # has a value here, because it defaults to the previous tag — and releasing
