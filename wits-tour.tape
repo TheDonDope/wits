@@ -51,6 +51,12 @@ Sleep 1200ms
 Down
 Space
 Sleep 2500ms
+# Stash: the stashes holding ground product, and the ones already consumed.
+Tab
+Sleep 3s
+# Sessions: what came out of the stash, through which device, how hot.
+Tab
+Sleep 3500ms
 # Devices.
 Tab
 Sleep 3500ms

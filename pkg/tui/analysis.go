@@ -272,3 +272,224 @@ func (v analysisView) cycles(a *App, width int) string {
 	}
 	return BarChart(bars, width, t)
 }
+
+// sessionsView is where the sessions live: how much came out of the stash,
+// when, through which device and at what temperature. It is the view the
+// spreadsheet never had — the imported years recorded only grinding — so it
+// grows as sessions are actually logged.
+type sessionsView struct {
+	scroll int
+}
+
+func newSessionsView() sessionsView { return sessionsView{} }
+
+func (v sessionsView) keys(base keyMap) help.KeyMap { return base }
+
+func (v sessionsView) Update(msg tea.Msg, a *App) (sessionsView, tea.Cmd) {
+	if msg, ok := msg.(tea.KeyPressMsg); ok {
+		switch {
+		case key.Matches(msg, a.keys.Up):
+			v.scroll = max(v.scroll-1, 0)
+		case key.Matches(msg, a.keys.Down):
+			v.scroll++
+		case key.Matches(msg, a.keys.PageUp):
+			v.scroll = max(v.scroll-10, 0)
+		case key.Matches(msg, a.keys.PgDown):
+			v.scroll += 10
+		case key.Matches(msg, a.keys.Top):
+			v.scroll = 0
+		}
+	}
+	return v, nil
+}
+
+// seshes returns the session events, oldest first.
+func seshes(a *App) []journal.Event {
+	var out []journal.Event
+	for _, e := range a.data.State.Events {
+		if e.Type == journal.Sesh {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+func (v sessionsView) View(a *App, height int) string {
+	t := a.theme
+	width := a.inner()
+	events := seshes(a)
+
+	if len(events) == 0 {
+		return lipgloss.NewStyle().Padding(1, 1).Render(
+			t.Subtitle.Render("No sessions logged yet.\n\nPress ") + t.Key.Render("s") +
+				t.Subtitle.Render(" to record one, or `wits sesh` from the shell.\nThe imported years only recorded grinding, so this view starts here."))
+	}
+
+	sections := []string{
+		v.summary(a, events, width),
+		"",
+		t.Rule("Seshed per day", width),
+		v.perDay(a, events, width),
+		"",
+		t.Rule("By device", width),
+		v.byDevice(a, events, width),
+		"",
+		t.Rule("Rhythm", width),
+		v.rhythm(a, events, width),
+	}
+
+	lines := strings.Split(lipgloss.JoinVertical(lipgloss.Left, sections...), "\n")
+	visible := max(height-2, 1)
+	offset := min(v.scroll, max(len(lines)-visible, 0))
+	show := visible
+	more := offset+visible < len(lines)
+	if more {
+		show = max(visible-1, 1)
+	}
+	body := strings.Join(lines[offset:min(offset+show, len(lines))], "\n")
+	if more {
+		body += "\n" + t.Dim.Render("↓ more")
+	}
+	return lipgloss.NewStyle().Padding(1, 1).Render(body)
+}
+
+// summary is the headline figures: how many sessions, how much they drew, and
+// what a typical one looks like.
+func (v sessionsView) summary(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	total, days := 0.0, map[string]bool{}
+	temps, tempCount := 0, 0
+	for _, e := range events {
+		total += e.Grams
+		days[e.OccurredAt.Format(time.DateOnly)] = true
+		if e.Temperature > 0 {
+			temps += e.Temperature
+			tempCount++
+		}
+	}
+	perSession := total / float64(len(events))
+	avgTemp := "—"
+	if tempCount > 0 {
+		avgTemp = fmt.Sprintf("%d°C", temps/tempCount)
+	}
+
+	cols := lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.NewStyle().Width(width/4).Render(
+			t.Metric("sessions", fmt.Sprintf("%d", len(events)),
+				fmt.Sprintf("across %s", plural(len(days), "day")))),
+		lipgloss.NewStyle().Width(width/4).Render(
+			t.Metric("seshed", fmt.Sprintf("%.1f g", total), "out of the stash")),
+		lipgloss.NewStyle().Width(width/4).Render(
+			t.Metric("per session", fmt.Sprintf("%.2f g", perSession), "")),
+		lipgloss.NewStyle().Width(width/4).Render(
+			t.Metric("avg temp", avgTemp, "where one was set")),
+	)
+	return cols
+}
+
+// perDay draws the grams seshed per day as the braille area the analysis view
+// uses, with the same seven-day average riding over it.
+func (v sessionsView) perDay(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	perDay := map[string]float64{}
+	var first, last time.Time
+	for _, e := range events {
+		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
+		if first.IsZero() || e.OccurredAt.Before(first) {
+			first = e.OccurredAt
+		}
+		if e.OccurredAt.After(last) {
+			last = e.OccurredAt
+		}
+	}
+	var values []float64
+	for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
+		values = append(values, perDay[d.Format(time.DateOnly)])
+	}
+	chart := AreaChart(values, movingAverage(values, 7), width, 6, t, t.SeshC, t.Alt)
+	return lipgloss.JoinVertical(lipgloss.Left, chart,
+		axisLabels(t, first.Format("02 Jan 06"), last.Format("02 Jan 06"), width))
+}
+
+// deviceUsage is what the sessions drew through one device.
+type deviceUsage struct {
+	grams float64
+	count int
+	temps int
+	tSum  int
+}
+
+// usageByDevice aggregates the sessions per device, heaviest first. Sessions
+// without a device are owned rather than dropped: they happened.
+func usageByDevice(events []journal.Event) ([]string, map[string]*deviceUsage) {
+	byDev := map[string]*deviceUsage{}
+	for _, e := range events {
+		name := e.Device
+		if name == "" {
+			name = "no device"
+		}
+		u, ok := byDev[name]
+		if !ok {
+			u = &deviceUsage{}
+			byDev[name] = u
+		}
+		u.grams += e.Grams
+		u.count++
+		if e.Temperature > 0 {
+			u.tSum += e.Temperature
+			u.temps++
+		}
+	}
+	names := make([]string, 0, len(byDev))
+	for n := range byDev {
+		names = append(names, n)
+	}
+	sort.Slice(names, func(i, j int) bool { return byDev[names[i]].grams > byDev[names[j]].grams })
+	return names, byDev
+}
+
+// byDevice ranks the devices by the grams drawn through them, with how often
+// and how hot alongside — which is what device usage actually consists of.
+func (v sessionsView) byDevice(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	names, byDev := usageByDevice(events)
+	bars := make([]Bar, 0, len(names))
+	for _, n := range names {
+		u := byDev[n]
+		note := plural(u.count, "session")
+		if u.temps > 0 {
+			note = fmt.Sprintf("%s · avg %d°C", note, u.tSum/u.temps)
+		}
+		label := n
+		if a.data.Devices != nil {
+			if d, err := a.data.Devices.Find(n); err == nil {
+				label = d.Name
+			}
+		}
+		bars = append(bars, Bar{
+			Label: label,
+			Value: u.grams,
+			Note:  fmt.Sprintf("%.2f g · %s", u.grams, note),
+			Color: t.SeshC,
+		})
+	}
+	return BarChart(bars, width, t)
+}
+
+// rhythm is the calendar of session days, in the same heat the analysis
+// screen reads consumption in.
+func (v sessionsView) rhythm(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	perDay := map[string]float64{}
+	var first, last time.Time
+	for _, e := range events {
+		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
+		if first.IsZero() || e.OccurredAt.Before(first) {
+			first = e.OccurredAt
+		}
+		if e.OccurredAt.After(last) {
+			last = e.OccurredAt
+		}
+	}
+	return Calendar(perDay, first, last, width, t)
+}

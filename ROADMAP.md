@@ -181,6 +181,15 @@ storage is long gone and whose sessions were never logged — the shape the
 imported years left — is reconciled to zero, recorded as consumed at some
 point, which is the only honest reading of an empty jar.
 
+The stash screen drills in the same way: the stashes holding something above —
+with everything that ever passed through each, and how many sessions that took
+— and the finished ones below, grouped under the day each was consumed. A
+refilled stash returns to the active table; the old ending no longer ends the
+story. The sessions screen reads the other direction: sessions, grams drawn,
+per-session and average-temperature figures, the braille per-day chart, grams
+by device with session counts and temperatures, and the rhythm calendar. The
+imported years recorded no sessions, so it grows from here.
+
 Every product gets a short handle when it is first bought — three to five
 characters from the cultivar, then the THC/CBD ratio: `wcake-221`. Handles are
 never one keystroke from another, since references resolve by prefix, and a

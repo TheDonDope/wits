@@ -368,7 +368,7 @@ const entryReconcile entryKind = iota + 200
 // The ledger's own figure is put in front of the field rather than left to be
 // remembered, because the point of weighing is to compare, and a number typed
 // from memory is not a reconciliation.
-func newReconcileForm(slug string, a *App) *entryForm {
+func newReconcileForm(slug string, a *App, account journal.Account) *entryForm {
 	f := &entryForm{kind: entryReconcile, product: slug}
 	b := a.data.State.Balances[slug]
 	if b == nil {
@@ -383,7 +383,7 @@ func newReconcileForm(slug string, a *App) *entryForm {
 		accounts = append(accounts,
 			huh.NewOption(fmt.Sprintf("AVB — ledger says %.2f g", b.AVB), string(journal.AVB)))
 	}
-	f.account = string(journal.Storage)
+	f.account = string(account)
 
 	f.form = huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(a.data.ProductName(slug)).
@@ -417,9 +417,9 @@ const entryWeighMany entryKind = iota + 400
 // newWeighManyForm asks which account is on the scale, then for each ticked
 // jar's reading in turn, the way `wits reconcile` does. A blank reading skips
 // a jar, and nothing is written until every question is answered.
-func newWeighManyForm(slugs []string, a *App) *entryForm {
+func newWeighManyForm(slugs []string, a *App, account journal.Account) *entryForm {
 	f := &entryForm{kind: entryWeighMany, slugs: slugs, readings: make([]string, len(slugs))}
-	f.account = string(journal.Storage)
+	f.account = string(account)
 
 	groups := []*huh.Group{huh.NewGroup(
 		huh.NewNote().Title(fmt.Sprintf("Weighing %s", plural(len(slugs), "jar"))).

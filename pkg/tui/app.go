@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
@@ -46,11 +47,13 @@ const (
 	journalScreen
 	analysisScreen
 	storageScreen
+	stashScreen
+	sessionsScreen
 	devicesScreen
 )
 
 // tabs are the screen names, in order.
-var tabs = []string{"Dashboard", "Journal", "Analysis", "Storage", "Devices"}
+var tabs = []string{"Dashboard", "Journal", "Analysis", "Storage", "Stash", "Sessions", "Devices"}
 
 // keyMap is the global key bindings. Screens add their own on top, borrowing
 // from here where the key is shared, so that a binding is declared once and
@@ -133,6 +136,8 @@ type App struct {
 	journal   journalView
 	analysis  analysisView
 	storage   storageView
+	stash     stashView
+	sessions  sessionsView
 	devices   devicesView
 	device    *deviceForm
 }
@@ -149,6 +154,8 @@ func New(data Data) *App {
 	a.journal = newJournalView()
 	a.analysis = newAnalysisView()
 	a.storage = newStorageView()
+	a.stash = newStashView()
+	a.sessions = newSessionsView()
 	a.devices = newDevicesView()
 	return a
 }
@@ -171,41 +178,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.theme = NewTheme(msg.IsDark())
 
 	case entryDoneMsg:
-		if errors.Is(msg.err, errCancelled) {
-			a.notice = ""
-			return a, nil
-		}
-		if msg.err != nil {
-			a.notice, a.failed = msg.err.Error(), true
-			return a, nil
-		}
-		if msg.summary != "" {
-			// A weighing session: several adjustments summed into one line,
-			// and the ticks have served their purpose.
-			a.storage.ClearMarks()
-			a.notice, a.failed = msg.summary, false
-			return a, a.reload()
-		}
-		if msg.event.Type == "" {
-			// A product was edited rather than an entry recorded.
-			a.notice, a.failed = fmt.Sprintf("renamed %s to %s", msg.event.Product, msg.event.Note), false
-			return a, a.reload()
-		}
-		a.notice, a.failed = fmt.Sprintf("recorded %s %.2fg %s",
-			msg.event.Type, msg.event.Grams, msg.event.Product), false
-		return a, a.reload()
+		return a.entryDone(msg)
 
 	case deviceDoneMsg:
-		if errors.Is(msg.err, errCancelled) {
-			a.notice = ""
-			return a, nil
-		}
-		if msg.err != nil {
-			a.notice, a.failed = msg.err.Error(), true
-			return a, nil
-		}
-		a.notice, a.failed = fmt.Sprintf("saved device %s", msg.name), false
-		return a, a.reload()
+		return a.deviceDone(msg)
 
 	case reloadedMsg:
 		if msg.err != nil {
@@ -216,92 +192,16 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, nil
 
 	case tea.KeyPressMsg:
-		if a.device != nil {
-			if msg.String() == "esc" {
-				a.device, a.notice = nil, ""
-				return a, nil
-			}
-			var cmd tea.Cmd
-			a.device, cmd = a.device.Update(msg, a)
+		if handled, cmd := a.formKey(msg); handled {
 			return a, cmd
 		}
-		// A form in front owns the keyboard.
-		if a.entry != nil {
-			// huh only aborts on ctrl+c, so esc is handled here rather than
-			// leaving the panel promising something that does not work.
-			if msg.String() == "esc" {
-				a.entry, a.notice = nil, ""
-				return a, nil
-			}
-			var cmd tea.Cmd
-			a.entry, cmd = a.entry.Update(msg, a)
+		if handled, cmd := a.entryKey(msg); handled {
+			return a, cmd
+		}
+		if handled, cmd := a.correctionKey(msg); handled {
 			return a, cmd
 		}
 		switch {
-		case key.Matches(msg, a.keys.New):
-			a.entry, a.notice = newEntryForm(entryGrind, a), ""
-			return a, a.entry.form.Init()
-		case key.Matches(msg, a.keys.Sesh) && a.screen != analysisScreen:
-			a.entry, a.notice = newEntryForm(entrySesh, a), ""
-			return a, a.entry.form.Init()
-		case key.Matches(msg, a.keys.Buy):
-			a.entry, a.notice = newEntryForm(entryBuy, a), ""
-			return a, a.entry.form.Init()
-		case key.Matches(msg, a.keys.Add) && a.screen == devicesScreen:
-			a.device, a.notice = newDeviceForm(nil, a), ""
-			return a, a.device.form.Init()
-		case key.Matches(msg, a.keys.Edit) && a.screen == storageScreen:
-			if r := a.storage.Selected(a); r != nil {
-				a.entry, a.notice = newDescribeForm(r.Slug, a), ""
-				return a, a.entry.form.Init()
-			}
-			return a, nil
-		case key.Matches(msg, cleanKey) && a.screen == storageScreen:
-			if stale := staleStashes(a); len(stale) > 0 {
-				a.entry, a.notice = newCleanHistoryForm(stale, a), ""
-				return a, a.entry.form.Init()
-			}
-			a.notice, a.failed = "no stale stashes to clean", true
-			return a, nil
-		case key.Matches(msg, a.keys.Weigh) && a.screen != journalScreen:
-			// Ticked jars on the storage screen are weighed together; without
-			// any, the jar under the cursor or the fullest one is weighed.
-			if a.screen == storageScreen {
-				if marked := a.storage.Marked(a); len(marked) > 0 {
-					a.entry, a.notice = newWeighManyForm(marked, a), ""
-					return a, a.entry.form.Init()
-				}
-			}
-			if slug := a.weighable(); slug != "" {
-				a.entry, a.notice = newReconcileForm(slug, a), ""
-				return a, a.entry.form.Init()
-			}
-			a.notice, a.failed = "nothing on the shelf to weigh", true
-			return a, nil
-		case key.Matches(msg, a.keys.Edit) && a.screen == devicesScreen:
-			if d := a.devices.Selected(a); d != nil {
-				a.device, a.notice = newDeviceForm(d, a), ""
-				return a, a.device.form.Init()
-			}
-			return a, nil
-		case key.Matches(msg, a.keys.Delete) && a.screen == devicesScreen:
-			if d := a.devices.Selected(a); d != nil {
-				a.device, a.notice = newDeviceRemoveForm(d, a), ""
-				return a, a.device.form.Init()
-			}
-			return a, nil
-		case key.Matches(msg, a.keys.Edit) && a.screen == journalScreen:
-			if e := a.journal.Selected(); e != nil {
-				a.entry, a.notice = newAmendForm(e, a), ""
-				return a, a.entry.form.Init()
-			}
-			return a, nil
-		case key.Matches(msg, a.keys.Delete) && a.screen == journalScreen:
-			if e := a.journal.Selected(); e != nil {
-				a.entry, a.notice = newUndoForm(e, a), ""
-				return a, a.entry.form.Init()
-			}
-			return a, nil
 		case key.Matches(msg, a.keys.Quit):
 			return a, tea.Quit
 		case key.Matches(msg, a.keys.Help):
@@ -340,6 +240,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.analysis, cmd = a.analysis.Update(msg, a)
 	case storageScreen:
 		a.storage, cmd = a.storage.Update(msg, a)
+	case stashScreen:
+		a.stash, cmd = a.stash.Update(msg, a)
+	case sessionsScreen:
+		a.sessions, cmd = a.sessions.Update(msg, a)
 	case devicesScreen:
 		a.devices, cmd = a.devices.Update(msg, a)
 	}
@@ -386,6 +290,10 @@ func (a *App) View() tea.View {
 		body = a.analysis.View(a, bodyHeight)
 	case storageScreen:
 		body = a.storage.View(a, bodyHeight)
+	case stashScreen:
+		body = a.stash.View(a, bodyHeight)
+	case sessionsScreen:
+		body = a.sessions.View(a, bodyHeight)
 	case devicesScreen:
 		body = a.devices.View(a, bodyHeight)
 	}
@@ -433,6 +341,171 @@ func (a *App) header() string {
 	}
 	line := left + strings.Repeat(" ", gap) + right
 	return lipgloss.JoinVertical(lipgloss.Left, " "+line, t.Rule("", a.width))
+}
+
+// entryDone turns a finished entry form into the notice the footer shows.
+func (a *App) entryDone(msg entryDoneMsg) (tea.Model, tea.Cmd) {
+	if errors.Is(msg.err, errCancelled) {
+		a.notice = ""
+		return a, nil
+	}
+	if msg.err != nil {
+		a.notice, a.failed = msg.err.Error(), true
+		return a, nil
+	}
+	if msg.summary != "" {
+		// A weighing session: several adjustments summed into one line, and
+		// the ticks have served their purpose.
+		a.storage.ClearMarks()
+		a.stash.ClearMarks()
+		a.notice, a.failed = msg.summary, false
+		return a, a.reload()
+	}
+	if msg.event.Type == "" {
+		// A product was edited rather than an entry recorded.
+		a.notice, a.failed = fmt.Sprintf("renamed %s to %s", msg.event.Product, msg.event.Note), false
+		return a, a.reload()
+	}
+	a.notice, a.failed = fmt.Sprintf("recorded %s %.2fg %s",
+		msg.event.Type, msg.event.Grams, msg.event.Product), false
+	return a, a.reload()
+}
+
+// deviceDone is entryDone for the device forms.
+func (a *App) deviceDone(msg deviceDoneMsg) (tea.Model, tea.Cmd) {
+	if errors.Is(msg.err, errCancelled) {
+		a.notice = ""
+		return a, nil
+	}
+	if msg.err != nil {
+		a.notice, a.failed = msg.err.Error(), true
+		return a, nil
+	}
+	a.notice, a.failed = fmt.Sprintf("saved device %s", msg.name), false
+	return a, a.reload()
+}
+
+// formKey routes a key to whatever form is in front, which owns the keyboard
+// while it is open, so navigation cannot fire underneath a half-filled entry.
+func (a *App) formKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
+	if a.device != nil {
+		if msg.String() == "esc" {
+			a.device, a.notice = nil, ""
+			return true, nil
+		}
+		var cmd tea.Cmd
+		a.device, cmd = a.device.Update(msg, a)
+		return true, cmd
+	}
+	if a.entry != nil {
+		// huh only aborts on ctrl+c, so esc is handled here rather than
+		// leaving the panel promising something that does not work.
+		if msg.String() == "esc" {
+			a.entry, a.notice = nil, ""
+			return true, nil
+		}
+		var cmd tea.Cmd
+		a.entry, cmd = a.entry.Update(msg, a)
+		return true, cmd
+	}
+	return false, nil
+}
+
+// open puts an entry form in front and starts it.
+func (a *App) open(f *entryForm) (bool, tea.Cmd) {
+	a.entry, a.notice = f, ""
+	return true, a.entry.form.Init()
+}
+
+// entryKey opens the forms that record something new: a grind, a session, a
+// fill, a weighing or the history clean-up.
+func (a *App) entryKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
+	switch {
+	case key.Matches(msg, a.keys.New):
+		return a.open(newEntryForm(entryGrind, a))
+	case key.Matches(msg, a.keys.Sesh) && a.screen != analysisScreen:
+		return a.open(newEntryForm(entrySesh, a))
+	case key.Matches(msg, a.keys.Buy):
+		return a.open(newEntryForm(entryBuy, a))
+	case key.Matches(msg, cleanKey) && a.screen == storageScreen:
+		if stale := staleStashes(a); len(stale) > 0 {
+			return a.open(newCleanHistoryForm(stale, a))
+		}
+		a.notice, a.failed = "no stale stashes to clean", true
+		return true, nil
+	case key.Matches(msg, a.keys.Weigh) && a.screen != journalScreen:
+		return a.weighKey()
+	}
+	return false, nil
+}
+
+// weighKey opens the right weighing form for where the cursor is: the ticked
+// jars together, the one under the cursor, or the fullest one. The stash
+// screen weighs stashes, so its forms start on that account.
+func (a *App) weighKey() (bool, tea.Cmd) {
+	if a.screen == storageScreen {
+		if marked := a.storage.Marked(a); len(marked) > 0 {
+			return a.open(newWeighManyForm(marked, a, journal.Storage))
+		}
+	}
+	if a.screen == stashScreen {
+		if marked := a.stash.Marked(a); len(marked) > 0 {
+			return a.open(newWeighManyForm(marked, a, journal.Stash))
+		}
+		if slug := a.stash.Selected(a); slug != "" {
+			return a.open(newReconcileForm(slug, a, journal.Stash))
+		}
+	}
+	if slug := a.weighable(); slug != "" {
+		return a.open(newReconcileForm(slug, a, journal.Storage))
+	}
+	a.notice, a.failed = "nothing on the shelf to weigh", true
+	return true, nil
+}
+
+// correctionKey opens the forms that correct what already exists: a product's
+// details, a journal entry, or a device.
+func (a *App) correctionKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
+	edit := key.Matches(msg, a.keys.Edit)
+	del := key.Matches(msg, a.keys.Delete)
+	switch {
+	case edit && a.screen == storageScreen:
+		if r := a.storage.Selected(a); r != nil {
+			return a.open(newDescribeForm(r.Slug, a))
+		}
+		return true, nil
+	case edit && a.screen == stashScreen:
+		if slug := a.stash.Selected(a); slug != "" {
+			return a.open(newDescribeForm(slug, a))
+		}
+		return true, nil
+	case edit && a.screen == journalScreen:
+		if e := a.journal.Selected(); e != nil {
+			return a.open(newAmendForm(e, a))
+		}
+		return true, nil
+	case del && a.screen == journalScreen:
+		if e := a.journal.Selected(); e != nil {
+			return a.open(newUndoForm(e, a))
+		}
+		return true, nil
+	case key.Matches(msg, a.keys.Add) && a.screen == devicesScreen:
+		a.device, a.notice = newDeviceForm(nil, a), ""
+		return true, a.device.form.Init()
+	case edit && a.screen == devicesScreen:
+		if d := a.devices.Selected(a); d != nil {
+			a.device, a.notice = newDeviceForm(d, a), ""
+			return true, a.device.form.Init()
+		}
+		return true, nil
+	case del && a.screen == devicesScreen:
+		if d := a.devices.Selected(a); d != nil {
+			a.device, a.notice = newDeviceRemoveForm(d, a), ""
+			return true, a.device.form.Init()
+		}
+		return true, nil
+	}
+	return false, nil
 }
 
 // reloadedMsg carries a freshly folded repository.
@@ -491,6 +564,10 @@ func (a *App) screenKeys() help.KeyMap {
 		return a.analysis.keys(a.keys)
 	case storageScreen:
 		return a.storage.keys(a.keys)
+	case stashScreen:
+		return a.stash.keys(a.keys)
+	case sessionsScreen:
+		return a.sessions.keys(a.keys)
 	case devicesScreen:
 		return a.devices.keys(a.keys)
 	default:

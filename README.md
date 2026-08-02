@@ -118,7 +118,8 @@ About 24 days left at that rate
 
 `wits` on its own opens the interface: a dashboard of what is left and how long
 it will last, the journal, an analysis view scoping from the current cycle out to
-the whole history, the storage and the devices. Entries can be recorded there
+the whole history, the storage, the stash, the sessions and the devices.
+Entries can be recorded there
 too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
 
 The analysis view draws the daily amounts as a braille area chart with a
@@ -173,7 +174,12 @@ wits revert 8297238 --reason "misread the scale"
 ```
 
 The storage screen is two tables: what still holds something, and the history
-of every jar weighed down to zero, newest first. Space ticks jars in either
+of every jar weighed down to zero, newest first. The stash screen drills into
+the ground product the same way — the stashes holding something above, and
+under them every stash worked down to nothing, grouped under the day it was
+consumed. The sessions screen tells the other half of the story: how much came
+out of the stash, when, through which device and how hot, drawn with the same
+charts the analysis view uses. Space ticks jars in either
 table and `r` weighs the ticked ones together; `e` corrects a name; `c` records
 stale stash remainders from earlier cycles as consumed, which is what four
 imported years of grind-only records leave behind. Product names are never
