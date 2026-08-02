@@ -36,8 +36,10 @@ func (k entryKind) String() string {
 		return "Amend entry"
 	case entryUndo:
 		return "Undo entry"
-	case entryReconcile:
+	case entryReconcile, entryWeighMany:
 		return "Weigh and reconcile"
+	case entryCleanHistory:
+		return "Clean history"
 	case entryDescribe:
 		return "Edit product"
 	default:
@@ -72,6 +74,11 @@ type entryForm struct {
 
 	// target is the entry being corrected, for the amend and undo forms.
 	target *journal.Event
+
+	// slugs and readings belong to the weigh-many form: one reading per
+	// ticked jar, collected in order.
+	slugs    []string
+	readings []string
 
 	err error
 }
@@ -195,9 +202,12 @@ func optionalInt(s string) error {
 }
 
 // entryDoneMsg is sent when an entry has been written, so the app can reload.
+// A summary stands in for the event where one line cannot: a weighing session
+// records several adjustments, and the notice should say what they added up to.
 type entryDoneMsg struct {
-	event journal.Event
-	err   error
+	event   journal.Event
+	summary string
+	err     error
 }
 
 // Update advances the form and, once it is complete, writes the entry.
@@ -211,6 +221,14 @@ func (f *entryForm) Update(msg tea.Msg, a *App) (*entryForm, tea.Cmd) {
 	case huh.StateAborted:
 		return nil, nil
 	case huh.StateCompleted:
+		switch f.kind {
+		case entryWeighMany:
+			summary, err := f.commitMany(a)
+			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
+		case entryCleanHistory:
+			summary, err := f.commitClean(a)
+			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
+		}
 		e, err := f.commit(a)
 		return nil, func() tea.Msg { return entryDoneMsg{event: e, err: err} }
 	}
@@ -392,6 +410,141 @@ func nonNegativeGrams(s string) error {
 
 // entryDescribe corrects what a product is called and what is known about it.
 const entryDescribe entryKind = iota + 300
+
+// entryWeighMany weighs the jars ticked on the storage screen in one sitting.
+const entryWeighMany entryKind = iota + 400
+
+// newWeighManyForm asks which account is on the scale, then for each ticked
+// jar's reading in turn, the way `wits reconcile` does. A blank reading skips
+// a jar, and nothing is written until every question is answered.
+func newWeighManyForm(slugs []string, a *App) *entryForm {
+	f := &entryForm{kind: entryWeighMany, slugs: slugs, readings: make([]string, len(slugs))}
+	f.account = string(journal.Storage)
+
+	groups := []*huh.Group{huh.NewGroup(
+		huh.NewNote().Title(fmt.Sprintf("Weighing %s", plural(len(slugs), "jar"))).
+			Description("Nothing in the past is edited. Each difference is recorded\nas an adjustment, and the accounts agree with the jars again."),
+		huh.NewSelect[string]().Title("Weigh which account").
+			Options(
+				huh.NewOption("Storage — sealed product", string(journal.Storage)),
+				huh.NewOption("The stash — ground product", string(journal.Stash)),
+			).
+			Value(&f.account),
+	)}
+	for i, slug := range slugs {
+		b := a.data.State.Balances[slug]
+		if b == nil {
+			b = &ledger.Balance{}
+		}
+		groups = append(groups, huh.NewGroup(
+			huh.NewInput().
+				Title(a.data.ProductName(slug)).
+				Description(fmt.Sprintf("On the scale, in grams — ledger says storage %.2f g · stash %.2f g.\nBlank to skip.", b.Storage, b.Stash)).
+				Value(&f.readings[i]).
+				Validate(optionalWeight),
+		))
+	}
+	f.form = huh.NewForm(groups...).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	return f
+}
+
+// commitMany records the collected readings and sums up what changed. A jar
+// that already matches is counted rather than turned into an error, because a
+// scale agreeing with the ledger is a good day, not a failure.
+func (f *entryForm) commitMany(a *App) (string, error) {
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	account := journal.Account(f.account)
+
+	adjusted, matched, skipped := 0, 0, 0
+	for i, slug := range f.slugs {
+		reading := strings.TrimSpace(f.readings[i])
+		if reading == "" {
+			skipped++
+			continue
+		}
+		weighed, err := strconv.ParseFloat(
+			strings.Replace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(reading)), "g"), ",", ".", 1), 64)
+		if err != nil {
+			return "", fmt.Errorf("%q is not a weight in grams", reading)
+		}
+		_, err = rec.Reconcile(slug, account, weighed, "")
+		if errors.Is(err, record.ErrNothingToReconcile) {
+			matched++
+			continue
+		}
+		if err != nil {
+			return "", err
+		}
+		adjusted++
+	}
+
+	parts := []string{fmt.Sprintf("adjusted %s", plural(adjusted, "jar"))}
+	if matched > 0 {
+		parts = append(parts, fmt.Sprintf("%d already matched", matched))
+	}
+	if skipped > 0 {
+		parts = append(parts, fmt.Sprintf("%d skipped", skipped))
+	}
+	return "weighed " + string(account) + ": " + strings.Join(parts, ", "), nil
+}
+
+// optionalWeight accepts a scale reading, zero included, or nothing at all.
+func optionalWeight(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	return nonNegativeGrams(s)
+}
+
+// entryCleanHistory zeroes out the stale stash remainders in one confirmed go.
+const entryCleanHistory entryKind = iota + 500
+
+// newCleanHistoryForm confirms recording the stale stashes as consumed. The
+// imported years never logged sessions, so a stash whose storage is long gone
+// reads as if the grams were still in the jar; a zero here says they were
+// consumed at some point, which is the only honest reading of an empty jar.
+func newCleanHistoryForm(slugs []string, a *App) *entryForm {
+	f := &entryForm{kind: entryCleanHistory, slugs: slugs}
+
+	var listed []string
+	total := 0.0
+	for _, slug := range slugs {
+		if b := a.data.State.Balances[slug]; b != nil {
+			listed = append(listed, fmt.Sprintf("%s — %.2f g", a.data.ProductName(slug), b.Stash))
+			total += b.Stash
+		}
+	}
+	f.form = huh.NewForm(huh.NewGroup(
+		huh.NewNote().Title(fmt.Sprintf("Clean history — %s, %.2f g", plural(len(slugs), "jar"), total)).
+			Description(strings.Join(listed, "\n")+
+				"\n\nEach stash is reconciled to zero: the grams were consumed at\nsome point, the sessions were never logged. Nothing is deleted."),
+		huh.NewConfirm().Title("Record them as consumed?").Affirmative("Clean").Negative("Keep").
+			Value(&f.confirm),
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	return f
+}
+
+// commitClean reconciles every stale stash to zero and sums up what left.
+func (f *entryForm) commitClean(a *App) (string, error) {
+	if !f.confirm {
+		return "", errCancelled
+	}
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	cleaned, grams := 0, 0.0
+	for _, slug := range f.slugs {
+		b := a.data.State.Balances[slug]
+		if b == nil || b.Stash <= 0 {
+			continue
+		}
+		was := b.Stash
+		if _, err := rec.Reconcile(slug, journal.Stash, 0, "clean history: consumed at some point"); err != nil {
+			return "", err
+		}
+		cleaned++
+		grams += was
+	}
+	return fmt.Sprintf("cleaned %s: %.2f g recorded as consumed", plural(cleaned, "stash"), grams), nil
+}
 
 // newDescribeForm edits a product's details.
 //

@@ -168,10 +168,18 @@ be audited and one that cannot.
 
 ### Products and reconciliation
 
-A products screen listing what is on the shelf — storage, stash, AVB and grams
-ground, with the potency and how much of the fill is still held. It lists what is
-held by default and everything ever dispensed on `a`, because a catalog
-remembering four years of prescriptions is a history rather than a shelf.
+A storage screen in two tables: what still holds something — storage, stash,
+AVB and grams ground, with the potency and how much of the fill is still held —
+and under it the history of every jar weighed down to zero, newest first,
+because a catalog remembering four years of prescriptions is a history and a
+shelf, and the two read better apart. Names are never abbreviated: the name
+column takes what the longest name needs, and the numbers are narrow instead.
+
+Jars can be ticked in either table with space and weighed together on `r`, the
+way `wits reconcile` walks an account. `c` cleans the history: a stash whose
+storage is long gone and whose sessions were never logged — the shape the
+imported years left — is reconciled to zero, recorded as consumed at some
+point, which is the only honest reading of an empty jar.
 
 Every product gets a short handle when it is first bought — three to five
 characters from the cultivar, then the THC/CBD ratio: `wcake-221`. Handles are
@@ -185,7 +193,7 @@ product and their grams were added together: these records held two such pairs,
 a MAC1 at 22/1 and 25/1, and a Lemon Tartz at 21/1 and 25/1.
 
 A handle is fixed once and never changes: it is the name every entry refers to,
-so `e` on the products screen corrects what a product is *called*, not which
+so `e` on the storage screen corrects what a product is *called*, not which
 product it *is*.
 
 `wits reconcile`, and `r` in the interface, record the difference between what
