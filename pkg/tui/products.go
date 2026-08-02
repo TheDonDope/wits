@@ -24,15 +24,16 @@ type storageView struct {
 	view   viewport.Model
 	cursor int
 	marked map[string]bool // slugs ticked for weighing
+	player
 }
 
 func newStorageView() storageView {
-	return storageView{view: viewport.New(), marked: map[string]bool{}}
+	return storageView{view: viewport.New(), marked: map[string]bool{}, player: newPlayer()}
 }
 
 type storageKeys struct {
 	keyMap
-	Mark, Reconcile, Edit, Clean key.Binding
+	Mark, Reconcile, Edit, Clean, Play key.Binding
 }
 
 // markKey and cleanKey are declared once, shared by the help line and the
@@ -43,11 +44,11 @@ var (
 )
 
 func (k storageKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Clean, k.Help, k.Quit}
+	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Clean, k.Play, k.Help, k.Quit}
 }
 
 func (k storageKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Clean})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Clean, k.Play})
 }
 
 func (v storageView) keys(base keyMap) help.KeyMap {
@@ -57,6 +58,7 @@ func (v storageView) keys(base keyMap) help.KeyMap {
 		Reconcile: withHelp(base.Weigh, "weigh"),
 		Edit:      base.Edit,
 		Clean:     cleanKey,
+		Play:      playKey,
 	}
 }
 
@@ -101,8 +103,20 @@ func (p productRow) gone() bool { return p.Held() <= 0 && p.AVB <= 0 }
 
 func (v storageView) Update(msg tea.Msg, a *App) (storageView, tea.Cmd) {
 	rows := v.rows(a)
+	var cmd tea.Cmd
+	if _, ok := msg.(playTickMsg); ok {
+		v.player, cmd = v.player.advance(len(a.data.State.Events))
+		return v, cmd
+	}
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
+		case key.Matches(msg, playKey):
+			v.player, cmd = v.player.toggle(len(a.data.State.Events))
+			return v, cmd
+		case key.Matches(msg, slideKey):
+			v.player = v.player.step(msg, len(a.data.State.Events))
+		case key.Matches(msg, speedKeys):
+			v.player = v.player.retune(msg)
 		case key.Matches(msg, a.keys.Up):
 			v.cursor = max(v.cursor-1, 0)
 		case key.Matches(msg, a.keys.Down):
@@ -161,7 +175,15 @@ func (v storageView) rows(a *App) []productRow {
 
 // tables folds the journal into one row per product and splits the result
 // into what still holds something and what has been weighed down to zero.
+// Under playback only the applied prefix exists, so the shelf fills and the
+// history writes itself the way it happened.
 func (v storageView) tables(a *App) (shelf, history []productRow) {
+	events := v.played(a.data.State.Events)
+	balances := a.data.State.Balances
+	if v.playhead >= 0 {
+		balances = ledger.Fold(events).Balances
+	}
+
 	byProduct := map[string]*productRow{}
 	get := func(slug string) *productRow {
 		if r, ok := byProduct[slug]; ok {
@@ -177,7 +199,7 @@ func (v storageView) tables(a *App) (shelf, history []productRow) {
 		return r
 	}
 
-	for _, e := range a.data.State.Events {
+	for _, e := range events {
 		r := get(e.Product)
 		if e.OccurredAt.After(r.LastSeen) {
 			r.LastSeen = e.OccurredAt
@@ -189,7 +211,7 @@ func (v storageView) tables(a *App) (shelf, history []productRow) {
 			r.Ground = ledger.Round(r.Ground + e.Grams)
 		}
 	}
-	for slug, b := range a.data.State.Balances {
+	for slug, b := range balances {
 		r := get(slug)
 		r.Storage, r.Stash, r.AVB = b.Storage, b.Stash, b.AVB
 	}
@@ -247,7 +269,7 @@ func (v storageView) View(a *App, height int) string {
 	shelf, history := v.tables(a)
 	rows := append(append([]productRow{}, shelf...), history...)
 
-	if len(rows) == 0 {
+	if len(rows) == 0 && v.playhead < 0 {
 		return lipgloss.NewStyle().Padding(1, 1).Render(
 			t.Subtitle.Render("Nothing in storage yet.\n\nRecord a prescription fill with ") +
 				t.Key.Render("b") + t.Subtitle.Render(" or `wits buy`."))
@@ -257,7 +279,8 @@ func (v storageView) View(a *App, height int) string {
 	}
 	nameW := nameWidth(a, rows, width)
 
-	lines := []string{v.status(a, shelf, history, width), ""}
+	lines := []string{v.status(a, shelf, history, width),
+		v.transport(a, a.data.State.Events, width), ""}
 	cursorLine := 0
 
 	section, at := v.shelfSection(a, shelf, nameW, width, len(lines))
@@ -303,7 +326,7 @@ func (v storageView) historySection(a *App, history []productRow, shelved, nameW
 	t := a.theme
 	cursorLine := -1
 	lines := []string{"", t.Rule("History", width), v.historyHeader(a, nameW)}
-	if stale := staleStashes(a); len(stale) > 0 {
+	if stale := staleStashes(a); len(stale) > 0 && v.playhead < 0 {
 		lines = append(lines, t.Dim.Render(fmt.Sprintf(
 			"  %s with a stash remainder from earlier cycles — press ", plural(len(stale), "jar")))+
 			t.Key.Render("c")+t.Dim.Render(" to record it as consumed"))
@@ -499,6 +522,12 @@ type stashStats struct {
 // stashHistory replays the journal watching only the stash account, so the
 // screen can say when a stash was finished rather than only that it is empty.
 func stashHistory(a *App) map[string]*stashStats {
+	return stashHistoryOf(a.data.State.Events)
+}
+
+// stashHistoryOf is stashHistory over any run of events, which is what lets
+// the stash screen replay a prefix of the ledger.
+func stashHistoryOf(events []journal.Event) map[string]*stashStats {
 	out := map[string]*stashStats{}
 	bal := map[string]float64{}
 	get := func(slug string) *stashStats {
@@ -509,7 +538,7 @@ func stashHistory(a *App) map[string]*stashStats {
 		out[slug] = s
 		return s
 	}
-	for _, e := range a.data.State.Events {
+	for _, e := range events {
 		touched := false
 		if e.To == journal.Stash {
 			s := get(e.Product)
@@ -548,23 +577,24 @@ type stashView struct {
 	view   viewport.Model
 	cursor int
 	marked map[string]bool
+	player
 }
 
 func newStashView() stashView {
-	return stashView{view: viewport.New(), marked: map[string]bool{}}
+	return stashView{view: viewport.New(), marked: map[string]bool{}, player: newPlayer()}
 }
 
 type stashKeys struct {
 	keyMap
-	Mark, Reconcile, Edit key.Binding
+	Mark, Reconcile, Edit, Play key.Binding
 }
 
 func (k stashKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Help, k.Quit}
+	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Play, k.Help, k.Quit}
 }
 
 func (k stashKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Play})
 }
 
 func (v stashView) keys(base keyMap) help.KeyMap {
@@ -573,21 +603,32 @@ func (v stashView) keys(base keyMap) help.KeyMap {
 		Mark:      markKey,
 		Reconcile: withHelp(base.Weigh, "weigh"),
 		Edit:      base.Edit,
+		Play:      playKey,
 	}
+}
+
+// balances returns the account balances the screen reads: the live fold, or
+// one over only what the playback has applied.
+func (v stashView) balances(a *App) map[string]*ledger.Balance {
+	if v.playhead < 0 {
+		return a.data.State.Balances
+	}
+	return ledger.Fold(v.played(a.data.State.Events)).Balances
 }
 
 // active returns the stashes holding something, fullest first: the tin most
 // worth weighing is the one with the most in it.
 func (v stashView) active(a *App) []*stashStats {
-	stats := stashHistory(a)
+	stats := stashHistoryOf(v.played(a.data.State.Events))
+	balances := v.balances(a)
 	var out []*stashStats
-	for slug, b := range a.data.State.Balances {
+	for slug, b := range balances {
 		if b.Stash > 0 {
 			out = append(out, stats[slug])
 		}
 	}
 	sort.Slice(out, func(i, j int) bool {
-		bi, bj := a.data.State.Balances[out[i].Slug], a.data.State.Balances[out[j].Slug]
+		bi, bj := balances[out[i].Slug], balances[out[j].Slug]
 		if bi.Stash != bj.Stash {
 			return bi.Stash > bj.Stash
 		}
@@ -599,10 +640,11 @@ func (v stashView) active(a *App) []*stashStats {
 // finished returns the emptied stashes, newest ending first, so the history
 // reads back the way the journal does.
 func (v stashView) finished(a *App) []*stashStats {
-	stats := stashHistory(a)
+	stats := stashHistoryOf(v.played(a.data.State.Events))
+	balances := v.balances(a)
 	var out []*stashStats
 	for slug, s := range stats {
-		b := a.data.State.Balances[slug]
+		b := balances[slug]
 		if s.Through > 0 && (b == nil || b.Stash <= 0) {
 			out = append(out, s)
 		}
@@ -630,8 +672,20 @@ func (v stashView) slugsInOrder(a *App) []string {
 
 func (v stashView) Update(msg tea.Msg, a *App) (stashView, tea.Cmd) {
 	slugs := v.slugsInOrder(a)
+	var cmd tea.Cmd
+	if _, ok := msg.(playTickMsg); ok {
+		v.player, cmd = v.player.advance(len(a.data.State.Events))
+		return v, cmd
+	}
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
+		case key.Matches(msg, playKey):
+			v.player, cmd = v.player.toggle(len(a.data.State.Events))
+			return v, cmd
+		case key.Matches(msg, slideKey):
+			v.player = v.player.step(msg, len(a.data.State.Events))
+		case key.Matches(msg, speedKeys):
+			v.player = v.player.retune(msg)
 		case key.Matches(msg, a.keys.Up):
 			v.cursor = max(v.cursor-1, 0)
 		case key.Matches(msg, a.keys.Down):
@@ -694,7 +748,7 @@ func (v stashView) View(a *App, height int) string {
 	width := a.inner()
 	active, finished := v.active(a), v.finished(a)
 
-	if len(active) == 0 && len(finished) == 0 {
+	if len(active) == 0 && len(finished) == 0 && v.playhead < 0 {
 		return lipgloss.NewStyle().Padding(1, 1).Render(
 			t.Subtitle.Render("Nothing has been ground yet.\n\nPress ") + t.Key.Render("n") +
 				t.Subtitle.Render(" to grind into a stash, or record it with `wits grind`."))
@@ -710,7 +764,8 @@ func (v stashView) View(a *App, height int) string {
 		marked = fmt.Sprintf("   %s marked — press r to weigh them", plural(n, "stash"))
 	}
 	lines := []string{t.Dim.Render(truncate(fmt.Sprintf(
-		"holding · %d   finished · %d%s", len(active), len(finished), marked), width)), ""}
+		"holding · %d   finished · %d%s", len(active), len(finished), marked), width)),
+		v.transport(a, a.data.State.Events, width), ""}
 	cursorLine := 0
 
 	section, at := v.activeSection(a, active, nameW, width, len(lines))
@@ -768,7 +823,7 @@ func (v stashView) activeSection(a *App, active []*stashStats, nameW, width, off
 // activeLine renders one stash still holding something.
 func (v stashView) activeLine(a *App, s *stashStats, nameW int, selected bool) string {
 	t := a.theme
-	b := a.data.State.Balances[s.Slug]
+	b := v.balances(a)[s.Slug]
 	name := truncate(a.data.ProductName(s.Slug), nameW)
 	label := t.Value.Width(nameW).Render(name)
 	if selected {

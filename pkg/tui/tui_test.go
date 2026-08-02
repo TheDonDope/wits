@@ -266,11 +266,11 @@ func TestAnalysisPlayback(t *testing.T) {
 	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 40})
 
 	out := stripANSI(m.View().Content)
-	assert.Contains(t, out, "space to replay", "Should offer the replay when live")
+	assert.Contains(t, out, "p to replay", "Should offer the replay when live")
 
-	// Space starts the replay from empty and schedules the first tick.
-	_, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeySpace, Text: " "})
-	require.True(t, app.analysis.playing, "Space should start playing")
+	// p starts the replay from empty and schedules the first tick.
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	require.True(t, app.analysis.playing, "p should start playing")
 	assert.Equal(t, 0, app.analysis.playhead, "from the empty ledger")
 	require.NotNil(t, cmd, "and schedule the first tick")
 

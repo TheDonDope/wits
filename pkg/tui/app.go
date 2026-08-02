@@ -360,10 +360,14 @@ func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 }
 
 // slides reports whether the screen in front reads the horizontal keys for
-// itself — the journal's cover slider and the analysis day cursor — leaving
+// itself — the journal's cover slider and the replay transports — leaving
 // only tab and shift+tab to change screens.
 func (a *App) slides() bool {
-	return a.screen == journalScreen || a.screen == analysisScreen
+	switch a.screen {
+	case journalScreen, analysisScreen, storageScreen, stashScreen:
+		return true
+	}
+	return false
 }
 
 // entryDone turns a finished entry form into the notice the footer shows.
