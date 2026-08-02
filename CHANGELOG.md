@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.19.0"></a>
+## [v0.19.0] - 2026-08-02
+### Chore
+- **deps:** bump golang.org/x/sys in the gomod-minor group
+
+### Ci
+- skip the coverage uploads where the secrets are withheld
+
+
 <a name="v0.18.0"></a>
 ## [v0.18.0] - 2026-08-02
+### Docs
+- update changelog for v0.18.0
+
 ### Feat
 - **replay:** adjustments ride along silently
 
@@ -361,7 +373,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.19.0...HEAD
+[v0.19.0]: https://github.com/TheDonDope/wits/compare/v0.18.0...v0.19.0
 [v0.18.0]: https://github.com/TheDonDope/wits/compare/v0.17.0...v0.18.0
 [v0.17.0]: https://github.com/TheDonDope/wits/compare/v0.16.0...v0.17.0
 [v0.16.0]: https://github.com/TheDonDope/wits/compare/v0.15.0...v0.16.0
