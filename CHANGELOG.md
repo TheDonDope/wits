@@ -2,6 +2,15 @@
 ## [Unreleased]
 
 
+<a name="v0.20.0"></a>
+## [v0.20.0] - 2026-08-02
+### Chore
+- **deps:** bump the actions group across 1 directory with 3 updates
+
+### Feat
+- **seance:** summon the ledger as playing cards
+
+
 <a name="v0.19.0"></a>
 ## [v0.19.0] - 2026-08-02
 ### Chore
@@ -9,6 +18,9 @@
 
 ### Ci
 - skip the coverage uploads where the secrets are withheld
+
+### Docs
+- update changelog for v0.19.0
 
 
 <a name="v0.18.0"></a>
@@ -373,7 +385,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.20.0...HEAD
+[v0.20.0]: https://github.com/TheDonDope/wits/compare/v0.19.0...v0.20.0
 [v0.19.0]: https://github.com/TheDonDope/wits/compare/v0.18.0...v0.19.0
 [v0.18.0]: https://github.com/TheDonDope/wits/compare/v0.17.0...v0.18.0
 [v0.17.0]: https://github.com/TheDonDope/wits/compare/v0.16.0...v0.17.0
