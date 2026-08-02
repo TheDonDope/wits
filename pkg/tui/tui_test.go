@@ -309,3 +309,54 @@ func TestSnapshot(t *testing.T) {
 	_, err = Snapshot(sample(t), "journal", 96, 30, []string{"ctrl+alt+del"})
 	assert.ErrorContains(t, err, "cannot press", "Should refuse a key it cannot spell")
 }
+
+func TestReplaySkipsAdjustments(t *testing.T) {
+	// A record with a correction in the middle: purchase, grind, adjust,
+	// grind. The adjustment must ride along silently.
+	at := time.Date(2026, time.July, 9, 10, 0, 0, 0, time.UTC)
+	mk := func(typ journal.Type, grams float64, day int) journal.Event {
+		from, to, _ := journal.Flow(typ)
+		return journal.Event{Type: typ, Product: "wcake", Grams: grams, From: from, To: to,
+			OccurredAt: at.AddDate(0, 0, day)}
+	}
+	events := []journal.Event{
+		mk(journal.Purchase, 20, 0),
+		mk(journal.Grind, 1, 1),
+		mk(journal.Adjust, 0.5, 2),
+		mk(journal.Grind, 1, 3),
+	}
+	products := &catalog.Catalog{}
+	require.NoError(t, products.Add(product("Enua 22/1 Wedding Cake", "wcake")))
+	data := Data{Workspace: &workspace.Workspace{
+		Products: products, Devices: &catalog.Devices{}, State: ledger.Fold(events),
+	}, Now: at.AddDate(0, 0, 4)}
+
+	app := New(data)
+	app.screen = analysisScreen
+	app.analysis.scope = 4 // all time
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 40})
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "0/3", "The counter should not count the adjustment")
+
+	// Two ticks: purchase, then grind.
+	m, _ = m.Update(playTickMsg{})
+	m, _ = m.Update(playTickMsg{})
+	assert.Equal(t, 2, app.analysis.playhead, "Two ticks apply the first two events")
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "2/3", "still not counting the adjustment")
+	assert.Contains(t, out, "ground", "and narrating the grind")
+	assert.NotContains(t, out, "adjusted", "never the adjustment")
+
+	m, _ = m.Update(playTickMsg{})
+	assert.Equal(t, -1, app.analysis.playhead,
+		"The next tick swallows the adjustment, reaches the end, and settles on live")
+
+	// Stepping back from live passes over the adjustment the same way.
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
+	assert.Equal(t, 2, app.analysis.playhead, "Left from live lands before the adjustment, not on it")
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
+	assert.Equal(t, 1, app.analysis.playhead, "and keeps walking real events")
+}

@@ -84,7 +84,7 @@ func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case playTickMsg:
-		v.player, cmd = v.player.advance(len(v.events(a)))
+		v.player, cmd = v.player.advance(v.events(a))
 		return v, cmd
 	case tea.KeyPressMsg:
 		switch {
@@ -93,10 +93,10 @@ func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
 			v.scroll, v.player = 0, newPlayer()
 			v.speed = 2
 		case key.Matches(msg, playKey):
-			v.player, cmd = v.player.toggle(len(v.events(a)))
+			v.player, cmd = v.player.toggle(v.events(a))
 			return v, cmd
 		case key.Matches(msg, slideKey):
-			v.player = v.player.step(msg, len(v.events(a)))
+			v.player = v.player.step(msg, v.events(a))
 		case key.Matches(msg, speedKeys):
 			v.player = v.player.retune(msg)
 		case key.Matches(msg, a.keys.Up):
@@ -114,17 +114,24 @@ func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
 	return v, nil
 }
 
+// skippable reports whether an event rides along silently in a replay rather
+// than getting a frame of its own. Adjustments are corrections — reconciled
+// scales, cleaned history — and a replay narrating each one reads as spam
+// while the bars barely move. They are still applied with the prefix, so the
+// balances stay true; they just never take the stage.
+func skippable(e journal.Event) bool { return e.Type == journal.Adjust }
+
 // toggle starts the replay — from the beginning when the screen was live or
 // already played out — or pauses one that is running.
-func (p player) toggle(total int) (player, tea.Cmd) {
+func (p player) toggle(events []journal.Event) (player, tea.Cmd) {
 	if p.playing {
 		p.playing = false
 		return p, nil
 	}
-	if total == 0 {
+	if len(events) == 0 {
 		return p, nil
 	}
-	if p.playhead < 0 || p.playhead >= total {
+	if p.playhead < 0 || p.playhead >= len(events) {
 		p.playhead = 0
 	}
 	p.playing = true
@@ -132,13 +139,17 @@ func (p player) toggle(total int) (player, tea.Cmd) {
 }
 
 // advance applies the next event of a running playback and schedules the one
-// after it, settling back to live when the record runs out.
-func (p player) advance(total int) (player, tea.Cmd) {
+// after it, swallowing the skippable ones so every frame shows a real event,
+// and settling back to live when the record runs out.
+func (p player) advance(events []journal.Event) (player, tea.Cmd) {
 	if !p.playing {
 		return p, nil
 	}
 	p.playhead++
-	if p.playhead >= total {
+	for p.playhead < len(events) && skippable(events[p.playhead-1]) {
+		p.playhead++
+	}
+	if p.playhead >= len(events) {
 		p.playhead, p.playing = -1, false
 		return p, nil
 	}
@@ -146,8 +157,10 @@ func (p player) advance(total int) (player, tea.Cmd) {
 }
 
 // step moves the playback by hand, pausing it: right applies the next event,
-// left takes the last one back. Stepping past the end settles on live.
-func (p player) step(msg tea.KeyPressMsg, total int) player {
+// left takes the last one back, both passing over the skippable ones the way
+// the clock does. Stepping past the end settles on live.
+func (p player) step(msg tea.KeyPressMsg, events []journal.Event) player {
+	total := len(events)
 	if total == 0 {
 		return p
 	}
@@ -157,9 +170,16 @@ func (p player) step(msg tea.KeyPressMsg, total int) player {
 		at = total
 	}
 	if msg.String() == "left" || msg.String() == "h" {
-		at = max(at-1, 0)
+		at--
+		for at > 0 && skippable(events[at-1]) {
+			at--
+		}
+		at = max(at, 0)
 	} else {
 		at++
+		for at < total && skippable(events[at-1]) {
+			at++
+		}
 	}
 	if at >= total {
 		p.playhead = -1
@@ -205,17 +225,35 @@ func (p player) transport(a *App, events []journal.Event, width int) string {
 	if p.playing {
 		mark, state = "▶", "playing"
 	}
+	// The counter counts the events worth a frame; the adjustments riding
+	// along silently are not part of the story being told.
 	line := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(mark+" ") +
-		t.Value.Render(fmt.Sprintf("%d/%d", p.playhead, len(events))) +
+		t.Value.Render(fmt.Sprintf("%d/%d", shown(events[:min(p.playhead, len(events))]), shown(events))) +
 		t.Dim.Render(fmt.Sprintf(" · %s · %.1f events/s · p %s · ←/→ step · +/- speed",
 			state, 1000/float64(playSpeeds[p.speed].Milliseconds()),
 			map[bool]string{true: "pause", false: "play"}[p.playing]))
-	if p.playhead > 0 {
-		e := events[p.playhead-1]
+	// Narrate the newest event that took the stage, never a silent one.
+	for at := min(p.playhead, len(events)); at > 0; at-- {
+		if skippable(events[at-1]) {
+			continue
+		}
+		e := events[at-1]
 		line += "\n" + t.Dim.Render("→ ") +
 			t.entryLine(e, a.data.ProductName(e.Product), width-2, false, false, false)
+		break
 	}
 	return line
+}
+
+// shown counts the events of a run that a replay gives a frame to.
+func shown(events []journal.Event) int {
+	n := 0
+	for _, e := range events {
+		if !skippable(e) {
+			n++
+		}
+	}
+	return n
 }
 
 func (v analysisView) View(a *App, height int) string {
