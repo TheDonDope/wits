@@ -42,6 +42,8 @@ func (k entryKind) String() string {
 		return "Clean history"
 	case entryDescribe:
 		return "Edit product"
+	case entrySeance:
+		return "Séance window"
 	default:
 		return "Grind"
 	}
@@ -79,6 +81,9 @@ type entryForm struct {
 	// ticked jar, collected in order.
 	slugs    []string
 	readings []string
+
+	// from and to belong to the séance's window form, as written dates.
+	from, to string
 
 	err error
 }
@@ -228,6 +233,9 @@ func (f *entryForm) Update(msg tea.Msg, a *App) (*entryForm, tea.Cmd) {
 		case entryCleanHistory:
 			summary, err := f.commitClean(a)
 			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
+		case entrySeance:
+			from, to, err := f.window()
+			return nil, func() tea.Msg { return seanceDatesMsg{from: from, to: to, err: err} }
 		}
 		e, err := f.commit(a)
 		return nil, func() tea.Msg { return entryDoneMsg{event: e, err: err} }
@@ -604,4 +612,67 @@ func parseFloatOrZero(s string) float64 {
 		return 0
 	}
 	return v
+}
+
+// The séance's window form: two dates, and no journal entry at the end of it.
+// It rides the entryForm machinery so it behaves like every other panel, but
+// completes into a seanceDatesMsg rather than a commit.
+
+const entrySeance entryKind = iota + 600
+
+// seanceDatesMsg carries the window the séance should summon next.
+type seanceDatesMsg struct {
+	from, to time.Time
+	err      error
+}
+
+// newSeanceDatesForm builds the window form, prefilled with the span of the
+// whole ledger so that accepting the defaults changes nothing but on purpose.
+func newSeanceDatesForm(a *App) *entryForm {
+	f := &entryForm{kind: entrySeance}
+	if events := a.data.State.Events; len(events) > 0 {
+		f.from = events[0].OccurredAt.Format("2006-01-02")
+	}
+	f.to = a.data.Now.Format("2006-01-02")
+	f.form = huh.NewForm(huh.NewGroup(
+		huh.NewInput().Title("From").Description("The first day to summon, e.g. 2026-07-01").
+			Value(&f.from).Validate(validDay),
+		huh.NewInput().Title("To").Description("The last day, inclusive").
+			Value(&f.to).Validate(validDay),
+	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	return f
+}
+
+// window reads the two dates back out, widening the end to the close of its
+// day so that "to 30 Jul" means through 30 Jul, which is how anyone says it.
+func (f *entryForm) window() (time.Time, time.Time, error) {
+	from, err := parseDay(f.from)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	to, err := parseDay(f.to)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	to = to.AddDate(0, 0, 1)
+	if !to.After(from) {
+		return time.Time{}, time.Time{}, errors.New("the window ends before it starts")
+	}
+	return from, to, nil
+}
+
+// parseDay reads a date in the shapes people write them.
+func parseDay(s string) (time.Time, error) {
+	for _, layout := range []string{"2006-01-02", "02.01.2006", "02 Jan 2006"} {
+		if d, err := time.Parse(layout, strings.TrimSpace(s)); err == nil {
+			return d, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("not a date; write it like 2026-07-01")
+}
+
+// validDay is parseDay as a form validator.
+func validDay(s string) error {
+	_, err := parseDay(s)
+	return err
 }

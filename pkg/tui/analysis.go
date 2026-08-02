@@ -708,3 +708,324 @@ func (v sessionsView) rhythm(a *App, events []journal.Event, width int) string {
 	}
 	return Calendar(perDay, first, last, width, t)
 }
+
+// The Séance is the tab where the ledger is summoned back: the same replay
+// transport the other screens use, but staged. Each event takes the table as
+// a playing card with a figurine on its face and the full record on its back,
+// while the shelf and the stashes fill and drain below it. The frame chooses
+// which stretch of the past is called up — the whole ledger, one prescription
+// cycle, or a window picked by hand.
+type seanceView struct {
+	player
+	frame    int       // 0 the whole ledger, 1..N one cycle each, -1 a window picked by hand
+	from, to time.Time // the hand-picked window, half-open, when frame is -1
+	flipped  bool      // the card on the table shows its back
+	scroll   int
+}
+
+func newSeanceView() seanceView { return seanceView{player: newPlayer()} }
+
+// The séance's own keys: turning the frame, flipping the card, and picking
+// the window by hand.
+var (
+	frameKey = key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "frame"))
+	flipKey  = key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "flip card"))
+	datesKey = key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "dates"))
+)
+
+type seanceKeys struct {
+	keyMap
+	Play, Step, Flip, Frame, Dates, Speed key.Binding
+}
+
+func (k seanceKeys) ShortHelp() []key.Binding {
+	return []key.Binding{k.Play, k.Step, k.Flip, k.Frame, k.Dates, k.Speed, k.Quit}
+}
+
+func (k seanceKeys) FullHelp() [][]key.Binding {
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Play, k.Step, k.Speed, k.Frame, k.Flip, k.Dates})
+}
+
+func (v seanceView) keys(base keyMap) help.KeyMap {
+	return seanceKeys{keyMap: base, Play: playKey, Step: withHelp(slideKey, "step"),
+		Flip: flipKey, Frame: frameKey, Dates: datesKey, Speed: speedKeys}
+}
+
+func (v seanceView) Update(msg tea.Msg, a *App) (seanceView, tea.Cmd) {
+	if _, ok := msg.(playTickMsg); ok {
+		var cmd tea.Cmd
+		v.player, cmd = v.player.advance(v.events(a))
+		return v, cmd
+	}
+	if press, ok := msg.(tea.KeyPressMsg); ok {
+		return v.press(press, a)
+	}
+	return v, nil
+}
+
+// press handles the séance's keys. Turning the frame or picking a new window
+// resets the sitting: the tape rewinds and the card turns face up again.
+func (v seanceView) press(msg tea.KeyPressMsg, a *App) (seanceView, tea.Cmd) {
+	var cmd tea.Cmd
+	switch {
+	case key.Matches(msg, frameKey):
+		v.frame = (v.frame + 1) % (len(a.data.State.Cycles) + 1)
+		v.player, v.flipped, v.scroll = newPlayer(), false, 0
+	case key.Matches(msg, datesKey):
+		_, open := a.open(newSeanceDatesForm(a))
+		return v, open
+	case key.Matches(msg, flipKey):
+		v.flipped = !v.flipped
+	case key.Matches(msg, playKey):
+		v.player, cmd = v.player.toggle(v.events(a))
+	case key.Matches(msg, slideKey):
+		v.player = v.player.step(msg, v.events(a))
+	case key.Matches(msg, speedKeys):
+		v.player = v.player.retune(msg)
+	case key.Matches(msg, a.keys.Up):
+		v.scroll = max(v.scroll-1, 0)
+	case key.Matches(msg, a.keys.Down):
+		v.scroll++
+	case key.Matches(msg, a.keys.Top):
+		v.scroll = 0
+	}
+	return v, cmd
+}
+
+// reframe points the séance at a window picked by hand and starts the sitting
+// over.
+func (v seanceView) reframe(from, to time.Time) seanceView {
+	v.frame, v.from, v.to = -1, from, to
+	v.player, v.flipped, v.scroll = newPlayer(), false, 0
+	return v
+}
+
+// cycleAt returns the cycle the frame points at, or nil when it points at the
+// whole ledger or past the end after a reload shrank the record.
+func (v seanceView) cycleAt(a *App) *ledger.Cycle {
+	cycles := a.data.State.Cycles
+	if v.frame >= 1 && v.frame <= len(cycles) {
+		return &cycles[v.frame-1]
+	}
+	return nil
+}
+
+// events returns the stretch of the ledger the frame has called up.
+func (v seanceView) events(a *App) []journal.Event {
+	if v.frame < 0 {
+		var out []journal.Event
+		for _, e := range a.data.State.Events {
+			if !e.OccurredAt.Before(v.from) && e.OccurredAt.Before(v.to) {
+				out = append(out, e)
+			}
+		}
+		return out
+	}
+	if c := v.cycleAt(a); c != nil {
+		return c.Events
+	}
+	return a.data.State.Events
+}
+
+// frameName says which stretch of the past is on the table.
+func (v seanceView) frameName(a *App) string {
+	if v.frame < 0 {
+		return fmt.Sprintf("%s → %s", v.from.Format("02 Jan 2006"),
+			v.to.AddDate(0, 0, -1).Format("02 Jan 2006"))
+	}
+	if c := v.cycleAt(a); c != nil {
+		return fmt.Sprintf("cycle %d of %d · %s", v.frame,
+			len(a.data.State.Cycles), c.Start.Format("Jan 2006"))
+	}
+	return "the whole ledger"
+}
+
+func (v seanceView) View(a *App, height int) string {
+	t := a.theme
+	width := a.inner()
+	events := v.events(a)
+	if len(events) == 0 {
+		return lipgloss.NewStyle().Padding(1, 1).Render(
+			t.Subtitle.Render("The séance finds nothing in this frame."))
+	}
+	played := v.played(events)
+
+	sections := []string{
+		v.banner(a, events, width),
+		v.transport(a, events, width),
+		"",
+		v.table(a, events, width),
+		"",
+		t.Rule("The shelf", width),
+		v.shelf(a, played, width),
+		"",
+		t.Rule("The stashes", width),
+		v.stashes(a, played, width),
+	}
+	// The stage overruns a small terminal, so the view scrolls the way the
+	// analysis does rather than cutting the stashes off silently.
+	lines := strings.Split(lipgloss.JoinVertical(lipgloss.Left, sections...), "\n")
+	visible := max(height-2, 1)
+	offset := min(v.scroll, max(len(lines)-visible, 0))
+	show := visible
+	more := offset+visible < len(lines)
+	if more {
+		show = max(visible-1, 1)
+	}
+	body := strings.Join(lines[offset:min(offset+show, len(lines))], "\n")
+	if more {
+		body += "\n" + t.Dim.Render("↓ more")
+	}
+	return lipgloss.NewStyle().Padding(1, 1).Render(body)
+}
+
+// banner names the frame and counts the apparitions it holds.
+func (v seanceView) banner(a *App, events []journal.Event, _ int) string {
+	t := a.theme
+	return t.Subtitle.Render("Summoning ") + t.PanelTitle.Render(v.frameName(a)) +
+		t.Dim.Render(fmt.Sprintf("  ·  %d apparitions  ·  f frame · d dates · x flip", shown(events)))
+}
+
+// table lays the cards out: the newest apparition face up — or face down to
+// its record when flipped — with its neighbours as ghosts either side.
+func (v seanceView) table(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	cur := lastShown(v.played(events))
+	if cur < 0 {
+		return lipgloss.PlaceHorizontal(width, lipgloss.Center, t.CardSleeping())
+	}
+	e := events[cur]
+	card := t.CardFront(e, a.data.ProductName(e.Product))
+	if v.flipped {
+		card = t.CardBack(e, a.data.ProductName(e.Product))
+	}
+	var pieces []string
+	if prev := lastShown(events[:cur]); prev >= 0 {
+		pieces = append(pieces, t.CardGhost(events[prev]), "  ")
+	}
+	pieces = append(pieces, card)
+	if next := nextShown(events, cur); next >= 0 {
+		pieces = append(pieces, "  ", t.CardGhost(events[next]))
+	}
+	row := lipgloss.JoinHorizontal(lipgloss.Center, pieces...)
+	return lipgloss.PlaceHorizontal(width, lipgloss.Center, row)
+}
+
+// lastShown finds the newest event of a run that a replay would give a frame
+// to, or -1 when the run holds none.
+func lastShown(events []journal.Event) int {
+	for i := len(events) - 1; i >= 0; i-- {
+		if !skippable(events[i]) {
+			return i
+		}
+	}
+	return -1
+}
+
+// nextShown finds the next event after the given one that would take a frame.
+func nextShown(events []journal.Event, after int) int {
+	for i := after + 1; i < len(events); i++ {
+		if !skippable(events[i]) {
+			return i
+		}
+	}
+	return -1
+}
+
+// seanceTotals sums what each product has had bought and ground within the
+// played prefix, which is what the jars measure their fill against.
+func seanceTotals(events []journal.Event) (bought, ground map[string]float64) {
+	bought, ground = map[string]float64{}, map[string]float64{}
+	for _, e := range events {
+		switch e.Type {
+		case journal.Purchase:
+			bought[e.Product] += e.Grams
+		case journal.Grind:
+			ground[e.Product] += e.Grams
+		}
+	}
+	return bought, ground
+}
+
+// appearance lists the products in the order the played prefix first moved
+// grams into them by the given event type, so jars appear on the shelf the
+// moment the replay buys them.
+func appearance(events []journal.Event, typ journal.Type) []string {
+	var order []string
+	seen := map[string]bool{}
+	for _, e := range events {
+		if e.Type == typ && e.Product != "" && !seen[e.Product] {
+			seen[e.Product] = true
+			order = append(order, e.Product)
+		}
+	}
+	return order
+}
+
+// shelf draws the storage jars: one per product the replay has bought so far,
+// filled to what is left in storage against everything bought into it.
+func (v seanceView) shelf(a *App, played []journal.Event, width int) string {
+	t := a.theme
+	bought, _ := seanceTotals(played)
+	return jarRow(a, played, appearance(played, journal.Purchase), bought,
+		journal.Storage, t.StorageC, width, "nothing on the shelf yet")
+}
+
+// stashes draws the stash tins the same way, measured against everything
+// ground into them.
+func (v seanceView) stashes(a *App, played []journal.Event, width int) string {
+	t := a.theme
+	_, ground := seanceTotals(played)
+	return jarRow(a, played, appearance(played, journal.Grind), ground,
+		journal.Stash, t.StashC, width, "nothing ground yet")
+}
+
+// jarRow renders a row of labelled jars, each filled to what its account holds
+// against what has passed through it. When the shelf outgrows the terminal the
+// newest jars keep their place, since they are the ones the replay just moved.
+func jarRow(a *App, played []journal.Event, order []string, through map[string]float64,
+	account journal.Account, fill tint, width int, empty string) string {
+	t := a.theme
+	if len(order) == 0 {
+		return t.Dim.Render(empty)
+	}
+	balances := ledger.Fold(played).Balances
+	if room := max(width/15, 1); len(order) > room {
+		order = order[len(order)-room:]
+	}
+	var cols []string
+	for _, slug := range order {
+		have := heldIn(balances[slug], account)
+		// A reconciliation can leave more in the jar than ever passed through
+		// it on the books, so the fuller of the two sets the scale.
+		denom := through[slug]
+		if have > denom {
+			denom = have
+		}
+		fraction := 0.0
+		if denom > 0 {
+			fraction = have / denom
+		}
+		// The label wraps rather than truncates: a product keeps its whole
+		// name in this house, even under a jar three fingers wide.
+		const jw = 13
+		col := append(Jar(jw, 4, fraction, fill, t),
+			center(t.Dim.Render(fmt.Sprintf("%.1f g", have)), jw),
+			lipgloss.NewStyle().Width(jw).Align(lipgloss.Center).
+				Render(t.Value.Render(a.data.ProductName(slug))))
+		cols = append(cols, strings.Join(col, "\n"), "  ")
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Top, cols...)
+}
+
+// heldIn reads one account out of a balance that may not exist yet.
+func heldIn(b *ledger.Balance, account journal.Account) float64 {
+	switch {
+	case b == nil:
+		return 0
+	case account == journal.Storage:
+		return b.Storage
+	default:
+		return b.Stash
+	}
+}

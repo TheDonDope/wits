@@ -119,15 +119,25 @@ About 24 days left at that rate
 `wits` on its own opens the interface: a dashboard of cards — storage, stash,
 sessions, devices, two rhythm calendars and a projection of the supply's
 decline to its empty day — then the journal, an analysis view scoping from the
-current cycle out to the whole history, the storage, the stash, the sessions
-and the devices. Entries can be recorded there too — `n` to grind, `s` for a
-session, `b` for a fill, `r` to weigh.
+current cycle out to the whole history, the storage, the stash, the sessions,
+the devices — and the Séance. Entries can be recorded there too — `n` to
+grind, `s` for a session, `b` for a fill, `r` to weigh.
 
 The analysis view draws the daily amounts as a braille area chart with a
 seven-day average riding over it, and the longer scopes as a calendar heatmap —
 one cell per day, colour carrying the amount — so a year of habit reads the way
 a contribution graph does: the heavy weeks, the pauses, whether weekends
 differ.
+
+The Séance is where the ledger is summoned back. It replays any stretch of the
+record — the whole ledger, one prescription cycle, or a date window picked by
+hand: `f` turns the frame, `d` picks the dates, and the transport is the same
+one every replay uses — `p` plays, `←/→` steps, `+/-` retunes. Each event
+takes the table as a playing card wearing a stylized figurine for its action;
+`x` flips the card to the record on its back — both timestamps, the accounts
+the grams moved between, the hash chaining it to the entry before. Beneath the
+table the storage jars and stash tins fill and drain as the replay walks the
+history.
 
 ## Commands
 

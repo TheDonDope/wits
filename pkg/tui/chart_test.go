@@ -94,3 +94,21 @@ func TestGradientGaugeWidth(t *testing.T) {
 	assert.Equal(t, 10, lipgloss.Width(GradientGauge(10, 1, th.Good, th.Bad, th.Dim)), "Should be full width when full")
 	assert.NotContains(t, stripANSI(GradientGauge(10, 1, th.Good, th.Bad, th.Dim)), "─", "Should have no track left when full")
 }
+
+func TestJar(t *testing.T) {
+	theme := NewTheme(true)
+	rows := Jar(11, 4, 0.5, theme.Accent, theme)
+	assert.Len(t, rows, 6, "walls, four rows of body, and a lid")
+
+	assert.Equal(t, strings.Repeat(" ", 9), stripANSI(rows[1])[3:12],
+		"Half full leaves the top empty")
+	assert.Contains(t, stripANSI(rows[4]), strings.Repeat("█", 9),
+		"and the bottom brimming")
+
+	for _, row := range Jar(11, 4, 1.5, theme.Accent, theme)[1:5] {
+		assert.Contains(t, stripANSI(row), "█", "Overfull clamps to the brim")
+	}
+	for _, row := range Jar(11, 4, 0, theme.Accent, theme)[1:5] {
+		assert.NotContains(t, stripANSI(row), "█", "Drained holds nothing")
+	}
+}

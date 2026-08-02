@@ -1,4 +1,4 @@
-# The interface: five screens, read from the ledger and nothing else.
+# The interface: eight screens, read from the ledger and nothing else.
 #
 # Seeded by demo-seed.sh, because `wits` reads a .wits directory and a source
 # checkout has none — without it this would record the words "not a wits
@@ -34,11 +34,11 @@ Sleep 4s
 # Journal.
 Tab
 Sleep 3500ms
-# Analysis: the ledger replays itself — space plays the scope from empty,
+# Analysis: the ledger replays itself — p plays the scope from empty,
 # + turns the speed up, and the bars grow the way the record grew.
 Tab
 Sleep 2500ms
-Space
+Type "p"
 Sleep 5s
 Type "+"
 Sleep 4s
@@ -65,5 +65,20 @@ Sleep 3500ms
 # Devices.
 Tab
 Sleep 3500ms
+# The Séance: the ledger summoned back — every event a playing card with a
+# figurine for its action, the jars and tins filling as the replay runs.
+Tab
+Sleep 2500ms
+Type "p"
+Sleep 4s
+Type "+"
+Sleep 5s
+# x flips the card to the record on its back; f turns the frame to one cycle.
+Type "x"
+Sleep 3s
+Type "x"
+Sleep 1500ms
+Type "f"
+Sleep 3s
 Type "q"
 Sleep 1s
