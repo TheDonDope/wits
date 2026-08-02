@@ -32,20 +32,21 @@ func newJournalView() journalView {
 // journalKeys are the bindings this screen adds.
 type journalKeys struct {
 	keyMap
-	Filter, Reveal, Edit, Delete key.Binding
+	Slide, Filter, Reveal, Edit, Delete key.Binding
 }
 
 func (k journalKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Up, k.Down, k.Edit, k.Delete, k.Filter, k.Help, k.Quit}
+	return []key.Binding{k.Slide, k.Up, k.Down, k.Edit, k.Delete, k.Filter, k.Help, k.Quit}
 }
 
 func (k journalKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Filter, k.Reveal, k.Edit, k.Delete})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Slide, k.Filter, k.Reveal, k.Edit, k.Delete})
 }
 
 func (v journalView) keys(base keyMap) help.KeyMap {
 	return journalKeys{
 		keyMap: base,
+		Slide:  slideKey,
 		Filter: filterKey,
 		Reveal: revealKey,
 		Edit:   withHelp(base.Edit, "amend"),
@@ -81,6 +82,8 @@ func (v journalView) Update(msg tea.Msg, a *App) (journalView, tea.Cmd) {
 			v.cursor = v.step(-1)
 		case key.Matches(msg, a.keys.Down):
 			v.cursor = v.step(+1)
+		case key.Matches(msg, slideKey):
+			v.cursor = v.slide(msg)
 		case key.Matches(msg, a.keys.PageUp):
 			for i := 0; i < 10; i++ {
 				v.cursor = v.step(-1)
@@ -203,14 +206,15 @@ func (v journalView) View(a *App, height int) string {
 		}
 	}
 
-	body := max(height-2, 1)
+	cover := v.cover(a, width)
+	body := max(height-3-lipgloss.Height(cover), 1)
 	v.view.SetWidth(width)
 	v.view.SetHeight(body)
 	v.view.SetContent(strings.Join(lines, "\n"))
 	v.view.SetYOffset(scrollTo(v.cursor, v.view.YOffset(), body, len(lines)))
 
 	return lipgloss.NewStyle().Padding(0, 1).Render(
-		lipgloss.JoinVertical(lipgloss.Left, v.status(a, width), v.view.View()))
+		lipgloss.JoinVertical(lipgloss.Left, cover, "", v.status(a, width), v.view.View()))
 }
 
 // scrollTo returns the offset that keeps line in view, moving as little as it
@@ -261,4 +265,105 @@ func countEvents(rows []row) int {
 		}
 	}
 	return n
+}
+
+// slideKey moves the cover slider: the arrows and their vi spellings. On this
+// screen they browse entries; tab and shift+tab still change screens.
+var slideKey = key.NewBinding(key.WithKeys("left", "right", "h", "l"), key.WithHelp("←/→", "browse"))
+
+// slide moves the cursor the way the slider reads: left toward older entries,
+// right toward newer ones. The list is newest first, so the directions cross.
+func (v journalView) slide(msg tea.KeyPressMsg) int {
+	switch msg.String() {
+	case "left", "h":
+		return v.step(+1)
+	default:
+		return v.step(-1)
+	}
+}
+
+// cover is the slider above the list: the selected entry as a card between
+// its neighbours, older to the left, newer to the right.
+func (v journalView) cover(a *App, width int) string {
+	t := a.theme
+	var entries []int
+	at := -1
+	for i, r := range v.rows {
+		if r.heading {
+			continue
+		}
+		if i == v.cursor {
+			at = len(entries)
+		}
+		entries = append(entries, i)
+	}
+	if at < 0 || len(entries) == 0 {
+		return ""
+	}
+
+	midW := min(46, max(width-32, 28))
+	sideW := max((width-midW-2)/2, 14)
+
+	older, newer := blankCard(sideW), blankCard(sideW)
+	if at+1 < len(entries) {
+		older = v.sideCard(a, v.rows[entries[at+1]].event, sideW)
+	}
+	if at > 0 {
+		newer = v.sideCard(a, v.rows[entries[at-1]].event, sideW)
+	}
+	mid := v.midCard(a, v.rows[entries[at]].event, midW)
+
+	strip := lipgloss.JoinHorizontal(lipgloss.Center, older, " ", mid, " ", newer)
+	return lipgloss.JoinVertical(lipgloss.Left, strip,
+		t.Dim.Render(fmt.Sprintf(" ← older · %d of %d · newer →", len(entries)-at, len(entries))))
+}
+
+// midCard is the selected entry, told in full.
+func (v journalView) midCard(a *App, e *journal.Event, w int) string {
+	t := a.theme
+	colour := t.eventColor(e.Type)
+	head := lipgloss.NewStyle().Foreground(colour).Render(glyphs[e.Type]+" ") +
+		t.Value.Render(verbs[e.Type]) +
+		t.Big.Render(fmt.Sprintf("  %.2f g", e.Grams))
+	lines := []string{
+		head,
+		t.Value.Render(truncate(a.data.ProductName(e.Product), w-4)),
+		t.Dim.Render(e.OccurredAt.Format("Mon 02 Jan 2006 · 15:04")),
+	}
+	if detail := t.eventDetail(*e); detail != "" {
+		lines = append(lines, truncate(detail, w-4))
+	}
+	lines = append(lines, t.Dim.Render(shortHash(e.Hash)))
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).BorderForeground(t.Accent).
+		Padding(0, 1).Width(w).
+		Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+// sideCard is a neighbour, told small and dim.
+func (v journalView) sideCard(a *App, e *journal.Event, w int) string {
+	t := a.theme
+	lines := []string{
+		t.Dim.Render(fmt.Sprintf("%s %.2f g", verbs[e.Type], e.Grams)),
+		t.Dim.Render(truncate(a.data.ProductName(e.Product), w-4)),
+		t.Dim.Render(e.OccurredAt.Format("02 Jan")),
+	}
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).BorderForeground(t.Line).
+		Padding(0, 1).Width(w).
+		Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+// blankCard holds a neighbour's place at the edges of the journal, so the
+// selected card does not wander as the slider reaches either end.
+func blankCard(w int) string {
+	return lipgloss.NewStyle().Width(w).Render("")
+}
+
+// shortHash abbreviates an event hash the way git abbreviates a commit.
+func shortHash(h string) string {
+	if len(h) > 7 {
+		return h[:7]
+	}
+	return h
 }

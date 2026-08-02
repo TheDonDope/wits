@@ -201,18 +201,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if handled, cmd := a.correctionKey(msg); handled {
 			return a, cmd
 		}
-		switch {
-		case key.Matches(msg, a.keys.Quit):
-			return a, tea.Quit
-		case key.Matches(msg, a.keys.Help):
-			a.showHelp = !a.showHelp
-			return a, nil
-		case key.Matches(msg, a.keys.Next):
-			a.screen = screen((int(a.screen) + 1) % len(tabs))
-			return a, nil
-		case key.Matches(msg, a.keys.Prev):
-			a.screen = screen((int(a.screen) - 1 + len(tabs)) % len(tabs))
-			return a, nil
+		if handled, cmd := a.navKey(msg); handled {
+			return a, cmd
 		}
 	}
 
@@ -341,6 +331,32 @@ func (a *App) header() string {
 	}
 	line := left + strings.Repeat(" ", gap) + right
 	return lipgloss.JoinVertical(lipgloss.Left, " "+line, t.Rule("", a.width))
+}
+
+// navKey is quitting, help, and the tab bar. On the journal the horizontal
+// keys belong to the cover slider, so only tab and shift+tab change screens
+// from there — an unhandled key falls through to the screen.
+func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
+	switch {
+	case key.Matches(msg, a.keys.Quit):
+		return true, tea.Quit
+	case key.Matches(msg, a.keys.Help):
+		a.showHelp = !a.showHelp
+		return true, nil
+	case key.Matches(msg, a.keys.Next):
+		if a.screen == journalScreen && msg.String() != "tab" {
+			return false, nil
+		}
+		a.screen = screen((int(a.screen) + 1) % len(tabs))
+		return true, nil
+	case key.Matches(msg, a.keys.Prev):
+		if a.screen == journalScreen && msg.String() != "shift+tab" {
+			return false, nil
+		}
+		a.screen = screen((int(a.screen) - 1 + len(tabs)) % len(tabs))
+		return true, nil
+	}
+	return false, nil
 }
 
 // entryDone turns a finished entry form into the notice the footer shows.
