@@ -95,8 +95,28 @@ check() {
 	           git ls-files --others --exclude-standard -- '*.go') | sort -u | grep -v '_test\.go$' || true)"
 	if [ -n "$fresh" ]; then
 		say "! new non-test .go files — Codacy's revive will ask each for a package comment:"
-		echo "$fresh" | sed 's/^/    /'
+		while IFS= read -r f; do say "    $f"; done <<<"$fresh"
 		say "  prefer growing an existing file, or expect the flag"
+	fi
+
+	# Codacy runs shellcheck too — this very script was its first catch.
+	scripts="$( (git diff --name-only "$b"...HEAD -- '*.sh' 2>/dev/null; \
+	             git diff --name-only -- '*.sh'; \
+	             git ls-files --others --exclude-standard -- '*.sh') | sort -u)"
+	scripts="$(while IFS= read -r f; do [ -f "$f" ] && echo "$f"; done <<<"$scripts" || true)"
+	if [ -n "$scripts" ]; then
+		if command -v shellcheck >/dev/null; then
+			# shellcheck disable=SC2086 # the file list is meant to split
+			if out="$(shellcheck $scripts 2>&1)"; then
+				say "✓ shellcheck (changed scripts)"
+			else
+				say "✗ shellcheck:"
+				say "$out" | head -20
+				fail=1
+			fi
+		else
+			say "· shellcheck not installed; skipping the script check"
+		fi
 	fi
 
 	say ""
