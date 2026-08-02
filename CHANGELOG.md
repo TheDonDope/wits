@@ -2,11 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.9.0"></a>
+## [v0.9.0] - 2026-08-02
+### Feat
+- **tui:** a stash screen and a sessions screen
+
+
 <a name="v0.8.0"></a>
 ## [v0.8.0] - 2026-08-02
 ### Build
 - a preflight that says what the gate will say, first
 - **preflight:** check the scripts too, as the gate taught it to
+
+### Docs
+- update changelog for v0.8.0
 
 ### Feat
 - **tui:** a storage screen with a shelf, a history, and ticked weighing
@@ -268,7 +277,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.9.0...HEAD
+[v0.9.0]: https://github.com/TheDonDope/wits/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/TheDonDope/wits/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/TheDonDope/wits/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/TheDonDope/wits/compare/v0.5.0...v0.6.0
