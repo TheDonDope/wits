@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.10.0"></a>
+## [v0.10.0] - 2026-08-02
+### Feat
+- **tui:** deal the dashboard as cards
+
+### Fix
+- **tui:** stop shadowing any, and drop the cycle the stash card never read
+
+
 <a name="v0.9.0"></a>
 ## [v0.9.0] - 2026-08-02
+### Docs
+- update changelog for v0.9.0
+
 ### Feat
 - **tui:** a stash screen and a sessions screen
 
@@ -277,7 +289,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/TheDonDope/wits/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/TheDonDope/wits/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/TheDonDope/wits/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/TheDonDope/wits/compare/v0.6.0...v0.7.0
