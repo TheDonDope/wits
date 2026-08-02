@@ -138,7 +138,7 @@ differ.
 | `wits status` | What is left, and how long it will last |
 | `wits log` | The journal, newest first |
 | `wits revert <entry>` | Undo an entry by recording a correction |
-| `wits reconcile <product> <weight>` | Make an account agree with the scale |
+| `wits reconcile [account] [product] [weight]` | Make an account agree with the scale; interactive with no arguments |
 | `wits device add <name>` | Register a vaporizer |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet |
@@ -184,17 +184,20 @@ wrong — instead the difference is recorded, and the account agrees with the ja
 again:
 
 ```console
-$ wits reconcile wcake-221 17.6 --dry-run
+$ wits reconcile storage wcake-221 17.6 --dry-run
 storage holds 18.00g by the ledger and 17.60g on the scale: -0.40g
 
-$ wits reconcile wcake-221 17.6 --reason "spilled on the desk"
-[21ee6ae] adjusted 0.40g out of storage, now 17.60g
+$ wits reconcile storage wcake-221 17.6 --reason "spilled on the desk"
+[21ee6ae] adjusted 0.40g out of storage of wcake-221, now 17.60g
 ```
 
 ![Reconciling against the scale](./assets/wits-reconcile.gif)
 
-`--stash` weighs the stash instead, `--avb` the already vaped bud. In the interface
-this is `r`, on any screen — it offers the jar under the cursor on the products
+For weighing day, `wits reconcile` on its own is interactive: pick storage or
+the stash, tick the jars to weigh — all of them by default — and each is asked
+for in turn, with the ledger's figure beside the prompt. A blank reading skips
+a jar; `wits reconcile stash` skips the first question. In the interface this
+is `r`, on any screen — it offers the jar under the cursor on the products
 screen, or otherwise the fullest one, since that is the one worth checking.
 
 ## The repository
