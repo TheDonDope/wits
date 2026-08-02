@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.11.0"></a>
+## [v0.11.0] - 2026-08-02
+### Feat
+- **tui:** a cover slider for the journal, and product bars on the storage card
+
+
 <a name="v0.10.0"></a>
 ## [v0.10.0] - 2026-08-02
+### Docs
+- update changelog for v0.10.0
+
 ### Feat
 - **tui:** deal the dashboard as cards
 
@@ -289,7 +298,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.11.0...HEAD
+[v0.11.0]: https://github.com/TheDonDope/wits/compare/v0.10.0...v0.11.0
 [v0.10.0]: https://github.com/TheDonDope/wits/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/TheDonDope/wits/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/TheDonDope/wits/compare/v0.7.0...v0.8.0
