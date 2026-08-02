@@ -20,47 +20,76 @@ import (
 type analysisView struct {
 	scope  int // an index into scopes
 	scroll int // lines scrolled past, since the long scopes overrun a screen
-	sel    int // the day cursor, counted back from the last day of the scope
+
+	// The ledger replays: everything on screen is derived from an append-only
+	// log, so any scope can be played from empty, one event at a time, and
+	// the bars grow the way the record grew.
+	playhead int  // events applied; -1 means live, everything applied
+	playing  bool // whether the playback is running on its own
+	speed    int  // an index into playSpeeds
 }
 
-func newAnalysisView() analysisView { return analysisView{} }
+func newAnalysisView() analysisView { return analysisView{playhead: -1, speed: 2} }
+
+// playSpeeds are the autoplay intervals, slowest first.
+var playSpeeds = []time.Duration{
+	800 * time.Millisecond, 400 * time.Millisecond, 200 * time.Millisecond,
+	100 * time.Millisecond, 50 * time.Millisecond,
+}
+
+// playTickMsg advances a running playback by one event.
+type playTickMsg struct{}
+
+// playKey and speedKeys drive the playback; the horizontal keys step it.
+var (
+	playKey   = key.NewBinding(key.WithKeys("space"), key.WithHelp("space", "play/pause"))
+	speedKeys = key.NewBinding(key.WithKeys("+", "=", "-", "_"), key.WithHelp("+/-", "speed"))
+)
 
 var scopes = []string{"this cycle", "last 30 days", "last 90 days", "last 12 months", "all time"}
 
 type analysisKeys struct {
 	keyMap
 	Scope key.Binding
-	Slide key.Binding
+	Play  key.Binding
+	Step  key.Binding
+	Speed key.Binding
 }
 
 // scopeKey is declared once so the help line and the dispatch cannot drift.
 var scopeKey = key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "scope"))
 
 func (k analysisKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Slide, k.Next, k.Scope, k.Help, k.Quit}
+	return []key.Binding{k.Play, k.Step, k.Speed, k.Scope, k.Help, k.Quit}
 }
 
 func (k analysisKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Scope, k.Slide})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Play, k.Step, k.Speed, k.Scope})
 }
 
 func (v analysisView) keys(base keyMap) help.KeyMap {
-	return analysisKeys{keyMap: base, Scope: scopeKey, Slide: withHelp(slideKey, "day")}
+	return analysisKeys{keyMap: base, Scope: scopeKey,
+		Play: playKey, Step: withHelp(slideKey, "step"), Speed: speedKeys}
 }
 
 func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
-	if msg, ok := msg.(tea.KeyPressMsg); ok {
+	switch msg := msg.(type) {
+	case playTickMsg:
+		return v.advance(a)
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, scopeKey):
 			v.scope = (v.scope + 1) % len(scopes)
-			v.scroll, v.sel = 0, 0
+			v.scroll, v.playhead, v.playing = 0, -1, false
+		case key.Matches(msg, playKey):
+			return v.togglePlay(a)
 		case key.Matches(msg, slideKey):
-			// Counted back from the last day: left walks into the past.
-			switch msg.String() {
-			case "left", "h":
-				v.sel = min(v.sel+1, max(v.spanDays(a)-1, 0))
-			default:
-				v.sel = max(v.sel-1, 0)
+			v = v.stepPlayhead(a, msg)
+		case key.Matches(msg, speedKeys):
+			if msg.String() == "-" || msg.String() == "_" {
+				v.speed = max(v.speed-1, 0)
+			} else {
+				v.speed = min(v.speed+1, len(playSpeeds)-1)
 			}
 		case key.Matches(msg, a.keys.Up):
 			v.scroll = max(v.scroll-1, 0)
@@ -77,6 +106,69 @@ func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
 	return v, nil
 }
 
+// togglePlay starts the replay — from the beginning when the screen was live
+// or already played out — or pauses one that is running.
+func (v analysisView) togglePlay(a *App) (analysisView, tea.Cmd) {
+	if v.playing {
+		v.playing = false
+		return v, nil
+	}
+	total := len(v.events(a))
+	if total == 0 {
+		return v, nil
+	}
+	if v.playhead < 0 || v.playhead >= total {
+		v.playhead = 0
+	}
+	v.playing = true
+	return v, v.tick()
+}
+
+// advance applies the next event of a running playback and schedules the one
+// after it, settling back to live when the record runs out.
+func (v analysisView) advance(a *App) (analysisView, tea.Cmd) {
+	if !v.playing {
+		return v, nil
+	}
+	total := len(v.events(a))
+	v.playhead++
+	if v.playhead >= total {
+		v.playhead, v.playing = -1, false
+		return v, nil
+	}
+	return v, v.tick()
+}
+
+// stepPlayhead moves the playback by hand, pausing it: right applies the next
+// event, left takes the last one back. Stepping past the end settles on live.
+func (v analysisView) stepPlayhead(a *App, msg tea.KeyPressMsg) analysisView {
+	total := len(v.events(a))
+	if total == 0 {
+		return v
+	}
+	v.playing = false
+	at := v.playhead
+	if at < 0 {
+		at = total
+	}
+	if msg.String() == "left" || msg.String() == "h" {
+		at = max(at-1, 0)
+	} else {
+		at++
+	}
+	if at >= total {
+		v.playhead = -1
+		return v
+	}
+	v.playhead = at
+	return v
+}
+
+// tick schedules the next playback step at the current speed.
+func (v analysisView) tick() tea.Cmd {
+	return tea.Tick(playSpeeds[v.speed], func(time.Time) tea.Msg { return playTickMsg{} })
+}
+
 func (v analysisView) View(a *App, height int) string {
 	t := a.theme
 	width := a.inner()
@@ -86,21 +178,26 @@ func (v analysisView) View(a *App, height int) string {
 		return lipgloss.NewStyle().Padding(1, 1).Render(t.Subtitle.Render("Nothing to analyse yet."))
 	}
 
+	played := events
+	if v.playhead >= 0 {
+		played = events[:min(v.playhead, len(events))]
+	}
+
 	sections := []string{
-		v.summary(a, events, width),
+		v.summary(a, played, width),
+		v.transport(a, events, width),
 		"",
 		t.Rule("Grams per day", width),
-		v.perDay(a, events, width),
+		v.perDay(a, played, width),
 		"",
 		t.Rule("By product", width),
-		v.byProduct(a, events, width),
+		v.byProduct(a, played, width),
 	}
-	sections = append(sections, "", t.Rule("Product trails", width), v.trails(a, events, width))
 	if v.scope != 0 {
-		sections = append(sections, "", t.Rule("Rhythm", width), v.rhythm(a, events, width))
+		sections = append(sections, "", t.Rule("Rhythm", width), v.rhythm(a, played, width))
 	}
 	if v.scope >= 3 {
-		sections = append(sections, "", t.Rule("Cycles", width), v.cycles(a, width))
+		sections = append(sections, "", t.Rule("Cycles", width), v.cycles(a, played, width))
 	}
 	// The long scopes overrun a screen, so the view scrolls rather than
 	// silently cutting the calendar off at whatever height the terminal has.
@@ -139,27 +236,6 @@ func (v analysisView) events(a *App) []journal.Event {
 	}
 }
 
-// spanDays is how many days the scope's grind chart covers, for clamping the
-// day cursor.
-func (v analysisView) spanDays(a *App) int {
-	var first, last time.Time
-	for _, e := range v.events(a) {
-		if e.Type != journal.Grind {
-			continue
-		}
-		if first.IsZero() || e.OccurredAt.Before(first) {
-			first = e.OccurredAt
-		}
-		if e.OccurredAt.After(last) {
-			last = e.OccurredAt
-		}
-	}
-	if first.IsZero() {
-		return 0
-	}
-	return daysBetween(first, last) + 1
-}
-
 // since returns the events that happened after the cutoff.
 func since(a *App, cutoff time.Time) []journal.Event {
 	var out []journal.Event
@@ -192,6 +268,31 @@ func (v analysisView) summary(a *App, events []journal.Event, width int) string 
 			t.Metric("per elapsed day", fmt.Sprintf("%.2f g", stats.PerElapsedDay), "")),
 	)
 	return lipgloss.JoinVertical(lipgloss.Left, scope, "", cols)
+}
+
+// transport is the playback line: where the replay stands, how fast it runs,
+// and the event it just applied — the ledger telling its own story.
+func (v analysisView) transport(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	if v.playhead < 0 {
+		return t.Dim.Render("live · press ") + t.Key.Render("space") +
+			t.Dim.Render(" to replay the scope from empty")
+	}
+	mark, state := "⏸", "paused"
+	if v.playing {
+		mark, state = "▶", "playing"
+	}
+	line := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(mark+" ") +
+		t.Value.Render(fmt.Sprintf("%d/%d", v.playhead, len(events))) +
+		t.Dim.Render(fmt.Sprintf(" · %s · %.1f events/s · space %s · ←/→ step · +/- speed",
+			state, 1000/float64(playSpeeds[v.speed].Milliseconds()),
+			map[bool]string{true: "pause", false: "play"}[v.playing]))
+	if v.playhead > 0 {
+		e := events[v.playhead-1]
+		line += "\n" + t.Dim.Render("→ ") +
+			t.entryLine(e, a.data.ProductName(e.Product), width-2, false, false, false)
+	}
+	return line
 }
 
 // perDay draws the daily amounts as columns across the whole scope.
@@ -228,20 +329,10 @@ func (v analysisView) perDay(a *App, events []journal.Event, width int) string {
 	legend := lipgloss.JoinHorizontal(lipgloss.Left,
 		lipgloss.NewStyle().Foreground(t.StashC).Render("⣿"), t.Dim.Render(" daily   "),
 		lipgloss.NewStyle().Foreground(t.Alt).Render("⠒⠒"), t.Dim.Render(" 7-day average"),
-		t.Dim.Render("   ←/→ walks the days"),
 	)
-
-	// The day cursor: its figure above the chart, its date lit in the axis.
-	chartW := max(width-axisGutter, 12)
-	dayIdx := max(len(values)-1-v.sel, 0)
-	day := first.AddDate(0, 0, dayIdx)
-	col := min(dayIdx*(chartW*2)/max(len(values), 1)/2, chartW-1)
-	marker := strings.Repeat(" ", axisGutter) +
-		pointerRow(t, chartW, col, fmt.Sprintf("%.2f g · %s", values[dayIdx], day.Format("Mon 02 Jan")))
-	axis := strings.Repeat(" ", axisGutter) +
-		dateAxisCursor(t, first, last, chartW, col, day.Format("02 Jan"))
-
-	return lipgloss.JoinVertical(lipgloss.Left, marker, chart, axis, legend)
+	return lipgloss.JoinVertical(lipgloss.Left, chart,
+		strings.Repeat(" ", axisGutter)+dateAxis(t, first, last, max(width-axisGutter, 12)),
+		legend)
 }
 
 // rhythm draws the longer scopes as a calendar heatmap, one cell per day. The
@@ -309,59 +400,15 @@ func (v analysisView) byProduct(a *App, events []journal.Event, width int) strin
 	return BarChart(bars, width, t)
 }
 
-// trails is the per-product breakdown over time: the heaviest products, each
-// with the shape of its own days across the scope.
-func (v analysisView) trails(a *App, events []journal.Event, width int) string {
-	t, data := a.theme, a.data
-	perProduct := map[string]map[string]float64{}
-	totals := map[string]float64{}
-	var first, last time.Time
-	for _, e := range events {
-		if e.Type != journal.Grind {
-			continue
-		}
-		if perProduct[e.Product] == nil {
-			perProduct[e.Product] = map[string]float64{}
-		}
-		perProduct[e.Product][e.OccurredAt.Format(time.DateOnly)] += e.Grams
-		totals[e.Product] += e.Grams
-		if first.IsZero() || e.OccurredAt.Before(first) {
-			first = e.OccurredAt
-		}
-		if e.OccurredAt.After(last) {
-			last = e.OccurredAt
-		}
-	}
-	if first.IsZero() {
-		return t.Dim.Render("nothing ground in this range")
-	}
-	slugs := make([]string, 0, len(totals))
-	for s := range totals {
-		slugs = append(slugs, s)
-	}
-	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
-	if len(slugs) > 4 {
-		slugs = slugs[:4]
-	}
-
-	var lines []string
-	for _, slug := range slugs {
-		var values []float64
-		for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
-			values = append(values, perProduct[slug][d.Format(time.DateOnly)])
-		}
-		lines = append(lines,
-			t.Value.Render(data.ProductName(slug))+t.Dim.Render(fmt.Sprintf("  %.1f g", totals[slug])),
-			Sparkline(values, width, lipgloss.NewStyle().Foreground(t.StashC)))
-	}
-	return lipgloss.JoinVertical(lipgloss.Left, lines...)
-}
-
 // cycles compares whole cycles: how much was dispensed, how long it lasted, and
-// the rate it went at.
-func (v analysisView) cycles(a *App, width int) string {
+// the rate it went at. Under playback the cycles are folded from what has been
+// applied so far, so they appear the way they appeared.
+func (v analysisView) cycles(a *App, events []journal.Event, width int) string {
 	t := a.theme
 	all := a.data.State.Cycles
+	if v.playhead >= 0 {
+		all = ledger.Fold(events).Cycles
+	}
 	if len(all) == 0 {
 		return t.Dim.Render("no cycles yet")
 	}

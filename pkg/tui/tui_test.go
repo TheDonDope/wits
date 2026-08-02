@@ -257,24 +257,49 @@ func TestAnalysisAxes(t *testing.T) {
 	assert.Contains(t, out, "11 Jul", "The date axis should carry more than its ends")
 	assert.Contains(t, out, "2.0 ┤", "The y axis should say what the peak weighs")
 	assert.Contains(t, out, "0.0 ┴", "and where zero is")
-	assert.Contains(t, out, "Product trails", "Should break the heaviest products down over time")
 }
 
-func TestAnalysisDayCursor(t *testing.T) {
+func TestAnalysisPlayback(t *testing.T) {
 	app := New(sample(t))
 	app.screen = analysisScreen
 	var m tea.Model = app
 	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 40})
 
 	out := stripANSI(m.View().Content)
-	assert.Contains(t, out, "g · ", "The cursor should say what its day weighs")
+	assert.Contains(t, out, "space to replay", "Should offer the replay when live")
 
-	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
-	assert.Equal(t, 1, app.analysis.sel, "Left should walk a day into the past")
-	assert.Equal(t, analysisScreen, app.screen, "and stay on the analysis screen")
+	// Space starts the replay from empty and schedules the first tick.
+	_, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeySpace, Text: " "})
+	require.True(t, app.analysis.playing, "Space should start playing")
+	assert.Equal(t, 0, app.analysis.playhead, "from the empty ledger")
+	require.NotNil(t, cmd, "and schedule the first tick")
 
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "0/6", "The transport should count the events")
+	assert.Contains(t, out, "playing", "and say it is playing")
+
+	// Ticks apply events one at a time.
+	m, _ = m.Update(playTickMsg{})
+	assert.Equal(t, 1, app.analysis.playhead, "A tick should apply one event")
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "picked up", "and tell the event it applied")
+
+	// Stepping by hand pauses; stepping past the end settles on live.
 	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
-	assert.Equal(t, 0, app.analysis.sel, "Right should walk back toward today")
+	assert.False(t, app.analysis.playing, "A hand step should pause the replay")
+	assert.Equal(t, 2, app.analysis.playhead)
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
+	assert.Equal(t, 1, app.analysis.playhead, "Left should take an event back")
+	for i := 0; i < 9; i++ {
+		m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	}
+	assert.Equal(t, -1, app.analysis.playhead, "Past the end the screen is live again")
+
+	// The speed keys move along the scale.
+	m, _ = m.Update(tea.KeyPressMsg{Code: '+', Text: "+"})
+	assert.Equal(t, 3, app.analysis.speed, "Plus should speed the replay up")
+	m, _ = m.Update(tea.KeyPressMsg{Code: '-', Text: "-"})
+	assert.Equal(t, 2, app.analysis.speed, "Minus should slow it down")
 }
 
 func TestAnalysisByProductKeepsFullNames(t *testing.T) {
