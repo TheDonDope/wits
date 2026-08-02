@@ -20,16 +20,22 @@ import (
 type analysisView struct {
 	scope  int // an index into scopes
 	scroll int // lines scrolled past, since the long scopes overrun a screen
+	player
+}
 
-	// The ledger replays: everything on screen is derived from an append-only
-	// log, so any scope can be played from empty, one event at a time, and
-	// the bars grow the way the record grew.
+func newAnalysisView() analysisView { return analysisView{player: newPlayer()} }
+
+// player is the replay transport shared by every screen that can play the
+// ledger back: where the tape stands, whether it runs on its own, how fast.
+// Everything on these screens is derived from an append-only log, so any of
+// them can start from empty and grow the way the record grew.
+type player struct {
 	playhead int  // events applied; -1 means live, everything applied
 	playing  bool // whether the playback is running on its own
 	speed    int  // an index into playSpeeds
 }
 
-func newAnalysisView() analysisView { return analysisView{playhead: -1, speed: 2} }
+func newPlayer() player { return player{playhead: -1, speed: 2} }
 
 // playSpeeds are the autoplay intervals, slowest first.
 var playSpeeds = []time.Duration{
@@ -40,9 +46,11 @@ var playSpeeds = []time.Duration{
 // playTickMsg advances a running playback by one event.
 type playTickMsg struct{}
 
-// playKey and speedKeys drive the playback; the horizontal keys step it.
+// playKey and speedKeys drive the playback on every screen that has one; the
+// horizontal keys step it. Play sits on p rather than space, which stays free
+// for marking wherever there are rows to mark.
 var (
-	playKey   = key.NewBinding(key.WithKeys("space"), key.WithHelp("space", "play/pause"))
+	playKey   = key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "play/pause"))
 	speedKeys = key.NewBinding(key.WithKeys("+", "=", "-", "_"), key.WithHelp("+/-", "speed"))
 )
 
@@ -73,24 +81,24 @@ func (v analysisView) keys(base keyMap) help.KeyMap {
 }
 
 func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case playTickMsg:
-		return v.advance(a)
+		v.player, cmd = v.player.advance(len(v.events(a)))
+		return v, cmd
 	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, scopeKey):
 			v.scope = (v.scope + 1) % len(scopes)
-			v.scroll, v.playhead, v.playing = 0, -1, false
+			v.scroll, v.player = 0, newPlayer()
+			v.speed = 2
 		case key.Matches(msg, playKey):
-			return v.togglePlay(a)
+			v.player, cmd = v.player.toggle(len(v.events(a)))
+			return v, cmd
 		case key.Matches(msg, slideKey):
-			v = v.stepPlayhead(a, msg)
+			v.player = v.player.step(msg, len(v.events(a)))
 		case key.Matches(msg, speedKeys):
-			if msg.String() == "-" || msg.String() == "_" {
-				v.speed = max(v.speed-1, 0)
-			} else {
-				v.speed = min(v.speed+1, len(playSpeeds)-1)
-			}
+			v.player = v.player.retune(msg)
 		case key.Matches(msg, a.keys.Up):
 			v.scroll = max(v.scroll-1, 0)
 		case key.Matches(msg, a.keys.Down):
@@ -106,48 +114,45 @@ func (v analysisView) Update(msg tea.Msg, a *App) (analysisView, tea.Cmd) {
 	return v, nil
 }
 
-// togglePlay starts the replay — from the beginning when the screen was live
-// or already played out — or pauses one that is running.
-func (v analysisView) togglePlay(a *App) (analysisView, tea.Cmd) {
-	if v.playing {
-		v.playing = false
-		return v, nil
+// toggle starts the replay — from the beginning when the screen was live or
+// already played out — or pauses one that is running.
+func (p player) toggle(total int) (player, tea.Cmd) {
+	if p.playing {
+		p.playing = false
+		return p, nil
 	}
-	total := len(v.events(a))
 	if total == 0 {
-		return v, nil
+		return p, nil
 	}
-	if v.playhead < 0 || v.playhead >= total {
-		v.playhead = 0
+	if p.playhead < 0 || p.playhead >= total {
+		p.playhead = 0
 	}
-	v.playing = true
-	return v, v.tick()
+	p.playing = true
+	return p, p.tick()
 }
 
 // advance applies the next event of a running playback and schedules the one
 // after it, settling back to live when the record runs out.
-func (v analysisView) advance(a *App) (analysisView, tea.Cmd) {
-	if !v.playing {
-		return v, nil
+func (p player) advance(total int) (player, tea.Cmd) {
+	if !p.playing {
+		return p, nil
 	}
-	total := len(v.events(a))
-	v.playhead++
-	if v.playhead >= total {
-		v.playhead, v.playing = -1, false
-		return v, nil
+	p.playhead++
+	if p.playhead >= total {
+		p.playhead, p.playing = -1, false
+		return p, nil
 	}
-	return v, v.tick()
+	return p, p.tick()
 }
 
-// stepPlayhead moves the playback by hand, pausing it: right applies the next
-// event, left takes the last one back. Stepping past the end settles on live.
-func (v analysisView) stepPlayhead(a *App, msg tea.KeyPressMsg) analysisView {
-	total := len(v.events(a))
+// step moves the playback by hand, pausing it: right applies the next event,
+// left takes the last one back. Stepping past the end settles on live.
+func (p player) step(msg tea.KeyPressMsg, total int) player {
 	if total == 0 {
-		return v
+		return p
 	}
-	v.playing = false
-	at := v.playhead
+	p.playing = false
+	at := p.playhead
 	if at < 0 {
 		at = total
 	}
@@ -157,16 +162,60 @@ func (v analysisView) stepPlayhead(a *App, msg tea.KeyPressMsg) analysisView {
 		at++
 	}
 	if at >= total {
-		v.playhead = -1
-		return v
+		p.playhead = -1
+		return p
 	}
-	v.playhead = at
-	return v
+	p.playhead = at
+	return p
+}
+
+// retune moves the autoplay speed a notch either way.
+func (p player) retune(msg tea.KeyPressMsg) player {
+	if msg.String() == "-" || msg.String() == "_" {
+		p.speed = max(p.speed-1, 0)
+	} else {
+		p.speed = min(p.speed+1, len(playSpeeds)-1)
+	}
+	return p
+}
+
+// played returns the prefix of the events the playhead has applied, or all of
+// them when the screen is live.
+func (p player) played(events []journal.Event) []journal.Event {
+	if p.playhead < 0 {
+		return events
+	}
+	return events[:min(p.playhead, len(events))]
 }
 
 // tick schedules the next playback step at the current speed.
-func (v analysisView) tick() tea.Cmd {
-	return tea.Tick(playSpeeds[v.speed], func(time.Time) tea.Msg { return playTickMsg{} })
+func (p player) tick() tea.Cmd {
+	return tea.Tick(playSpeeds[p.speed], func(time.Time) tea.Msg { return playTickMsg{} })
+}
+
+// transport is the playback line: where the replay stands, how fast it runs,
+// and the event it just applied — the ledger telling its own story.
+func (p player) transport(a *App, events []journal.Event, width int) string {
+	t := a.theme
+	if p.playhead < 0 {
+		return t.Dim.Render("live · press ") + t.Key.Render("p") +
+			t.Dim.Render(" to replay the ledger from empty")
+	}
+	mark, state := "⏸", "paused"
+	if p.playing {
+		mark, state = "▶", "playing"
+	}
+	line := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(mark+" ") +
+		t.Value.Render(fmt.Sprintf("%d/%d", p.playhead, len(events))) +
+		t.Dim.Render(fmt.Sprintf(" · %s · %.1f events/s · p %s · ←/→ step · +/- speed",
+			state, 1000/float64(playSpeeds[p.speed].Milliseconds()),
+			map[bool]string{true: "pause", false: "play"}[p.playing]))
+	if p.playhead > 0 {
+		e := events[p.playhead-1]
+		line += "\n" + t.Dim.Render("→ ") +
+			t.entryLine(e, a.data.ProductName(e.Product), width-2, false, false, false)
+	}
+	return line
 }
 
 func (v analysisView) View(a *App, height int) string {
@@ -178,10 +227,7 @@ func (v analysisView) View(a *App, height int) string {
 		return lipgloss.NewStyle().Padding(1, 1).Render(t.Subtitle.Render("Nothing to analyse yet."))
 	}
 
-	played := events
-	if v.playhead >= 0 {
-		played = events[:min(v.playhead, len(events))]
-	}
+	played := v.played(events)
 
 	sections := []string{
 		v.summary(a, played, width),
@@ -268,31 +314,6 @@ func (v analysisView) summary(a *App, events []journal.Event, width int) string 
 			t.Metric("per elapsed day", fmt.Sprintf("%.2f g", stats.PerElapsedDay), "")),
 	)
 	return lipgloss.JoinVertical(lipgloss.Left, scope, "", cols)
-}
-
-// transport is the playback line: where the replay stands, how fast it runs,
-// and the event it just applied — the ledger telling its own story.
-func (v analysisView) transport(a *App, events []journal.Event, width int) string {
-	t := a.theme
-	if v.playhead < 0 {
-		return t.Dim.Render("live · press ") + t.Key.Render("space") +
-			t.Dim.Render(" to replay the scope from empty")
-	}
-	mark, state := "⏸", "paused"
-	if v.playing {
-		mark, state = "▶", "playing"
-	}
-	line := lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(mark+" ") +
-		t.Value.Render(fmt.Sprintf("%d/%d", v.playhead, len(events))) +
-		t.Dim.Render(fmt.Sprintf(" · %s · %.1f events/s · space %s · ←/→ step · +/- speed",
-			state, 1000/float64(playSpeeds[v.speed].Milliseconds()),
-			map[bool]string{true: "pause", false: "play"}[v.playing]))
-	if v.playhead > 0 {
-		e := events[v.playhead-1]
-		line += "\n" + t.Dim.Render("→ ") +
-			t.entryLine(e, a.data.ProductName(e.Product), width-2, false, false, false)
-	}
-	return line
 }
 
 // perDay draws the daily amounts as columns across the whole scope.

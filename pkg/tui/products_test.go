@@ -501,3 +501,57 @@ func TestSessionsScreenShowsTheStory(t *testing.T) {
 	assert.Contains(t, out, "no device", "and owning the sessions that had none")
 	assert.Contains(t, out, "Rhythm", "Should draw the calendar")
 }
+
+func TestStorageReplay(t *testing.T) {
+	app := seshed(t)
+	app.screen = storageScreen
+	var m tea.Model = app
+
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "p to replay", "Should offer the replay when live")
+
+	// p starts from the empty ledger: no jars yet.
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	require.True(t, app.storage.playing, "p should start playing")
+	require.NotNil(t, cmd, "and schedule a tick")
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "0/7", "The transport should count the whole ledger")
+	assert.Contains(t, out, "nothing on the shelf", "and the shelf should start empty")
+
+	// One purchase in, the first jar appears.
+	m, _ = m.Update(playTickMsg{})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "Cannamedical 28/1 Lemon Cookie", "The first fill should appear on the shelf")
+	assert.Contains(t, out, "picked up", "and the transport should narrate it")
+
+	// Stepping past the end settles on live.
+	for i := 0; i < 8; i++ {
+		m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	}
+	assert.Equal(t, -1, app.storage.playhead, "Past the end the screen is live again")
+}
+
+func TestStashReplay(t *testing.T) {
+	app := seshed(t)
+	app.screen = stashScreen
+	var m tea.Model = app
+
+	_, _ = m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	require.True(t, app.stash.playing)
+
+	// Play until the lemon stash has been ground but not yet worked down: it
+	// stands in the active table, not the history.
+	for i := 0; i < 2; i++ {
+		m, _ = m.Update(playTickMsg{})
+	}
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "holding · 1", "The ground stash should be active mid-replay")
+	assert.Contains(t, out, "finished · 0", "and nothing finished yet")
+
+	// Two sessions later it is consumed and moves to the history.
+	for i := 0; i < 2; i++ {
+		m, _ = m.Update(playTickMsg{})
+	}
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "finished · 1", "The emptied stash should move into the history as it empties")
+}
