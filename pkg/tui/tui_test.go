@@ -235,3 +235,58 @@ func TestDashboardStorageCardListsProducts(t *testing.T) {
 	assert.Contains(t, out, "Enua 22/1 Wedding", "The storage card should bar each product")
 	assert.Contains(t, out, "Cannamedical 28/1", "all of them")
 }
+
+func TestAnalysisScopes(t *testing.T) {
+	app := New(sample(t))
+	app.screen = analysisScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 40})
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "last 30 days", "The second scope is the last month")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "last 90 days", "and the third is the quarter")
+}
+
+func TestAnalysisAxes(t *testing.T) {
+	out := render(t, sample(t), analysisScreen, 96, 40)
+
+	assert.Contains(t, out, "11 Jul", "The date axis should carry more than its ends")
+	assert.Contains(t, out, "2.0 ┤", "The y axis should say what the peak weighs")
+	assert.Contains(t, out, "0.0 ┴", "and where zero is")
+	assert.Contains(t, out, "Product trails", "Should break the heaviest products down over time")
+}
+
+func TestAnalysisDayCursor(t *testing.T) {
+	app := New(sample(t))
+	app.screen = analysisScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 40})
+
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "g · ", "The cursor should say what its day weighs")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
+	assert.Equal(t, 1, app.analysis.sel, "Left should walk a day into the past")
+	assert.Equal(t, analysisScreen, app.screen, "and stay on the analysis screen")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	assert.Equal(t, 0, app.analysis.sel, "Right should walk back toward today")
+}
+
+func TestAnalysisByProductKeepsFullNames(t *testing.T) {
+	app := seshed(t)
+	app.screen = analysisScreen
+	app.analysis.scope = 4 // all time
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 110, Height: 44})
+
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "Cannamedical 28/1 Lemon Cookie",
+		"By product must never shorten a name")
+	assert.Contains(t, out, "g/day", "and should rate each product")
+	assert.Contains(t, out, "%", "and give its share")
+}
