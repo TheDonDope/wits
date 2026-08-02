@@ -2,6 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.8.0"></a>
+## [v0.8.0] - 2026-08-02
+### Build
+- a preflight that says what the gate will say, first
+- **preflight:** check the scripts too, as the gate taught it to
+
+### Feat
+- **tui:** a storage screen with a shelf, a history, and ticked weighing
+
+### Refactor
+- **tui:** keep the screen in products.go, whatever the tab says
+
+
 <a name="v0.7.0"></a>
 ## [v0.7.0] - 2026-08-02
 ### Build
@@ -40,6 +53,7 @@
 - run the Go workflow for v2 as well as main
 
 ### Docs
+- update changelog for v0.7.0
 - re-record the demo against the corrected figures
 - seed a finished cycle and re-record the demo
 - make the templates and comments tell the truth
@@ -254,7 +268,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/TheDonDope/wits/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/TheDonDope/wits/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/TheDonDope/wits/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/TheDonDope/wits/compare/v0.4.1...v0.5.0
