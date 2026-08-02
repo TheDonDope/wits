@@ -81,39 +81,9 @@ func (v devicesView) View(a *App, height int) string {
 	var rows []string
 	for i, d := range devices {
 		selected := i == v.cursor
-		name := t.Value.Render(truncate(d.Name, 28))
-		if selected {
-			name = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(truncate(d.Name, 28))
-		}
-		marker := "  "
-		if selected {
-			marker = lipgloss.NewStyle().Foreground(t.Accent).Render("│ ")
-		}
-
-		kind := d.Kind
-		if kind == "" {
-			kind = "—"
-		}
-		temps := "—"
-		if d.MaxTemp > 0 {
-			temps = fmt.Sprintf("%d–%d°C", d.MinTemp, d.MaxTemp)
-		}
-		def := "—"
-		if d.DefaultTemp > 0 {
-			def = fmt.Sprintf("%d°C", d.DefaultTemp)
-		}
-
-		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Left,
-			marker,
-			lipgloss.NewStyle().Width(30).Render(name),
-			t.Dim.Width(12).Render(kind),
-			t.Label.Width(12).Render(temps),
-			t.Value.Width(8).Render(def),
-			t.Dim.Render(plural(a.sessionsWith(d.Slug), "session")),
-		))
-
-		// Under the selected device, say what its default setting releases: the
-		// point of recording a temperature at all.
+		rows = append(rows, v.deviceLine(a, d, selected))
+		// Under the selected device, say what its default setting releases:
+		// the point of recording a temperature at all.
 		if selected && d.DefaultTemp > 0 {
 			rows = append(rows, "", t.Rule(fmt.Sprintf("At %d°C", d.DefaultTemp), width))
 			rows = append(rows, releasedSummary(a, d.DefaultTemp, width), "")
@@ -129,6 +99,37 @@ func (v devicesView) View(a *App, height int) string {
 	)
 	return lipgloss.NewStyle().Padding(1, 1).Render(
 		clip(lipgloss.JoinVertical(lipgloss.Left, append([]string{header, ""}, rows...)...), height-2))
+}
+
+// deviceLine renders one device as a row.
+func (v devicesView) deviceLine(a *App, d *catalog.Device, selected bool) string {
+	t := a.theme
+	name := t.Value.Render(truncate(d.Name, 28))
+	marker := "  "
+	if selected {
+		name = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(truncate(d.Name, 28))
+		marker = lipgloss.NewStyle().Foreground(t.Accent).Render("│ ")
+	}
+	kind := d.Kind
+	if kind == "" {
+		kind = "—"
+	}
+	temps := "—"
+	if d.MaxTemp > 0 {
+		temps = fmt.Sprintf("%d–%d°C", d.MinTemp, d.MaxTemp)
+	}
+	def := "—"
+	if d.DefaultTemp > 0 {
+		def = fmt.Sprintf("%d°C", d.DefaultTemp)
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		marker,
+		lipgloss.NewStyle().Width(30).Render(name),
+		t.Dim.Width(12).Render(kind),
+		t.Label.Width(12).Render(temps),
+		t.Value.Width(8).Render(def),
+		t.Dim.Render(plural(a.sessionsWith(d.Slug), "session")),
+	)
 }
 
 // releasedSummary lists what a temperature reaches, and warns if it is hot
@@ -153,11 +154,14 @@ func releasedSummary(a *App, celsius, width int) string {
 	return body
 }
 
-// plural renders a count with its noun, so a device used once does not read as
-// "1 sessions".
+// plural renders a count with its noun, so a device used once does not read
+// as "1 sessions" — and two stashes never read as "2 stashs".
 func plural(n int, noun string) string {
 	if n == 1 {
 		return fmt.Sprintf("1 %s", noun)
+	}
+	if strings.HasSuffix(noun, "sh") || strings.HasSuffix(noun, "s") {
+		return fmt.Sprintf("%d %ses", n, noun)
 	}
 	return fmt.Sprintf("%d %ss", n, noun)
 }
