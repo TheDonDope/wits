@@ -88,7 +88,7 @@ func (d dashboard) grid(a *App, c *ledger.Cycle, width int) []string {
 
 	return []string{
 		pair(card(a, "Storage", d.storageCard(a, c, inner), colW),
-			card(a, "Stash", d.stashCard(a, c, inner), colW)),
+			card(a, "Stash", d.stashCard(a, inner), colW)),
 		pair(card(a, "Sessions", d.sessionsCard(a, inner), colW),
 			card(a, "Devices", d.devicesCard(a, inner), colW)),
 		card(a, "Supply projection", d.projectionCard(a, c, width-4), width),
@@ -153,7 +153,7 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 }
 
 // stashCard is the ground product: how much sits in the stashes, and where.
-func (d dashboard) stashCard(a *App, c *ledger.Cycle, w int) string {
+func (d dashboard) stashCard(a *App, w int) string {
 	t, data := a.theme, a.data
 	total, peak := 0.0, 0.0
 	var tins []stashShare
@@ -351,14 +351,14 @@ func storageProjection(a *App, c *ledger.Cycle) (hist, proj []float64, emptyAt t
 func rhythmCard(a *App, typ journal.Type, w int) string {
 	t := a.theme
 	perDay := map[string]float64{}
-	any := false
+	logged := false
 	for _, e := range a.data.State.Events {
 		if e.Type == typ {
 			perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
-			any = true
+			logged = true
 		}
 	}
-	if !any {
+	if !logged {
 		return t.Dim.Render("nothing here yet")
 	}
 	from := a.data.Now.AddDate(0, 0, -12*7)
