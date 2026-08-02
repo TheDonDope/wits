@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
@@ -18,31 +17,18 @@ import (
 	"github.com/TheDonDope/wits/pkg/version"
 )
 
-var (
-	// Version contains the application version number. It's set via ldflags
-	// when building.
-	Version = ""
-
-	// CommitSHA contains the SHA of the commit that this application was built
-	// against. It's set via ldflags when building.
-	CommitSHA = ""
-
-	// CommitDate contains the date of the commit that this application was
-	// built against. It's set via ldflags when building.
-	CommitDate = ""
-
-	rootCmd = &cobra.Command{
-		Use:          "wits",
-		Short:        "A tui for cannabis patients and users",
-		Long:         "Wits is the weed information tracking system, aimed to help cannabis patients and users.",
-		SilenceUsage: true,
-		// main reports the error itself, so cobra should not print it too.
-		SilenceErrors: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return commands.Home.RunE(cmd, args)
-		},
-	}
-)
+var rootCmd = &cobra.Command{
+	Use:          "wits",
+	Short:        "A tui for cannabis patients and users",
+	Long:         "Wits is the weed information tracking system, aimed to help cannabis patients and users.",
+	Version:      version.String(),
+	SilenceUsage: true,
+	// main reports the error itself, so cobra should not print it too.
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return commands.Home.RunE(cmd, args)
+	},
+}
 
 func init() {
 	// The completion command stays visible: tab completion offers the product
@@ -63,23 +49,6 @@ func init() {
 		commands.Revert,
 		commands.Export,
 	)
-
-	if len(CommitSHA) >= 7 {
-		vt := rootCmd.VersionTemplate()
-		rootCmd.SetVersionTemplate(vt[:len(vt)-1] + " (" + CommitSHA[0:7] + ")\n")
-	}
-	if Version == "" {
-		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
-			Version = info.Main.Version
-		} else {
-			Version = "unknown (built from source)"
-		}
-	}
-	rootCmd.Version = Version
-
-	version.Version = Version
-	version.CommitSHA = CommitSHA
-	version.CommitDate = CommitDate
 }
 
 func main() {

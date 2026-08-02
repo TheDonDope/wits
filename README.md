@@ -282,6 +282,7 @@ ledger it serves would mean versioning the ledger against itself.
 wits/                     module github.com/TheDonDope/wits
   cmd/
     wits/                 the terminal interface and the commands
+    witsnap/              the camera and the tap: screens as text, the fold as JSON
     wits-server/          the REST API                        (planned)
   pkg/
     journal/              the append-only log
@@ -294,6 +295,7 @@ wits/                     module github.com/TheDonDope/wits
     importer/             reading the tracking spreadsheet
     cannabis/             cannabinoids, terpenes and their boiling points
     tui/                  the screens
+    version/              the build stamp every binary reports from
   wits-ui/                the web interface, in Angular       (planned)
 ```
 

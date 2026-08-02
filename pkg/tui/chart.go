@@ -162,73 +162,6 @@ func BarChart(bars []Bar, width int, t *Theme) string {
 	return strings.Join(rows, "\n")
 }
 
-// Column is one bar of a vertical chart. A column may carry its own colour —
-// the dashboard tints heavier days hotter — and falls back to the chart's fill
-// when it does not.
-type Column struct {
-	Value float64
-	Label string
-	Color tint
-}
-
-// ColumnChart renders a vertical bar chart, which is how a run of daily amounts
-// is easiest to read: time runs left to right, and the shape of a week is
-// visible at a glance.
-func ColumnChart(cols []Column, height int, t *Theme, fill tint) string {
-	if len(cols) == 0 || height <= 0 {
-		return t.Dim.Render("nothing to show yet")
-	}
-	peak := 0.0
-	for _, c := range cols {
-		peak = math.Max(peak, c.Value)
-	}
-	if peak <= 0 {
-		return t.Dim.Render("nothing logged in this range")
-	}
-
-	styles := make([]lipgloss.Style, len(cols))
-	for i, c := range cols {
-		colour := c.Color
-		if colour == nil {
-			colour = fill
-		}
-		styles[i] = lipgloss.NewStyle().Foreground(colour)
-	}
-	var b strings.Builder
-	for row := 0; row < height; row++ {
-		// Rows are filled from the top down, so each row represents the band
-		// between two fractions of the maximum.
-		upper := float64(height-row) / float64(height)
-		lower := float64(height-row-1) / float64(height)
-		for i, c := range cols {
-			b.WriteString(columnCell(c.Value/peak, upper, lower, height, styles[i]))
-		}
-		b.WriteByte('\n')
-	}
-	b.WriteString(t.Dim.Render(strings.Repeat("─", len(cols))))
-	return b.String()
-}
-
-// columnCell renders one cell of a column: full, empty, or the partial band
-// where the column's top lands, in eighths of a cell.
-func columnCell(fraction, upper, lower float64, height int, style lipgloss.Style) string {
-	switch {
-	case fraction >= upper:
-		return style.Render("█")
-	case fraction <= lower:
-		return " "
-	default:
-		eighth := int((fraction-lower)*float64(height)*8 + 0.5)
-		if eighth < 1 {
-			eighth = 1
-		}
-		if eighth > 8 {
-			eighth = 8
-		}
-		return style.Render(string(sparks[eighth-1]))
-	}
-}
-
 // Stack renders one bar split between accounts, scaled against total rather
 // than against its own sum. Scaling each bar to itself would make every row the
 // full width, which says nothing: the point is to compare one product's
@@ -576,10 +509,6 @@ func axisLabels(t *Theme, left, right string, width int) string {
 	}
 	return t.Dim.Render(left) + strings.Repeat(" ", gap) + t.Dim.Render(right)
 }
-
-// round trims to centigrams, matching what the ledger stores and what a
-// jeweller's scale reads.
-func round(g float64) float64 { return math.Round(g*100) / 100 }
 
 // dateAxis writes a run of dates under a chart, evenly spaced: the ends
 // anchored left and right, the middles centred, and any label that would

@@ -519,14 +519,9 @@ type stashStats struct {
 	EmptiedAt time.Time // when the stash last reached zero; zero while it holds
 }
 
-// stashHistory replays the journal watching only the stash account, so the
-// screen can say when a stash was finished rather than only that it is empty.
-func stashHistory(a *App) map[string]*stashStats {
-	return stashHistoryOf(a.data.State.Events)
-}
-
-// stashHistoryOf is stashHistory over any run of events, which is what lets
-// the stash screen replay a prefix of the ledger.
+// stashHistoryOf replays a run of events watching only the stash account, so
+// the screen can say when a stash was finished rather than only that it is
+// empty — and, given a prefix of the ledger, replay it.
 func stashHistoryOf(events []journal.Event) map[string]*stashStats {
 	out := map[string]*stashStats{}
 	bal := map[string]float64{}
