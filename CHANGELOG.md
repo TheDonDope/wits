@@ -2,6 +2,110 @@
 ## [Unreleased]
 
 
+<a name="v0.7.0"></a>
+## [v0.7.0] - 2026-08-02
+### Build
+- finish the move to Bubble Tea v2
+- bump go version to 1.26.3
+
+### Chore
+- bump go version to 1.26.3
+- bump go version to 1.24.2
+- make the build files tell the truth
+- **deps:** bump github.com/spf13/cobra from 1.9.1 to 1.10.1
+- **deps:** bump codecov/codecov-action from 5.4.3 to 5.5.1
+- **deps:** bump codacy/codacy-coverage-reporter-action
+- **deps:** bump github.com/spf13/cobra from 1.10.1 to 1.10.2
+- **deps:** bump codecov/codecov-action from 5.5.1 to 5.5.2
+- **deps:** bump actions/checkout from 5 to 6
+- **deps:** bump github.com/charmbracelet/bubbletea
+- **deps:** bump github.com/charmbracelet/huh from 0.7.0 to 0.8.0
+- **deps:** bump github.com/charmbracelet/bubbletea from 1.3.7 to 1.3.9
+- **deps:** bump github.com/charmbracelet/huh from 0.8.0 to 1.0.0
+- **deps:** bump actions/setup-go from 5 to 6
+- **deps:** bump codecov/codecov-action from 5.5.2 to 6.0.0
+- **deps:** bump github.com/charmbracelet/bubbletea from 1.3.6 to 1.3.7
+- **deps:** bump github.com/stretchr/testify from 1.10.0 to 1.11.1
+- **deps:** bump actions/checkout from 4 to 5
+- **deps:** bump github.com/charmbracelet/bubbletea from 1.3.5 to 1.3.6
+- **deps:** bump codecov/codecov-action from 5.4.2 to 5.4.3
+- **deps:** bump github.com/charmbracelet/bubbletea from 1.3.4 to 1.3.5
+- **deps:** bump codecov/codecov-action
+- **deps:** bump github.com/charmbracelet/huh from 0.6.0 to 0.7.0
+- **deps:** bump github.com/charmbracelet/bubbles from 0.20.0 to 0.21.0
+- **deps:** bump codecov/codecov-action
+- **deps:** bump github.com/charmbracelet/bubbles
+
+### Ci
+- run the Go workflow for v2 as well as main
+
+### Docs
+- re-record the demo against the corrected figures
+- seed a finished cycle and re-record the demo
+- make the templates and comments tell the truth
+- bring the README and roadmap up to the current behaviour
+- split the demo into five clips and re-record them
+- added historic xlsx import data
+- rewrite the README, re-record the demo, audit the roadmap
+- rewrite the roadmap around a ledger model
+
+### Feat
+- correct entries from the journal, manage devices, refresh the README
+- add a products screen and reconciling against the scale
+- bring back the spreadsheet importer
+- short product handles, editing a product, and completion
+- **catalog:** add product and device catalogs
+- **catalog:** put the THC/CBD ratio at the end of every slug
+- **cmd:** add the git-shaped command surface
+- **importer:** import the tracking spreadsheet into the journal
+- **journal:** add an append-only, hash-chained event log
+- **ledger:** derive balances, cycles and statistics from the journal
+- **reconcile:** weigh a whole account interactively, or one jar in a line
+- **repo:** add the .wits repository and discovery
+- **tui:** braille area charts, a rhythm heatmap, and heat-tinted bars
+- **tui:** record entries with huh v2 forms
+
+### Fix
+- address Codacy static analysis findings
+- add importer
+- **cli:** say device when a device is missing, and count in the singular
+- **ledger:** give a cycle its carry-over, so nothing reads over 100%
+- **record:** refuse an amend whole, and name the account it refuses
+
+### Perf
+- **journal:** cache the tip, and stop logging every append
+
+### Refactor
+- speak of the stash, not the tin
+- share how a repository is opened, and lock the journal
+- **catalog:** split NewHandle along its seams
+- **cmd:** open the interface the way every other command does
+- **tui:** fold the new charts into chart.go and split the big ones
+- **tui:** one binding per key, one field per meaning
+
+### Style
+- gofmt existing tests
+
+### Test
+- cover the import command and its report
+- **importer:** run against the real workbook
+- **journal:** cover a repository that cannot be written to
+- **tui:** cover the devices screen and its forms
+- **workspace:** cover opening from the working directory
+
+### BREAKING CHANGE
+
+the import path is now github.com/TheDonDope/wits.
+
+pkg/tui is rewritten, and pkg/storage, pkg/service and
+cannabis.Strain are removed. The reference tables in pkg/cannabis stay,
+since the catalog and the temperature lookups use them.
+
+events no longer have an `id`, and a v1 journal will not
+verify against v2 hashes. Migrate by bundling the old repository and
+restoring it into a new one, which rebuilds the chain.
+
+
 <a name="v0.6.0"></a>
 ## [v0.6.0] - 2025-03-25
 ### Chore
@@ -9,6 +113,7 @@
 - set font options for tapes
 
 ### Docs
+- update changelog for v0.6.0
 - render env example source in readme
 - add dependecy logos to readme
 - add initial dev diary
@@ -149,10 +254,11 @@
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits-tui/compare/v0.6.0...HEAD
-[v0.6.0]: https://github.com/TheDonDope/wits-tui/compare/v0.5.0...v0.6.0
-[v0.5.0]: https://github.com/TheDonDope/wits-tui/compare/v0.4.1...v0.5.0
-[v0.4.1]: https://github.com/TheDonDope/wits-tui/compare/v0.4.0...v0.4.1
-[v0.4.0]: https://github.com/TheDonDope/wits-tui/compare/v0.3.0...v0.4.0
-[v0.3.0]: https://github.com/TheDonDope/wits-tui/compare/v0.2.0...v0.3.0
-[v0.2.0]: https://github.com/TheDonDope/wits-tui/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/TheDonDope/wits/compare/v0.6.0...v0.7.0
+[v0.6.0]: https://github.com/TheDonDope/wits/compare/v0.5.0...v0.6.0
+[v0.5.0]: https://github.com/TheDonDope/wits/compare/v0.4.1...v0.5.0
+[v0.4.1]: https://github.com/TheDonDope/wits/compare/v0.4.0...v0.4.1
+[v0.4.0]: https://github.com/TheDonDope/wits/compare/v0.3.0...v0.4.0
+[v0.3.0]: https://github.com/TheDonDope/wits/compare/v0.2.0...v0.3.0
+[v0.2.0]: https://github.com/TheDonDope/wits/compare/v0.1.0...v0.2.0
