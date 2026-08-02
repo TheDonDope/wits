@@ -71,21 +71,6 @@ func render(t *testing.T, data Data, s screen, w, h int) string {
 	return stripANSI(m.View().Content)
 }
 
-// stripANSI removes escape sequences so assertions can be made on the text.
-func stripANSI(s string) string {
-	var b strings.Builder
-	for i := 0; i < len(s); i++ {
-		if s[i] == 0x1b {
-			for i < len(s) && s[i] != 'm' {
-				i++
-			}
-			continue
-		}
-		b.WriteByte(s[i])
-	}
-	return b.String()
-}
-
 func TestDashboard(t *testing.T) {
 	out := render(t, sample(t), dashboardScreen, 96, 44)
 
@@ -314,4 +299,21 @@ func TestAnalysisByProductKeepsFullNames(t *testing.T) {
 		"By product must never shorten a name")
 	assert.Contains(t, out, "g/day", "and should rate each product")
 	assert.Contains(t, out, "%", "and give its share")
+}
+
+func TestSnapshot(t *testing.T) {
+	shot, err := Snapshot(sample(t), "storage", 96, 30, nil)
+	require.NoError(t, err)
+	assert.Contains(t, shot, "Enua 22/1 Wedding Cake", "Should render the screen it was asked for")
+
+	// The playback can be photographed mid-run, tick by tick.
+	shot, err = Snapshot(sample(t), "analysis", 96, 40, []string{"p", "tick"})
+	require.NoError(t, err)
+	assert.Contains(t, shot, "1/6", "Should apply the presses before the picture")
+
+	_, err = Snapshot(sample(t), "garage", 96, 30, nil)
+	assert.ErrorContains(t, err, "no screen called", "Should name the screens that exist")
+
+	_, err = Snapshot(sample(t), "journal", 96, 30, []string{"ctrl+alt+del"})
+	assert.ErrorContains(t, err, "cannot press", "Should refuse a key it cannot spell")
 }

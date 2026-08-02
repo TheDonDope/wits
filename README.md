@@ -330,6 +330,11 @@ make preflight  # everything CI and the Codacy gate will say, said here first
 `./preflight.sh watch <pr>` polls a pull request's checks and reads the Codacy
 delta the way the gate does, so a red X never comes as a surprise.
 
+`make snap` builds `witsnap`, the camera and the tap: `witsnap screens` renders
+any screen as plain text — `--press p,tick,tick` photographs a replay mid-run —
+and `witsnap json` writes the whole derived state as JSON, which is the seam a
+new client or a new visualisation starts from.
+
 `make build-windows` cross-compiles `bin/wits.exe`. `make render-tapes` re-records
 every GIF in `assets/` from the `*.tape` files; it needs `vhs`, `gum` and `ttyd`
 (`make install` covers the first two). The tapes seed a throwaway repository
