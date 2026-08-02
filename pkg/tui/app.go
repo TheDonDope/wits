@@ -626,3 +626,88 @@ func (a *App) weighable() string {
 
 // inner returns the width available inside the frame.
 func (a *App) inner() int { return max(a.width-2, 10) }
+
+// ScreenNames lists the screens a Snapshot can render, in tab order.
+func ScreenNames() []string {
+	out := make([]string, len(tabs))
+	for i, name := range tabs {
+		out[i] = strings.ToLower(name)
+	}
+	return out
+}
+
+// Snapshot renders one screen to plain text, no terminal required. It is the
+// seam the tooling photographs through — pull request captures, quick visual
+// checks, future clients that want to see what the interface would say —
+// driving the same model the running program drives, keystroke by keystroke.
+func Snapshot(data Data, screenName string, width, height int, presses []string) (string, error) {
+	at := -1
+	for i, name := range tabs {
+		if strings.EqualFold(name, screenName) {
+			at = i
+		}
+	}
+	if at < 0 {
+		return "", fmt.Errorf("no screen called %q; the screens are %s",
+			screenName, strings.Join(ScreenNames(), ", "))
+	}
+
+	app := New(data)
+	app.screen = screen(at)
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: width, Height: height})
+	for _, press := range presses {
+		msg, err := pressFor(press)
+		if err != nil {
+			return "", err
+		}
+		m, _ = m.Update(msg)
+	}
+	return stripANSI(m.View().Content), nil
+}
+
+// pressFor turns a spelled-out key into the message the runtime would send.
+// "tick" is the playback clock, so a replay can be photographed mid-run.
+func pressFor(press string) (tea.Msg, error) {
+	switch press {
+	case "tick":
+		return playTickMsg{}, nil
+	case "tab":
+		return tea.KeyPressMsg{Code: tea.KeyTab}, nil
+	case "shift+tab":
+		return tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}, nil
+	case "enter":
+		return tea.KeyPressMsg{Code: tea.KeyEnter}, nil
+	case "space":
+		return tea.KeyPressMsg{Code: tea.KeySpace, Text: " "}, nil
+	case "left":
+		return tea.KeyPressMsg{Code: tea.KeyLeft}, nil
+	case "right":
+		return tea.KeyPressMsg{Code: tea.KeyRight}, nil
+	case "up":
+		return tea.KeyPressMsg{Code: tea.KeyUp}, nil
+	case "down":
+		return tea.KeyPressMsg{Code: tea.KeyDown}, nil
+	}
+	runes := []rune(press)
+	if len(runes) != 1 {
+		return nil, fmt.Errorf("cannot press %q; use a single key, tick, or a named key", press)
+	}
+	return tea.KeyPressMsg{Code: runes[0], Text: press}, nil
+}
+
+// stripANSI removes the escape sequences from a rendered frame, leaving the
+// text a capture or an assertion can read.
+func stripANSI(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == 0x1b {
+			for i < len(s) && s[i] != 'm' {
+				i++
+			}
+			continue
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
