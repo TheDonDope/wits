@@ -116,7 +116,7 @@ func (d dashboard) actions(a *App, width int) string {
 }
 
 // products shows each product of this cycle as a stacked bar: what is still
-// sealed, what is in its tin, and what has come back as AVB.
+// sealed, what is in its stash, and what has come back as AVB.
 func (d dashboard) products(a *App, c *ledger.Cycle, width int) string {
 	t, data := a.theme, a.data
 

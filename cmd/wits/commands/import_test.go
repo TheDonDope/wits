@@ -148,7 +148,7 @@ func TestCompletion(t *testing.T) {
 			"and the name beside it, since a slug alone is not recognisable")
 	})
 
-	t.Run("SeshOffersOnlyWhatIsInATin", func(t *testing.T) {
+	t.Run("SeshOffersOnlyWhatIsInAStash", func(t *testing.T) {
 		out, _ := completeProduct(journal.Stash)(nil, nil, "")
 
 		require.Len(t, out, 1, "only one product has been ground")

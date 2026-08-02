@@ -16,7 +16,7 @@ var Status = &cobra.Command{
 	Use:   "status",
 	Short: "Show what is left and how long it will last",
 	Long: "Show the working state derived from the journal: how much of each\n" +
-		"product is in storage and in its tin, how far through the current cycle\n" +
+		"product is in storage and in its stash, how far through the current cycle\n" +
 		"you are, and how long the remainder will last at the observed rate.",
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {

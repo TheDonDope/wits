@@ -25,7 +25,7 @@ var Reconcile = &cobra.Command{
 		"read wrong. The past is not edited to hide it, because nobody knows which\n" +
 		"entry was wrong. Instead the difference is recorded as an adjustment, and\n" +
 		"the account agrees with the jar again.\n\n" +
-		"Storage is reconciled by default; --stash weighs the tin and --avb the\n" +
+		"Storage is reconciled by default; --stash weighs the stash and --avb the\n" +
 		"already vaped bud.",
 	Example: "  wits reconcile wedding-cake 17.6\n" +
 		"  wits reconcile wedding-cake 1.75 --stash --reason \"spilled on the desk\"\n" +
@@ -92,7 +92,7 @@ func reconcileAccount() (journal.Account, error) {
 }
 
 func init() {
-	Reconcile.Flags().BoolVar(&reconcileStash, "stash", false, "weigh the tin rather than storage")
+	Reconcile.Flags().BoolVar(&reconcileStash, "stash", false, "weigh the stash rather than storage")
 	Reconcile.Flags().BoolVar(&reconcileAVB, "avb", false, "weigh the already vaped bud")
 	Reconcile.Flags().StringVar(&reconcileReason, "reason", "", "why the amounts differ")
 	Reconcile.Flags().BoolVar(&reconcileDryRun, "dry-run", false, "show the difference without recording it")

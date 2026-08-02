@@ -312,14 +312,14 @@ func TestReconcileCommand(t *testing.T) {
 		assert.Contains(t, status, "18.00g", "and storage should be untouched")
 	})
 
-	t.Run("TheTin", func(t *testing.T) {
+	t.Run("TheStash", func(t *testing.T) {
 		dir := stocked(t)
 		defer func() { reconcileStash = false }()
 
 		out, err := run(t, dir, Reconcile, "wedding", "1.75", "--stash")
 
 		require.NoError(t, err)
-		assert.Contains(t, out, "out of stash", "Should weigh the tin when asked to")
+		assert.Contains(t, out, "out of stash", "Should weigh the stash when asked to")
 	})
 
 	t.Run("NothingToReconcile", func(t *testing.T) {

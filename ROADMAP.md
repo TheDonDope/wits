@@ -29,7 +29,7 @@ from the pharmacy through to the ash.
 | `avb-use` | avb | — | grams, purpose |
 | `adjust` | any | any | grams, reason — corrections are these |
 
-**Three tins, not one.** The stash is per product, so every gram stays
+**A stash per product, not one pool.** The stash is per product, so every gram stays
 attributable to a single product end to end. No blends, no proportional guessing.
 
 ### Cycles are derived
@@ -103,7 +103,7 @@ prescription and are absent.
 
 Grinding or seshing more than an account holds is refused. The journal would
 record it happily, but a negative balance means the log has stopped describing
-the tin on the table.
+the stash on the table.
 
 ### Bundles — `wits bundle` / `wits restore`
 
@@ -168,7 +168,7 @@ be audited and one that cannot.
 
 ### Products and reconciliation
 
-A products screen listing what is on the shelf — storage, tin, AVB and grams
+A products screen listing what is on the shelf — storage, stash, AVB and grams
 ground, with the potency and how much of the fill is still held. It lists what is
 held by default and everything ever dispensed on `a`, because a catalog
 remembering four years of prescriptions is a history rather than a shelf.

@@ -96,13 +96,13 @@ func newEntryForm(kind entryKind, a *App) *entryForm {
 				Description("Taken out of storage").
 				Options(productOptions(a, journal.Storage)...).
 				Value(&f.product),
-			huh.NewInput().Title("Amount").Description("Grams ground into the tin").
+			huh.NewInput().Title("Amount").Description("Grams ground into the stash").
 				Value(&f.amount).Validate(validGrams),
 		))
 	case entrySesh:
 		fields := []huh.Field{
 			huh.NewSelect[string]().Title("Product").
-				Description("Taken out of the tin").
+				Description("Taken out of the stash").
 				Options(productOptions(a, journal.Stash)...).
 				Value(&f.product),
 			huh.NewInput().Title("Amount").Description("Grams through the device").
@@ -359,7 +359,7 @@ func newReconcileForm(slug string, a *App) *entryForm {
 
 	accounts := []huh.Option[string]{
 		huh.NewOption(fmt.Sprintf("Storage — ledger says %.2f g", b.Storage), string(journal.Storage)),
-		huh.NewOption(fmt.Sprintf("The tin — ledger says %.2f g", b.Stash), string(journal.Stash)),
+		huh.NewOption(fmt.Sprintf("The stash — ledger says %.2f g", b.Stash), string(journal.Stash)),
 	}
 	if b.AVB > 0 {
 		accounts = append(accounts,

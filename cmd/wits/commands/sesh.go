@@ -22,7 +22,7 @@ var Sesh = &cobra.Command{
 	Use:     "sesh <product> <amount>",
 	Aliases: []string{"session"},
 	Short:   "Record a session, drawing from the stash",
-	Long: "Record a session: ground product comes out of that product's tin and\n" +
+	Long: "Record a session: ground product comes out of that product's stash and\n" +
 		"goes through a device. What is left of it becomes AVB, which is weighed\n" +
 		"and credited separately.\n\n" +
 		"With a temperature, this also reports which compounds that setting is\n" +
@@ -50,7 +50,7 @@ var Sesh = &cobra.Command{
 			return err
 		}
 		out := cmd.OutOrStdout()
-		fmt.Fprintf(out, "[%s] sesh %.2fg %s, %.2fg left in the tin\n",
+		fmt.Fprintf(out, "[%s] sesh %.2fg %s, %.2fg left in the stash\n",
 			shortHash(e.Hash), e.Grams, e.Product, s.Recorder.Available(e.Product, journal.Stash))
 		if e.Temperature > 0 {
 			writeReleased(out, e.Temperature)
