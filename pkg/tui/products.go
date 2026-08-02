@@ -480,3 +480,385 @@ func humanDay(d, now time.Time) string {
 		return d.Format("02 Jan 2006")
 	}
 }
+
+// The stash screen is the storage screen's drill-down: the tins that hold
+// ground product now, and under them the story of every stash already worked
+// down to nothing, grouped under the day it was finished.
+
+// stashStats is what the stash screen knows about one product's stash beyond
+// its current balance: everything that ever passed through it, how many
+// sessions drew on it, and when it last reached zero.
+type stashStats struct {
+	Slug      string
+	Through   float64   // grams ever ground into the stash
+	Sessions  int       // sessions drawn from it
+	LastTouch time.Time // the last event that moved its stash
+	EmptiedAt time.Time // when the stash last reached zero; zero while it holds
+}
+
+// stashHistory replays the journal watching only the stash account, so the
+// screen can say when a stash was finished rather than only that it is empty.
+func stashHistory(a *App) map[string]*stashStats {
+	out := map[string]*stashStats{}
+	bal := map[string]float64{}
+	get := func(slug string) *stashStats {
+		if s, ok := out[slug]; ok {
+			return s
+		}
+		s := &stashStats{Slug: slug}
+		out[slug] = s
+		return s
+	}
+	for _, e := range a.data.State.Events {
+		touched := false
+		if e.To == journal.Stash {
+			s := get(e.Product)
+			bal[e.Product] = ledger.Round(bal[e.Product] + e.Grams)
+			s.Through = ledger.Round(s.Through + e.Grams)
+			if bal[e.Product] > 0 {
+				// Refilled: the old ending no longer ends the story.
+				s.EmptiedAt = time.Time{}
+			}
+			touched = true
+		}
+		if e.From == journal.Stash {
+			s := get(e.Product)
+			bal[e.Product] = ledger.Round(bal[e.Product] - e.Grams)
+			if bal[e.Product] <= 0 {
+				s.EmptiedAt = e.OccurredAt
+			}
+			touched = true
+		}
+		if touched {
+			s := get(e.Product)
+			if e.OccurredAt.After(s.LastTouch) {
+				s.LastTouch = e.OccurredAt
+			}
+			if e.Type == journal.Sesh {
+				s.Sessions++
+			}
+		}
+	}
+	return out
+}
+
+// stashView is two tables: the stashes holding something, and the finished
+// ones grouped under the day they were consumed.
+type stashView struct {
+	view   viewport.Model
+	cursor int
+	marked map[string]bool
+}
+
+func newStashView() stashView {
+	return stashView{view: viewport.New(), marked: map[string]bool{}}
+}
+
+type stashKeys struct {
+	keyMap
+	Mark, Reconcile, Edit key.Binding
+}
+
+func (k stashKeys) ShortHelp() []key.Binding {
+	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Help, k.Quit}
+}
+
+func (k stashKeys) FullHelp() [][]key.Binding {
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit})
+}
+
+func (v stashView) keys(base keyMap) help.KeyMap {
+	return stashKeys{
+		keyMap:    base,
+		Mark:      markKey,
+		Reconcile: withHelp(base.Weigh, "weigh"),
+		Edit:      base.Edit,
+	}
+}
+
+// active returns the stashes holding something, fullest first: the tin most
+// worth weighing is the one with the most in it.
+func (v stashView) active(a *App) []*stashStats {
+	stats := stashHistory(a)
+	var out []*stashStats
+	for slug, b := range a.data.State.Balances {
+		if b.Stash > 0 {
+			out = append(out, stats[slug])
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		bi, bj := a.data.State.Balances[out[i].Slug], a.data.State.Balances[out[j].Slug]
+		if bi.Stash != bj.Stash {
+			return bi.Stash > bj.Stash
+		}
+		return out[i].Slug < out[j].Slug
+	})
+	return out
+}
+
+// finished returns the emptied stashes, newest ending first, so the history
+// reads back the way the journal does.
+func (v stashView) finished(a *App) []*stashStats {
+	stats := stashHistory(a)
+	var out []*stashStats
+	for slug, s := range stats {
+		b := a.data.State.Balances[slug]
+		if s.Through > 0 && (b == nil || b.Stash <= 0) {
+			out = append(out, s)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].EmptiedAt.Equal(out[j].EmptiedAt) {
+			return out[i].EmptiedAt.After(out[j].EmptiedAt)
+		}
+		return out[i].Slug < out[j].Slug
+	})
+	return out
+}
+
+// slugsInOrder is the cursor's world: active stashes, then the finished ones.
+func (v stashView) slugsInOrder(a *App) []string {
+	var out []string
+	for _, s := range v.active(a) {
+		out = append(out, s.Slug)
+	}
+	for _, s := range v.finished(a) {
+		out = append(out, s.Slug)
+	}
+	return out
+}
+
+func (v stashView) Update(msg tea.Msg, a *App) (stashView, tea.Cmd) {
+	slugs := v.slugsInOrder(a)
+	if msg, ok := msg.(tea.KeyPressMsg); ok {
+		switch {
+		case key.Matches(msg, a.keys.Up):
+			v.cursor = max(v.cursor-1, 0)
+		case key.Matches(msg, a.keys.Down):
+			v.cursor = min(v.cursor+1, max(len(slugs)-1, 0))
+		case key.Matches(msg, a.keys.PageUp):
+			v.cursor = max(v.cursor-10, 0)
+		case key.Matches(msg, a.keys.PgDown):
+			v.cursor = min(v.cursor+10, max(len(slugs)-1, 0))
+		case key.Matches(msg, a.keys.Top):
+			v.cursor = 0
+		case key.Matches(msg, a.keys.Bottom):
+			v.cursor = max(len(slugs)-1, 0)
+		case key.Matches(msg, markKey):
+			if v.cursor < len(slugs) {
+				slug := slugs[v.cursor]
+				if v.marked[slug] {
+					delete(v.marked, slug)
+				} else {
+					v.marked[slug] = true
+				}
+			}
+		}
+	}
+	return v, nil
+}
+
+// Selected returns the slug under the cursor.
+func (v stashView) Selected(a *App) string {
+	slugs := v.slugsInOrder(a)
+	if v.cursor < 0 || v.cursor >= len(slugs) {
+		return ""
+	}
+	return slugs[v.cursor]
+}
+
+// Marked returns the ticked slugs in display order.
+func (v stashView) Marked(a *App) []string {
+	var out []string
+	for _, slug := range v.slugsInOrder(a) {
+		if v.marked[slug] {
+			out = append(out, slug)
+		}
+	}
+	return out
+}
+
+// ClearMarks unticks everything.
+func (v *stashView) ClearMarks() { v.marked = map[string]bool{} }
+
+// Stash column widths beyond the product name.
+const (
+	stashGramW = 10
+	throughW   = 11
+	seshCountW = 12
+	lastSeshW  = 13
+)
+
+func (v stashView) View(a *App, height int) string {
+	t := a.theme
+	width := a.inner()
+	active, finished := v.active(a), v.finished(a)
+
+	if len(active) == 0 && len(finished) == 0 {
+		return lipgloss.NewStyle().Padding(1, 1).Render(
+			t.Subtitle.Render("Nothing has been ground yet.\n\nPress ") + t.Key.Render("n") +
+				t.Subtitle.Render(" to grind into a stash, or record it with `wits grind`."))
+	}
+	slugs := v.slugsInOrder(a)
+	if v.cursor >= len(slugs) {
+		v.cursor = len(slugs) - 1
+	}
+	nameW := stashNameWidth(a, slugs, width)
+
+	marked := ""
+	if n := len(v.Marked(a)); n > 0 {
+		marked = fmt.Sprintf("   %s marked — press r to weigh them", plural(n, "stash"))
+	}
+	lines := []string{t.Dim.Render(truncate(fmt.Sprintf(
+		"holding · %d   finished · %d%s", len(active), len(finished), marked), width)), ""}
+	cursorLine := 0
+
+	section, at := v.activeSection(a, active, nameW, width, len(lines))
+	lines, cursorLine = append(lines, section...), max(cursorLine, at)
+
+	section, at = v.finishedSection(a, finished, len(active), nameW, width, len(lines))
+	lines, cursorLine = append(lines, section...), max(cursorLine, at)
+
+	body := max(height-1, 1)
+	v.view.SetWidth(width)
+	v.view.SetHeight(body)
+	v.view.SetContent(strings.Join(lines, "\n"))
+	v.view.SetYOffset(scrollTo(cursorLine, v.view.YOffset(), body, len(lines)))
+	return lipgloss.NewStyle().Padding(0, 1).Render(v.view.View())
+}
+
+// stashNameWidth is nameWidth for the stash tables' narrower fixed columns.
+func stashNameWidth(a *App, slugs []string, width int) int {
+	nameW := lipgloss.Width("PRODUCT")
+	for _, slug := range slugs {
+		nameW = max(nameW, lipgloss.Width(a.data.ProductName(slug)))
+	}
+	fixed := markW + potW + stashGramW + throughW + seshCountW + lastSeshW
+	if nameW > width-fixed {
+		nameW = max(width-fixed, 12)
+	}
+	return nameW
+}
+
+// activeSection renders the stashes holding something.
+func (v stashView) activeSection(a *App, active []*stashStats, nameW, width, offset int) ([]string, int) {
+	t := a.theme
+	cursorLine := -1
+	lines := []string{t.Rule("Stash", width), lipgloss.JoinHorizontal(lipgloss.Left,
+		strings.Repeat(" ", markW-1),
+		t.Label.Width(nameW).Render("PRODUCT"),
+		t.Label.Width(potW).Align(lipgloss.Right).Render("THC/CBD"),
+		t.Label.Width(stashGramW).Align(lipgloss.Right).Render("STASH"),
+		t.Label.Width(throughW).Align(lipgloss.Right).Render("THROUGH"),
+		t.Label.Width(seshCountW).Align(lipgloss.Right).Render("SESSIONS"),
+		t.Label.Width(lastSeshW).Align(lipgloss.Right).Render("LAST USED"),
+	)}
+	if len(active) == 0 {
+		lines = append(lines, t.Dim.Render("  every stash is empty"))
+	}
+	for i, s := range active {
+		if i == v.cursor {
+			cursorLine = offset + len(lines)
+		}
+		lines = append(lines, v.activeLine(a, s, nameW, i == v.cursor))
+	}
+	return lines, cursorLine
+}
+
+// activeLine renders one stash still holding something.
+func (v stashView) activeLine(a *App, s *stashStats, nameW int, selected bool) string {
+	t := a.theme
+	b := a.data.State.Balances[s.Slug]
+	name := truncate(a.data.ProductName(s.Slug), nameW)
+	label := t.Value.Width(nameW).Render(name)
+	if selected {
+		label = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Width(nameW).Render(name)
+	}
+	last := "—"
+	if !s.LastTouch.IsZero() {
+		last = humanDay(s.LastTouch, a.data.Now)
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		v.prefix(a, s.Slug, selected),
+		label,
+		t.Dim.Width(potW).Align(lipgloss.Right).Render(stashPotency(a, s.Slug)),
+		grams(t, b.Stash, t.StashC, stashGramW),
+		t.Dim.Width(throughW).Align(lipgloss.Right).Render(fmt.Sprintf("%.2f g", s.Through)),
+		t.Dim.Width(seshCountW).Align(lipgloss.Right).Render(fmt.Sprintf("%d", s.Sessions)),
+		t.Dim.Width(lastSeshW).Align(lipgloss.Right).Render(last),
+	)
+}
+
+// finishedSection renders the emptied stashes under the day each was finished.
+func (v stashView) finishedSection(a *App, finished []*stashStats, activeCount, nameW, width, offset int) ([]string, int) {
+	t := a.theme
+	cursorLine := -1
+	lines := []string{"", t.Rule("Consumed", width)}
+	if len(finished) == 0 {
+		lines = append(lines, t.Dim.Render("  no stash finished yet"))
+	}
+	lastDay := ""
+	for i, s := range finished {
+		day := "earlier"
+		if !s.EmptiedAt.IsZero() {
+			day = s.EmptiedAt.Format(time.DateOnly)
+		}
+		if day != lastDay {
+			heading := "earlier"
+			if !s.EmptiedAt.IsZero() {
+				heading = s.EmptiedAt.Format("Mon 02 Jan 2006")
+			}
+			lines = append(lines, t.PanelTitle.Render(heading))
+			lastDay = day
+		}
+		at := activeCount + i
+		if at == v.cursor {
+			cursorLine = offset + len(lines)
+		}
+		lines = append(lines, v.finishedLine(a, s, nameW, at == v.cursor))
+	}
+	return lines, cursorLine
+}
+
+// finishedLine renders one emptied stash: what it was, what went through it,
+// and how many sessions that took.
+func (v stashView) finishedLine(a *App, s *stashStats, nameW int, selected bool) string {
+	t := a.theme
+	name := truncate(a.data.ProductName(s.Slug), nameW)
+	label := t.Dim.Width(nameW).Render(name)
+	if selected {
+		label = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Width(nameW).Render(name)
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		v.prefix(a, s.Slug, selected),
+		label,
+		t.Dim.Width(potW).Align(lipgloss.Right).Render(stashPotency(a, s.Slug)),
+		t.Dim.Width(throughW).Align(lipgloss.Right).Render(fmt.Sprintf("%.2f g", s.Through)),
+		t.Dim.Width(seshCountW).Align(lipgloss.Right).Render(plural(s.Sessions, "session")),
+	)
+}
+
+// prefix renders the cursor bar and checkbox, shared with the storage screen's
+// idea of marking.
+func (v stashView) prefix(a *App, slug string, selected bool) string {
+	t := a.theme
+	bar := " "
+	if selected {
+		bar = lipgloss.NewStyle().Foreground(t.Accent).Render("│")
+	}
+	box := t.Dim.Render("☐")
+	if v.marked[slug] {
+		box = lipgloss.NewStyle().Foreground(t.Accent).Render("☑")
+	}
+	return bar + box + " "
+}
+
+// stashPotency is potency by slug rather than by row.
+func stashPotency(a *App, slug string) string {
+	if a.data.Products != nil {
+		if p, err := a.data.Products.Find(slug); err == nil && p.THC > 0 {
+			return fmt.Sprintf("%g/%g", p.THC, p.CBD)
+		}
+	}
+	return "—"
+}

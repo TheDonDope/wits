@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
@@ -363,4 +364,140 @@ func TestEditingAProductDoesNotOrphanItsEntries(t *testing.T) {
 	assert.Len(t, reloaded.State.Events, before, "Renaming records nothing and loses nothing")
 	assert.Equal(t, "Renamed Entirely", reloaded.ProductName("wcake"),
 		"and the entries still resolve to the product, under its new name")
+}
+
+// seshed returns an app with one finished stash, one holding, and sessions
+// through two devices — enough for the stash and sessions screens to have
+// something true to say.
+func seshed(t *testing.T) *App {
+	t.Helper()
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+	data, err := Load(r)
+	require.NoError(t, err)
+	rec := record.New(r, data.Products, data.Devices, data.State)
+
+	require.NoError(t, data.Devices.Add(&catalog.Device{Name: "Volcano Hybrid", MaxTemp: 230, DefaultTemp: 185}))
+	require.NoError(t, data.Devices.Save(r.DevicesPath()))
+
+	_, _, _, err = rec.Buy("Cannamedical 28/1 Lemon Cookie", "lemon", 10, day10(-10))
+	require.NoError(t, err)
+	_, err = rec.Grind("lemon", 3, day10(-9))
+	require.NoError(t, err)
+	_, err = rec.Session("lemon", 2, day10(-8), "volcano", 190, "")
+	require.NoError(t, err)
+	_, err = rec.Session("lemon", 1, day10(-7), "volcano", 0, "")
+	require.NoError(t, err)
+
+	_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "wcake", 20, day10(0))
+	require.NoError(t, err)
+	_, err = rec.Grind("wcake", 2, day10(0))
+	require.NoError(t, err)
+	_, err = rec.Session("wcake", 0.5, day10(0), "", 0, "")
+	require.NoError(t, err)
+
+	data, err = Load(r)
+	require.NoError(t, err)
+	app := New(data)
+	app.width, app.height = 96, 30
+	return app
+}
+
+// day10 is a stable timestamp n days from now, at ten in the morning.
+func day10(n int) time.Time {
+	return time.Now().AddDate(0, 0, n).Truncate(24 * time.Hour).Add(10 * time.Hour)
+}
+
+func TestStashHistory(t *testing.T) {
+	app := seshed(t)
+
+	stats := stashHistory(app)
+
+	lemon := stats["lemon"]
+	require.NotNil(t, lemon)
+	assert.InDelta(t, 3.0, lemon.Through, 0.001, "Should total everything ground into the stash")
+	assert.Equal(t, 2, lemon.Sessions, "Should count the sessions drawn from it")
+	assert.False(t, lemon.EmptiedAt.IsZero(), "A stash worked to zero should know when it ended")
+
+	wcake := stats["wcake"]
+	require.NotNil(t, wcake)
+	assert.True(t, wcake.EmptiedAt.IsZero(), "A stash still holding something has not ended")
+}
+
+func TestStashHistoryRefillForgetsTheOldEnding(t *testing.T) {
+	app := seshed(t)
+	rec := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State)
+
+	// The lemon stash ended; grinding into it again reopens the story.
+	_, err := rec.Grind("lemon", 1, day10(0))
+	require.NoError(t, err)
+	var err2 error
+	app.data, err2 = Load(app.data.Repo)
+	require.NoError(t, err2)
+
+	stats := stashHistory(app)
+	assert.True(t, stats["lemon"].EmptiedAt.IsZero(), "A refilled stash is active again, not history")
+}
+
+func TestStashScreenShowsBothTables(t *testing.T) {
+	app := seshed(t)
+	app.screen = stashScreen
+	var m tea.Model = app
+
+	out := stripANSI(m.View().Content)
+
+	assert.Contains(t, out, "Stash", "Should title the active table")
+	assert.Contains(t, out, "Consumed", "Should title the finished table")
+	assert.Contains(t, out, "Enua 22/1 Wedding Cake", "The holding stash sits above")
+	assert.Contains(t, out, "Cannamedical 28/1 Lemon Cookie", "The finished stash sits below")
+	assert.Contains(t, out, "holding · 1   finished · 1", "Should count both tables")
+	assert.Contains(t, out, "2 sessions", "Should say how many sessions finished it")
+
+	// The finished stash is grouped under the day it was consumed.
+	ended := stashHistory(app)["lemon"].EmptiedAt.Format("Mon 02 Jan 2006")
+	assert.Contains(t, out, ended, "Should head the group with the day it was consumed")
+}
+
+func TestStashMarkAndWeigh(t *testing.T) {
+	app := seshed(t)
+	app.screen = stashScreen
+	var m tea.Model = app
+
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeySpace, Text: " "})
+	require.Len(t, app.stash.Marked(app), 1, "Space should tick the stash under the cursor")
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
+	require.NotNil(t, app.entry, "r should open the weighing form")
+	assert.Equal(t, entryWeighMany, app.entry.kind)
+	assert.Equal(t, string(journal.Stash), app.entry.account, "The stash screen weighs stashes first")
+}
+
+func TestSessionsScreenEmpty(t *testing.T) {
+	app := liveApp(t)
+	app.screen = sessionsScreen
+	var m tea.Model = app
+
+	out := stripANSI(m.View().Content)
+
+	assert.Contains(t, out, "No sessions logged yet", "Should say so rather than draw empty charts")
+	assert.Contains(t, out, "wits sesh", "and say how to start")
+}
+
+func TestSessionsScreenShowsTheStory(t *testing.T) {
+	app := seshed(t)
+	app.screen = sessionsScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+
+	out := stripANSI(m.View().Content)
+
+	assert.Contains(t, out, "SESSIONS", "Should count the sessions")
+	assert.Contains(t, out, "3", "all three of them")
+	assert.Contains(t, out, "SESHED", "Should total the grams drawn")
+	assert.Contains(t, out, "By device", "Should break usage down by device")
+	assert.Contains(t, out, "Volcano Hybrid", "naming the device properly")
+	assert.Contains(t, out, "avg 187°C",
+		"with the temperatures it ran at, the device default filled in where none was set")
+	assert.Contains(t, out, "no device", "and owning the sessions that had none")
+	assert.Contains(t, out, "Rhythm", "Should draw the calendar")
 }
