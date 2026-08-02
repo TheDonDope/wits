@@ -105,16 +105,16 @@ func (v storageView) Update(msg tea.Msg, a *App) (storageView, tea.Cmd) {
 	rows := v.rows(a)
 	var cmd tea.Cmd
 	if _, ok := msg.(playTickMsg); ok {
-		v.player, cmd = v.player.advance(len(a.data.State.Events))
+		v.player, cmd = v.player.advance(a.data.State.Events)
 		return v, cmd
 	}
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, playKey):
-			v.player, cmd = v.player.toggle(len(a.data.State.Events))
+			v.player, cmd = v.player.toggle(a.data.State.Events)
 			return v, cmd
 		case key.Matches(msg, slideKey):
-			v.player = v.player.step(msg, len(a.data.State.Events))
+			v.player = v.player.step(msg, a.data.State.Events)
 		case key.Matches(msg, speedKeys):
 			v.player = v.player.retune(msg)
 		case key.Matches(msg, a.keys.Up):
@@ -669,16 +669,16 @@ func (v stashView) Update(msg tea.Msg, a *App) (stashView, tea.Cmd) {
 	slugs := v.slugsInOrder(a)
 	var cmd tea.Cmd
 	if _, ok := msg.(playTickMsg); ok {
-		v.player, cmd = v.player.advance(len(a.data.State.Events))
+		v.player, cmd = v.player.advance(a.data.State.Events)
 		return v, cmd
 	}
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, playKey):
-			v.player, cmd = v.player.toggle(len(a.data.State.Events))
+			v.player, cmd = v.player.toggle(a.data.State.Events)
 			return v, cmd
 		case key.Matches(msg, slideKey):
-			v.player = v.player.step(msg, len(a.data.State.Events))
+			v.player = v.player.step(msg, a.data.State.Events)
 		case key.Matches(msg, speedKeys):
 			v.player = v.player.retune(msg)
 		case key.Matches(msg, a.keys.Up):
