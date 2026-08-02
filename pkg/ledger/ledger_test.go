@@ -34,7 +34,7 @@ func TestFold(t *testing.T) {
 		b := s.Balances["wedding-cake"]
 		require.NotNil(t, b)
 		assert.Equal(t, 19.25, b.Storage, "Should take the ground amount out of storage")
-		assert.Equal(t, 0.25, b.Stash, "Should leave the unconsumed remainder in the tin")
+		assert.Equal(t, 0.25, b.Stash, "Should leave the unconsumed remainder in the stash")
 		assert.Equal(t, 0.15, b.Consumed, "Should hold what has not been collected as AVB yet")
 		assert.Equal(t, 0.35, b.AVB, "Should credit the weighed AVB")
 	})
@@ -51,7 +51,7 @@ func TestFold(t *testing.T) {
 		assert.Equal(t, 20.0, Round(b.Storage+b.Stash+b.Consumed+b.AVB), "Should account for every purchased gram")
 	})
 
-	t.Run("KeepsTinsSeparate", func(t *testing.T) {
+	t.Run("KeepsStashesSeparate", func(t *testing.T) {
 		s := Fold([]journal.Event{
 			event(journal.Purchase, "wedding-cake", 20, day(0)),
 			event(journal.Purchase, "lemon-cookie", 20, day(0)),

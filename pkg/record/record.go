@@ -1,7 +1,7 @@
 // Package record applies entries to a repository.
 //
 // It exists so that the commands and the interface record an entry the same
-// way. The checks here are the ones that keep the journal describing the tins
+// way. The checks here are the ones that keep the journal describing the stashes
 // on the table — chiefly that an account cannot be drawn below zero — and they
 // should not live in two places where one could drift from the other.
 package record
@@ -71,7 +71,7 @@ func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.
 	return e, product, added, err
 }
 
-// Grind moves grams from a product's storage into its tin.
+// Grind moves grams from a product's storage into its stash.
 func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event, error) {
 	product, err := r.products.Find(ref)
 	if err != nil {
@@ -88,7 +88,7 @@ func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event
 	})
 }
 
-// Session records a session drawing on a product's tin.
+// Session records a session drawing on a product's stash.
 func (r *Recorder) Session(ref string, grams float64, at time.Time, device string, temp int, note string) (journal.Event, error) {
 	product, err := r.products.Find(ref)
 	if err != nil {
@@ -305,7 +305,7 @@ var ErrNothingToReconcile = errors.New("the ledger already matches the scale")
 // its way to becoming AVB, and there is no jar of it to weigh.
 var reconcilable = map[journal.Account]string{
 	journal.Storage: "storage",
-	journal.Stash:   "the tin",
+	journal.Stash:   "the stash",
 	journal.AVB:     "the AVB jar",
 }
 

@@ -32,7 +32,7 @@ Sleep 2500ms
 Type "wits device add 'Volcano Hybrid' --kind desktop --max 230 --default 185" Sleep 400ms Enter
 Sleep 2500ms
 
-# Grind into the tin, then a session out of it.
+# Grind into the stash, then a session out of it.
 Type "wits grind wcake 0.75" Sleep 400ms Enter
 Sleep 2s
 Type "wits sesh wcake 0.30 --device volcano --temp 185" Sleep 400ms Enter

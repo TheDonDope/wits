@@ -14,7 +14,7 @@ var Grind = &cobra.Command{
 	Use:   "grind <product> <amount>",
 	Short: "Move ground product from storage into the stash",
 	Long: "Record grinding product for the day, moving grams from storage into\n" +
-		"that product's tin.\n\n" +
+		"that product's stash.\n\n" +
 		"The product can be given as a slug or as any unambiguous part of its\n" +
 		"name, so a daily entry stays short.",
 	Example: "  wits grind wedding-cake 0.75\n" +

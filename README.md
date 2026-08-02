@@ -25,7 +25,7 @@ so nothing is lost between the pharmacy and the ashes.
   ┌───────────┐        grind          ┌───────────┐
   │  STORAGE  │ ────────────────────▶ │   STASH   │
   │  sealed,  │                       │  ground,  │
-  │ per product                       │  one tin per product
+  │ per product                       │  one per product
   └───────────┘                       └─────┬─────┘
                                             │  sesh · device + temperature
                                             ▼
@@ -85,7 +85,7 @@ References resolve by prefix, so `wcake` is enough while it is unambiguous.
 
 Tab completion offers the handles, with the full name and how much is left
 beside each — and only the ones the command can act on, so `sesh` offers what is
-in a tin rather than everything ever dispensed:
+in a stash rather than everything ever dispensed:
 
 ```console
 $ wits grind <TAB>
@@ -133,8 +133,8 @@ differ.
 | --- | --- |
 | `wits init [dir]` | Create a repository |
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it |
-| `wits grind <product> <amount>` | Move product from storage into its tin |
-| `wits sesh <product> <amount>` | Record a session, drawing on the tin |
+| `wits grind <product> <amount>` | Move product from storage into its stash |
+| `wits sesh <product> <amount>` | Record a session, drawing on the stash |
 | `wits status` | What is left, and how long it will last |
 | `wits log` | The journal, newest first |
 | `wits revert <entry>` | Undo an entry by recording a correction |
@@ -193,7 +193,7 @@ $ wits reconcile wcake-221 17.6 --reason "spilled on the desk"
 
 ![Reconciling against the scale](./assets/wits-reconcile.gif)
 
-`--stash` weighs the tin instead, `--avb` the already vaped bud. In the interface
+`--stash` weighs the stash instead, `--avb` the already vaped bud. In the interface
 this is `r`, on any screen — it offers the jar under the cursor on the products
 screen, or otherwise the fullest one, since that is the one worth checking.
 

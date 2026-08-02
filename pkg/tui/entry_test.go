@@ -200,7 +200,7 @@ func TestProductOptionsOnlyOfferWhatIsThere(t *testing.T) {
 	stash := productOptions(app, journal.Stash)
 
 	assert.Len(t, storage, 1, "Should offer the product that has storage")
-	assert.Empty(t, stash, "Should offer nothing from an empty tin, rather than a choice bound to be refused")
+	assert.Empty(t, stash, "Should offer nothing from an empty stash, rather than a choice bound to be refused")
 }
 
 func TestNoticeAfterAnEntry(t *testing.T) {

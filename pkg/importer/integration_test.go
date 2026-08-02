@@ -142,7 +142,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 		assert.Len(t, state.Cycles, 29, "29 worksheets become 29 cycles")
 
 		// Mass is conserved: what was dispensed is either still in storage, in a
-		// tin, or has gone through a device.
+		// stash, or has gone through a device.
 		var held, ground float64
 		for _, b := range state.Balances {
 			held += b.Storage
@@ -150,9 +150,9 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 		}
 		_, sheetGround := result.Grams()
 		assert.InDelta(t, sheetGround, ground, 0.005,
-			"everything ground is in a tin, since the sheets record no sessions")
+			"everything ground is in a stash, since the sheets record no sessions")
 		assert.InDelta(t, 1184.01, held+ground, 0.005,
-			"and storage plus tins equals what was dispensed")
+			"and storage plus stashes equals what was dispensed")
 	})
 
 	t.Run("ImportingAgainIsRefused", func(t *testing.T) {

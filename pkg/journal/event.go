@@ -18,7 +18,7 @@ const (
 	External Account = "external"
 	// Storage holds sealed product as it was dispensed.
 	Storage Account = "storage"
-	// Stash holds ground product, one tin per product.
+	// Stash holds ground product, one per product.
 	Stash Account = "stash"
 	// Consumed holds what a session has put through a device but that has not
 	// been weighed as AVB yet.

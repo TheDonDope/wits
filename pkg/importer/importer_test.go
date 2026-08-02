@@ -300,7 +300,7 @@ func TestCommit(t *testing.T) {
 		// The sheet grinds 0.75 and 0.50 of the Wedding Cake, out of 20 g.
 		state := ledger.Fold(events)
 		assert.Equal(t, 18.75, state.Balances["enua-wedding-cake-221"].Storage, "Storage should match the sheet")
-		assert.Equal(t, 1.25, state.Balances["enua-wedding-cake-221"].Stash, "and so should the tin")
+		assert.Equal(t, 1.25, state.Balances["enua-wedding-cake-221"].Stash, "and so should the stash")
 	})
 
 	t.Run("RefusesARepositoryThatAlreadyHasEntries", func(t *testing.T) {

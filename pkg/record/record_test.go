@@ -53,12 +53,12 @@ func TestGrind(t *testing.T) {
 	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
 	require.NoError(t, err)
 
-	t.Run("MovesStorageIntoTheTin", func(t *testing.T) {
+	t.Run("MovesStorageIntoTheStash", func(t *testing.T) {
 		_, err := rec.Grind("wedding", 0.75, time.Now())
 		require.NoError(t, err)
 
 		assert.Equal(t, 19.25, rec.Available("wcake-221", journal.Storage), "Should leave storage short")
-		assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "Should fill the tin")
+		assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "Should fill the stash")
 	})
 
 	t.Run("RefusesToOverdraw", func(t *testing.T) {
@@ -81,18 +81,18 @@ func TestSession(t *testing.T) {
 	_, err = rec.Grind("wedding", 1.0, time.Now())
 	require.NoError(t, err)
 
-	t.Run("DrawsOnTheTin", func(t *testing.T) {
+	t.Run("DrawsOnTheStash", func(t *testing.T) {
 		e, err := rec.Session("wedding", 0.4, time.Now(), "", 0, "evening")
 		require.NoError(t, err)
 
 		assert.Equal(t, journal.Sesh, e.Type, "Should record a session")
 		assert.Equal(t, "evening", e.Note, "Should keep the note")
-		assert.Equal(t, 0.6, rec.Available("wcake-221", journal.Stash), "Should empty the tin by that much")
+		assert.Equal(t, 0.6, rec.Available("wcake-221", journal.Stash), "Should empty the stash by that much")
 	})
 
-	t.Run("RefusesMoreThanTheTinHolds", func(t *testing.T) {
+	t.Run("RefusesMoreThanTheStashHolds", func(t *testing.T) {
 		_, err := rec.Session("wedding", 99, time.Now(), "", 0, "")
-		assert.ErrorContains(t, err, "in the tin", "Should say which account is short")
+		assert.ErrorContains(t, err, "in the stash", "Should say which account is short")
 	})
 
 	t.Run("RefusesATemperatureTheDeviceCannotReach", func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 20.0, rec.Available("wcake-221", journal.Storage), "Should restore storage")
-		assert.Zero(t, rec.Available("wcake-221", journal.Stash), "Should empty the tin again")
+		assert.Zero(t, rec.Available("wcake-221", journal.Stash), "Should empty the stash again")
 		assert.Equal(t, grind.Hash, fix.Reverts, "The correction should name what it undid")
 		assert.Len(t, rec.State().Events, 3, "Should keep the original and add the correction")
 	})
@@ -166,7 +166,7 @@ func TestRevert(t *testing.T) {
 		_, err = rec.Revert(grind.Hash, "")
 
 		assert.ErrorContains(t, err, "cannot undo",
-			"Should refuse when the tin no longer holds what would have to go back")
+			"Should refuse when the stash no longer holds what would have to go back")
 	})
 
 	t.Run("UnknownEntry", func(t *testing.T) {
@@ -187,7 +187,7 @@ func TestAmend(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 0.75, corrected.Grams, "Should record the corrected amount")
-	assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "The tin should hold the corrected amount")
+	assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "The stash should hold the corrected amount")
 	assert.Equal(t, 19.25, rec.Available("wcake-221", journal.Storage), "Storage should reflect the correction")
 	assert.Len(t, rec.State().Events, 4, "Should keep the original, the undo and the replacement")
 }
@@ -206,7 +206,7 @@ func TestAmendRefusesBeforeReverting(t *testing.T) {
 
 	assert.ErrorContains(t, err, "cannot amend", "Should refuse an amount storage cannot cover")
 	assert.Len(t, rec.State().Events, 2, "Should write nothing when it refuses")
-	assert.Equal(t, 7.5, rec.Available("wcake-221", journal.Stash), "The tin should be untouched")
+	assert.Equal(t, 7.5, rec.Available("wcake-221", journal.Stash), "The stash should be untouched")
 
 	_, err = rec.Amend(grind.Hash, 0, "")
 	assert.ErrorContains(t, err, "positive", "Should refuse a zero amount before writing anything")
@@ -269,14 +269,14 @@ func TestReconcile(t *testing.T) {
 			"Storage should now agree with the scale")
 	})
 
-	t.Run("TheTin", func(t *testing.T) {
+	t.Run("TheStash", func(t *testing.T) {
 		rec := stocked(t)
 
 		_, err := rec.Reconcile("wedding", journal.Stash, 1.75, "")
 		require.NoError(t, err)
 
 		assert.InDelta(t, 1.75, rec.Available("wcake-221", journal.Stash), 0.001,
-			"Should reconcile the tin as readily as storage")
+			"Should reconcile the stash as readily as storage")
 		assert.InDelta(t, 18.0, rec.Available("wcake-221", journal.Storage), 0.001,
 			"and should leave the other accounts alone")
 	})

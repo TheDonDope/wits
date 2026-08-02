@@ -58,7 +58,7 @@ type productRow struct {
 	LastSeen time.Time
 }
 
-// Held is what is still on the shelf and in the tin.
+// Held is what is still on the shelf and in the stash.
 func (p productRow) Held() float64 { return round(p.Storage + p.Stash) }
 
 func (v productsView) Update(msg tea.Msg, a *App) (productsView, tea.Cmd) {
@@ -171,7 +171,7 @@ func (v productsView) View(a *App, height int) string {
 		t.Label.Width(34).Render("PRODUCT"),
 		t.Label.Width(10).Render("THC/CBD"),
 		t.Label.Width(10).Align(lipgloss.Right).Render("STORAGE"),
-		t.Label.Width(9).Align(lipgloss.Right).Render("TIN"),
+		t.Label.Width(9).Align(lipgloss.Right).Render("STASH"),
 		t.Label.Width(9).Align(lipgloss.Right).Render("AVB"),
 		t.Label.Width(11).Align(lipgloss.Right).Render("GROUND"),
 	)

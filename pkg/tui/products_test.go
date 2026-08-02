@@ -44,7 +44,7 @@ func TestProductsScreen(t *testing.T) {
 	assert.Contains(t, out, "Enua 22/1 Wedding Cake", "Should name the product")
 	assert.Contains(t, out, "22/1", "Should show its potency")
 	assert.Contains(t, out, "18.00 g", "Should show what is in storage")
-	assert.Contains(t, out, "2.00 g", "and what is in the tin")
+	assert.Contains(t, out, "2.00 g", "and what is in the stash")
 	assert.Contains(t, out, "on the shelf", "Should say what it is listing")
 }
 
@@ -77,7 +77,7 @@ func TestProductsGaugeAgreesWithItsCaption(t *testing.T) {
 	// it states. Filling it from grams ground would disagree with itself as soon
 	// as anything is seshed or adjusted.
 	assert.InDelta(t, 20.0, r.Bought, 0.001)
-	assert.InDelta(t, 20.0, r.Held(), 0.001, "nothing has left the product yet, only moved tin-wards")
+	assert.InDelta(t, 20.0, r.Held(), 0.001, "nothing has left the product yet, only moved stash-wards")
 	assert.InDelta(t, 2.0, r.Ground, 0.001, "though 2 g has been ground")
 }
 
