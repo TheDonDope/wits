@@ -136,9 +136,18 @@ figure asserted was reconciled against the workbook read independently.
 
 ### The interface
 
-Built on Bubble Tea v2. Five screens — dashboard, journal, analysis, products,
-devices — reading from the ledger and nothing else, so the figures on screen and
-the figures in `wits status` are the same figures by construction.
+Built on Bubble Tea v2. Eight screens — dashboard, journal, analysis, storage,
+stash, sessions, devices, séance — reading from the ledger and nothing else, so
+the figures on screen and the figures in `wits status` are the same figures by
+construction.
+
+Because everything is derived from an append-only log, any screen can start
+from empty and grow the way the record grew: the analysis, storage and stash
+views share one replay transport (`p` plays, `←/→` steps, `+/-` retunes;
+adjustments ride along silently). The Séance stages that replay — each event a
+playing card with a figurine for its action and the full record on its flip
+side, the jars and tins filling underneath — framed to the whole ledger, one
+cycle, or a date window picked by hand.
 
 Entries are recorded with huh v2 forms embedded as models. Nothing calls
 `form.Run()`, which is what the previous interface did inside `Update` and why it

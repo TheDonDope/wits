@@ -580,3 +580,41 @@ func AreaWithAxis(values, average []float64, width, height int, t *Theme, fill, 
 	}
 	return strings.Join(rows, "\n")
 }
+
+// Jar renders a container filled to a fraction, the way a jar on a shelf
+// holds what is left of it: walls, a lid line, and the contents rising from
+// the bottom in eighths of a row, so a tenth of a gram still shows. The
+// fraction is clamped rather than trusted, because a reconciliation can put
+// more into an account than was ever bought into it.
+func Jar(width, height int, fraction float64, fill tint, t *Theme) []string {
+	if width < 4 {
+		width = 4
+	}
+	if height < 1 {
+		height = 1
+	}
+	fraction = clamp(fraction, 0, 1)
+	inner := width - 2
+	eighths := int(math.Round(fraction * float64(height) * 8))
+	style := lipgloss.NewStyle().Foreground(fill)
+
+	rows := make([]string, 0, height+2)
+	rows = append(rows, t.Dim.Render("╭"+strings.Repeat("─", inner)+"╮"))
+	for row := height - 1; row >= 0; row-- {
+		// The eighths this row holds: full below the level, empty above it,
+		// and one partial row where the surface sits.
+		have := min(max(eighths-row*8, 0), 8)
+		var body string
+		switch {
+		case have == 8:
+			body = style.Render(strings.Repeat("█", inner))
+		case have > 0:
+			body = style.Render(strings.Repeat(string(sparks[have-1]), inner))
+		default:
+			body = strings.Repeat(" ", inner)
+		}
+		rows = append(rows, t.Dim.Render("│")+body+t.Dim.Render("│"))
+	}
+	rows = append(rows, t.Dim.Render("╰"+strings.Repeat("─", inner)+"╯"))
+	return rows
+}

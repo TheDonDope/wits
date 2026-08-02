@@ -360,3 +360,110 @@ func TestReplaySkipsAdjustments(t *testing.T) {
 	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	assert.Equal(t, 1, app.analysis.playhead, "and keeps walking real events")
 }
+
+func TestSeanceScreen(t *testing.T) {
+	out := render(t, sample(t), seanceScreen, 110, 46)
+
+	assert.Contains(t, out, "Summoning the whole ledger", "Should name the frame on the table")
+	assert.Contains(t, out, "apparitions", "Should count what the frame holds")
+	assert.Contains(t, out, "The shelf", "Should draw the storage jars")
+	assert.Contains(t, out, "The stashes", "Should draw the stash tins")
+	assert.Contains(t, out, "═╩═", "The card wears a figurine on its pedestal")
+	assert.Contains(t, out, "Enua 22/1 Wedding Cake", "The product keeps its whole name")
+	assert.Contains(t, out, "live · press p", "Should offer the replay while live")
+}
+
+func TestSeanceFlipAndSleep(t *testing.T) {
+	app := New(sample(t))
+	app.screen = seanceScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 110, Height: 46})
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "the record", "x should turn the card over")
+	assert.Contains(t, out, "occurred", "and show when it happened")
+	assert.Contains(t, out, "storage→stash", "and the accounts the grams moved between")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	out = stripANSI(m.View().Content)
+	assert.NotContains(t, out, "the record", "x again should turn it back face up")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "the ledger sleeps",
+		"Before the first tick nothing has been summoned yet")
+}
+
+func TestSeanceFrames(t *testing.T) {
+	app := New(sample(t))
+	app.screen = seanceScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 110, Height: 46})
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'f', Text: "f"})
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "cycle 1 of 1", "f should turn the frame to the first cycle")
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'f', Text: "f"})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "the whole ledger", "and back around to everything")
+
+	// A window picked by hand: the first two days of the sample.
+	from := time.Date(2026, time.July, 9, 0, 0, 0, 0, time.UTC)
+	m, _ = m.Update(seanceDatesMsg{from: from, to: from.AddDate(0, 0, 2)})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "09 Jul 2026 → 10 Jul 2026", "Should frame the window by its days")
+	assert.Contains(t, out, "4 apparitions", "and hold only the events inside it")
+
+	// The séance stakes a claim on the horizontal keys, so only tab moves on.
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyRight})
+	assert.Equal(t, seanceScreen, app.screen, "Right steps the replay rather than the tab bar")
+}
+
+func TestSeanceWindowForm(t *testing.T) {
+	app := New(sample(t))
+	app.screen = seanceScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 110, Height: 46})
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
+	require.NotNil(t, app.entry, "d should open the window form")
+	assert.Equal(t, entrySeance, app.entry.kind)
+	assert.Equal(t, "2026-07-09", app.entry.from, "prefilled with the ledger's first day")
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "Séance window")
+
+	// The parser reads the shapes people write dates in, and refuses a window
+	// that ends before it starts.
+	f := &entryForm{kind: entrySeance, from: "2026-07-01", to: "31.07.2026"}
+	from, to, err := f.window()
+	require.NoError(t, err)
+	assert.Equal(t, time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC), from)
+	assert.Equal(t, time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC), to,
+		"The last day is inclusive, so the window runs to the close of it")
+
+	f = &entryForm{kind: entrySeance, from: "2026-07-01", to: "2026-06-01"}
+	_, _, err = f.window()
+	assert.ErrorContains(t, err, "ends before it starts")
+
+	assert.Error(t, validDay("soon"), "Should refuse a date it cannot read")
+	assert.NoError(t, validDay("02 Jan 2026"), "and accept one written out")
+}
+
+func TestSeanceReplayGrowsTheShelf(t *testing.T) {
+	app := New(sample(t))
+	app.screen = seanceScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 110, Height: 46})
+
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "nothing on the shelf yet", "The shelf starts bare")
+
+	m, _ = m.Update(playTickMsg{})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "picked up", "The first tick deals the first purchase")
+	assert.NotContains(t, out, "nothing on the shelf yet", "and its jar takes the shelf")
+	assert.Contains(t, out, "nothing ground yet", "while the tins wait for the first grind")
+}
