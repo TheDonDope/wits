@@ -87,13 +87,17 @@ func stripANSI(s string) string {
 }
 
 func TestDashboard(t *testing.T) {
-	out := render(t, sample(t), dashboardScreen, 96, 30)
+	out := render(t, sample(t), dashboardScreen, 96, 44)
 
-	assert.Contains(t, out, "REMAINING", "Should lead with what is left")
+	assert.Contains(t, out, "Storage", "Should deal a storage card")
 	assert.Contains(t, out, "26.90 g", "Should show grams remaining in the cycle")
 	assert.Contains(t, out, "of 30 g", "Should show what the cycle started with")
-	assert.Contains(t, out, "Enua 22/1 Wedding Cake", "Should name products, not slugs")
-	assert.Contains(t, out, "storage", "Should explain the colours")
+	assert.Contains(t, out, "Stash", "Should deal a stash card")
+	assert.Contains(t, out, "Enua 22/1 Wedding", "Should name products, not slugs, sized to the card")
+	assert.Contains(t, out, "Sessions", "Should deal a sessions card")
+	assert.Contains(t, out, "Devices", "Should deal a devices card")
+	assert.Contains(t, out, "Supply projection", "Should project the decline")
+	assert.Contains(t, out, "Rhythm", "Should deal the rhythm cards")
 }
 
 func TestJournalScreen(t *testing.T) {

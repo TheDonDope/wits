@@ -116,11 +116,12 @@ total                             41.00g                  68%
 About 24 days left at that rate
 ```
 
-`wits` on its own opens the interface: a dashboard of what is left and how long
-it will last, the journal, an analysis view scoping from the current cycle out to
-the whole history, the storage, the stash, the sessions and the devices.
-Entries can be recorded there
-too — `n` to grind, `s` for a session, `b` for a fill, `r` to weigh.
+`wits` on its own opens the interface: a dashboard of cards — storage, stash,
+sessions, devices, two rhythm calendars and a projection of the supply's
+decline to its empty day — then the journal, an analysis view scoping from the
+current cycle out to the whole history, the storage, the stash, the sessions
+and the devices. Entries can be recorded there too — `n` to grind, `s` for a
+session, `b` for a fill, `r` to weigh.
 
 The analysis view draws the daily amounts as a braille area chart with a
 seven-day average riding over it, and the longer scopes as a calendar heatmap —
