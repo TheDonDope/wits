@@ -619,43 +619,6 @@ func dateAxisRunes(first, last time.Time, width int) []rune {
 	return row
 }
 
-// dateAxisCursor is the tick row with the selected day written over it in the
-// accent, where the cursor stands.
-func dateAxisCursor(t *Theme, first, last time.Time, width, at int, label string) string {
-	row := dateAxisRunes(first, last, width)
-	start := min(max(at-len(label)/2, 0), max(width-len(label), 0))
-	end := min(start+len(label), width)
-	// Any tick the highlight touches goes entirely, not just the letters
-	// underneath: half a date is worse than none.
-	lo, hi := max(start-1, 0), min(end+1, width)
-	for lo > 0 && row[lo-1] != ' ' {
-		lo--
-	}
-	for hi < width && row[hi] != ' ' {
-		hi++
-	}
-	for i := lo; i < hi; i++ {
-		row[i] = ' '
-	}
-	return t.Dim.Render(string(row[:start])) +
-		lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(label) +
-		t.Dim.Render(string(row[end:]))
-}
-
-// pointerRow is the marker above a chart: the day's figure sitting on the
-// column the cursor points at.
-func pointerRow(t *Theme, width, at int, label string) string {
-	text := label + " ▾"
-	start := at - lipgloss.Width(text) + 1
-	if start < 0 {
-		text = "▾ " + label
-		start = at
-	}
-	start = min(max(start, 0), max(width-lipgloss.Width(text), 0))
-	return strings.Repeat(" ", start) +
-		lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(text)
-}
-
 // axisGutter is the width of the y-axis labels beside a scaled area chart.
 const axisGutter = 8
 

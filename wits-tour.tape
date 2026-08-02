@@ -34,12 +34,17 @@ Sleep 4s
 # Journal.
 Tab
 Sleep 3500ms
-# Analysis: the cycle first, then scoped out to the year, where the rhythm
-# heatmap and the cycle comparison appear.
+# Analysis: the ledger replays itself — space plays the scope from empty,
+# + turns the speed up, and the bars grow the way the record grew.
 Tab
+Sleep 2500ms
+Space
+Sleep 5s
+Type "+"
 Sleep 4s
+# Scoped out to the month.
 Type "s"
-Sleep 4s
+Sleep 3500ms
 # Storage: the shelf above, the history of finished jars below.
 Tab
 Sleep 3s
