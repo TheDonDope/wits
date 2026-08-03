@@ -54,7 +54,7 @@ var Export = &cobra.Command{
 				cycles = cycles[n-1:]
 			}
 		}
-		writeMarkdown(out, cycles, s.Products)
+		writeMarkdown(out, cycles, s.Products, s.State)
 
 		if exportOut != "" {
 			fmt.Fprintf(cmd.ErrOrStderr(), "Wrote %s to %s\n", plural(len(cycles), "cycle"), exportOut)
@@ -64,7 +64,7 @@ var Export = &cobra.Command{
 }
 
 // writeMarkdown renders cycles as a Markdown document.
-func writeMarkdown(out io.Writer, cycles []ledger.Cycle, products *catalog.Catalog) {
+func writeMarkdown(out io.Writer, cycles []ledger.Cycle, products *catalog.Catalog, state *ledger.State) {
 	fmt.Fprintf(out, "# Wits journal\n\nExported %s.\n", time.Now().Format(time.DateOnly))
 
 	if len(cycles) == 0 {
@@ -77,7 +77,7 @@ func writeMarkdown(out io.Writer, cycles []ledger.Cycle, products *catalog.Catal
 		if c.Open() {
 			fmt.Fprintf(out, " (open)\n\n")
 		} else {
-			fmt.Fprintf(out, " to %s\n\n", c.End.Format(time.DateOnly))
+			fmt.Fprintf(out, ", emptied %s\n\n", c.End.Format(time.DateOnly))
 		}
 
 		stats := ledger.Summarise(c.Events)
@@ -85,11 +85,14 @@ func writeMarkdown(out io.Writer, cycles []ledger.Cycle, products *catalog.Catal
 		fmt.Fprintln(out, "| --- | --- |")
 		fmt.Fprintf(out, "| Purchased | %.2f g |\n", c.Purchased)
 		if c.Carried > 0 {
-			fmt.Fprintf(out, "| Carried in from earlier | %.2f g |\n", c.Carried)
+			fmt.Fprintf(out, "| On the shelf already | %.2f g |\n", c.Carried)
 		}
-		fmt.Fprintf(out, "| Ground | %.2f g |\n", c.Ground)
-		fmt.Fprintf(out, "| Remaining of the fill | %.2f g (%.0f%%) |\n",
-			c.FillRemaining(), c.FillRemainingPct()*100)
+		fmt.Fprintf(out, "| Ground during | %.2f g |\n", c.Ground)
+		if c.Open() {
+			remaining := state.FillOnShelf(&c)
+			fmt.Fprintf(out, "| Remaining of the fill | %.2f g (%s) |\n",
+				remaining, percent(remaining, c.Purchased))
+		}
 		fmt.Fprintf(out, "| Days elapsed | %d |\n", stats.ElapsedDays)
 		fmt.Fprintf(out, "| Days with an entry | %d |\n", stats.ActiveDays)
 		fmt.Fprintf(out, "| Per active day | %.2f g |\n", stats.PerActiveDay)

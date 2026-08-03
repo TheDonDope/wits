@@ -26,60 +26,55 @@ type State struct {
 	Balances map[string]*Balance
 	Events   []journal.Event
 	Cycles   []Cycle
+
+	// lots is each product's jar split into the fills that stocked it,
+	// oldest first. It is how a gram in storage stays on the account of the
+	// cycle that dispensed it, and how a cycle knows when it is empty.
+	lots map[string][]lot
 }
 
 // CycleGap is how long after a cycle opened a further purchase still counts as
 // part of the same fill.
 //
-// A cycle runs from one fill to the next. Ending it when storage reaches zero
-// instead sounds tidier, and usually amounts to the same thing, but it does not
-// survive real data: 13 of the 47 spreadsheet cycles ended with a remainder
-// between 0.01 g and 4.84 g rather than at zero, and consecutive cycles
-// routinely overlap because a new sheet is started before the old one is
-// finished — 2025-10 has entries as late as 26 November, while 2025-11 begins
-// on the 1st. A single running total cannot describe two live cycles, so the
-// fill is the only boundary that holds.
+// One prescription is sometimes picked up across a couple of days, so
+// purchases within this window of the cycle opening belong to the same fill.
+// Anything later is the next prescription and opens the next cycle — the
+// tightest real boundary in four years of records was eight days, between
+// 2024-12-1 and 2024-12-2.
 //
-// Products for one prescription are collected together, so purchases within a
-// few days of the cycle opening belong to it. The tightest real boundary in
-// four years was eight days, between 2024-12-1 and 2024-12-2.
+// Only the opening is time-based. The close is not: a cycle ends when its own
+// jars are empty, however long that takes — 13 of the 47 spreadsheet cycles
+// ended with a remainder rather than at zero, and a cycle with grams standing
+// simply stays open beside its successors.
 const CycleGap = 3 * 24 * time.Hour
 
-// Cycle is one prescription fill, running until the next fill arrives. Cycles
-// are derived, never stored.
+// Cycle is one prescription fill. It opens with a purchase and closes when
+// its own jars are empty — not when the next fill arrives, because a fill
+// outliving its month is normal and a remainder belongs to the cycle that
+// dispensed it. Cycles overlap: several can stand open at once, each holding
+// what is left of its own fill. Cycles are derived, never stored.
 type Cycle struct {
+	Seq       int // position in State.Cycles
 	Start     time.Time
-	End       time.Time // zero while the cycle is still open
+	End       time.Time // zero while any of the cycle's own grams remain
 	Purchased float64
 	Carried   float64 // grams already in storage when the fill arrived
 	Ground    float64
-	Leftover  float64 // grams still in storage when the next fill arrived
 	Products  []string
-	Events    []journal.Event
+	Events    []journal.Event // everything recorded during the fill's tenure
 
-	// Opening is the storage balance each product carried into the cycle.
-	// Without it, grinding down last month's remainder reads as overspending
-	// this month's fill, and a product's "left" would run past 100%.
+	// Opening is the storage balance each product carried into the cycle,
+	// noted for the record: those grams stay on their own cycles' accounts.
 	Opening map[string]float64
 }
 
-// Open reports whether the cycle still has product in storage.
+// Open reports whether any of the cycle's own grams are still in storage.
 func (c Cycle) Open() bool { return c.End.IsZero() }
 
-// Held returns the grams the cycle started with: the fill itself plus
-// whatever the previous cycle left in storage.
+// Held returns the grams on the whole shelf when the cycle opened: the fill
+// itself plus everything earlier cycles still had standing. The supply
+// projection starts here; the cycle's own arithmetic does not.
 func (c Cycle) Held() float64 { return Round(c.Purchased + c.Carried) }
-
-// Remaining returns the grams of the cycle still in storage.
-func (c Cycle) Remaining() float64 { return Round(c.Held() - c.Ground) }
-
-// RemainingPct returns how much of the cycle is left, from 0 to 1.
-func (c Cycle) RemainingPct() float64 {
-	if c.Held() == 0 {
-		return 0
-	}
-	return c.Remaining() / c.Held()
-}
 
 // PurchasedOf returns how many grams of one product the cycle's fill brought.
 func (c Cycle) PurchasedOf(slug string) float64 {
@@ -92,63 +87,69 @@ func (c Cycle) PurchasedOf(slug string) float64 {
 	return Round(grams)
 }
 
-// HeldOf returns the grams of one product the cycle started with, carry-over
-// included, which is what a per-product percentage has to be a percentage of.
-func (c Cycle) HeldOf(slug string) float64 {
-	return Round(c.PurchasedOf(slug) + c.Opening[slug])
-}
-
-// GroundOf returns the grams of one product ground during the cycle.
-func (c Cycle) GroundOf(slug string) float64 {
-	var grams float64
-	for _, e := range c.Events {
-		if e.Product == slug && e.Type == journal.Grind {
-			grams += e.Grams
-		}
-	}
-	return Round(grams)
-}
-
-// Fill returns the grams the cycle's own jars started with: what the fill
-// dispensed, plus what those same jars still carried from an earlier fill of
-// the same product — grinding draws on the jar, not on one vintage in it.
-// The remainder sitting in other jars is the previous cycles' business and
-// is deliberately not counted; Held is the whole shelf, Fill is this fill.
-func (c Cycle) Fill() float64 {
-	var grams float64
-	for _, slug := range c.Products {
-		grams += c.HeldOf(slug)
-	}
-	return Round(grams)
-}
-
-// FillRemaining returns the grams of the fill's own jars not yet ground, by
-// the cycle's events. A live shelf can disagree by whatever a reconciliation
-// adjusted; a screen holding the balances should prefer State.FillOnShelf.
-func (c Cycle) FillRemaining() float64 {
-	remaining := c.Fill()
-	for _, slug := range c.Products {
-		remaining -= c.GroundOf(slug)
-	}
-	return Round(remaining)
-}
-
-// FillRemainingPct returns how much of the fill is left, from 0 to 1.
-func (c Cycle) FillRemainingPct() float64 {
-	if c.Fill() == 0 {
-		return 0
-	}
-	return c.FillRemaining() / c.Fill()
+// lot is one fill's share of a product's jar. A jar refilled before it was
+// empty holds grams of two cycles, and no scale can say whose leave first —
+// so the ledger says the oldest do: grinds consume lots first-in-first-out,
+// and each cycle's claim shrinks in the order it was dispensed.
+type lot struct {
+	cycle int
+	grams float64
 }
 
 // Fold replays the events and returns the state they describe. Events are
 // folded in journal order, which is the order they were recorded in.
 func Fold(events []journal.Event) *State {
-	s := &State{Balances: map[string]*Balance{}, Events: events}
+	s := &State{Balances: map[string]*Balance{}, Events: events, lots: map[string][]lot{}}
+
+	// share is what each cycle still holds in storage across all its jars;
+	// a cycle closes the moment its share is ground away, and reopens if a
+	// reconciliation finds grams again.
+	var share []float64
+	settle := func(cycle int, at time.Time) {
+		if Round(share[cycle]) <= 0 {
+			share[cycle] = 0
+			s.Cycles[cycle].End = at
+		} else if !s.Cycles[cycle].End.IsZero() {
+			s.Cycles[cycle].End = time.Time{}
+		}
+	}
+	// consume draws grams out of a product's jar, oldest lot first.
+	consume := func(product string, grams float64, at time.Time) {
+		q := s.lots[product]
+		for grams > 0 && len(q) > 0 {
+			take := math.Min(grams, q[0].grams)
+			q[0].grams = Round(q[0].grams - take)
+			grams = Round(grams - take)
+			share[q[0].cycle] = Round(share[q[0].cycle] - take)
+			settle(q[0].cycle, at)
+			if q[0].grams <= 0 {
+				q = q[1:]
+			}
+		}
+		s.lots[product] = q
+	}
+	// credit puts found grams back into the jar's newest lot: an upward
+	// reconciliation corrects the present jar, not a bygone fill.
+	credit := func(product string, grams float64, cycle int, at time.Time) {
+		if len(s.Cycles) == 0 {
+			return
+		}
+		q := s.lots[product]
+		if n := len(q); n > 0 {
+			cycle = q[n-1].cycle
+			q[n-1].grams = Round(q[n-1].grams + grams)
+		} else {
+			q = append(q, lot{cycle: cycle, grams: grams})
+		}
+		s.lots[product] = q
+		share[cycle] = Round(share[cycle] + grams)
+		settle(cycle, at)
+	}
 
 	// cur indexes into s.Cycles rather than pointing at an element: appending to
 	// the slice can move the backing array, which would strand a pointer.
 	cur := -1
+	lastCycleOf := map[string]int{}
 	for _, e := range events {
 		b := s.balance(e.Product)
 		apply(b, e.From, -e.Grams)
@@ -157,10 +158,11 @@ func Fold(events []journal.Event) *State {
 		switch e.Type {
 		case journal.Purchase:
 			if cur == -1 || e.OccurredAt.Sub(s.Cycles[cur].Start) > CycleGap {
-				if cur != -1 {
-					s.Cycles[cur].End = e.OccurredAt
-					s.Cycles[cur].Leftover = s.Cycles[cur].Remaining()
-				}
+				// A new fill opens a new cycle. The one before stays open
+				// for as long as its own jars hold something: a fill
+				// outliving its month is normal, and its remainder is its
+				// own, not the newcomer's.
+				//
 				// The purchase itself has already been applied above, so the
 				// snapshot backs it out again: what was carried in is what sat
 				// in storage before this fill arrived.
@@ -177,17 +179,33 @@ func Fold(events []journal.Event) *State {
 					}
 				}
 				s.Cycles = append(s.Cycles, Cycle{
-					Start: e.OccurredAt, Opening: opening, Carried: Round(carried),
+					Seq: len(s.Cycles), Start: e.OccurredAt,
+					Opening: opening, Carried: Round(carried),
 				})
+				share = append(share, 0)
 				cur = len(s.Cycles) - 1
 			}
 			s.Cycles[cur].Purchased = Round(s.Cycles[cur].Purchased + e.Grams)
 			if !contains(s.Cycles[cur].Products, e.Product) {
 				s.Cycles[cur].Products = append(s.Cycles[cur].Products, e.Product)
 			}
+			s.lots[e.Product] = append(s.lots[e.Product], lot{cycle: cur, grams: e.Grams})
+			share[cur] = Round(share[cur] + e.Grams)
+			lastCycleOf[e.Product] = cur
 		case journal.Grind:
 			if cur != -1 {
 				s.Cycles[cur].Ground = Round(s.Cycles[cur].Ground + e.Grams)
+			}
+			consume(e.Product, e.Grams, e.OccurredAt)
+		default:
+			// Anything else that moves grams through storage — adjustments
+			// down and up, corrections either way — settles the lots too, so
+			// a jar reconciled to zero closes its cycles' claims.
+			if e.From == journal.Storage {
+				consume(e.Product, e.Grams, e.OccurredAt)
+			}
+			if e.To == journal.Storage && e.Product != "" {
+				credit(e.Product, e.Grams, lastCycleOf[e.Product], e.OccurredAt)
 			}
 		}
 		if cur != -1 {
@@ -226,44 +244,63 @@ func (s *State) Held(product string) float64 {
 	return 0
 }
 
-// CurrentCycle returns the cycle in progress, or nil when storage is empty.
+// CurrentCycle returns the latest fill while anything on the shelf keeps a
+// cycle open, or nil once every cycle has ground down to nothing. The latest
+// fill is the prescription in progress even when an older cycle's jar
+// outlives it.
 func (s *State) CurrentCycle() *Cycle {
-	if n := len(s.Cycles); n > 0 && s.Cycles[n-1].Open() {
-		return &s.Cycles[n-1]
+	if len(s.Cycles) == 0 {
+		return nil
+	}
+	for i := range s.Cycles {
+		if s.Cycles[i].Open() {
+			return &s.Cycles[len(s.Cycles)-1]
+		}
 	}
 	return nil
 }
 
-// FillOnShelf returns the storage the cycle's own jars still hold: the live
-// counterpart of Cycle.FillRemaining, which also feels what reconciliation
-// adjusted after the fact.
-func (s *State) FillOnShelf(c *Cycle) float64 {
+// ShareOf returns the grams of one product still standing on the cycle's own
+// account — the jar's balance minus whatever older or newer fills hold in it.
+func (s *State) ShareOf(c *Cycle, slug string) float64 {
 	var grams float64
-	for _, slug := range c.Products {
-		if b, ok := s.Balances[slug]; ok {
-			grams += b.Storage
+	for _, l := range s.lots[slug] {
+		if l.cycle == c.Seq {
+			grams += l.grams
 		}
 	}
 	return Round(grams)
 }
 
-// CarriedOnShelf returns the storage still sitting outside the cycle's own
-// jars, and how many jars hold it — the previous cycles' remainder, which the
-// fill's arithmetic deliberately leaves out.
-func (s *State) CarriedOnShelf(c *Cycle) (float64, int) {
-	own := map[string]bool{}
-	for _, slug := range c.Products {
-		own[slug] = true
-	}
+// FillOnShelf returns the grams of the cycle's fill still in storage: its
+// own lots, summed over its products.
+func (s *State) FillOnShelf(c *Cycle) float64 {
 	var grams float64
-	var jars int
-	for slug, b := range s.Balances {
-		if !own[slug] && b.Storage > 0 {
-			grams += b.Storage
+	for _, slug := range c.Products {
+		grams += s.ShareOf(c, slug)
+	}
+	return Round(grams)
+}
+
+// CarriedOnShelf returns the storage still standing on other cycles'
+// accounts — the older fills' remainders — with the jars holding it and the
+// cycles still open for it.
+func (s *State) CarriedOnShelf(c *Cycle) (grams float64, jars, cycles int) {
+	open := map[int]bool{}
+	for _, q := range s.lots {
+		var other float64
+		for _, l := range q {
+			if l.cycle != c.Seq && l.grams > 0 {
+				other += l.grams
+				open[l.cycle] = true
+			}
+		}
+		if other > 0 {
 			jars++
+			grams += other
 		}
 	}
-	return Round(grams), jars
+	return Round(grams), jars, len(open)
 }
 
 // Stats summarises a run of events over time.

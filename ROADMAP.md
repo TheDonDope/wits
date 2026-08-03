@@ -32,13 +32,34 @@ from the pharmacy through to the ash.
 **A stash per product, not one pool.** The stash is per product, so every gram stays
 attributable to a single product end to end. No blends, no proportional guessing.
 
-### Cycles are derived
+### Cycles are derived, and they overlap
 
-A cycle runs from one prescription fill to the next. Ending it when storage
-reaches zero sounds tidier but does not survive real data: 13 of 47 historical
-cycles ended with a remainder between 0.01 g and 4.84 g, and consecutive cycles
-overlap because a new sheet was started before the old one finished. See
-`ledger.CycleGap`.
+A cycle opens with a prescription fill — purchases within three days count as
+one pickup, see `ledger.CycleGap` — and closes when **its own jars are
+empty**, not when the next fill arrives. 13 of 47 historical cycles ended
+with a remainder, and a remainder belongs to the cycle that dispensed it: that
+cycle simply stays open beside its successors until the last of its grams is
+ground, reconciled, or cleaned away.
+
+Every gram in storage stands on the account of one cycle. A jar refilled
+before it was empty holds two cycles' grams, and grinds draw the oldest lot
+first — no scale can say whose grams leave a mixed jar, so the ledger says
+the oldest do, the way inventory leaves a shelf. That is what keeps a
+product's "left" at or under 100% with no carry-over arithmetic at all.
+
+### The three scopes
+
+Every figure on screen speaks exactly one of these, and says which:
+
+| Scope | What it counts | Where |
+| --- | --- | --- |
+| **The fill** | one cycle's own grams: dispensed, remaining, per product | dashboard storage card, `wits status`, `witsnap json`, export |
+| **The shelf** | every jar standing today, whoever dispensed it | supply projection, storage screen balances, the "N older jars" lines |
+| **The jar** | one product across its lifetime — every fill, every gram | storage screen detail ("of 65 g ever dispensed, over 4 fills"), history table |
+
+The dashboard's "+ 15.82 g in 7 older jars from 6 earlier cycles still open"
+is the seam between the first two: the shelf minus the fill, attributed to
+the cycles it still belongs to.
 
 ### Entries carry two timestamps
 
@@ -89,10 +110,12 @@ Days-with-an-entry and days-elapsed are reported **separately and labelled**. Th
 spreadsheet conflated them, because its date column was pre-filled with zero
 rows, so its average depended on how far ahead it had been filled in.
 
-A cycle knows what it **carried over**: the storage each product brought in from
-the cycle before, kept apart from what the fill itself dispensed. Grinding down
-last month's remainder is not overspending this month's fill, and a product's
-"left" can no longer read as more than 100%.
+Every gram in storage stands on the account of the cycle that dispensed it,
+in per-fill lots drained oldest-first. Grinding down last month's remainder
+draws on last month's cycle, not this month's fill; a product's "left" cannot
+read over 100%, and a cycle closes itself when its own lots are empty. The
+shelf a fill arrived to is still noted (`Carried`, `Opening`), for the
+record.
 
 ### The commands
 

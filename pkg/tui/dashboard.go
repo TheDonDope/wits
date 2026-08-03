@@ -140,11 +140,11 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	t := a.theme
 	stats := ledger.Summarise(c.Events)
 
-	// The card is the fill's: the headline sums the same jars the rows below
-	// draw, over what this fill dispensed into them. Older jars still on the
-	// shelf get their own line rather than a share of the arithmetic.
+	// The card is the fill's: the headline sums the cycle's own shares of
+	// the jars the rows below draw, over what this fill dispensed. What
+	// older cycles still hold gets its own line, not a seat in the sum.
 	remaining := a.data.State.FillOnShelf(c)
-	held := c.Fill()
+	held := c.Purchased
 	fraction := 0.0
 	if held > 0 {
 		fraction = clamp(remaining/held, 0, 1)
@@ -165,9 +165,10 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 		bar,
 		t.Dim.Render(fmt.Sprintf("%s on the shelf · %s", plural(len(c.Products), "product"), runway)),
 	}
-	if carried, jars := a.data.State.CarriedOnShelf(c); carried > 0 {
+	if carried, jars, open := a.data.State.CarriedOnShelf(c); carried > 0 {
 		lines = append(lines, t.Dim.Render(
-			fmt.Sprintf("+ %.2f g carried from earlier cycles in %s", carried, plural(jars, "older jar"))))
+			fmt.Sprintf("+ %.2f g in %s from %s still open",
+				carried, plural(jars, "older jar"), plural(open, "earlier cycle"))))
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, append(lines, d.storageRows(a, c, w)...)...)
 }
@@ -188,15 +189,16 @@ func (d dashboard) storageRows(a *App, c *ledger.Cycle, w int) []string {
 		if b == nil {
 			continue
 		}
+		share := data.State.ShareOf(c, slug)
 		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Left,
 			t.Value.Width(labelW).Render(truncate(data.ProductName(slug), labelW)),
 			" ",
 			Stack(max(w-labelW-10, 6), []Bar{
-				{Value: b.Storage, Color: t.StorageC},
+				{Value: share, Color: t.StorageC},
 				{Value: b.Stash, Color: t.StashC},
 				{Value: b.AVB, Color: t.AVBC},
-			}, c.HeldOf(slug), t),
-			t.Dim.Render(fmt.Sprintf(" %.2f g", b.Storage)),
+			}, c.PurchasedOf(slug), t),
+			t.Dim.Render(fmt.Sprintf(" %.2f g", share)),
 		))
 	}
 	return rows
