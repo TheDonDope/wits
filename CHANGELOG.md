@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.23.0"></a>
+## [v0.23.0] - 2026-08-03
+### Refactor
+- **ledger:** give the fold its bookkeeper
+
+
 <a name="v0.22.0"></a>
 ## [v0.22.0] - 2026-08-03
+### Docs
+- update changelog for v0.22.0
+
 ### Fix
 - **ledger:** bill the fill, not the shelf
 
@@ -409,7 +418,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.23.0...HEAD
+[v0.23.0]: https://github.com/TheDonDope/wits/compare/v0.22.0...v0.23.0
 [v0.22.0]: https://github.com/TheDonDope/wits/compare/v0.21.0...v0.22.0
 [v0.21.0]: https://github.com/TheDonDope/wits/compare/v0.20.0...v0.21.0
 [v0.20.0]: https://github.com/TheDonDope/wits/compare/v0.19.0...v0.20.0
