@@ -106,11 +106,13 @@ func card(a *App, title, body string, w int) string {
 }
 
 // quickActions is the row of things worth doing from here, spelled out rather
-// than left in the help line.
+// than left in the help line, with the wall clock on the far right — the one
+// place the interface admits what time it is now rather than what the frame
+// was computed at.
 func (d dashboard) quickActions(a *App, width int) string {
 	t := a.theme
 	actions := []struct{ key, label string }{
-		{"n", "grind"}, {"s", "sesh"}, {"b", "fill"}, {"r", "weigh"},
+		{"b", "buy"}, {"g", "grind"}, {"s", "sesh"}, {"r", "weigh"},
 	}
 	cells := make([]string, 0, len(actions))
 	for _, act := range actions {
@@ -125,6 +127,10 @@ func (d dashboard) quickActions(a *App, width int) string {
 		// Too narrow for the boxes; the help line still carries the same keys.
 		return ""
 	}
+	clock := t.Dim.Render(a.clock().Format("Mon 02 Jan 2006 · 15:04:05"))
+	if gap := width - lipgloss.Width(row) - lipgloss.Width(clock); gap > 0 {
+		return lipgloss.JoinHorizontal(lipgloss.Center, row, strings.Repeat(" ", gap), clock)
+	}
 	return row
 }
 
@@ -137,8 +143,9 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	fraction := c.RemainingPct()
 
 	headline := t.Big.Render(fmt.Sprintf("%.2f g", remaining)) +
-		t.Dim.Render(fmt.Sprintf("  of %.0f g · cycle %d, day %d",
-			c.Held(), len(a.data.State.Cycles), daysBetween(c.Start, a.data.Now)+1))
+		t.Dim.Render(fmt.Sprintf("  of %.0f g · cycle %d (started: %s), day %d",
+			c.Held(), len(a.data.State.Cycles), c.Start.Format("2006-01-02"),
+			daysBetween(c.Start, a.data.Now)+1))
 	bar := GradientGauge(w, fraction, t.Good, t.Level(fraction), t.Dim)
 
 	runway := "nothing ground yet, no rate to project"
@@ -217,7 +224,7 @@ func (d dashboard) stashCard(a *App, w int) string {
 		))
 	}
 	if len(lines) == 1 {
-		lines = append(lines, t.Dim.Render("every stash is empty — n grinds into one"))
+		lines = append(lines, t.Dim.Render("every stash is empty — g grinds into one"))
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }

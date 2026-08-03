@@ -144,8 +144,8 @@ About 24 days left at that rate
 sessions, devices, two rhythm calendars and a projection of the supply's
 decline to its empty day — then the journal, an analysis view scoping from the
 current cycle out to the whole history, the storage, the stash, the sessions,
-the devices — and the Séance. Entries can be recorded there too — `n` to
-grind, `s` for a session, `b` for a fill, `r` to weigh.
+the devices — and the Séance. Entries can be recorded there too — `b` for a
+fill, `g` to grind, `s` for a session, `r` to weigh.
 
 The analysis view draws the daily amounts as a braille area chart with a
 seven-day average riding over it, and the longer scopes as a calendar heatmap —

@@ -358,7 +358,7 @@ func TestDashboardShowsQuickActions(t *testing.T) {
 
 	out := stripANSI(m.View().Content)
 
-	for _, want := range []string{"grind", "sesh", "fill", "weigh"} {
+	for _, want := range []string{"buy", "grind", "sesh", "weigh"} {
 		assert.Contains(t, out, want, "the home view should offer %q without reading the help line", want)
 	}
 }

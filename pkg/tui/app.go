@@ -80,9 +80,12 @@ func defaultKeys() keyMap {
 		Down:   key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
 		PageUp: key.NewBinding(key.WithKeys("pgup", "ctrl+b"), key.WithHelp("pgup", "page up")),
 		PgDown: key.NewBinding(key.WithKeys("pgdown", "ctrl+f"), key.WithHelp("pgdn", "page down")),
-		Top:    key.NewBinding(key.WithKeys("home", "g"), key.WithHelp("g", "top")),
+		Top:    key.NewBinding(key.WithKeys("home"), key.WithHelp("home", "top")),
 		Bottom: key.NewBinding(key.WithKeys("end", "G"), key.WithHelp("G", "bottom")),
-		New:    key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "grind")),
+		// g grinds, mirroring the command's initial; n stays as a quiet alias
+		// for the muscle memory the first weeks built. Jumping to the top moved
+		// to home alone to make room.
+		New:    key.NewBinding(key.WithKeys("g", "n"), key.WithHelp("g", "grind")),
 		Sesh:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sesh")),
 		Buy:    key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "buy")),
 		Weigh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "weigh")),
@@ -102,7 +105,7 @@ func withHelp(b key.Binding, desc string) key.Binding {
 
 // ShortHelp implements help.KeyMap.
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Next, k.New, k.Sesh, k.Buy, k.Weigh, k.Help, k.Quit}
+	return []key.Binding{k.Next, k.Buy, k.New, k.Sesh, k.Weigh, k.Help, k.Quit}
 }
 
 // FullHelp implements help.KeyMap.
@@ -111,7 +114,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Next, k.Prev},
 		{k.Up, k.Down, k.PageUp, k.PgDown},
 		{k.Top, k.Bottom},
-		{k.New, k.Sesh, k.Buy, k.Weigh},
+		{k.Buy, k.New, k.Sesh, k.Weigh},
 		{k.Help, k.Quit},
 	}
 }
@@ -127,6 +130,11 @@ type App struct {
 
 	width, height int
 	showHelp      bool
+
+	// wall is the ticking wall clock the dashboard shows. Data.Now stays the
+	// frame every derived figure is computed against; the wall is only ever
+	// read for display, so the two disagreeing cannot put a number on screen.
+	wall time.Time
 
 	// entry is the form in front, if any. While it is open it takes every key,
 	// so navigation cannot fire underneath a half-filled entry.
@@ -168,7 +176,25 @@ func New(data Data) *App {
 func (a *App) Init() tea.Cmd {
 	// Ask the terminal what it is, so the theme can be resolved against the
 	// actual background rather than assumed.
-	return tea.RequestBackgroundColor
+	return tea.Batch(tea.RequestBackgroundColor, tickWall())
+}
+
+// wallTickMsg carries the clock, once a second.
+type wallTickMsg time.Time
+
+// tickWall schedules the next reading of the wall clock.
+func tickWall() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return wallTickMsg(t) })
+}
+
+// clock is the time the dashboard displays: the ticking wall once it has
+// ticked, and the frame's own moment before that — a snapshot has no ticks,
+// and a blank corner would read as a fault.
+func (a *App) clock() time.Time {
+	if a.wall.IsZero() {
+		return a.data.Now
+	}
+	return a.wall
 }
 
 // Update implements tea.Model.
@@ -180,6 +206,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.BackgroundColorMsg:
 		a.theme = NewTheme(msg.IsDark())
+
+	case wallTickMsg:
+		a.wall = time.Time(msg)
+		return a, tickWall()
 
 	case entryDoneMsg:
 		return a.entryDone(msg)

@@ -196,7 +196,7 @@ func TestJournalCoverSlider(t *testing.T) {
 	app.screen = journalScreen
 	var m tea.Model = app
 	m, _ = m.Update(tea.WindowSizeMsg{Width: 96, Height: 34})
-	m, _ = m.Update(tea.KeyPressMsg{Code: 'g', Text: "g"})
+	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyHome})
 	before := app.journal.Selected()
 	m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	after := app.journal.Selected()
@@ -211,6 +211,21 @@ func TestDashboardStorageCardListsProducts(t *testing.T) {
 
 	assert.Contains(t, out, "Enua 22/1 Wedding", "The storage card should bar each product")
 	assert.Contains(t, out, "Cannamedical 28/1", "all of them")
+}
+
+func TestDashboardWallClockAndCycleStart(t *testing.T) {
+	app := New(sample(t))
+	app.screen = dashboardScreen
+	app.wall = time.Date(2026, 8, 3, 14, 30, 5, 0, time.UTC)
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 44})
+
+	out := stripANSI(m.View().Content)
+
+	assert.Contains(t, out, "Mon 03 Aug 2026 · 14:30:05",
+		"The quick-action line should carry the ticking wall clock")
+	assert.Contains(t, out, "(started: ",
+		"The storage card should date the cycle it counts")
 }
 
 func TestAnalysisScopes(t *testing.T) {
