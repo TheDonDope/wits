@@ -1,5 +1,73 @@
 # Development Diary
 
+## 2026-08-02
+
+### From v0.7.0 to v0.20.0 in one day
+
+Fourteen releases in one sitting, all of them growing the interface out of the ledger. Weighing day became `wits reconcile` run bare — pick the account, tick the jars, read the scale — and then the storage, stash and sessions screens arrived to show what the reconciling is for. The dashboard was dealt as cards, the analysis screen learned braille area charts and a rhythm heatmap, and then the whole thing learned to replay: any screen can start from empty and grow the way the record grew, adjustments riding along silently. The day ended with the Séance, where each event takes the table as a playing card and `x` flips it to the record on its back, jars and tins filling underneath as the replay walks the history. Along the way: a preflight script that says what the CI gate will say first, `witsnap` as the camera and the tap for screenshots and JSON, a fuller terpene set, and a cleanup round for dead code and version wiring. All five tapes were re-recorded against the current behaviour.
+
+- `e69d741` refactor(tui): fold the new charts into chart.go and split the big ones
+- `aabdebc` refactor: speak of the stash, not the tin
+- `db29fb0` feat(reconcile): weigh a whole account interactively, or one jar in a line
+- `5516581` feat(tui): a storage screen with a shelf, a history, and ticked weighing
+- `a869ffc` refactor(tui): keep the screen in products.go, whatever the tab says
+- `d9dcd1e` build: a preflight that says what the gate will say, first
+- `d871fa5` build(preflight): check the scripts too, as the gate taught it to
+- `783e821` feat(tui): a stash screen and a sessions screen
+- `aab3af8` feat(tui): deal the dashboard as cards
+- `29d7679` fix(tui): stop shadowing any, and drop the cycle the stash card never read
+- `31d4232` feat(tui): a cover slider for the journal, and product bars on the storage card
+- `980d016` feat(tui): a deeper analysis screen
+- `fa9ca48` feat(analysis): the ledger replays itself
+- `951c772` feat(tui): the storage and stash screens replay too
+- `8b393ad` build(witsnap): the camera and the tap
+- `f5e2239` feat(cannabis): a fuller terpene set, with where each is found
+- `ba3b0e7` chore: a cleanup round — dead code, version wiring, devops, renderings
+- `b77fed5` feat(replay): adjustments ride along silently
+- `722bec7` ci: skip the coverage uploads where the secrets are withheld
+- `534ffaf` feat(seance): summon the ledger as playing cards
+
+### Notes for 2026-08-02
+
+Dependabot rode along with three actions bumps and a golang.org/x/sys bump; the changelog was cut at every release from v0.7.0 through v0.20.0.
+
+## 2026-08-01
+
+### The rebuild: a ledger, not a spreadsheet
+
+The ground-up rebuild landed: Wits is now a ledger, everything derived by replaying an append-only, hash-chained journal, with the roadmap rewritten around that model before the first line. The day laid down the whole stack — journal, repository discovery, the fold in `pkg/ledger`, product and device catalogs, the git-shaped command surface — then rebuilt the interface on Bubble Tea v2 with huh v2 forms embedded as models instead of blocking the event loop. The spreadsheet importer went away in favour of repository bundles, then came back properly, tested against the real four-year workbook rather than fixtures. Corrections, device management, a products screen and reconciling against the scale rounded out the surface, and the module was renamed to `wits` with the monorepo layout settled. The README was rewritten and the demo re-recorded to match.
+
+- `a921d37` docs: rewrite the roadmap around a ledger model
+- `05f967b` feat(journal): add an append-only, hash-chained event log
+- `c07e03a` feat(repo): add the .wits repository and discovery
+- `b62ad65` feat(ledger): derive balances, cycles and statistics from the journal
+- `38e83a8` feat(catalog): add product and device catalogs
+- `6dad63a` feat(importer): import the tracking spreadsheet into the journal
+- `6c159f6` feat(cmd): add the git-shaped command surface
+- `eb00771` style: gofmt existing tests
+- `cf53493` fix: address Codacy static analysis findings
+- `eb3f067` feat!: replace the spreadsheet importer with repository bundles
+- `8f055ca` ci: run the Go workflow for v2 as well as main
+- `61f1cd8` feat!: rebuild the interface on Bubble Tea v2
+- `e1f9fe3` feat(tui): record entries with huh v2 forms
+- `8625283` feat: correct entries from the journal, manage devices, refresh the README
+- `2933d07` test(tui): cover the devices screen and its forms
+- `febbb48` feat: bring back the spreadsheet importer
+- `a92e8aa` test: cover the import command and its report
+- `a9c1719` refactor: share how a repository is opened, and lock the journal
+- `f08d908` test(workspace): cover opening from the working directory
+- `41eca80` test(journal): cover a repository that cannot be written to
+- `54fe4bc` refactor!: rename the module to wits and settle the monorepo layout
+- `c2690cf` refactor(cmd): open the interface the way every other command does
+- `c8273b4` docs: rewrite the README, re-record the demo, audit the roadmap
+- `669d0de` docs: added historic xlsx import data
+- `0cbb689` test(importer): run against the real workbook
+- `b94dcb3` feat: add a products screen and reconciling against the scale
+
+### Notes for 2026-08-01
+
+The long quiet between March 2025 and here was 34 commits of dependency bumps — the diary has nothing to say about a version number. Work carried on past midnight; the ratio-in-the-slug fix, the five-clip demo and the carry-over fix are the first hours of 2026-08-02 in the log.
+
 ## 2025-03-20
 
 ### Integrate more charmbracelet tools
