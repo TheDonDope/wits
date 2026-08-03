@@ -482,7 +482,9 @@ func (v storageView) detail(a *App, r productRow, width int) string {
 	// has nothing to fill a bar with.
 	if r.Bought > 0 && r.Held() > 0 {
 		remaining := clamp(r.Held()/r.Bought, 0, 1)
-		bar := Gauge(max(width-46, 10), remaining, t.Level(remaining), t.Dim)
+		// The label grew a lifetime ("ever dispensed … over N fills"), so the
+		// bar cedes it the room; clipping the words defeats naming the scope.
+		bar := Gauge(max(width-66, 10), remaining, t.Level(remaining), t.Dim)
 		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Left,
 			"  ", bar, " ",
 			t.Dim.Render(fmt.Sprintf("%.2f g of %.2f g ever dispensed still held, over %s",
