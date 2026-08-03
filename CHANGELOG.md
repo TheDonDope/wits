@@ -2,10 +2,27 @@
 ## [Unreleased]
 
 
+<a name="v0.21.0"></a>
+## [v0.21.0] - 2026-08-03
+### Docs
+- re-record the tour against the new dashboard
+- say how to install the working tree, and completion honestly
+- bring the dev diary up to the rebuild
+
+### Feat
+- **tui:** reorder the quick actions, tick a clock, date the cycle
+
+### Fix
+- **tui:** keep the clean-history question on screen
+
+
 <a name="v0.20.0"></a>
 ## [v0.20.0] - 2026-08-02
 ### Chore
 - **deps:** bump the actions group across 1 directory with 3 updates
+
+### Docs
+- update changelog for v0.20.0
 
 ### Feat
 - **seance:** summon the ledger as playing cards
@@ -385,7 +402,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.21.0...HEAD
+[v0.21.0]: https://github.com/TheDonDope/wits/compare/v0.20.0...v0.21.0
 [v0.20.0]: https://github.com/TheDonDope/wits/compare/v0.19.0...v0.20.0
 [v0.19.0]: https://github.com/TheDonDope/wits/compare/v0.18.0...v0.19.0
 [v0.18.0]: https://github.com/TheDonDope/wits/compare/v0.17.0...v0.18.0
