@@ -105,11 +105,15 @@ type state struct {
 	Devices     []deviceUse                `json:"device_usage"`
 }
 
+// currentCycle is scoped to the fill: held and remaining count the cycle's
+// own jars, and what earlier cycles left in other jars reports separately.
 type currentCycle struct {
 	Start        time.Time `json:"start"`
 	Held         float64   `json:"held"`
 	Remaining    float64   `json:"remaining"`
 	RemainingPct float64   `json:"remaining_pct"`
+	CarriedGrams float64   `json:"carried_grams,omitempty"`
+	CarriedJars  int       `json:"carried_jars,omitempty"`
 	PerActiveDay float64   `json:"per_active_day"`
 	DaysLeft     float64   `json:"days_left"`
 }
@@ -170,13 +174,22 @@ func current(ws *workspace.Workspace) *currentCycle {
 		return nil
 	}
 	stats := ledger.Summarise(c.Events)
+	remaining := ws.State.FillOnShelf(c)
+	held := c.Fill()
+	pct := 0.0
+	if held > 0 {
+		pct = remaining / held
+	}
+	carried, jars := ws.State.CarriedOnShelf(c)
 	return &currentCycle{
 		Start:        c.Start,
-		Held:         c.Held(),
-		Remaining:    c.Remaining(),
-		RemainingPct: c.RemainingPct(),
+		Held:         held,
+		Remaining:    remaining,
+		RemainingPct: pct,
+		CarriedGrams: carried,
+		CarriedJars:  jars,
 		PerActiveDay: stats.PerActiveDay,
-		DaysLeft:     stats.DaysLeft(c.Remaining()),
+		DaysLeft:     stats.DaysLeft(remaining),
 	}
 }
 

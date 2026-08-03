@@ -213,6 +213,45 @@ func TestDashboardStorageCardListsProducts(t *testing.T) {
 	assert.Contains(t, out, "Cannamedical 28/1", "all of them")
 }
 
+// TestDashboardBillsTheFillNotTheShelf pins the storage card to the fill's
+// own jars. It once summed every jar on the shelf into a headline over
+// fill-plus-carry-over, so the total never matched the rows drawn under it.
+func TestDashboardBillsTheFillNotTheShelf(t *testing.T) {
+	at := time.Date(2026, time.July, 9, 10, 0, 0, 0, time.UTC)
+	mk := func(typ journal.Type, product string, grams float64, day int) journal.Event {
+		from, to, _ := journal.Flow(typ)
+		return journal.Event{
+			Type: typ, Product: product, Grams: grams, From: from, To: to,
+			OccurredAt: at.AddDate(0, 0, day),
+		}
+	}
+	events := []journal.Event{
+		mk(journal.Purchase, "old", 10, -40),
+		mk(journal.Grind, "old", 2, -35),
+		mk(journal.Purchase, "wcake", 20, 0),
+		mk(journal.Grind, "wcake", 1, 1),
+	}
+	products := &catalog.Catalog{}
+	require.NoError(t, products.Add(product("Khiron 20/1 Old Strain", "old")))
+	require.NoError(t, products.Add(product("Enua 22/1 Wedding Cake", "wcake")))
+	data := Data{
+		Workspace: &workspace.Workspace{
+			Products: products,
+			Devices:  &catalog.Devices{},
+			State:    ledger.Fold(events),
+		},
+		Now: at.AddDate(0, 0, 2),
+	}
+
+	out := render(t, data, dashboardScreen, 110, 44)
+
+	assert.Contains(t, out, "19.00 g", "The headline sums the jars the card lists")
+	assert.Contains(t, out, "of 20 g", "over what the fill dispensed")
+	assert.NotContains(t, out, "of 28 g", "not the whole shelf")
+	assert.Contains(t, out, "+ 8.00 g carried from earlier cycles",
+		"with the previous cycles' remainder on its own line")
+}
+
 func TestDashboardWallClockAndCycleStart(t *testing.T) {
 	app := New(sample(t))
 	app.screen = dashboardScreen

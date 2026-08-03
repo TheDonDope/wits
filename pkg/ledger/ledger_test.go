@@ -254,6 +254,40 @@ func TestCycleGap(t *testing.T) {
 		assert.Equal(t, 16.0, c.HeldOf("wedding-cake"), "Should give a product its fill plus its carry-over")
 	})
 
+	t.Run("TheFillIsNotTheShelf", func(t *testing.T) {
+		// The dashboard once billed the whole shelf to the current cycle: a
+		// fill of 40 read as "of 51" because eleven grams of older jars were
+		// still on the shelf, and the headline summed jars the card never
+		// listed. The fill counts its own jars — including what one of them
+		// still held from an earlier fill of the same product — and the older
+		// jars report separately.
+		s := Fold([]journal.Event{
+			event(journal.Purchase, "old-strain", 10, day(0)),
+			event(journal.Purchase, "wedding-cake", 10, day(0)),
+			event(journal.Grind, "old-strain", 2, day(5)),
+			event(journal.Grind, "wedding-cake", 7, day(6)),
+			// The next fill: a new product, and wedding-cake again with 3 g
+			// still in its jar. old-strain is not refilled.
+			event(journal.Purchase, "lemon-cookie", 20, day(30)),
+			event(journal.Purchase, "wedding-cake", 20, day(30)),
+			event(journal.Grind, "lemon-cookie", 5, day(35)),
+			event(journal.Grind, "wedding-cake", 4, day(36)),
+			event(journal.Grind, "old-strain", 1, day(37)),
+		})
+
+		require.Len(t, s.Cycles, 2)
+		c := &s.Cycles[1]
+		assert.Equal(t, 51.0, c.Held(), "The shelf: 40 filled + 11 carried")
+		assert.Equal(t, 43.0, c.Fill(), "The fill: 40 dispensed + 3 in wedding-cake's own jar")
+		assert.Equal(t, 34.0, c.FillRemaining(), "The fill minus its own jars' grinds, not old-strain's")
+		assert.InDelta(t, 34.0/43.0, c.FillRemainingPct(), 1e-9)
+
+		assert.Equal(t, 34.0, s.FillOnShelf(c), "Live storage of the fill's jars agrees, absent adjustments")
+		carried, jars := s.CarriedOnShelf(c)
+		assert.Equal(t, 7.0, carried, "old-strain's remainder stays the earlier cycles' business")
+		assert.Equal(t, 1, jars, "and it sits in one jar")
+	})
+
 	t.Run("SameDayFillsStayTogether", func(t *testing.T) {
 		s := Fold([]journal.Event{
 			event(journal.Purchase, "wedding-cake", 20, day(0)),

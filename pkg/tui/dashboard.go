@@ -139,12 +139,20 @@ func (d dashboard) quickActions(a *App, width int) string {
 func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	t := a.theme
 	stats := ledger.Summarise(c.Events)
-	remaining := c.Remaining()
-	fraction := c.RemainingPct()
+
+	// The card is the fill's: the headline sums the same jars the rows below
+	// draw, over what this fill dispensed into them. Older jars still on the
+	// shelf get their own line rather than a share of the arithmetic.
+	remaining := a.data.State.FillOnShelf(c)
+	held := c.Fill()
+	fraction := 0.0
+	if held > 0 {
+		fraction = clamp(remaining/held, 0, 1)
+	}
 
 	headline := t.Big.Render(fmt.Sprintf("%.2f g", remaining)) +
 		t.Dim.Render(fmt.Sprintf("  of %.0f g · cycle %d (started: %s), day %d",
-			c.Held(), len(a.data.State.Cycles), c.Start.Format("2006-01-02"),
+			held, len(a.data.State.Cycles), c.Start.Format("2006-01-02"),
 			daysBetween(c.Start, a.data.Now)+1))
 	bar := GradientGauge(w, fraction, t.Good, t.Level(fraction), t.Dim)
 
@@ -156,6 +164,10 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 		headline,
 		bar,
 		t.Dim.Render(fmt.Sprintf("%s on the shelf · %s", plural(len(c.Products), "product"), runway)),
+	}
+	if carried, jars := a.data.State.CarriedOnShelf(c); carried > 0 {
+		lines = append(lines, t.Dim.Render(
+			fmt.Sprintf("+ %.2f g carried from earlier cycles in %s", carried, plural(jars, "older jar"))))
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, append(lines, d.storageRows(a, c, w)...)...)
 }

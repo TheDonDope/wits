@@ -62,20 +62,22 @@ func writeStatus(out io.Writer, state *ledger.State) {
 		fmt.Fprintf(w, "%s\t%.2fg\t%.2fg\t%.2fg\t%s\n",
 			product, b.Storage, b.Stash, b.AVB, percent(b.Storage, heldOf(cycle, product, state)))
 	}
+	remaining := state.FillOnShelf(cycle)
 	fmt.Fprintf(w, "\t\t\t\t\n")
-	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", cycle.Remaining(), percent(cycle.Remaining(), cycle.Held()))
+	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", remaining, percent(remaining, cycle.Fill()))
 	w.Flush()
 
 	fmt.Fprintf(out, "\n%.2fg of %.2fg left over %s, %d of them with an entry\n",
-		cycle.Remaining(), cycle.Held(), plural(stats.ElapsedDays, "day"), stats.ActiveDays)
-	if cycle.Carried > 0 {
-		fmt.Fprintf(out, "%.2fg of that was carried over from the cycle before\n", cycle.Carried)
+		remaining, cycle.Fill(), plural(stats.ElapsedDays, "day"), stats.ActiveDays)
+	if carried, jars := state.CarriedOnShelf(cycle); carried > 0 {
+		fmt.Fprintf(out, "%.2fg more still on the shelf, carried from earlier cycles in %s\n",
+			carried, plural(jars, "older jar"))
 	}
 	if stats.PerActiveDay > 0 {
 		fmt.Fprintf(out, "%.2fg per active day, %.2fg median, %.2fg per elapsed day\n",
 			stats.PerActiveDay, stats.MedianPerDay, stats.PerElapsedDay)
 		fmt.Fprintf(out, "About %s left at that rate\n",
-			plural(int(math.Round(stats.DaysLeft(cycle.Remaining()))), "day"))
+			plural(int(math.Round(stats.DaysLeft(remaining))), "day"))
 	} else {
 		fmt.Fprintln(out, "Nothing ground yet this cycle, so there is no rate to extrapolate from")
 	}
