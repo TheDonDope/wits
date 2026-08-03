@@ -2,9 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v0.22.0"></a>
+## [v0.22.0] - 2026-08-03
+### Fix
+- **ledger:** bill the fill, not the shelf
+
+
 <a name="v0.21.0"></a>
 ## [v0.21.0] - 2026-08-03
 ### Docs
+- update changelog for v0.21.0
 - re-record the tour against the new dashboard
 - say how to install the working tree, and completion honestly
 - bring the dev diary up to the rebuild
@@ -402,7 +409,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.22.0...HEAD
+[v0.22.0]: https://github.com/TheDonDope/wits/compare/v0.21.0...v0.22.0
 [v0.21.0]: https://github.com/TheDonDope/wits/compare/v0.20.0...v0.21.0
 [v0.20.0]: https://github.com/TheDonDope/wits/compare/v0.19.0...v0.20.0
 [v0.19.0]: https://github.com/TheDonDope/wits/compare/v0.18.0...v0.19.0
