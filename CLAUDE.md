@@ -132,4 +132,3 @@ witsnap, not only against synthetic events.
   every gram knows its fill"). Read `git log` before writing one.
 - DEVDIARY.md is a per-day narrative log (newest first, see `dev-diary.sh`) —
   add an entry for a significant day of work, with the day's commits.
-```
