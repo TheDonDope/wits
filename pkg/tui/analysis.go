@@ -336,7 +336,13 @@ func (v analysisView) summary(a *App, events []journal.Event, width int) string 
 	t := a.theme
 	stats := ledger.Summarise(events)
 
-	scope := t.Subtitle.Render("Showing ") + t.PanelTitle.Render(scopes[v.scope]) +
+	label := scopes[v.scope]
+	if v.scope == 0 {
+		if c := a.data.Cycle(); c != nil {
+			label = fmt.Sprintf("%s (started: %s)", label, c.Start.Format("2006-01-02"))
+		}
+	}
+	scope := t.Subtitle.Render("Showing ") + t.PanelTitle.Render(label) +
 		t.Dim.Render("  ·  press s to change")
 
 	cols := lipgloss.JoinHorizontal(lipgloss.Top,
@@ -442,18 +448,46 @@ func (v analysisView) byProduct(a *App, events []journal.Event, width int) strin
 	for s := range totals {
 		slugs = append(slugs, s)
 	}
-	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
+
+	// In the cycle scope the ranking is the fill's: its own products first,
+	// and the older cycles' jars ground during the window beneath them,
+	// muted and saying whose they are — the window is honest about them,
+	// and so is the label.
+	older := map[string]bool{}
+	if v.scope == 0 {
+		if c := a.data.Cycle(); c != nil {
+			own := map[string]bool{}
+			for _, slug := range c.Products {
+				own[slug] = true
+			}
+			for _, s := range slugs {
+				older[s] = !own[s]
+			}
+		}
+	}
+	sort.Slice(slugs, func(i, j int) bool {
+		if older[slugs[i]] != older[slugs[j]] {
+			return !older[slugs[i]]
+		}
+		return totals[slugs[i]] > totals[slugs[j]]
+	})
 
 	bars := make([]Bar, 0, len(slugs))
 	for _, s := range slugs {
 		active := len(days[s])
+		note := fmt.Sprintf("%.1f g · %2.0f%% · %s · %.2f g/day",
+			totals[s], totals[s]/ground*100, plural(active, "day"),
+			totals[s]/float64(max(active, 1)))
+		color := t.StashC
+		if older[s] {
+			note += " · older cycle"
+			color = t.AVBC
+		}
 		bars = append(bars, Bar{
 			Label: data.ProductName(s),
 			Value: totals[s],
-			Note: fmt.Sprintf("%.1f g · %2.0f%% · %s · %.2f g/day",
-				totals[s], totals[s]/ground*100, plural(active, "day"),
-				totals[s]/float64(max(active, 1))),
-			Color: t.StashC,
+			Note:  note,
+			Color: color,
 		})
 	}
 	return BarChart(bars, width, t)
