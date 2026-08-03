@@ -6,7 +6,7 @@ COMMIT_DATE = $(shell git --no-pager log -1 --pretty='format:%cd' --date='format
 PKG = github.com/TheDonDope/wits/pkg/version
 LDFLAGS = -X $(PKG).Version=$(VERSION) -X $(PKG).CommitSHA=$(COMMIT_SHA) -X $(PKG).CommitDate=$(COMMIT_DATE)
 
-.PHONY: run install build build-windows clean doc changelog render-tapes \
+.PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release
 
 .DEFAULT_GOAL := build
@@ -22,6 +22,13 @@ install:
 	go install github.com/charmbracelet/freeze@latest
 	go install github.com/charmbracelet/gum@latest
 	go install github.com/charmbracelet/vhs@latest
+
+# The working tree, installed where `go install …@latest` would put a release:
+# $GOBIN, or $GOPATH/bin when GOBIN is unset. Stamped through the same ldflags
+# as `make build`, so --version names the commit rather than confessing
+# "unknown (built from source)".
+install-wits:
+	go install -ldflags "$(LDFLAGS)" ./cmd/wits
 
 build:
 	go build \
