@@ -49,6 +49,9 @@ with none all work without special cases.
 go install github.com/TheDonDope/wits/cmd/wits@latest
 ```
 
+From a checkout, `make install-wits` installs the working tree to the same
+place instead — see [Development](#development).
+
 A repository is created the way a git one is, and every command finds it by
 walking up from the working directory.
 
@@ -94,7 +97,28 @@ mac1-251    15.00 g · Cantourage 25/1 MAC1+
 wcake-221   18.00 g · Enua 22/1 Wedding Cake
 ```
 
-Install it with `wits completion bash` (or `zsh`, `fish`).
+Completion is a script the shell sources, written by `wits completion bash`
+(or `zsh`, `fish`). Bash only runs it through the `bash-completion` package,
+which is not always preinstalled — without it the script loads silently and
+does nothing. Install that first, give it the directory it reads user
+completions from, and write the script there:
+
+```sh
+sudo pacman -S bash-completion   # or apt/dnf install bash-completion,
+                                 # brew install bash-completion@2
+mkdir -p ~/.local/share/bash-completion/completions
+wits completion bash > ~/.local/share/bash-completion/completions/wits
+```
+
+A new shell picks it up from there; nothing needs sourcing in `.bashrc`, and
+no `sudo` was involved. To try it in the current shell without writing
+anything: `source <(wits completion bash)`. Zsh wants the script on its
+`fpath` as `_wits`, fish in its own completions directory:
+
+```sh
+wits completion zsh > "${fpath[1]}/_wits"                    # zsh
+wits completion fish > ~/.config/fish/completions/wits.fish  # fish
+```
 
 Anything can be backdated with `--date 2026-07-29`, which is what makes a
 forgotten evening loggable the next morning without pretending it was entered
@@ -331,13 +355,23 @@ in one binary, which shows up on screen as inconsistent colour.
 ## Development
 
 ```sh
-make build      # build ./bin/wits
-make run        # build it and run it
-make test       # test with coverage
-make cover      # coverage as HTML
+make build         # build ./bin/wits
+make run           # build it and run it
+make install-wits  # install the working tree as `wits`, replacing a release
+make test          # test with coverage
+make cover         # coverage as HTML
 make vet
-make preflight  # everything CI and the Codacy gate will say, said here first
+make preflight     # everything CI and the Codacy gate will say, said here first
 ```
+
+`make build` writes to `./bin/wits`, which is fine for a session in the
+checkout and wrong for daily use — the shell keeps finding whatever `wits` is
+on the PATH. `make install-wits` installs the working tree where
+`go install …@latest` puts a release: `$GOBIN`, or `$GOPATH/bin` when GOBIN is
+unset (`go env GOPATH` says which). It goes through the same ldflags as
+`make build`, so `wits --version` names the tag and commit it was built from;
+a bare `go install ./cmd/wits` skips the stamp and reports
+`unknown (built from source)`.
 
 `./preflight.sh watch <pr>` polls a pull request's checks and reads the Codacy
 delta the way the gate does, so a red X never comes as a surprise.
