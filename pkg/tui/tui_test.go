@@ -267,6 +267,49 @@ func TestDashboardWallClockAndCycleStart(t *testing.T) {
 		"The storage card should date the cycle it counts")
 }
 
+// TestAnalysisCycleScopeNamesItsWindow pins the cycle scope's heading to the
+// fill's start date, and the by-product panel to saying which grinds drew on
+// older cycles' jars during the window.
+func TestAnalysisCycleScopeNamesItsWindow(t *testing.T) {
+	at := time.Date(2026, time.July, 9, 10, 0, 0, 0, time.UTC)
+	mk := func(typ journal.Type, product string, grams float64, day int) journal.Event {
+		from, to, _ := journal.Flow(typ)
+		return journal.Event{
+			Type: typ, Product: product, Grams: grams, From: from, To: to,
+			OccurredAt: at.AddDate(0, 0, day),
+		}
+	}
+	events := []journal.Event{
+		mk(journal.Purchase, "old", 10, -40),
+		mk(journal.Purchase, "wcake", 20, 0),
+		mk(journal.Grind, "wcake", 1, 1),
+		// The older jar, ground inside the new cycle's window.
+		mk(journal.Grind, "old", 3, 2),
+	}
+	products := &catalog.Catalog{}
+	require.NoError(t, products.Add(product("Khiron 20/1 Old Strain", "old")))
+	require.NoError(t, products.Add(product("Enua 22/1 Wedding Cake", "wcake")))
+	data := Data{
+		Workspace: &workspace.Workspace{
+			Products: products,
+			Devices:  &catalog.Devices{},
+			State:    ledger.Fold(events),
+		},
+		Now: at.AddDate(0, 0, 3),
+	}
+
+	out := render(t, data, analysisScreen, 120, 44)
+
+	assert.Contains(t, out, "this cycle (started: 2026-07-09)",
+		"The scope heading should date the fill it frames")
+	assert.Contains(t, out, "older cycle",
+		"A grind drawing on an older cycle's jar should say so")
+	older := strings.Index(out, "Khiron 20/1 Old Strain")
+	own := strings.Index(out, "Enua 22/1 Wedding Cake")
+	require.True(t, older > 0 && own > 0, "both jars ground in the window are listed")
+	assert.Less(t, own, older, "The fill's own products rank first, older jars beneath")
+}
+
 func TestAnalysisScopes(t *testing.T) {
 	app := New(sample(t))
 	app.screen = analysisScreen
