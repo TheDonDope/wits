@@ -274,9 +274,8 @@ func (v analysisView) View(a *App, height int) string {
 		t.Rule("Grams per day", width),
 		v.perDay(a, played, width),
 		"",
-		t.Rule("By product", width),
-		v.byProduct(a, played, width),
 	}
+	sections = append(sections, v.byProductSections(a, played, width)...)
 	if v.scope != 0 {
 		sections = append(sections, "", t.Rule("Rhythm", width), v.rhythm(a, played, width))
 	}
@@ -428,7 +427,32 @@ func (v analysisView) rhythm(a *App, events []journal.Event, width int) string {
 // byProduct ranks the products by how much of them was ground, each under its
 // full name — the name is what the jar is called, and the bars can shrink —
 // with the share, the active days and the rate alongside.
-func (v analysisView) byProduct(a *App, events []journal.Event, width int) string {
+// byProductSections lays the breakdown out. In the cycle scope the fill gets
+// its own graph, and every older cycle whose jars were ground during the
+// window gets one of its own beneath it, newest first — the window is honest
+// about all of them, and nobody files under another fill's heading.
+func (v analysisView) byProductSections(a *App, events []journal.Event, width int) []string {
+	t := a.theme
+	current, olderBy, seqs := v.byProductBars(a, events)
+	if len(seqs) == 0 {
+		return []string{t.Rule("By product", width), BarChart(current, width, t)}
+	}
+	sections := []string{t.Rule("By product · this cycle", width), BarChart(current, width, t)}
+	for _, seq := range seqs {
+		title := "By product · older cycles"
+		if seq >= 0 {
+			title = fmt.Sprintf("By product · cycle %d", seq+1)
+		}
+		sections = append(sections, "", t.Rule(title, width), BarChart(olderBy[seq], width, t))
+	}
+	return sections
+}
+
+// byProductBars ranks the products by how much of them was ground, each bar
+// carrying the share, the active days and the rate. In the cycle scope the
+// jars of older cycles group under the cycle that filled them, returned as
+// bars per cycle with the cycles newest first.
+func (v analysisView) byProductBars(a *App, events []journal.Event) (current []Bar, olderBy map[int][]Bar, seqs []int) {
 	t, data := a.theme, a.data
 	totals := map[string]float64{}
 	days := map[string]map[string]bool{}
@@ -448,49 +472,55 @@ func (v analysisView) byProduct(a *App, events []journal.Event, width int) strin
 	for s := range totals {
 		slugs = append(slugs, s)
 	}
+	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
 
-	// In the cycle scope the ranking is the fill's: its own products first,
-	// and the older cycles' jars ground during the window beneath them,
-	// muted and saying whose they are — the window is honest about them,
-	// and so is the label.
-	older := map[string]bool{}
+	own := map[string]bool{}
 	if v.scope == 0 {
 		if c := a.data.Cycle(); c != nil {
-			own := map[string]bool{}
 			for _, slug := range c.Products {
 				own[slug] = true
 			}
-			for _, s := range slugs {
-				older[s] = !own[s]
+		}
+	}
+	olderBy = map[int][]Bar{}
+	for _, s := range slugs {
+		active := len(days[s])
+		bar := Bar{
+			Label: data.ProductName(s),
+			Value: totals[s],
+			Note: fmt.Sprintf("%.1f g · %2.0f%% · %s · %.2f g/day",
+				totals[s], totals[s]/ground*100, plural(active, "day"),
+				totals[s]/float64(max(active, 1))),
+			Color: t.StashC,
+		}
+		if len(own) > 0 && !own[s] {
+			bar.Color = t.AVBC
+			olderBy[fillSeqOf(a, s)] = append(olderBy[fillSeqOf(a, s)], bar)
+			continue
+		}
+		current = append(current, bar)
+	}
+	for seq := range olderBy {
+		seqs = append(seqs, seq)
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(seqs)))
+	return current, olderBy, seqs
+}
+
+// fillSeqOf returns the Seq of the cycle whose jar a grind drew on: the last
+// one to fill the product before the current cycle. A jar no fill ever
+// stocked — an imported grind with no purchase — returns -1 and stays a
+// nameless older cycle.
+func fillSeqOf(a *App, slug string) int {
+	cycles := a.data.State.Cycles
+	for i := len(cycles) - 2; i >= 0; i-- {
+		for _, p := range cycles[i].Products {
+			if p == slug {
+				return i
 			}
 		}
 	}
-	sort.Slice(slugs, func(i, j int) bool {
-		if older[slugs[i]] != older[slugs[j]] {
-			return !older[slugs[i]]
-		}
-		return totals[slugs[i]] > totals[slugs[j]]
-	})
-
-	bars := make([]Bar, 0, len(slugs))
-	for _, s := range slugs {
-		active := len(days[s])
-		note := fmt.Sprintf("%.1f g · %2.0f%% · %s · %.2f g/day",
-			totals[s], totals[s]/ground*100, plural(active, "day"),
-			totals[s]/float64(max(active, 1)))
-		color := t.StashC
-		if older[s] {
-			note += " · older cycle"
-			color = t.AVBC
-		}
-		bars = append(bars, Bar{
-			Label: data.ProductName(s),
-			Value: totals[s],
-			Note:  note,
-			Color: color,
-		})
-	}
-	return BarChart(bars, width, t)
+	return -1
 }
 
 // cycles compares whole cycles: how much was dispensed, how long it lasted, and

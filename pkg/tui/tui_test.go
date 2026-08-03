@@ -302,12 +302,14 @@ func TestAnalysisCycleScopeNamesItsWindow(t *testing.T) {
 
 	assert.Contains(t, out, "this cycle (started: 2026-07-09)",
 		"The scope heading should date the fill it frames")
-	assert.Contains(t, out, "older cycle",
-		"A grind drawing on an older cycle's jar should say so")
+	assert.Contains(t, out, "By product · this cycle",
+		"The fill gets a graph of its own")
+	assert.Contains(t, out, "By product · cycle 1",
+		"and an older cycle's jars get one under the cycle that filled them")
 	older := strings.Index(out, "Khiron 20/1 Old Strain")
 	own := strings.Index(out, "Enua 22/1 Wedding Cake")
 	require.True(t, older > 0 && own > 0, "both jars ground in the window are listed")
-	assert.Less(t, own, older, "The fill's own products rank first, older jars beneath")
+	assert.Less(t, own, older, "The fill's graph comes first, the older cycle's beneath")
 }
 
 func TestAnalysisScopes(t *testing.T) {
