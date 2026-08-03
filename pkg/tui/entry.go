@@ -514,13 +514,29 @@ const entryCleanHistory entryKind = iota + 500
 func newCleanHistoryForm(slugs []string, a *App) *entryForm {
 	f := &entryForm{kind: entryCleanHistory, slugs: slugs}
 
+	// The confirmation has to stay on screen. A workbook import leaves dozens
+	// of stale jars, and listing them all pushed the question below the fold —
+	// the form answered enter with its default, Keep, and looked like it did
+	// nothing. What does not fit folds into one line; the storage screen is
+	// the full listing.
+	room := max(3, a.height-20)
 	var listed []string
-	total := 0.0
+	total, folded, foldedGrams := 0.0, 0, 0.0
 	for _, slug := range slugs {
-		if b := a.data.State.Balances[slug]; b != nil {
-			listed = append(listed, fmt.Sprintf("%s — %.2f g", a.data.ProductName(slug), b.Stash))
-			total += b.Stash
+		b := a.data.State.Balances[slug]
+		if b == nil {
+			continue
 		}
+		total += b.Stash
+		if len(listed) < room {
+			listed = append(listed, fmt.Sprintf("%s — %.2f g", a.data.ProductName(slug), b.Stash))
+		} else {
+			folded++
+			foldedGrams += b.Stash
+		}
+	}
+	if folded > 0 {
+		listed = append(listed, fmt.Sprintf("… and %d more, %.2f g together", folded, foldedGrams))
 	}
 	f.form = huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(fmt.Sprintf("Clean history — %s, %.2f g", plural(len(slugs), "jar"), total)).
