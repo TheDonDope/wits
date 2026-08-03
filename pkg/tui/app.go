@@ -678,15 +678,55 @@ func Snapshot(data Data, screenName string, width, height int, presses []string)
 	app := New(data)
 	app.screen = screen(at)
 	var m tea.Model = app
-	m, _ = m.Update(tea.WindowSizeMsg{Width: width, Height: height})
+	m = deliver(m, tea.WindowSizeMsg{Width: width, Height: height})
 	for _, press := range presses {
 		msg, err := pressFor(press)
 		if err != nil {
 			return "", err
 		}
-		m, _ = m.Update(msg)
+		m = deliver(m, msg)
 	}
 	return stripANSI(m.View().Content), nil
+}
+
+// deliver sends a message and drains the commands it produces, the way the
+// runtime does. huh moves between fields by returning a command, so a snapshot
+// that dropped them would photograph every form frozen before its first field.
+func deliver(m tea.Model, msg tea.Msg) tea.Model {
+	msgs := []tea.Msg{msg}
+	for steps := 0; len(msgs) > 0 && steps < 128; steps++ {
+		next := msgs[0]
+		msgs = msgs[1:]
+		if batch, ok := next.(tea.BatchMsg); ok {
+			for _, cmd := range batch {
+				if out := promptly(cmd); out != nil {
+					msgs = append(msgs, out)
+				}
+			}
+			continue
+		}
+		var cmd tea.Cmd
+		m, cmd = m.Update(next)
+		if cmd != nil {
+			if out := promptly(cmd); out != nil {
+				msgs = append(msgs, out)
+			}
+		}
+	}
+	return m
+}
+
+// promptly runs a command, abandoning one that does not answer at once — a
+// cursor blink waits on a timer, and a snapshot has no interest in it.
+func promptly(cmd tea.Cmd) tea.Msg {
+	done := make(chan tea.Msg, 1)
+	go func() { done <- cmd() }()
+	select {
+	case msg := <-done:
+		return msg
+	case <-time.After(50 * time.Millisecond):
+		return nil
+	}
 }
 
 // pressFor turns a spelled-out key into the message the runtime would send.

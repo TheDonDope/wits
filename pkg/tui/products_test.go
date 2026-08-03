@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -223,6 +224,57 @@ func TestCleanHistoryOffersAndRecords(t *testing.T) {
 	reloaded, err := Load(app.data.Repo)
 	require.NoError(t, err)
 	assert.Zero(t, reloaded.State.Balances["lemon"].Stash, "The stash should be zero afterwards")
+}
+
+// TestCleanHistoryManyJars is the imported-workbook shape: dozens of stale
+// stashes. The dialog must keep its confirmation on screen — listing every
+// jar once pushed it below the fold, where enter answered with the default
+// Keep and the clean-up looked like it did nothing.
+func TestCleanHistoryManyJars(t *testing.T) {
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+	data, err := Load(r)
+	require.NoError(t, err)
+	rec := record.New(r, data.Products, data.Devices, data.State)
+
+	for i := 0; i < 40; i++ {
+		slug := fmt.Sprintf("old%02d", i)
+		_, _, _, err = rec.Buy(fmt.Sprintf("Maker %d/1 Old Strain %d", 20+i%10, i), slug, 10, time.Now().AddDate(0, 0, -400+i*2))
+		require.NoError(t, err)
+		_, err = rec.Grind(slug, 10, time.Now().AddDate(0, 0, -399+i*2))
+		require.NoError(t, err)
+	}
+	_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "wcake", 20, time.Now())
+	require.NoError(t, err)
+
+	data, err = Load(r)
+	require.NoError(t, err)
+	app := New(data)
+	app.screen = storageScreen
+	app.width, app.height = 120, 40
+	var m tea.Model = app
+
+	m, _ = send(m, tea.KeyPressMsg{Code: 'c', Text: "c"})
+	require.NotNil(t, app.entry, "c should open the confirmation")
+
+	view := stripANSI(app.entry.View(app, 118))
+	lines := strings.Count(view, "\n") + 1
+	assert.LessOrEqual(t, lines, app.height-2, "The dialog must fit under the tab bar")
+	assert.Contains(t, view, "Record them as consumed?", "with the question on screen")
+	assert.Contains(t, view, "more,", "and the jars that did not fit folded into one line")
+	assert.Contains(t, view, "400.00 g", "counting every jar in the total, listed or folded")
+
+	// Choose Clean and submit, the way a user would.
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyLeft})
+	_, msgs := send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	done, ok := findDone(msgs)
+	require.True(t, ok, "enter should submit the confirmation")
+	require.NoError(t, done.err)
+	assert.Contains(t, done.summary, "cleaned 40 stashes")
+
+	reloaded, err := Load(r)
+	require.NoError(t, err)
+	assert.Zero(t, reloaded.State.Balances["old17"].Stash, "The stale stashes are zeroed")
 }
 
 func TestCleanHistoryDeclined(t *testing.T) {
