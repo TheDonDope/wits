@@ -84,8 +84,12 @@ func writeMarkdown(out io.Writer, cycles []ledger.Cycle, products *catalog.Catal
 		fmt.Fprintln(out, "| | |")
 		fmt.Fprintln(out, "| --- | --- |")
 		fmt.Fprintf(out, "| Purchased | %.2f g |\n", c.Purchased)
+		if c.Carried > 0 {
+			fmt.Fprintf(out, "| Carried in from earlier | %.2f g |\n", c.Carried)
+		}
 		fmt.Fprintf(out, "| Ground | %.2f g |\n", c.Ground)
-		fmt.Fprintf(out, "| Remaining | %.2f g (%.0f%%) |\n", c.Remaining(), c.RemainingPct()*100)
+		fmt.Fprintf(out, "| Remaining of the fill | %.2f g (%.0f%%) |\n",
+			c.FillRemaining(), c.FillRemainingPct()*100)
 		fmt.Fprintf(out, "| Days elapsed | %d |\n", stats.ElapsedDays)
 		fmt.Fprintf(out, "| Days with an entry | %d |\n", stats.ActiveDays)
 		fmt.Fprintf(out, "| Per active day | %.2f g |\n", stats.PerActiveDay)

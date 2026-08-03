@@ -98,6 +98,49 @@ func (c Cycle) HeldOf(slug string) float64 {
 	return Round(c.PurchasedOf(slug) + c.Opening[slug])
 }
 
+// GroundOf returns the grams of one product ground during the cycle.
+func (c Cycle) GroundOf(slug string) float64 {
+	var grams float64
+	for _, e := range c.Events {
+		if e.Product == slug && e.Type == journal.Grind {
+			grams += e.Grams
+		}
+	}
+	return Round(grams)
+}
+
+// Fill returns the grams the cycle's own jars started with: what the fill
+// dispensed, plus what those same jars still carried from an earlier fill of
+// the same product — grinding draws on the jar, not on one vintage in it.
+// The remainder sitting in other jars is the previous cycles' business and
+// is deliberately not counted; Held is the whole shelf, Fill is this fill.
+func (c Cycle) Fill() float64 {
+	var grams float64
+	for _, slug := range c.Products {
+		grams += c.HeldOf(slug)
+	}
+	return Round(grams)
+}
+
+// FillRemaining returns the grams of the fill's own jars not yet ground, by
+// the cycle's events. A live shelf can disagree by whatever a reconciliation
+// adjusted; a screen holding the balances should prefer State.FillOnShelf.
+func (c Cycle) FillRemaining() float64 {
+	remaining := c.Fill()
+	for _, slug := range c.Products {
+		remaining -= c.GroundOf(slug)
+	}
+	return Round(remaining)
+}
+
+// FillRemainingPct returns how much of the fill is left, from 0 to 1.
+func (c Cycle) FillRemainingPct() float64 {
+	if c.Fill() == 0 {
+		return 0
+	}
+	return c.FillRemaining() / c.Fill()
+}
+
 // Fold replays the events and returns the state they describe. Events are
 // folded in journal order, which is the order they were recorded in.
 func Fold(events []journal.Event) *State {
@@ -189,6 +232,38 @@ func (s *State) CurrentCycle() *Cycle {
 		return &s.Cycles[n-1]
 	}
 	return nil
+}
+
+// FillOnShelf returns the storage the cycle's own jars still hold: the live
+// counterpart of Cycle.FillRemaining, which also feels what reconciliation
+// adjusted after the fact.
+func (s *State) FillOnShelf(c *Cycle) float64 {
+	var grams float64
+	for _, slug := range c.Products {
+		if b, ok := s.Balances[slug]; ok {
+			grams += b.Storage
+		}
+	}
+	return Round(grams)
+}
+
+// CarriedOnShelf returns the storage still sitting outside the cycle's own
+// jars, and how many jars hold it — the previous cycles' remainder, which the
+// fill's arithmetic deliberately leaves out.
+func (s *State) CarriedOnShelf(c *Cycle) (float64, int) {
+	own := map[string]bool{}
+	for _, slug := range c.Products {
+		own[slug] = true
+	}
+	var grams float64
+	var jars int
+	for slug, b := range s.Balances {
+		if !own[slug] && b.Storage > 0 {
+			grams += b.Storage
+			jars++
+		}
+	}
+	return Round(grams), jars
 }
 
 // Stats summarises a run of events over time.

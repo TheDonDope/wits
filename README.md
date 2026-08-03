@@ -126,19 +126,26 @@ then.
 
 ```console
 $ wits status
-On cycle 29, opened 2026-07-09 (day 24)
+On cycle 29, opened 2026-07-09 (day 26)
 
 PRODUCT                           STORAGE  STASH   AVB    LEFT
 420-evolution-ice-cream-cake-271  16.90g   3.10g   0.00g  84%
 enua-citrus-slap-361              17.09g   2.91g   0.00g  85%
-cantourage-mac1-251               17.23g   47.77g  0.00g  86%
+cantourage-mac1-251               17.23g   47.77g  0.00g  75%
 
-total                             41.00g                  68%
+total                             51.22g                  81%
 
-41.00g of 60.00g left over 23 days, 11 of them with an entry
+51.22g of 62.95g left over 23 days, 11 of them with an entry
+15.82g more still on the shelf, carried from earlier cycles in 7 older jars
 1.73g per active day, 1.37g median, 0.83g per elapsed day
-About 24 days left at that rate
+About 30 days left at that rate
 ```
+
+The total is the fill's: the jars this cycle dispensed into, over what they
+started with — which includes what one of them still held when the same
+product was refilled. What earlier cycles left in *other* jars is reported on
+its own line rather than folded into the arithmetic, so the sum on top is
+always the sum of the rows above it.
 
 `wits` on its own opens the interface: a dashboard of cards — storage, stash,
 sessions, devices, two rhythm calendars and a projection of the supply's
