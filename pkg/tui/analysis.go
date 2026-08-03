@@ -448,15 +448,10 @@ func (v analysisView) byProductSections(a *App, events []journal.Event, width in
 	return sections
 }
 
-// byProductBars ranks the products by how much of them was ground, each bar
-// carrying the share, the active days and the rate. In the cycle scope the
-// jars of older cycles group under the cycle that filled them, returned as
-// bars per cycle with the cycles newest first.
-func (v analysisView) byProductBars(a *App, events []journal.Event) (current []Bar, olderBy map[int][]Bar, seqs []int) {
-	t, data := a.theme, a.data
-	totals := map[string]float64{}
-	days := map[string]map[string]bool{}
-	ground := 0.0
+// grindTotals sums the grams and active days ground per product, and ranks
+// the products heaviest first.
+func grindTotals(events []journal.Event) (totals map[string]float64, days map[string]map[string]bool, ground float64, slugs []string) {
+	totals, days = map[string]float64{}, map[string]map[string]bool{}
 	for _, e := range events {
 		if e.Type != journal.Grind {
 			continue
@@ -468,11 +463,20 @@ func (v analysisView) byProductBars(a *App, events []journal.Event) (current []B
 		}
 		days[e.Product][e.OccurredAt.Format(time.DateOnly)] = true
 	}
-	slugs := make([]string, 0, len(totals))
 	for s := range totals {
 		slugs = append(slugs, s)
 	}
 	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
+	return totals, days, ground, slugs
+}
+
+// byProductBars ranks the products by how much of them was ground, each bar
+// carrying the share, the active days and the rate. In the cycle scope the
+// jars of older cycles group under the cycle that filled them, returned as
+// bars per cycle with the cycles newest first.
+func (v analysisView) byProductBars(a *App, events []journal.Event) (current []Bar, olderBy map[int][]Bar, seqs []int) {
+	t, data := a.theme, a.data
+	totals, days, ground, slugs := grindTotals(events)
 
 	own := map[string]bool{}
 	if v.scope == 0 {
