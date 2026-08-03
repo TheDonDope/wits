@@ -92,6 +92,7 @@ type productRow struct {
 	AVB      float64
 	Ground   float64
 	Bought   float64
+	Fills    int
 	LastSeen time.Time
 }
 
@@ -207,6 +208,7 @@ func (v storageView) tables(a *App) (shelf, history []productRow) {
 		switch e.Type {
 		case journal.Purchase:
 			r.Bought = ledger.Round(r.Bought + e.Grams)
+			r.Fills++
 		case journal.Grind:
 			r.Ground = ledger.Round(r.Ground + e.Grams)
 		}
@@ -474,14 +476,17 @@ func (v storageView) detail(a *App, r productRow, width int) string {
 	}
 
 	rows := []string{"  " + t.Dim.Render(strings.Join(facts, " · "))}
-	// The bar is what is still held against what was dispensed, which is what
-	// the label beside it says. A finished jar has nothing to fill a bar with.
+	// The bar is the jar's whole story: what is still held against everything
+	// ever dispensed of this product, across however many fills — the storage
+	// screen speaks lifetime, the dashboard speaks the cycle. A finished jar
+	// has nothing to fill a bar with.
 	if r.Bought > 0 && r.Held() > 0 {
 		remaining := clamp(r.Held()/r.Bought, 0, 1)
 		bar := Gauge(max(width-46, 10), remaining, t.Level(remaining), t.Dim)
 		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Left,
 			"  ", bar, " ",
-			t.Dim.Render(fmt.Sprintf("%.2f g of %.2f g dispensed still held", r.Held(), r.Bought)),
+			t.Dim.Render(fmt.Sprintf("%.2f g of %.2f g ever dispensed still held, over %s",
+				r.Held(), r.Bought, plural(r.Fills, "fill"))),
 		))
 	}
 	rows = append(rows,

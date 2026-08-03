@@ -57,21 +57,23 @@ func writeStatus(out io.Writer, state *ledger.State) {
 		if b == nil {
 			continue
 		}
-		// Against what the cycle started with, carry-over included: grinding
-		// down last month's remainder must not read as more than 100% left.
+		// The cycle's own share of the jar, against what its fill dispensed.
+		// A jar refilled before it was empty holds an older cycle's grams
+		// too, and those stand on the older cycle's account.
+		share := state.ShareOf(cycle, product)
 		fmt.Fprintf(w, "%s\t%.2fg\t%.2fg\t%.2fg\t%s\n",
-			product, b.Storage, b.Stash, b.AVB, percent(b.Storage, heldOf(cycle, product, state)))
+			product, share, b.Stash, b.AVB, percent(share, cycle.PurchasedOf(product)))
 	}
 	remaining := state.FillOnShelf(cycle)
 	fmt.Fprintf(w, "\t\t\t\t\n")
-	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", remaining, percent(remaining, cycle.Fill()))
+	fmt.Fprintf(w, "total\t%.2fg\t\t\t%s\n", remaining, percent(remaining, cycle.Purchased))
 	w.Flush()
 
 	fmt.Fprintf(out, "\n%.2fg of %.2fg left over %s, %d of them with an entry\n",
-		remaining, cycle.Fill(), plural(stats.ElapsedDays, "day"), stats.ActiveDays)
-	if carried, jars := state.CarriedOnShelf(cycle); carried > 0 {
-		fmt.Fprintf(out, "%.2fg more still on the shelf, carried from earlier cycles in %s\n",
-			carried, plural(jars, "older jar"))
+		remaining, cycle.Purchased, plural(stats.ElapsedDays, "day"), stats.ActiveDays)
+	if carried, jars, open := state.CarriedOnShelf(cycle); carried > 0 {
+		fmt.Fprintf(out, "%.2fg more in %s, %s still open\n",
+			carried, plural(jars, "older jar"), plural(open, "earlier cycle"))
 	}
 	if stats.PerActiveDay > 0 {
 		fmt.Fprintf(out, "%.2fg per active day, %.2fg median, %.2fg per elapsed day\n",
@@ -81,17 +83,6 @@ func writeStatus(out io.Writer, state *ledger.State) {
 	} else {
 		fmt.Fprintln(out, "Nothing ground yet this cycle, so there is no rate to extrapolate from")
 	}
-}
-
-// heldOf returns the grams of a product the cycle started with, so that a
-// per-product percentage has something to be a percentage of. A product this
-// cycle never bought and never carried falls back to what is held now, rather
-// than showing a dash for a jar that is plainly on the shelf.
-func heldOf(cycle *ledger.Cycle, product string, state *ledger.State) float64 {
-	if grams := cycle.HeldOf(product); grams > 0 {
-		return grams
-	}
-	return state.Held(product)
 }
 
 // percent formats a share as a percentage, or a dash when there is nothing to

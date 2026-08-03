@@ -106,16 +106,18 @@ type state struct {
 }
 
 // currentCycle is scoped to the fill: held and remaining count the cycle's
-// own jars, and what earlier cycles left in other jars reports separately.
+// own share of the jars, and what older still-open cycles hold reports
+// separately.
 type currentCycle struct {
-	Start        time.Time `json:"start"`
-	Held         float64   `json:"held"`
-	Remaining    float64   `json:"remaining"`
-	RemainingPct float64   `json:"remaining_pct"`
-	CarriedGrams float64   `json:"carried_grams,omitempty"`
-	CarriedJars  int       `json:"carried_jars,omitempty"`
-	PerActiveDay float64   `json:"per_active_day"`
-	DaysLeft     float64   `json:"days_left"`
+	Start         time.Time `json:"start"`
+	Held          float64   `json:"held"`
+	Remaining     float64   `json:"remaining"`
+	RemainingPct  float64   `json:"remaining_pct"`
+	CarriedGrams  float64   `json:"carried_grams,omitempty"`
+	CarriedJars   int       `json:"carried_jars,omitempty"`
+	CarriedCycles int       `json:"carried_cycles,omitempty"`
+	PerActiveDay  float64   `json:"per_active_day"`
+	DaysLeft      float64   `json:"days_left"`
 }
 
 type dayTotals struct {
@@ -175,21 +177,22 @@ func current(ws *workspace.Workspace) *currentCycle {
 	}
 	stats := ledger.Summarise(c.Events)
 	remaining := ws.State.FillOnShelf(c)
-	held := c.Fill()
+	held := c.Purchased
 	pct := 0.0
 	if held > 0 {
 		pct = remaining / held
 	}
-	carried, jars := ws.State.CarriedOnShelf(c)
+	carried, jars, open := ws.State.CarriedOnShelf(c)
 	return &currentCycle{
-		Start:        c.Start,
-		Held:         held,
-		Remaining:    remaining,
-		RemainingPct: pct,
-		CarriedGrams: carried,
-		CarriedJars:  jars,
-		PerActiveDay: stats.PerActiveDay,
-		DaysLeft:     stats.DaysLeft(remaining),
+		Start:         c.Start,
+		Held:          held,
+		Remaining:     remaining,
+		RemainingPct:  pct,
+		CarriedGrams:  carried,
+		CarriedJars:   jars,
+		CarriedCycles: open,
+		PerActiveDay:  stats.PerActiveDay,
+		DaysLeft:      stats.DaysLeft(remaining),
 	}
 }
 

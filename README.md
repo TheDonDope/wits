@@ -39,9 +39,12 @@ so nothing is lost between the pharmacy and the ashes.
                                       └───────────┘
 ```
 
-A **cycle** is one prescription fill, running until the next one — not a calendar
-month. That is why a fill lasting six weeks, a month with two fills, and a month
-with none all work without special cases.
+A **cycle** is one prescription fill: it opens with the purchase and closes
+when its own jars are empty — not a calendar month, and not the arrival of the
+next fill. A fill lasting six weeks, a month with two fills, a month with
+none, and a remainder outliving its successors all work without special
+cases; cycles simply overlap, each keeping account of what it dispensed until
+the last of it is ground.
 
 ## Getting started
 
@@ -131,21 +134,22 @@ On cycle 29, opened 2026-07-09 (day 26)
 PRODUCT                           STORAGE  STASH   AVB    LEFT
 420-evolution-ice-cream-cake-271  16.90g   3.10g   0.00g  84%
 enua-citrus-slap-361              17.09g   2.91g   0.00g  85%
-cantourage-mac1-251               17.23g   47.77g  0.00g  75%
+cantourage-mac1-251               17.23g   47.77g  0.00g  86%
 
-total                             51.22g                  81%
+total                             51.22g                  85%
 
-51.22g of 62.95g left over 23 days, 11 of them with an entry
-15.82g more still on the shelf, carried from earlier cycles in 7 older jars
+51.22g of 60.00g left over 23 days, 11 of them with an entry
+15.82g more in 7 older jars, 6 earlier cycles still open
 1.73g per active day, 1.37g median, 0.83g per elapsed day
 About 30 days left at that rate
 ```
 
-The total is the fill's: the jars this cycle dispensed into, over what they
-started with — which includes what one of them still held when the same
-product was refilled. What earlier cycles left in *other* jars is reported on
-its own line rather than folded into the arithmetic, so the sum on top is
-always the sum of the rows above it.
+Every gram in storage stands on the account of the cycle that dispensed it,
+so the total is the fill's own: 51.22 g of the 60 g this prescription
+brought. What older cycles still hold gets its own line — those cycles are
+simply still open. A jar refilled before it was empty holds two cycles'
+grams, and grinding draws the oldest first, the way inventory leaves a
+shelf.
 
 `wits` on its own opens the interface: a dashboard of cards — storage, stash,
 sessions, devices, two rhythm calendars and a projection of the supply's

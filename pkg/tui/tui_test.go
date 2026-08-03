@@ -248,8 +248,8 @@ func TestDashboardBillsTheFillNotTheShelf(t *testing.T) {
 	assert.Contains(t, out, "19.00 g", "The headline sums the jars the card lists")
 	assert.Contains(t, out, "of 20 g", "over what the fill dispensed")
 	assert.NotContains(t, out, "of 28 g", "not the whole shelf")
-	assert.Contains(t, out, "+ 8.00 g carried from earlier cycles",
-		"with the previous cycles' remainder on its own line")
+	assert.Contains(t, out, "+ 8.00 g in 1 older jar",
+		"with the previous cycle's remainder on its own line")
 }
 
 func TestDashboardWallClockAndCycleStart(t *testing.T) {
