@@ -96,60 +96,107 @@ type lot struct {
 	grams float64
 }
 
+// folder carries a fold's running accounts: what each cycle still holds in
+// storage across all its jars, and which cycle a product was last bought in.
+// cur indexes into s.Cycles rather than pointing at an element: appending to
+// the slice can move the backing array, which would strand a pointer.
+type folder struct {
+	s     *State
+	share []float64
+	last  map[string]int
+	cur   int
+}
+
+// settle closes a cycle the moment its share is ground away, and reopens it
+// if a reconciliation finds grams again.
+func (f *folder) settle(cycle int, at time.Time) {
+	if Round(f.share[cycle]) <= 0 {
+		f.share[cycle] = 0
+		f.s.Cycles[cycle].End = at
+	} else if !f.s.Cycles[cycle].End.IsZero() {
+		f.s.Cycles[cycle].End = time.Time{}
+	}
+}
+
+// consume draws grams out of a product's jar, oldest lot first.
+func (f *folder) consume(product string, grams float64, at time.Time) {
+	q := f.s.lots[product]
+	for grams > 0 && len(q) > 0 {
+		take := math.Min(grams, q[0].grams)
+		q[0].grams = Round(q[0].grams - take)
+		grams = Round(grams - take)
+		f.share[q[0].cycle] = Round(f.share[q[0].cycle] - take)
+		f.settle(q[0].cycle, at)
+		if q[0].grams <= 0 {
+			q = q[1:]
+		}
+	}
+	f.s.lots[product] = q
+}
+
+// credit puts found grams back into the jar's newest lot: an upward
+// reconciliation corrects the present jar, not a bygone fill.
+func (f *folder) credit(product string, grams float64, at time.Time) {
+	if len(f.s.Cycles) == 0 {
+		return
+	}
+	cycle := f.last[product]
+	q := f.s.lots[product]
+	if n := len(q); n > 0 {
+		cycle = q[n-1].cycle
+		q[n-1].grams = Round(q[n-1].grams + grams)
+	} else {
+		q = append(q, lot{cycle: cycle, grams: grams})
+	}
+	f.s.lots[product] = q
+	f.share[cycle] = Round(f.share[cycle] + grams)
+	f.settle(cycle, at)
+}
+
+// purchase books a fill into its cycle, opening a new one when the purchase
+// falls outside the running cycle's pickup window. The one before stays open
+// for as long as its own jars hold something: a fill outliving its month is
+// normal, and its remainder is its own, not the newcomer's.
+func (f *folder) purchase(e journal.Event) {
+	s := f.s
+	if f.cur == -1 || e.OccurredAt.Sub(s.Cycles[f.cur].Start) > CycleGap {
+		// The purchase itself has already been applied above, so the
+		// snapshot backs it out again: what was carried in is what sat in
+		// storage before this fill arrived.
+		opening := map[string]float64{}
+		carried := 0.0
+		for slug, bal := range s.Balances {
+			held := bal.Storage
+			if slug == e.Product {
+				held = Round(held - e.Grams)
+			}
+			if held > 0 {
+				opening[slug] = held
+				carried += held
+			}
+		}
+		s.Cycles = append(s.Cycles, Cycle{
+			Seq: len(s.Cycles), Start: e.OccurredAt,
+			Opening: opening, Carried: Round(carried),
+		})
+		f.share = append(f.share, 0)
+		f.cur = len(s.Cycles) - 1
+	}
+	s.Cycles[f.cur].Purchased = Round(s.Cycles[f.cur].Purchased + e.Grams)
+	if !contains(s.Cycles[f.cur].Products, e.Product) {
+		s.Cycles[f.cur].Products = append(s.Cycles[f.cur].Products, e.Product)
+	}
+	s.lots[e.Product] = append(s.lots[e.Product], lot{cycle: f.cur, grams: e.Grams})
+	f.share[f.cur] = Round(f.share[f.cur] + e.Grams)
+	f.last[e.Product] = f.cur
+}
+
 // Fold replays the events and returns the state they describe. Events are
 // folded in journal order, which is the order they were recorded in.
 func Fold(events []journal.Event) *State {
 	s := &State{Balances: map[string]*Balance{}, Events: events, lots: map[string][]lot{}}
+	f := &folder{s: s, last: map[string]int{}, cur: -1}
 
-	// share is what each cycle still holds in storage across all its jars;
-	// a cycle closes the moment its share is ground away, and reopens if a
-	// reconciliation finds grams again.
-	var share []float64
-	settle := func(cycle int, at time.Time) {
-		if Round(share[cycle]) <= 0 {
-			share[cycle] = 0
-			s.Cycles[cycle].End = at
-		} else if !s.Cycles[cycle].End.IsZero() {
-			s.Cycles[cycle].End = time.Time{}
-		}
-	}
-	// consume draws grams out of a product's jar, oldest lot first.
-	consume := func(product string, grams float64, at time.Time) {
-		q := s.lots[product]
-		for grams > 0 && len(q) > 0 {
-			take := math.Min(grams, q[0].grams)
-			q[0].grams = Round(q[0].grams - take)
-			grams = Round(grams - take)
-			share[q[0].cycle] = Round(share[q[0].cycle] - take)
-			settle(q[0].cycle, at)
-			if q[0].grams <= 0 {
-				q = q[1:]
-			}
-		}
-		s.lots[product] = q
-	}
-	// credit puts found grams back into the jar's newest lot: an upward
-	// reconciliation corrects the present jar, not a bygone fill.
-	credit := func(product string, grams float64, cycle int, at time.Time) {
-		if len(s.Cycles) == 0 {
-			return
-		}
-		q := s.lots[product]
-		if n := len(q); n > 0 {
-			cycle = q[n-1].cycle
-			q[n-1].grams = Round(q[n-1].grams + grams)
-		} else {
-			q = append(q, lot{cycle: cycle, grams: grams})
-		}
-		s.lots[product] = q
-		share[cycle] = Round(share[cycle] + grams)
-		settle(cycle, at)
-	}
-
-	// cur indexes into s.Cycles rather than pointing at an element: appending to
-	// the slice can move the backing array, which would strand a pointer.
-	cur := -1
-	lastCycleOf := map[string]int{}
 	for _, e := range events {
 		b := s.balance(e.Product)
 		apply(b, e.From, -e.Grams)
@@ -157,59 +204,25 @@ func Fold(events []journal.Event) *State {
 
 		switch e.Type {
 		case journal.Purchase:
-			if cur == -1 || e.OccurredAt.Sub(s.Cycles[cur].Start) > CycleGap {
-				// A new fill opens a new cycle. The one before stays open
-				// for as long as its own jars hold something: a fill
-				// outliving its month is normal, and its remainder is its
-				// own, not the newcomer's.
-				//
-				// The purchase itself has already been applied above, so the
-				// snapshot backs it out again: what was carried in is what sat
-				// in storage before this fill arrived.
-				opening := map[string]float64{}
-				carried := 0.0
-				for slug, bal := range s.Balances {
-					held := bal.Storage
-					if slug == e.Product {
-						held = Round(held - e.Grams)
-					}
-					if held > 0 {
-						opening[slug] = held
-						carried += held
-					}
-				}
-				s.Cycles = append(s.Cycles, Cycle{
-					Seq: len(s.Cycles), Start: e.OccurredAt,
-					Opening: opening, Carried: Round(carried),
-				})
-				share = append(share, 0)
-				cur = len(s.Cycles) - 1
-			}
-			s.Cycles[cur].Purchased = Round(s.Cycles[cur].Purchased + e.Grams)
-			if !contains(s.Cycles[cur].Products, e.Product) {
-				s.Cycles[cur].Products = append(s.Cycles[cur].Products, e.Product)
-			}
-			s.lots[e.Product] = append(s.lots[e.Product], lot{cycle: cur, grams: e.Grams})
-			share[cur] = Round(share[cur] + e.Grams)
-			lastCycleOf[e.Product] = cur
+			f.purchase(e)
 		case journal.Grind:
-			if cur != -1 {
-				s.Cycles[cur].Ground = Round(s.Cycles[cur].Ground + e.Grams)
+			if f.cur != -1 {
+				s.Cycles[f.cur].Ground = Round(s.Cycles[f.cur].Ground + e.Grams)
 			}
-			consume(e.Product, e.Grams, e.OccurredAt)
+			f.consume(e.Product, e.Grams, e.OccurredAt)
 		default:
 			// Anything else that moves grams through storage — adjustments
 			// down and up, corrections either way — settles the lots too, so
 			// a jar reconciled to zero closes its cycles' claims.
 			if e.From == journal.Storage {
-				consume(e.Product, e.Grams, e.OccurredAt)
+				f.consume(e.Product, e.Grams, e.OccurredAt)
 			}
 			if e.To == journal.Storage && e.Product != "" {
-				credit(e.Product, e.Grams, lastCycleOf[e.Product], e.OccurredAt)
+				f.credit(e.Product, e.Grams, e.OccurredAt)
 			}
 		}
-		if cur != -1 {
-			s.Cycles[cur].Events = append(s.Cycles[cur].Events, e)
+		if f.cur != -1 {
+			s.Cycles[f.cur].Events = append(s.Cycles[f.cur].Events, e)
 		}
 	}
 	return s
