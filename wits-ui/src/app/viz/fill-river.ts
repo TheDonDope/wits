@@ -137,7 +137,7 @@ export class FillRiver {
 
   protected span(b: Bar): string {
     const fmt = (s: string | Date) => new Date(s).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-    return b.c.open ? `since ${fmt(b.c.start)} · ${b.days} days, open` : `${fmt(b.c.start)} → ${fmt(b.c.end!)} · ${b.days} days`;
+    return b.c.open ? `since ${fmt(b.c.start)} · ${b.days} days, open` : `${fmt(b.c.start)} → ${fmt(b.c.end ?? b.c.start)} · ${b.days} days`;
   }
 
   protected tipX(b: Bar): number {

@@ -5,13 +5,17 @@ import { DestroyRef, ElementRef, Signal, afterNextRender, inject, signal } from 
  * a chart draws at its real size instead of being stretched to it.
  */
 export function hostWidth(fallback = 600): Signal<number> {
-  const el = inject(ElementRef<HTMLElement>);
+  const el = inject<ElementRef<HTMLElement>>(ElementRef);
   const width = signal(fallback);
   const destroy = inject(DestroyRef);
   afterNextRender(() => {
-    const ro = new ResizeObserver(([entry]) => width.set(Math.max(entry.contentRect.width, 120)));
+    const ro = new ResizeObserver(([entry]) => {
+      width.set(Math.max(entry.contentRect.width, 120));
+    });
     ro.observe(el.nativeElement);
-    destroy.onDestroy(() => ro.disconnect());
+    destroy.onDestroy(() => {
+      ro.disconnect();
+    });
   });
   return width;
 }

@@ -19,7 +19,9 @@ export class CountUp {
   private frame = 0;
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => cancelAnimationFrame(this.frame));
+    inject(DestroyRef).onDestroy(() => {
+      cancelAnimationFrame(this.frame);
+    });
     effect(() => {
       const to = this.value();
       const from = untracked(this.shown);

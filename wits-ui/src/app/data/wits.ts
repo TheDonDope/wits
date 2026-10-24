@@ -31,7 +31,9 @@ export class Wits {
 
   constructor() {
     const timer = setInterval(() => void this.poll(), 4000);
-    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(timer);
+    });
   }
 
   /** Reloads every view when the journal has grown or shrunk elsewhere. */
@@ -76,8 +78,10 @@ export class Wits {
       this.version.update((v) => v + 1);
       return out;
     } catch (err) {
+      // The server says why in {"error": "…"}; anything else says it itself.
       const e = err as HttpErrorResponse;
-      throw new Error(e.error?.error ?? e.message);
+      const body = e.error as { error?: string } | null;
+      throw new Error(body?.error ?? e.message, { cause: err });
     }
   }
 }
