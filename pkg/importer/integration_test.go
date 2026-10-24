@@ -19,8 +19,8 @@ import (
 // fixtures built to suit it.
 //
 // Fixtures agree with whatever the code believes. This does not: it has stale
-// dropdown labels, a sheet dated a year early, a row logged against no product
-// at all, and two products spelled more than one way. Every figure asserted here
+// dropdown labels, a sheet dated a year early, a 0.01 g fill, and two products
+// spelled more than one way. Every figure asserted here
 // was reconciled against the workbook read independently of this package.
 const workbook = "../../assets/Tracking.2022.cleaned.xlsx"
 
@@ -40,15 +40,15 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 	t.Run("Totals", func(t *testing.T) {
 		purchased, ground := result.Grams()
 
-		assert.Len(t, result.Sheets, 29, "one worksheet is one prescription cycle")
-		assert.Len(t, result.Products, 50, "50 distinct products, two pairs of them differing only in strength")
-		assert.InDelta(t, 1184.01, purchased, 0.005, "grams dispensed, per the sheet headers")
-		assert.InDelta(t, 1116.97, ground, 0.005, "grams the daily rows account for")
+		assert.Len(t, result.Sheets, 30, "one worksheet is one prescription cycle")
+		assert.Len(t, result.Products, 53, "53 distinct products, two pairs of them differing only in strength")
+		assert.InDelta(t, 1244.01, purchased, 0.005, "grams dispensed, per the sheet headers")
+		assert.InDelta(t, 1199.21, ground, 0.005, "grams the daily rows account for")
 
 		counts := result.Counts()
-		assert.Equal(t, 85, counts[journal.Purchase], "one fill per product per sheet")
-		assert.Equal(t, 1284, counts[journal.Grind],
-			"1286 rows carry an amount; two are logged against no product and are left out")
+		assert.Equal(t, 88, counts[journal.Purchase], "one fill per product per sheet")
+		assert.Equal(t, 1332, counts[journal.Grind],
+			"1332 rows carry an amount, every one of them against a product")
 	})
 
 	t.Run("Span", func(t *testing.T) {
@@ -83,14 +83,12 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 
 	t.Run("ReportsWhatDoesNotAddUp", func(t *testing.T) {
 		anomalies := result.Anomalies()
-		require.Len(t, anomalies, 3, "no more and no fewer than the three known problems")
+		require.Len(t, anomalies, 2, "no more and no fewer than the two known problems")
 
 		assert.Contains(t, anomalies[0], "2025-03")
 		assert.Contains(t, anomalies[0], "fall in 2024", "a sheet dated a year early")
 		assert.Contains(t, anomalies[1], "2025-06")
 		assert.Contains(t, anomalies[1], "typo", "a 0.01 g fill")
-		assert.Contains(t, anomalies[2], "2025-10")
-		assert.Contains(t, anomalies[2], "2.40 g", "grams logged against no product")
 	})
 
 	// Two cultivars in these records were dispensed at two strengths, and each
@@ -132,14 +130,14 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("EverythingLands", func(t *testing.T) {
-		assert.Len(t, events, 1369, "every entry reaches the journal")
+		assert.Len(t, events, 1420, "every entry reaches the journal")
 		assert.NoError(t, r.Journal().Verify(), "and the hash chain verifies over all of it")
 	})
 
 	t.Run("TheFoldMatchesTheSheets", func(t *testing.T) {
 		state := ledger.Fold(events)
 
-		assert.Len(t, state.Cycles, 29, "29 worksheets become 29 cycles")
+		assert.Len(t, state.Cycles, 30, "30 worksheets become 30 cycles")
 
 		// Mass is conserved: what was dispensed is either still in storage, in a
 		// stash, or has gone through a device.
@@ -151,7 +149,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 		_, sheetGround := result.Grams()
 		assert.InDelta(t, sheetGround, ground, 0.005,
 			"everything ground is in a stash, since the sheets record no sessions")
-		assert.InDelta(t, 1184.01, held+ground, 0.005,
+		assert.InDelta(t, 1244.01, held+ground, 0.005,
 			"and storage plus stashes equals what was dispensed")
 	})
 
@@ -161,7 +159,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 		assert.ErrorIs(t, err, ErrNotEmpty, "a second import would double every gram")
 		after, readErr := r.Journal().Events()
 		require.NoError(t, readErr)
-		assert.Len(t, after, 1369, "and nothing was added")
+		assert.Len(t, after, 1420, "and nothing was added")
 	})
 }
 

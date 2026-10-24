@@ -207,7 +207,8 @@ add up, so years of history can be checked before any of it is written.
 Products are resolved **by position**, through the bindings in the running
 balance formulas, rather than by the label in the strain column — those labels
 are dropdown values that were not always renamed as products changed. On the
-records this was written for, trusting the labels misplaces 1116.97 g.
+records this was written for, every one of the 1199.21 g ground is placed
+through a binding, never through a label.
 
 ## Correcting a mistake
 
@@ -288,13 +289,13 @@ diffs cleanly in git. Small, too, because most of what the journal stores is
 derivable and is left out: sequence numbers, account pairs and the whole hash
 chain are recomputed on restore.
 
-Nearly three years of real history, 1369 entries across 50 products:
+Three years of real history, 1420 entries across 53 products:
 
 | | bytes | |
 | --- | ---: | --- |
-| journal | 506,205 | |
-| **bundle** | **27,968** | **18×** |
-| bundle, gzipped | 6,399 | 79× |
+| journal | 524,834 | |
+| **bundle** | **29,207** | **18×** |
+| bundle, gzipped | 6,644 | 79× |
 
 ![Bundling and restoring](./assets/wits-bundle.gif)
 
