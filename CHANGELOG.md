@@ -2,9 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v0.32.0"></a>
+## [v0.32.0] - 2026-10-24
+### Fix
+- **tui:** a notice lasts until the next key, not forever
+
+
 <a name="v0.31.0"></a>
 ## [v0.31.0] - 2026-10-24
 ### Docs
+- update changelog for v0.31.0
 - **skills:** ship from a clean main, and stop when you cannot reach one
 
 ### Feat
@@ -516,7 +523,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.32.0...HEAD
+[v0.32.0]: https://github.com/TheDonDope/wits/compare/v0.31.0...v0.32.0
 [v0.31.0]: https://github.com/TheDonDope/wits/compare/v0.30.0...v0.31.0
 [v0.30.0]: https://github.com/TheDonDope/wits/compare/v0.29.0...v0.30.0
 [v0.29.0]: https://github.com/TheDonDope/wits/compare/v0.28.0...v0.29.0
