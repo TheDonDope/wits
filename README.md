@@ -566,6 +566,15 @@ opens either as the record stood that day.
 
 ![The record played back to February 2025](./assets/wits-ui-analysis.png)
 
+The analysis tab also draws **tolerance**: grams a day against how the sessions
+went, both over the same 14 days rolling. Tolerance creeps when the grams climb
+and the rating stays flat. Breaks, a week or more with nothing ground and no
+session, are shaded behind the curve, and the replay draws it day by day, so you
+can see whether it comes back down after one. A week, not three days: the
+workbook grinds every two or three days, and at three days its last 90 held
+eleven "breaks" that were only the habit. At a week it holds one, 12 to 18
+September, and ten over the whole record, the longest 99 days.
+
 On the jars, tick the cards — or **Select all** — and **Clear stash** records
 their stashes as consumed, one adjustment each in a single write: the
 terminal's history clean-up, for the stashes you choose.

@@ -1,7 +1,7 @@
 import { DestroyRef, signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { balances, byProduct, movingAverage, perDay, summarise } from './derive';
+import { balances, breaks, byProduct, movingAverage, perDay, summarise, tolerance } from './derive';
 import { Binding, Keys } from './keys';
 import { Entry } from './models';
 import { Replay, SPEEDS } from './replay';
@@ -173,5 +173,44 @@ describe('Keys', () => {
     keys.handle(press('k'));
     expect(runs).toBe(1);
     expect(keys.footer().map((b) => b.help)).toEqual(['move']);
+  });
+});
+
+describe('tolerance', () => {
+  const day = (n: number) => `2026-07-${String(n).padStart(2, '0')}`;
+  const sesh = (n: number, hash: string): Entry => ({ ...entry('sesh', day(n), 0.5), hash });
+
+  it('rolls grams a day and the overall rating over the window', () => {
+    const entries = [entry('grind', day(1), 2), entry('grind', day(2), 1), sesh(2, 'a'), sesh(3, 'b')];
+    const curve = tolerance(entries, new Map([['a', 4], ['b', 2]]), day(1), day(3));
+
+    expect(curve.map((p) => p.grams)).toEqual([2, 1.5, 1]);
+    expect(curve[0].rating).toBeNull();
+    expect(curve[2].rating).toBe(3);
+    expect(curve[2].ratings).toBe(2);
+  });
+
+  it('leaves out what was undone', () => {
+    const undone = { ...entry('grind', day(1), 5), corrected: true };
+    expect(tolerance([undone], new Map(), day(1), day(1))[0].grams).toBe(0);
+  });
+
+  it('drops a day out of the window once it is past it', () => {
+    const curve = tolerance([entry('grind', day(1), 14)], new Map(), day(1), day(16));
+    expect(curve[13].grams).toBe(1);
+    expect(curve[14].grams).toBe(0);
+  });
+
+  it('marks a week and more without use as a break, one still going included', () => {
+    const entries = [entry('grind', day(1), 1), entry('grind', day(5), 1), entry('grind', day(13), 1), sesh(14, 'a')];
+    expect(breaks(entries, day(1), day(22))).toEqual([
+      { from: day(6), to: day(12), days: 7 },
+      { from: day(15), to: day(22), days: 8 },
+    ]);
+  });
+
+  it('counts a session as use, though nothing was ground', () => {
+    const entries = [entry('grind', day(1), 1), sesh(5, 'a'), entry('grind', day(10), 1)];
+    expect(breaks(entries, day(1), day(10))).toEqual([]);
   });
 });
