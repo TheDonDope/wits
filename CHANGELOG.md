@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.55.0"></a>
+## [v0.55.0] - 2026-10-24
+### Feat
+- **export:** a range for the appointment, and a site for the pages
+
+### Refactor
+- **export:** the index needs no session
+
+
 <a name="v0.54.0"></a>
 ## [v0.54.0] - 2026-10-24
+### Docs
+- update changelog for v0.54.0
+
 
 <a name="v0.53.0"></a>
 ## [v0.53.0] - 2026-10-24
@@ -744,7 +756,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.54.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.55.0...HEAD
+[v0.55.0]: https://github.com/TheDonDope/wits/compare/v0.54.0...v0.55.0
 [v0.54.0]: https://github.com/TheDonDope/wits/compare/v0.53.0...v0.54.0
 [v0.53.0]: https://github.com/TheDonDope/wits/compare/v0.52.0...v0.53.0
 [v0.52.0]: https://github.com/TheDonDope/wits/compare/v0.51.0...v0.52.0
