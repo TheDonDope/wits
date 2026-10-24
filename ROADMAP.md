@@ -113,7 +113,9 @@ verifies against the one it came from.
 ### The repository — `wits init`
 
 `.wits` is created the way `git init` creates `.git`, and every command finds it
-by walking up from the working directory. Configuration lives in `config.yml`;
+by walking up from the working directory. Configuration lives in `config.yml` —
+only the format version and the theme; `log_file` named a `wits.log` that every
+launch opened and nothing wrote to, and is gone;
 there is no `.env` and no environment to set. The directory is `0700` and its
 files `0600`, because it is health data.
 
@@ -241,7 +243,8 @@ jar at the time (`Shortfalls`, said as what the jar held — "grind 5.00 g of
 wcake-221 took more than storage held — 1.00 g"; the recorder refuses these,
 but an import, a restore or a hand edit does not go through it), entries naming a product or device the catalogs lack (one line per name),
 corrections of entries that do not exist, and the mass balance added up
-straight from the entries — what came in, what went out, what is held. It
+straight from the entries — what came in, what went out, what is in the jars
+and what has gone through a vaporizer (it called all of that "held"). It
 changes nothing, and fails when it finds anything.
 
 ### The spreadsheet importer — `wits import`

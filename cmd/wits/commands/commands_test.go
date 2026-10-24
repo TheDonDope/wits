@@ -470,7 +470,7 @@ func TestFsckCommand(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "2 entries, 1 product, 0 devices")
-		assert.Contains(t, out, "20.00 g came in, 0.00 g went out, 20.00 g held — every gram accounted for")
+		assert.Contains(t, out, "20.00 g came in, 0.00 g went out; 20.00 g in the jars — every gram accounted for")
 		assert.Contains(t, out, "✓ the chain verifies")
 	})
 

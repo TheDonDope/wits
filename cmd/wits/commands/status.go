@@ -144,25 +144,30 @@ func entries(n int) string {
 }
 
 // massLine adds the grams up straight from the entries, apart from the fold:
-// what came in from outside, what went out, and what the accounts hold. The
-// first less the second must be the third, or a gram has gone missing.
+// what came in from outside, what went out, and where the rest is — in the
+// jars, or through a vaporizer and not yet weighed as AVB. The first less the
+// second must be the rest, or a gram has gone missing. It used to call all of
+// the rest "held", vaped grams included.
 func massLine(state *ledger.State) string {
-	var in, out, held float64
+	var in, out, jars, vaped journal.Centigrams
 	for _, e := range state.Applied() {
 		if e.From == journal.External && e.To != journal.External {
-			in += e.Grams
+			in += journal.CG(e.Grams)
 		}
 		if e.To == journal.External && e.From != journal.External {
-			out += e.Grams
+			out += journal.CG(e.Grams)
 		}
 	}
 	for _, b := range state.Balances {
-		held += b.Storage + b.Stash + b.Consumed + b.AVB
+		jars += journal.CG(b.Storage) + journal.CG(b.Stash) + journal.CG(b.AVB)
+		vaped += journal.CG(b.Consumed)
 	}
-	in, out, held = ledger.Round(in), ledger.Round(out), ledger.Round(held)
-	line := fmt.Sprintf("%.2f g came in, %.2f g went out, %.2f g held", in, out, held)
-	if ledger.Round(in-out) != held {
-		return line + fmt.Sprintf(" — %.2f g unaccounted for", ledger.Round(in-out-held))
+	line := fmt.Sprintf("%.2f g came in, %.2f g went out; %.2f g in the jars", in.Grams(), out.Grams(), jars.Grams())
+	if vaped != 0 {
+		line += fmt.Sprintf(", %.2f g through a vaporizer", vaped.Grams())
+	}
+	if missing := in - out - jars - vaped; missing != 0 {
+		return line + fmt.Sprintf(" — %.2f g unaccounted for", missing.Grams())
 	}
 	return line + " — every gram accounted for"
 }

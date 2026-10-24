@@ -296,7 +296,7 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
 
 ```text
 .wits/
-  config.yml      # settings — the log file and the interface theme
+  config.yml      # settings — the interface theme
   products.yml    # the catalog
   devices.yml     # vaporizers and their temperature ranges
   journal.ndjson  # append-only, one entry per line, never rewritten
@@ -323,12 +323,12 @@ The chain is checked every time a repository opens. If the journal was changed
 outside Wits, `wits status` and the interface say so, and `wits fsck` says
 where — along with any entry that took grams that were not in the jar at the
 time, any entry naming a product or device the catalogs lack, and whether every
-gram that came in is held or went out:
+gram that came in is in the jars, through a vaporizer, or went out:
 
 ```console
 $ wits fsck
 1429 entries, 53 products, 1 device
-1254.00 g came in, 0.00 g went out, 1254.00 g held — every gram accounted for
+1254.00 g came in, 0.00 g went out; 1254.00 g in the jars — every gram accounted for
 ✓ the chain verifies, and nothing is out of place
 ```
 
