@@ -1,14 +1,15 @@
-"""
-The workbook read from its cells, without the importer.
+"""The workbook read from its cells, without the importer."""
 
-The importer's tests pin figures that must be reconciled independently of
-it — this is that independent reading. Run with the doctor's venv:
-
-    ~/.cache/wits-dev/venv/bin/python -I .claude/skills/workbook/cells.py [file]
-
-Each sheet is one fill: product rows (a name, then grams dispensed) above a
-row headed Date/Datum, and below it one row per grinding, the grams in C.
-"""
+# The importer's tests pin figures that must be reconciled independently of
+# it; this is that independent reading. Run with the doctor's venv:
+#
+#     ~/.cache/wits-dev/venv/bin/python -I .claude/skills/workbook/cells.py [file]
+#
+# Each sheet is one fill: product rows (a name, then grams dispensed) above a
+# row headed Date/Datum, and below it one row per grinding, the grams in C.
+#
+# The docstring stays on one line on purpose: Codacy enables both D212 and
+# D213, which contradict each other for any multi-line docstring.
 import sys
 from collections import Counter
 
