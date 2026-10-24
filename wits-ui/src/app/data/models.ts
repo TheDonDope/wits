@@ -39,6 +39,8 @@ export interface Fill {
   carried: { grams: number; jars: number; cycles: number };
   products: FillProduct[];
   shelf_projection: Projection;
+  /** When to order the next prescription: the projection's empty day, less the pharmacy's lead time. */
+  refill?: { order_by: string; empty_on: string; lead_days: number; overdue: boolean };
 }
 
 /** Every jar standing today — the shelf's scope. */

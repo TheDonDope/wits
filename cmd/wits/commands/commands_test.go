@@ -763,3 +763,35 @@ func TestSyncCommands(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "Already up to date.")
 }
+
+func TestRefillCommand(t *testing.T) {
+	dir := repository(t)
+	today := time.Now()
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", today.AddDate(0, 0, -2).Format(time.DateOnly))
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "2", "--date", today.AddDate(0, 0, -1).Format(time.DateOnly))
+	require.NoError(t, err)
+	orderBy := today.AddDate(0, 0, 9-3)
+
+	out, err := run(t, dir, Refill)
+
+	require.NoError(t, err)
+	assert.Contains(t, out, "18.00 g on the shelf, at 2.00 g a day", "Should say what it projects from")
+	assert.Contains(t, out, "Order the next prescription by "+orderBy.Format("Mon 2 January")+", with 3 days for the pharmacy.")
+
+	ics := filepath.Join(t.TempDir(), "refill.ics")
+	out, err = run(t, dir, Refill, "--lead", "5", "--ics", ics)
+	require.NoError(t, err)
+	assert.Contains(t, out, "with 5 days for the pharmacy", "Should use the lead time given")
+	cal, err := os.ReadFile(ics)
+	require.NoError(t, err)
+	assert.Contains(t, string(cal), "DTSTART;VALUE=DATE:"+today.AddDate(0, 0, 9-5).Format("20060102")+"\r\n",
+		"Should remind on the day to order by, in iCalendar's line endings")
+
+	out, err = run(t, dir, Status)
+	require.NoError(t, err)
+	assert.Contains(t, out, "with 5 days for the pharmacy", "Should keep the lead time, and status should say it")
+
+	_, err = run(t, dir, Refill, "--lead", "-1")
+	assert.ErrorContains(t, err, "0 or more")
+}

@@ -466,3 +466,28 @@ func TestAClashIsUndone(t *testing.T) {
 	assert.Equal(t, Fill(0), s.FillOnShelf(&s.Cycles[0]),
 		"The undo puts back only what the grind took from the fill — it took nothing, and the fill read 1.5 g")
 }
+
+func TestPlanRefill(t *testing.T) {
+	s := Fold([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 20, day(0)),
+		event(journal.Grind, "wedding-cake", 2, day(1)),
+		event(journal.Grind, "wedding-cake", 1, day(2)),
+	})
+	c := &s.Cycles[0]
+
+	plan, ok := PlanRefill(c, day(2), 3)
+
+	require.True(t, ok)
+	assert.Equal(t, Shelf(17), plan.Shelf, "The shelf is what the fill brought, less every grind")
+	assert.Equal(t, 1.5, plan.Rate, "At the fill's rate, per day with grinding")
+	assert.Equal(t, midnight(day(14)), plan.EmptyOn, "17 g at 1.5 g a day runs out on the 12th day from now")
+	assert.Equal(t, midnight(day(11)), plan.OrderBy, "Three days before that")
+	assert.False(t, plan.Overdue(day(11)), "The day to order by itself is not late")
+	assert.True(t, plan.Overdue(day(12)), "The day after it is")
+
+	_, ok = PlanRefill(nil, day(2), 3)
+	assert.False(t, ok, "There is nothing to plan without a fill")
+	fresh := Fold([]journal.Event{event(journal.Purchase, "wedding-cake", 20, day(0))})
+	_, ok = PlanRefill(&fresh.Cycles[0], day(0), 3)
+	assert.False(t, ok, "Nor without a rate")
+}

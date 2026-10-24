@@ -152,6 +152,7 @@ total                         36.73g                 61%
 8.07g more in 2 older jars, 1 earlier cycle still open
 1.93g per active day, 1.69g median, 0.81g per elapsed day
 About 19 days' worth at that rate
+Order the next prescription by Sat 14 November, with 3 days for the pharmacy.
 ```
 
 Every gram in storage stands on the account of the cycle that dispensed it,
@@ -160,6 +161,20 @@ brought. What older cycles still hold gets its own line — those cycles are
 simply still open. A jar refilled before it was empty holds two cycles'
 grams, and grinding draws the oldest first, the way inventory leaves a
 shelf.
+
+The last line is the refill planner. The shelf, 44.80 g in every jar, runs
+out on 17 November at the fill's 1.93 g a day, and the pharmacy needs its lead
+time before that. `wits refill` says it at length, `--lead 5` changes the lead
+time and keeps it, and `--ics refill.ics` writes a calendar reminder for the
+morning of the day to order by. The dashboards say it under their projection
+of the supply.
+
+```console
+$ wits refill --ics refill.ics
+44.80 g on the shelf, at 1.93 g a day with grinding: empty on Tue 17 November.
+Order the next prescription by Sat 14 November, with 3 days for the pharmacy.
+Wrote a reminder for 2026-11-14 to refill.ics
+```
 
 `wits` on its own opens the interface: a dashboard of cards — storage, stash,
 sessions, devices, two rhythm calendars and a projection of the supply's
@@ -202,6 +217,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
 | `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
 | `wits status` | What is left, and how long it will last |
+| `wits refill` | When to order the next prescription; `--lead` for the pharmacy's days, `--ics` for a reminder |
 | `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
 | `wits show [entry]` | One entry in full: what it moved, the jar before and after, what corrects it |
 | `wits revert <entry>` | Undo an entry by recording a correction |

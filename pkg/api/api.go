@@ -307,6 +307,17 @@ type fill struct {
 	// ShelfProjection is the shelf's, not the fill's: everything standing
 	// when the fill arrived, less every grind since, and on at the rate.
 	ShelfProjection projection `json:"shelf_projection"`
+	// Refill is when to order the next prescription: the projection's empty
+	// day, less the pharmacy's lead time.
+	Refill *refill `json:"refill,omitempty"`
+}
+
+// refill is ledger.Refill as a client reads it.
+type refill struct {
+	OrderBy  string `json:"order_by"`
+	EmptyOn  string `json:"empty_on"`
+	LeadDays int    `json:"lead_days"`
+	Overdue  bool   `json:"overdue"`
 }
 
 // projection is the shelf's grams day by day since the fill arrived, and on
@@ -386,6 +397,10 @@ func fillOf(ws *workspace.Workspace) *fill {
 		f.RemainingPct = float64(remaining / c.Purchased)
 	}
 	f.ShelfProjection = projectionOf(c, ws.OpenedAt, stats.PerActiveDay)
+	if plan, ok := ledger.PlanRefill(c, ws.OpenedAt, ws.Repo.Config.Lead()); ok {
+		f.Refill = &refill{OrderBy: plan.OrderBy.Format(time.DateOnly), EmptyOn: plan.EmptyOn.Format(time.DateOnly),
+			LeadDays: plan.Lead, Overdue: plan.Overdue(ws.OpenedAt)}
+	}
 	grams, jars, cycles := ws.State.CarriedOnShelf(c)
 	f.Carried = carried{Grams: float64(grams), Jars: jars, Cycles: cycles}
 	for _, slug := range c.Products {

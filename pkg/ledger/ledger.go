@@ -633,3 +633,49 @@ func contains(s []string, v string) bool {
 	}
 	return false
 }
+
+// Refill is when to order the next prescription: the day the shelf runs out
+// at the fill's rate, less the pharmacy's lead time.
+type Refill struct {
+	// Shelf is what stands in storage today, every jar — the projection's
+	// level, not the fill's own grams, since jars drain oldest first.
+	Shelf Shelf
+	// Rate is the fill's grams per day with grinding, the rate every
+	// projection runs at.
+	Rate float64
+	// EmptyOn is the day the shelf runs out; OrderBy, Lead days before it.
+	EmptyOn, OrderBy time.Time
+	Lead             int
+}
+
+// Overdue reports whether the day to order by has passed.
+func (r Refill) Overdue(now time.Time) bool { return midnight(r.OrderBy).Before(midnight(now)) }
+
+// PlanRefill is when to order, as the supply projection sees it: the shelf
+// held when the fill arrived, less every grind since, running down from now
+// at the fill's rate. It is false without a fill or a rate to go by.
+func PlanRefill(c *Cycle, now time.Time, lead int) (Refill, bool) {
+	if c == nil {
+		return Refill{}, false
+	}
+	shelf := journal.CG(float64(c.Held()))
+	for _, e := range c.Events {
+		if e.Type == journal.Grind && !e.OccurredAt.After(now) {
+			shelf -= journal.CG(e.Grams)
+		}
+	}
+	rate := Summarise(c.Events).PerActiveDay
+	if rate <= 0 {
+		return Refill{}, false
+	}
+	shelf = max(shelf, 0)
+	empty := midnight(now).AddDate(0, 0, int(math.Ceil(shelf.Grams()/rate)))
+	return Refill{Shelf: Shelf(shelf.Grams()), Rate: rate, EmptyOn: empty,
+		OrderBy: empty.AddDate(0, 0, -lead), Lead: lead}, true
+}
+
+// midnight is the start of the calendar day a moment falls on, in its zone.
+func midnight(t time.Time) time.Time {
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
+}
