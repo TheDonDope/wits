@@ -15,6 +15,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/remote"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/spf13/cobra"
 )
 
@@ -65,12 +66,17 @@ var Bundle = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		seals, err := seal.Store{Dir: s.Repo.SealsDir()}.All()
+		if err != nil {
+			return err
+		}
 		if err := bundle.Write(out, bundle.Contents{
 			Products: s.Products,
 			Devices:  s.Devices,
 			Events:   events,
 			Ratings:  s.Ratings,
 			Prices:   s.Prices,
+			Seals:    seals,
 		}); err != nil {
 			return err
 		}
@@ -188,8 +194,17 @@ func restore(r *repo.Repo, contents *bundle.Contents, step func(string)) error {
 	return restorePrices(r, contents, step)
 }
 
-// restorePrices writes a bundle's price log back, and checks the chain it made.
+// restorePrices writes a bundle's price log back, and checks the chain it
+// made; then its seals.
 func restorePrices(r *repo.Repo, contents *bundle.Contents, step func(string)) error {
+	if len(contents.Seals) > 0 {
+		step("restoring " + plural(len(contents.Seals), "seal"))
+		for _, f := range contents.Seals {
+			if err := (seal.Store{Dir: r.SealsDir()}).Save(f); err != nil {
+				return err
+			}
+		}
+	}
 	if len(contents.Prices) == 0 {
 		return nil
 	}

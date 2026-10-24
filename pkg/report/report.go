@@ -21,6 +21,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -51,6 +52,9 @@ type Report struct {
 
 	Entries int
 	Head    string
+	// Seal is the seal of the head, when it has one: who vouches for the
+	// journal this page was made from.
+	Seal *seal.Seal
 }
 
 // Use is what one product went through in the days asked for.
@@ -93,6 +97,7 @@ func Build(ws *workspace.Workspace, from, to time.Time, version string) Report {
 		Days: int(to.Sub(from).Hours()/24) + 1, Entries: len(ws.State.Events)}
 	if events, err := ws.Journal().Events(); err == nil && len(events) > 0 {
 		r.Head = events[len(events)-1].Hash
+		r.Seal = sealOf(ws, r.Head)
 	}
 	var in []journal.Event
 	for _, e := range ledger.Standing(ws.State.Events) {
@@ -230,6 +235,20 @@ func now(ws *workspace.Workspace) *Now {
 		n.EmptyOn, n.OrderBy, n.HasRefill = plan.EmptyOn, plan.OrderBy, true
 	}
 	return n
+}
+
+// sealOf is the kept seal of the head, if there is one that verifies.
+func sealOf(ws *workspace.Workspace, head string) *seal.Seal {
+	kept, err := seal.Store{Dir: ws.Repo.SealsDir()}.All()
+	if err != nil {
+		return nil
+	}
+	for _, f := range kept {
+		if s, err := seal.Parse(f.Text); err == nil && s.Head == head && s.Verify() == nil {
+			return &s
+		}
+	}
+	return nil
 }
 
 func midnight(t time.Time) time.Time {
@@ -378,6 +397,10 @@ func (p *page) footer(r Report) {
 		head = fmt.Sprintf("%d entries, whose last is %s", r.Entries, r.Head[:16])
 	}
 	p.text(margin, margin+10, 7, false, fmt.Sprintf("From the hash-chained journal kept by wits %s: %s. `wits fsck` checks it.", r.Version, head))
+	if r.Seal != nil {
+		p.text(margin, margin, 7, false, fmt.Sprintf("Sealed %s by the key %s: `wits verify %s.seal` checks the seal.",
+			long(r.Seal.At.Local()), seal.Fingerprint(r.Seal.Key), r.Seal.Name()))
+	}
 }
 
 func long(t time.Time) string { return t.Format("2 January 2006") }

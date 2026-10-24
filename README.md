@@ -235,6 +235,8 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits remote add <folder>` | Share the repository through a folder; `--key` on every device after the first |
 | `wits push` / `wits pull` | Write the repository to the folder; bring in what other devices wrote there |
 | `wits fsck` | Check the journal and the catalogs for damage |
+| `wits seal` | Sign the journal's head; `--timestamp` anchors it with OpenTimestamps, `--upgrade` fetches the proof |
+| `wits verify <file.seal>` | Check a seal: its signature, the journal it seals, its timestamp |
 | `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
 
 Every command takes `--help`, and `buy`, `grind` and `sesh` take `--date`.
@@ -329,6 +331,8 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
   effects.ndjson  # the effect log: ratings of sessions, append-only too
   prices.ndjson   # the price log: what each purchase cost, append-only too
   remote.key      # the age key the remote is encrypted to; never in the remote
+  seal.key        # the key seals are signed with; yours, and in no bundle or remote
+  seals/          # the seals of the journal's head, and their timestamp proofs
   index/          # reserved for a cached fold; nothing writes it yet
   *.lock          # empty; what two writers of one file take turns on
 ```
@@ -362,9 +366,10 @@ $ wits fsck
 ```
 
 The directory is created `0700` and its files `0600`. Nothing is transmitted
-anywhere; the application makes no network calls at all. `wits push` writes to a
-folder you name, encrypted, and what carries the folder further is yours to
-choose.
+anywhere unless you ask. `wits push` writes to a folder you name, encrypted, and
+what carries the folder further is yours to choose. `wits seal --timestamp`
+is the one network call wits makes, and only when asked. It sends one SHA-256,
+the seal's hash and nothing else, to the public OpenTimestamps calendars.
 
 ## Bundles
 
@@ -375,9 +380,9 @@ every entry in one go and checks the chain it made; a bundle that does not
 restore whole restores nothing. Bundles written before v0.41.0 left out the
 accounts of undos and weighings; they are recovered when such a bundle is
 restored, and one that cannot be recovered is refused rather than restored
-wrong. The effect log and the price log travel in the bundle too, after the
-entries (format 4; a build before v0.61.0 refuses one, rather than dropping
-the prices).
+wrong. The effect log, the price log and the seals with their timestamps
+travel in the bundle too, after the entries (format 5; an older build refuses
+one, rather than dropping what it cannot read).
 
 It is plain text, so the record stays legible with nothing but a text editor and
 diffs cleanly in git. Small, too, because most of what the journal stores is
@@ -456,6 +461,37 @@ Wrote a report for 2026-08-01 to 2026-10-24 to wits-report-2026-10-24.pdf
 Its figures are the range's own, the same `wits export --from --to` gives:
 67.56 g ground on 33 of the 85 days. The PDF is written by wits itself, in the
 Helvetica every reader has, and this one is 5,004 bytes.
+
+## A chain others can check
+
+The journal is hash-chained, so its last hash fixes everything before it.
+`wits seal` signs that hash with a key of your own (Ed25519, made the first
+time in `.wits/seal.key`). `--timestamp` has the OpenTimestamps calendars
+commit the seal's hash into Bitcoin, which proves it existed by a time nobody
+can move. A doctor or an authority can then check a report against the journal
+without trusting the patient or wits: the report's footer names the seal and
+the key's fingerprint, `wits verify` checks the seal, and `ots verify` or
+opentimestamps.org check the `.ots` proof with no wits at all.
+
+```console
+$ wits seal --timestamp
+Made a sealing key in .wits/seal.key; its fingerprint is SHA256:t3GaiTSwisPSicN8ccsjAcVflyo7R9oxCglLYSluQQM
+Sealed the journal's 1429 entries, head 1639d82, as 2026-10-24-1639d829b7e8.seal
+Sent the seal's SHA-256, and nothing else, to 4 calendars; the proof is 2026-10-24-1639d829b7e8.ots, pending until it is in a block.
+$ wits verify .wits/seals/2026-10-24-1639d829b7e8.seal
+✓ signed by SHA256:t3GaiTSwisPSicN8ccsjAcVflyo7R9oxCglLYSluQQM on 24 October 2026, 22:13
+✓ the journal here holds what was sealed: 1429 entries, up to 1639d82
+· timestamp pending at 4 calendars; `wits seal --upgrade` asks for it again
+```
+
+A seal is six lines of text: the head, how many entries it closes, when, the
+public key, and the signature over the lines before it. Hand out the key's
+fingerprint (`wits seal --key`) once, to the person who checks, and never the
+key file. A proof is pending for a few hours until a calendar's commitment is
+in a block; `wits seal --upgrade` then fetches it. `wits report --seal` seals
+the head before writing the page, so the page names the seal it can be
+checked against. Seals travel in bundles and through push and pull, and fsck
+checks every one: its signature, its head in the journal, and its proof.
 
 ## What it costs
 

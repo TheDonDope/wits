@@ -1,10 +1,15 @@
 package commands
 
 import (
+	"bytes"
+	"context"
+	"crypto/ed25519"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -14,6 +19,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 )
@@ -230,7 +236,46 @@ func effectProblems(ws *workspace.Workspace) []string {
 				shortHash(r.Hash), shortHash(r.Session)))
 		}
 	}
-	return append(problems, priceProblems(ws)...)
+	problems = append(problems, priceProblems(ws)...)
+	return append(problems, sealProblems(ws)...)
+}
+
+// sealProblems is any kept seal that does not verify, that seals a head the
+// journal does not hold where it says, or whose timestamp is of something
+// else.
+func sealProblems(ws *workspace.Workspace) []string {
+	kept, err := seal.Store{Dir: ws.Repo.SealsDir()}.All()
+	if err != nil {
+		return []string{err.Error()}
+	}
+	events, err := ws.Journal().Events()
+	if err != nil {
+		return []string{err.Error()}
+	}
+	var problems []string
+	for _, f := range kept {
+		s, err := seal.Parse(f.Text)
+		if err == nil {
+			err = s.Verify()
+		}
+		switch {
+		case err != nil:
+			problems = append(problems, fmt.Sprintf("seal %s: %v", f.Name, err))
+		case s.Entries < 1 || s.Entries > len(events) || events[s.Entries-1].Hash != s.Head:
+			problems = append(problems, fmt.Sprintf("seal %s seals %s at entry %d, which the journal does not hold there",
+				f.Name, shortHash(s.Head), s.Entries))
+		case len(f.OTS) > 0:
+			if p, err := seal.Describe(f.OTS); err != nil || !bytes.Equal(p.Digest, digestOf(s)) {
+				problems = append(problems, fmt.Sprintf("seal %s: its timestamp is not of it", f.Name))
+			}
+		}
+	}
+	return problems
+}
+
+func digestOf(s seal.Seal) []byte {
+	d := s.Digest()
+	return d[:]
 }
 
 // priceProblems is the price log's chain, and any price that names no
@@ -412,4 +457,229 @@ func daysSince(t time.Time) int {
 	from := time.Date(ty, tm, td, 0, 0, 0, 0, time.UTC)
 	to := time.Date(ny, nm, nd, 0, 0, 0, 0, time.UTC)
 	return int(to.Sub(from).Hours()/24) + 1
+}
+
+var (
+	sealTimestamp bool
+	sealUpgrade   bool
+	sealKey       bool
+)
+
+// Seal is the `wits seal` command.
+var Seal = &cobra.Command{
+	Use:   "seal",
+	Short: "Sign the journal's head, so others can check what it held",
+	Long: "Sign the hash of the journal's last entry with a key of your own. The hash\n" +
+		"covers every entry before it, so a seal fixes the whole journal up to that\n" +
+		"point. The key is made the first time, in .wits/seal.key; hand out its\n" +
+		"fingerprint (--key), never the file.\n\n" +
+		"--timestamp also sends the seal's SHA-256 — that hash and nothing else —\n" +
+		"to the public OpenTimestamps calendars, which commit it into Bitcoin within\n" +
+		"a few hours. --upgrade asks them for the finished proof. `ots verify` and\n" +
+		"opentimestamps.org check the .ots file without wits.",
+	Example: "  wits seal --timestamp\n  wits seal --upgrade\n  wits verify .wits/seals/2026-10-24-f81bbd2cc893.seal",
+	Args:    cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		switch {
+		case sealKey:
+			return showSealKey(cmd.OutOrStdout(), s)
+		case sealUpgrade:
+			return upgradeSeals(cmd, s)
+		}
+		f, made, err := sealHead(cmd, s)
+		if err != nil {
+			return err
+		}
+		out := cmd.OutOrStdout()
+		if made {
+			fmt.Fprintf(out, "Sealed the journal's %s, head %s, as %s.seal\n", entries(f.Entries), shortHash(f.Head), f.Name())
+		} else {
+			fmt.Fprintf(out, "The head %s is sealed already, as %s.seal\n", shortHash(f.Head), f.Name())
+		}
+		if sealTimestamp {
+			return timestampSeal(cmd, s, f)
+		}
+		return nil
+	},
+}
+
+// sealHead seals the journal's head, or finds the seal it already has.
+func sealHead(cmd *cobra.Command, s *session) (seal.Seal, bool, error) {
+	events, err := s.Journal().Events()
+	if err != nil {
+		return seal.Seal{}, false, err
+	}
+	if len(events) == 0 {
+		return seal.Seal{}, false, errors.New("the journal is empty: there is nothing to seal")
+	}
+	head := events[len(events)-1].Hash
+	st := seal.Store{Dir: s.Repo.SealsDir()}
+	kept, err := st.All()
+	if err != nil {
+		return seal.Seal{}, false, err
+	}
+	for _, f := range kept {
+		if old, err := seal.Parse(f.Text); err == nil && old.Head == head {
+			return old, false, nil
+		}
+	}
+	key, made, err := seal.Key(s.Repo.SealKeyPath())
+	if err != nil {
+		return seal.Seal{}, false, err
+	}
+	if made {
+		fmt.Fprintf(cmd.ErrOrStderr(), "Made a sealing key in %s; its fingerprint is %s\n",
+			s.Repo.SealKeyPath(), seal.Fingerprint(key.Public().(ed25519.PublicKey)))
+	}
+	f := seal.Make(key, head, len(events), time.Now())
+	return f, true, st.Save(seal.File{Name: f.Name(), Text: f.String()})
+}
+
+// timestampSeal sends the seal's hash to the calendars and keeps the proof.
+func timestampSeal(cmd *cobra.Command, s *session, f seal.Seal) error {
+	ctx, cancel := context.WithTimeout(cmd.Context(), 45*time.Second)
+	defer cancel()
+	ots, n, err := seal.Stamp(ctx, &http.Client{Timeout: 20 * time.Second}, f.Digest(), seal.Calendars)
+	if err != nil {
+		return err
+	}
+	if err := (seal.Store{Dir: s.Repo.SealsDir()}).Save(seal.File{Name: f.Name(), Text: f.String(), OTS: ots}); err != nil {
+		return err
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "Sent the seal's SHA-256, and nothing else, to %s; the proof is %s.ots, pending until it is in a block.\n",
+		plural(n, "calendar"), f.Name())
+	return nil
+}
+
+// upgradeSeals asks the calendars for the finished proof of every pending seal.
+func upgradeSeals(cmd *cobra.Command, s *session) error {
+	st := seal.Store{Dir: s.Repo.SealsDir()}
+	kept, err := st.All()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(cmd.Context(), 60*time.Second)
+	defer cancel()
+	client := &http.Client{Timeout: 20 * time.Second}
+	out := cmd.OutOrStdout()
+	asked := 0
+	for _, f := range kept {
+		if p, err := seal.Describe(f.OTS); err != nil || len(p.Pending) == 0 {
+			continue
+		}
+		asked++
+		upgraded, changed, err := seal.Upgrade(ctx, client, f.OTS)
+		if err != nil {
+			return err
+		}
+		if !changed {
+			fmt.Fprintf(out, "%s: still pending\n", f.Name)
+			continue
+		}
+		f.OTS = upgraded
+		if err := st.Save(f); err != nil {
+			return err
+		}
+		p, _ := seal.Describe(upgraded)
+		fmt.Fprintf(out, "%s: in Bitcoin block %d\n", f.Name, p.Blocks[0])
+	}
+	if asked == 0 {
+		fmt.Fprintln(out, "No seal is waiting for its proof.")
+	}
+	return nil
+}
+
+// showSealKey prints the public half of the sealing key.
+func showSealKey(out io.Writer, s *session) error {
+	key, err := seal.LoadKey(s.Repo.SealKeyPath())
+	if err != nil {
+		return err
+	}
+	pub := key.Public().(ed25519.PublicKey)
+	fmt.Fprintf(out, "%s\ned25519:%s\n", seal.Fingerprint(pub), base64.StdEncoding.EncodeToString(pub))
+	return nil
+}
+
+// Verify is the `wits verify` command.
+var Verify = &cobra.Command{
+	Use:   "verify <file.seal>",
+	Short: "Check a seal: its signature, the journal it seals, and its timestamp",
+	Long: "Check that a seal's signature is over its lines, made with the key it\n" +
+		"names; that the journal here holds the head it seals, at the same place;\n" +
+		"and, when its .ots proof is beside it, what that proof attests. Run outside\n" +
+		"a repository, only the seal itself and its proof are checked.",
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		text, err := os.ReadFile(args[0])
+		if err != nil {
+			return err
+		}
+		f, err := seal.Parse(string(text))
+		if err != nil {
+			return err
+		}
+		out := cmd.OutOrStdout()
+		if err := f.Verify(); err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "✓ signed by %s on %s\n", seal.Fingerprint(f.Key), f.At.Local().Format("2 January 2006, 15:04"))
+		if err := verifyHead(out, f); err != nil {
+			return err
+		}
+		return verifyProof(out, f, strings.TrimSuffix(args[0], ".seal")+".ots")
+	},
+}
+
+// verifyHead says whether the journal here holds the sealed head where the
+// seal says it is.
+func verifyHead(out io.Writer, f seal.Seal) error {
+	s, err := open()
+	if err != nil {
+		fmt.Fprintf(out, "· not in a repository: the head %s, after %s, is not checked\n", shortHash(f.Head), entries(f.Entries))
+		return nil
+	}
+	events, err := s.Journal().Events()
+	if err != nil {
+		return err
+	}
+	if f.Entries < 1 || f.Entries > len(events) || events[f.Entries-1].Hash != f.Head {
+		return fmt.Errorf("the journal here does not hold the sealed head %s at entry %d", shortHash(f.Head), f.Entries)
+	}
+	fmt.Fprintf(out, "✓ the journal here holds what was sealed: %s, up to %s\n", entries(f.Entries), shortHash(f.Head))
+	return nil
+}
+
+// verifyProof says what the seal's timestamp attests, when it has one.
+func verifyProof(out io.Writer, f seal.Seal, path string) error {
+	ots, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		fmt.Fprintln(out, "· no timestamp beside it: `wits seal --timestamp` makes one")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	p, err := seal.Describe(ots)
+	if err != nil {
+		return err
+	}
+	if d := f.Digest(); !bytes.Equal(p.Digest, d[:]) {
+		return errors.New("the timestamp is of something else, not this seal")
+	}
+	if len(p.Blocks) > 0 {
+		fmt.Fprintf(out, "✓ timestamped in Bitcoin block %d; `ots verify` or opentimestamps.org check it against the chain\n", p.Blocks[0])
+		return nil
+	}
+	fmt.Fprintf(out, "· timestamp pending at %s; `wits seal --upgrade` asks for it again\n", plural(len(p.Pending), "calendar"))
+	return nil
+}
+
+func init() {
+	Seal.Flags().BoolVar(&sealTimestamp, "timestamp", false, "also timestamp it with OpenTimestamps (sends its SHA-256 to the calendars)")
+	Seal.Flags().BoolVar(&sealUpgrade, "upgrade", false, "ask the calendars for the finished proofs")
+	Seal.Flags().BoolVar(&sealKey, "key", false, "show the sealing key's public half and fingerprint")
 }

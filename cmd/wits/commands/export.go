@@ -443,6 +443,7 @@ func writeIndex(out io.Writer, cycles []ledger.Cycle, page func(ledger.Cycle) st
 
 var (
 	reportFrom, reportTo, reportOut string
+	reportSeal                      bool
 )
 
 // Report is the `wits report` command.
@@ -452,7 +453,9 @@ var Report = &cobra.Command{
 	Long: "Write one page for the prescriber: the days asked for, grams a day, which\n" +
 		"strains, what the sessions did by the effect log, and what is left of the\n" +
 		"fill in progress, with when the next prescription is due. The last 90 days\n" +
-		"unless --from and --to say otherwise.",
+		"unless --from and --to say otherwise. With --seal, the journal's head is\n" +
+		"sealed first and the page names the seal, so the page can be checked\n" +
+		"against the journal it was made from.",
 	Example: "  wits report\n" +
 		"  wits report --from 2026-08-01 --to 2026-10-31 --out appointment.pdf",
 	Args: cobra.NoArgs,
@@ -464,6 +467,11 @@ var Report = &cobra.Command{
 		w, err := reportWindow(s.OpenedAt)
 		if err != nil {
 			return err
+		}
+		if reportSeal {
+			if _, _, err := sealHead(cmd, s); err != nil {
+				return err
+			}
 		}
 		out := reportOut
 		if out == "" {
@@ -498,6 +506,7 @@ func init() {
 	Report.Flags().StringVar(&reportFrom, "from", "", "the first day, YYYY-MM-DD (default 90 days ago)")
 	Report.Flags().StringVar(&reportTo, "to", "", "the last day, YYYY-MM-DD (default today)")
 	Report.Flags().StringVar(&reportOut, "out", "", "the file to write (default wits-report-<last day>.pdf)")
+	Report.Flags().BoolVar(&reportSeal, "seal", false, "seal the journal's head first, and name the seal on the page")
 	Export.Flags().StringVar(&exportFormat, "format", "markdown", "output format")
 	Export.Flags().StringVar(&exportOut, "out", "", "write to this file instead of stdout")
 	Export.Flags().BoolVar(&exportAll, "all", false, "export every cycle, not just the current one")

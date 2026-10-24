@@ -2,6 +2,7 @@ package bundle
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/prices"
+	"github.com/TheDonDope/wits/pkg/seal"
 )
 
 // can converts a stored integer back to a genetic type.
@@ -43,7 +45,7 @@ func Read(r io.Reader) (*Contents, error) {
 	if c.Events, err = rd.events(refs); err != nil {
 		return nil, err
 	}
-	if c.Ratings, c.Prices, err = rd.logs(); err != nil {
+	if c.Ratings, c.Prices, c.Seals, err = rd.logs(); err != nil {
 		return nil, err
 	}
 	if version < 2 {
@@ -152,31 +154,54 @@ func (rd *reader) events(t refs) ([]journal.Event, error) {
 
 // logs reads what follows the events, if the bundle carries anything there:
 // the effect log's ratings, and the price log's prices.
-func (rd *reader) logs() ([]effects.Rating, []prices.Price, error) {
+func (rd *reader) logs() ([]effects.Rating, []prices.Price, []seal.File, error) {
 	var ratings []effects.Rating
 	var paid []prices.Price
+	var seals []seal.File
 	for {
 		text, ok := rd.next()
 		if !ok {
-			return ratings, paid, rd.sc.Err()
+			return ratings, paid, seals, rd.sc.Err()
 		}
-		if text == "" || strings.HasPrefix(text, "#") {
-			continue
-		}
-		if strings.HasPrefix(text, "C ") {
-			p, err := readPrice(text, rd.line)
-			if err != nil {
-				return nil, nil, err
-			}
+		var err error
+		switch {
+		case text == "" || strings.HasPrefix(text, "#"):
+		case strings.HasPrefix(text, "C "):
+			var p prices.Price
+			p, err = readPrice(text, rd.line)
 			paid = append(paid, p)
-			continue
+		case strings.HasPrefix(text, "K "):
+			var f seal.File
+			f, err = readSeal(text, rd.line)
+			seals = append(seals, f)
+		default:
+			var r effects.Rating
+			r, err = readRating(text, rd.line)
+			ratings = append(ratings, r)
 		}
-		r, err := readRating(text, rd.line)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
-		ratings = append(ratings, r)
 	}
+}
+
+// readSeal decodes one seal line: K <name> <base64 seal> [<base64 proof>].
+func readSeal(text string, line int) (seal.File, error) {
+	parts := strings.Fields(text)
+	if len(parts) < 3 || len(parts) > 4 {
+		return seal.File{}, errorf(line, "a seal needs a name and its text")
+	}
+	body, err := base64.StdEncoding.DecodeString(parts[2])
+	if err != nil {
+		return seal.File{}, errorf(line, "unreadable seal %q", parts[1])
+	}
+	f := seal.File{Name: parts[1], Text: string(body)}
+	if len(parts) == 4 {
+		if f.OTS, err = base64.StdEncoding.DecodeString(parts[3]); err != nil {
+			return seal.File{}, errorf(line, "unreadable timestamp of seal %q", parts[1])
+		}
+	}
+	return f, nil
 }
 
 // readPrice decodes one price line: C <purchase> <at> <cents> [n=<note>].

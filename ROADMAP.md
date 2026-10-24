@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`,
+`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`, `seal`, `verify`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -567,6 +567,36 @@ workbook's 1429 entries in 10.5 s, registered its service worker, kept the
 repository in IndexedDB, and drew fill 30 as `wits status` does: day 57, 36.73
 g of 60, 19 days' worth, 8.07 g in 2 older jars.
 
+### A chain others can check — `wits seal`, `wits verify`
+
+A seal (`pkg/seal`) is the journal's head signed with an Ed25519 key of one's
+own, made in `.wits/seal.key` the first time and kept out of every bundle and
+remote. It is six lines of text: `head`, `entries`, `at`, `key`, and a `sig`
+over the lines before it. The head's hash covers every entry before it, so a
+seal fixes the journal up to there. `wits verify` checks the signature and
+whether the journal here holds that head at that entry; a journal grown since
+still does. Outside a repository it checks the seal alone. The fingerprint,
+`SHA256:` and base64 the way ssh writes one, is what to hand out (`--key`).
+
+`--timestamp` is OpenTimestamps, written in-tree: the seal's SHA-256 goes to
+the four public calendars, the only network call wits makes, opt-in and said
+plainly when it happens. Their answers merge into one standard `.ots` proof,
+pending until a calendar's commitment is in a block. `--upgrade` asks the
+calendars again and puts the Bitcoin attestation in place of the promise. The
+four live calendars answered a test digest, the proof parsed, and it wrote
+back byte for byte. The JavaScript reference library would have been the
+independent check, and installing it here was refused. `ots verify` on the
+user's side is the check that needs neither wits nor that library.
+
+`wits report --seal` seals before writing, and the footer names the seal and
+its key. Bundle format 5 carries the seals and their proofs, which travel in
+push and pull as well. A proof is only completed, never undone, so a push is
+refused if it would take back a proof the remote finished, and a pull keeps
+the one that got further. fsck checks every seal: its signature, its head, and
+that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
+verified in place, outside the repository and after a restore, and the sealed
+report's footer read.
+
 ### Tolerance — the analysis tab
 
 Grams a day against the effect log's ratings, rolling (`data/derive.ts`:
@@ -673,13 +703,6 @@ are the first things wits would send anywhere, so both are opt-in and said
 plainly.
 
 ### 4 · Trust
-
-#### 🔹 A chain others can check
-
-- **Status**: Planned
-- Sign the chain's head with a key of one's own and anchor it with
-  OpenTimestamps, so a doctor or an authority can check a report against it
-  without trusting the patient or wits.
 
 #### 🔹 Proof of what is carried
 

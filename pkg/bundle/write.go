@@ -2,6 +2,7 @@ package bundle
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/prices"
+	"github.com/TheDonDope/wits/pkg/seal"
 )
 
 // Contents is everything a bundle carries.
@@ -23,6 +25,9 @@ type Contents struct {
 	Ratings []effects.Rating
 	// Prices is the price log, superseded prices included.
 	Prices []prices.Price
+	// Seals are the seals of the journal's head, with their timestamps: a
+	// timestamp cannot be made again later, so it travels with the record.
+	Seals []seal.File
 }
 
 // Write encodes the contents as a bundle.
@@ -66,11 +71,12 @@ func Write(w io.Writer, c Contents) error {
 			return err
 		}
 	}
-	if len(c.Ratings) > 0 || len(c.Prices) > 0 {
+	if len(c.Ratings) > 0 || len(c.Prices) > 0 || len(c.Seals) > 0 {
 		fmt.Fprintln(out, ratingsSeparator)
 	}
 	writeRatings(out, c.Ratings)
 	writePrices(out, c.Prices)
+	writeSeals(out, c.Seals)
 	return out.Flush()
 }
 
@@ -342,6 +348,19 @@ func writePrices(out io.Writer, paid []prices.Price) {
 		fmt.Fprintf(out, "C %s %s %d", p.Purchase, p.At.Format(time.RFC3339), p.Cents)
 		if p.Note != "" {
 			fmt.Fprintf(out, " n=%s", escape(p.Note))
+		}
+		fmt.Fprint(out, "\n")
+	}
+}
+
+// writeSeals appends the seals, a line each: the name, the seal's text and,
+// when it has one, its timestamp proof, both in base64 — a seal is lines of
+// its own, and a proof is bytes. Format 5 added them.
+func writeSeals(out io.Writer, seals []seal.File) {
+	for _, f := range seals {
+		fmt.Fprintf(out, "K %s %s", f.Name, base64.StdEncoding.EncodeToString([]byte(f.Text)))
+		if len(f.OTS) > 0 {
+			fmt.Fprintf(out, " %s", base64.StdEncoding.EncodeToString(f.OTS))
 		}
 		fmt.Fprint(out, "\n")
 	}

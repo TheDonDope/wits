@@ -26,6 +26,10 @@ const (
 	indexDir     = "index"
 	// remoteKeyFile is the age identity push and pull encrypt to.
 	remoteKeyFile = "remote.key"
+	// sealKeyFile is the Ed25519 key seals are signed with, and sealsDir
+	// where they are kept.
+	sealKeyFile = "seal.key"
+	sealsDir    = "seals"
 )
 
 // Permissions are deliberately tight. This is a multi-year medical record, and
@@ -227,6 +231,13 @@ func (r *Repo) SetTheme(name string) error {
 func (r *Repo) SetRemote(dir string) error {
 	return r.setConfig(func(c *Config) { c.Remote = dir })
 }
+
+// SealKeyPath is the key seals are signed with: one's own, kept here and
+// never in a bundle or a remote.
+func (r *Repo) SealKeyPath() string { return filepath.Join(r.root, sealKeyFile) }
+
+// SealsDir is where the seals of the journal's head are kept.
+func (r *Repo) SealsDir() string { return filepath.Join(r.root, sealsDir) }
 
 // SetLead records the pharmacy's lead time, in days.
 func (r *Repo) SetLead(days int) error {

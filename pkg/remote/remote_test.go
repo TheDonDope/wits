@@ -11,6 +11,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -256,4 +257,22 @@ func TestPricesTravelAndFollowTheirPurchase(t *testing.T) {
 	x, _ := os.ReadFile(deck.PricesPath())
 	y, _ := os.ReadFile(phone.PricesPath())
 	assert.Equal(t, string(x), string(y), "Should end with the same price log")
+}
+
+func TestSealsTravel(t *testing.T) {
+	deck, phone := pair(t)
+	record(t, deck, buy(20, 0))
+	require.NoError(t, (seal.Store{Dir: deck.SealsDir()}).Save(seal.File{Name: "a", Text: "wits-seal 1\n"}))
+
+	pushed, err := Push(deck)
+	require.NoError(t, err)
+	pulled, err := Pull(phone)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, pushed.Seals)
+	assert.Equal(t, 1, pulled.Seals)
+	kept, err := seal.Store{Dir: phone.SealsDir()}.All()
+	require.NoError(t, err)
+	require.Len(t, kept, 1)
+	assert.Equal(t, "wits-seal 1\n", kept[0].Text)
 }
