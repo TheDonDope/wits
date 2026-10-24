@@ -1,4 +1,5 @@
-"""The workbook read from its cells, without the importer.
+"""
+The workbook read from its cells, without the importer.
 
 The importer's tests pin figures that must be reconciled independently of
 it — this is that independent reading. Run with the doctor's venv:
