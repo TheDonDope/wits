@@ -17,7 +17,7 @@ import { Written } from '../data/models';
 import { Wits } from '../data/wits';
 
 /**
- * Records an entry: a grind, a session, a fill or a weighing. Every check is
+ * Records an entry: a grind, a session, a fill, a weighing, or AVB collected or used. Every check is
  * the recorder's, on the server — what this form refuses is what the command
  * line would refuse, said in the same words.
  */
@@ -126,6 +126,37 @@ import { Wits } from '../data/wits';
             </mat-form-field>
           </div>
         </mat-tab>
+        <mat-tab><ng-template mat-tab-label><mat-icon>recycling</mat-icon>&nbsp;AVB</ng-template>
+          <div class="form">
+            <mat-form-field appearance="outline">
+              <mat-label>What happened</mat-label>
+              <mat-select [ngModel]="avbMode()" (ngModelChange)="avbMode.set($event)">
+                <mat-option value="collect">Emptied a device — AVB weighed out</mat-option>
+                <mat-option value="use">Used AVB — butter, a tincture</mat-option>
+              </mat-select>
+            </mat-form-field>
+            @if (avbMode() === 'collect') {
+              <mat-form-field appearance="outline">
+                <mat-label>The device emptied</mat-label>
+                <mat-select [ngModel]="emptied()" (ngModelChange)="device.set($event)">
+                  @for (w of wits.avb.value()?.waiting ?? []; track w.device) {
+                    <mat-option [value]="w.device">{{ deviceName(w.device) }}
+                      <span class="dim">· {{ w.grams | number: '1.2-2' }} g in {{ w.sessions }} {{ w.sessions === 1 ? 'session' : 'sessions' }}</span>
+                    </mat-option>
+                  }
+                </mat-select>
+                <mat-hint>From its sessions since it was last emptied.</mat-hint>
+              </mat-form-field>
+            } @else {
+              <p class="dim">{{ wits.avb.value()?.held ?? 0 | number: '1.2-2' }} g in the AVB jar.</p>
+            }
+            <ng-container *ngTemplateOutlet="amount" />
+            <mat-form-field appearance="outline">
+              <mat-label>Note</mat-label>
+              <input matInput [ngModel]="note()" (ngModelChange)="note.set($event)" />
+            </mat-form-field>
+          </div>
+        </mat-tab>
       </mat-tab-group>
 
       <ng-template #amount>
@@ -154,7 +185,8 @@ import { Wits } from '../data/wits';
     </mat-dialog-actions>
   `,
   styles: `
-    .form { display: grid; gap: 4px; padding-top: 18px; min-width: min(460px, 80vw); }
+    /* The dialog is at most 94vw: less its padding and its border, so the form never pushes past it. */
+    .form { display: grid; gap: 4px; padding-top: 18px; width: min(580px, calc(94vw - 52px)); }
     .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .temp { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
     .error { display: flex; gap: 8px; align-items: center; color: var(--w-warn); background: rgba(255,122,138,.08);
@@ -176,16 +208,27 @@ export class RecordDialog {
   protected readonly temp = signal(185);
   protected readonly note = signal('');
   protected readonly account = signal('storage');
+  protected readonly avbMode = signal<'collect' | 'use'>('collect');
   protected readonly error = signal('');
   protected readonly busy = signal(false);
 
   protected readonly sealed = computed(() => this.wits.jars.value().filter((j) => j.storage > 0));
   protected readonly stashed = computed(() => this.wits.jars.value().filter((j) => j.stash > 0));
+  /** The device emptied: the one picked, or the only one with sessions waiting. */
+  protected readonly emptied = computed(() => {
+    const waiting = this.wits.avb.value()?.waiting ?? [];
+    return this.device() || (waiting.length === 1 ? waiting[0].device : '');
+  });
   protected readonly range = computed(() => {
     const d = this.wits.devices.value().find((x) => x.slug === this.device());
     // The API leaves a range out when the device has none.
     return d ? { min: d.min_temp ?? 120, max: d.max_temp ?? 230 } : null;
   });
+
+  /** A device's name, or what a session that named none is called. */
+  protected deviceName(slug: string): string {
+    return slug ? (this.wits.devices.value().find((d) => d.slug === slug)?.name ?? slug) : 'no device named';
+  }
 
   protected pickDevice(slug: string): void {
     this.device.set(slug);
@@ -209,7 +252,7 @@ export class RecordDialog {
     }
   }
 
-  private send(): Promise<Written> {
+  private send(): Promise<Written | { message: string }> {
     const grams = this.grams() ?? 0;
     const day = this.date();
     const date = day ? isoDay(day) : undefined;
@@ -227,6 +270,10 @@ export class RecordDialog {
         });
       case 2:
         return this.wits.buy({ name: this.name(), grams, date });
+      case 4:
+        return this.avbMode() === 'collect'
+          ? this.wits.collectAVB({ grams, device: this.emptied(), note: this.note() || undefined, date })
+          : this.wits.useAVB({ grams, note: this.note() || undefined, date });
       default:
         return this.wits.weigh({ product: this.product(), account: this.account(), weighed: grams });
     }

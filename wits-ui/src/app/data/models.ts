@@ -159,3 +159,10 @@ export interface EffectLog {
     by_time_of_day: EffectGroup[];
   };
 }
+
+/** The AVB jar: what it holds, what each device has waiting, and every collection's yield. */
+export interface Avb {
+  held: number;
+  waiting: { device: string; grams: number; sessions: number }[];
+  yields: { at: string; device: string; collected: number; from: number; sessions: number; ratio: number }[];
+}

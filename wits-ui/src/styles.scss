@@ -151,3 +151,11 @@ body {
     0 40px 80px -24px rgb(0 0 0 / 80%),
     0 0 120px -40px rgb(139 123 255 / 45%) !important;
 }
+
+// Material sizes a field's input box at 180 px, so two side by side in the
+// record dialog could not shrink to a phone's width and pushed the form past
+// the dialog's edge. Inside it, fields take the width the form gives them.
+.record-panel .mat-mdc-form-field-infix {
+  width: auto;
+  min-width: 0;
+}

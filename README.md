@@ -32,9 +32,9 @@ so nothing is lost between the pharmacy and the ashes.
                                       ┌───────────┐
                                       │ CONSUMED  │
                                       └─────┬─────┘
-                                            │  weighed after collection
+                                            │  avb collect · weighed out of the device
                                             ▼
-                                      ┌───────────┐
+                                      ┌───────────┐  avb use
                                       │    AVB    │ ──────▶ edibles / tincture
                                       └───────────┘
 ```
@@ -215,6 +215,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
+| `wits avb collect <grams>` / `use <grams>` | AVB weighed out of a device, or used up; `wits avb` for the jar and every yield |
 | `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
 | `wits status` | What is left, and how long it will last |
 | `wits refill` | When to order the next prescription; `--lead` for the pharmacy's days, `--ics` for a reminder |
@@ -429,6 +430,33 @@ that took grams that weren't there. The jar takes nothing more except an undo
 until one of the two is reverted with `wits revert`. Every other jar records
 as usual.
 
+## AVB
+
+Already vaped bud is what is left of a session once it has been through a
+device. When a device is emptied, weigh what comes out and record it:
+
+```console
+$ wits avb collect 0.21
+[d3dd09d] collected 0.21g of AVB from 0.75g in 3 sessions: 28% back
+$ wits avb
+0.21g in the AVB jar
+
+COLLECTED   DEVICE               AVB    FROM                 YIELD
+2026-10-24  storz-bickel-mighty  0.21g  0.75g in 3 sessions  28%
+$ wits avb use 0.1 --note tincture
+[885418c] used 0.10g of AVB, 0.11g left in the jar
+```
+
+What came out came from the sessions put through that device since it was last
+emptied, and it is shared between their products in proportion to what each
+put in: here, 0.08 g to the Morning Sun's 0.30 g and 0.13 g to the Papaya
+Bomb's 0.45 g. More cannot come out than went in, and a device cannot be
+emptied twice without a session between. `--device` can be left out when only
+one device has sessions waiting. `avb use` draws the jar down as a whole, each
+product's share in proportion to what it holds. What stays behind in
+**consumed**, here 0.54 g, is what the vapour took. The browser records both
+on the **AVB** tab of Record (`v`), and its AVB tile shows the last yield.
+
 ## Temperatures
 
 Wits knows the boiling point of every cannabinoid and terpene, so a number on a
@@ -499,7 +527,7 @@ sessions screen.
 ![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
 
 Every key the terminal has is here too, and the footer shows the ones the page
-answers: `g` `s` `b` `r` to record, `1`–`6` or `h`/`l` between pages, `p` to
+answers: `g` `s` `b` `r` `v` to record, `1`–`6` or `h`/`l` between pages, `p` to
 replay, `j`/`k` to move, `space` to tick, and `?` for all of them.
 
 It answers this machine only. The server listens on a loopback address and

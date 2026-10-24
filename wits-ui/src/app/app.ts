@@ -14,7 +14,7 @@ import { Wits } from './data/wits';
 import { RecordDialog } from './pages/record';
 
 /** The record dialog's tabs, in order, as a link names them. */
-const RECORD_TABS = ['grind', 'session', 'fill', 'weigh'];
+const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
 
 @Component({
   selector: 'app-root',
@@ -58,7 +58,7 @@ export class App {
       clearInterval(tick);
     });
     this.keys.register('Everywhere', () => this.global(), inject(DestroyRef));
-    // ?record=grind (or session, fill, weigh) opens the form on that tab: a
+    // ?record=grind (or session, fill, weigh, avb) opens the form on that tab: a
     // link to bookmark for the thing done most often.
     afterNextRender(() => {
       const tab = new URLSearchParams(location.search).get('record');
@@ -85,6 +85,7 @@ export class App {
       { keys: ['s'], help: 'session', run: open(1) },
       { keys: ['b'], help: 'fill', run: open(2) },
       { keys: ['r'], help: 'weigh', run: open(3) },
+      { keys: ['v'], help: 'AVB', run: open(4) },
       ...this.links.map((l, i) => ({ keys: [String(i + 1)], label: String(i + 1), help: l.label.toLowerCase(), run: go(i), quiet: true })),
       { keys: ['l'], label: 'h/l', help: 'pages', run: step(1) },
       { keys: ['h'], help: 'previous page', run: step(-1), quiet: true },
@@ -103,6 +104,8 @@ export class App {
     this.dialog.open(RecordDialog, {
       autoFocus: 'first-tabbable',
       panelClass: 'record-panel',
+      // Five tabs want more than Material's 560 px; a phone still gets the screen less a margin.
+      maxWidth: 'min(660px, 94vw)',
       data: { tab: Math.max(tab, 0) },
     });
   }

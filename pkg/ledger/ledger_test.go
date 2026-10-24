@@ -491,3 +491,39 @@ func TestPlanRefill(t *testing.T) {
 	_, ok = PlanRefill(&fresh.Cycles[0], day(0), 3)
 	assert.False(t, ok, "Nor without a rate")
 }
+
+func TestSplit(t *testing.T) {
+	shares := Split(21, map[string]journal.Centigrams{"morning": 30, "papaya": 45, "none": 0})
+	assert.Equal(t, map[string]journal.Centigrams{"morning": 8, "papaya": 13}, shares,
+		"21 cg in proportion to 30 and 45, the centigram left over to the larger remainder")
+	assert.Equal(t, map[string]journal.Centigrams{"a": 1, "b": 1, "c": 1},
+		Split(3, map[string]journal.Centigrams{"a": 1, "b": 1, "c": 1}), "all of it, when it all comes back")
+	assert.Empty(t, Split(5, nil), "nothing to share between")
+}
+
+func TestYields(t *testing.T) {
+	sesh := func(product string, g float64, n int, device string) journal.Event {
+		e := event(journal.Sesh, product, g, day(n))
+		e.Device = device
+		return e
+	}
+	collect := func(product string, g float64, n int, device string) journal.Event {
+		e := event(journal.AVBCollect, product, g, day(n))
+		e.Device = device
+		return e
+	}
+	events := []journal.Event{
+		sesh("morning", 0.3, 1, "mighty"), sesh("papaya", 0.45, 1, "mighty"), sesh("papaya", 0.2, 1, "volcano"),
+		collect("morning", 0.08, 2, "mighty"), collect("papaya", 0.13, 2, "mighty"),
+		sesh("morning", 0.5, 3, "mighty"),
+	}
+
+	waiting := Uncollected(events, day(3))
+	assert.Len(t, waiting["mighty"], 1, "only the session since the mighty was emptied")
+	assert.Len(t, waiting["volcano"], 1, "the volcano has not been")
+
+	y := Yields(events)
+	require.Len(t, y, 1, "two entries at one moment from one device are one collection")
+	assert.Equal(t, Yield{At: day(2), Device: "mighty", Collected: 0.21, From: 0.75, Sessions: 2}, y[0])
+	assert.InDelta(t, 0.28, y[0].Ratio(), 1e-9)
+}

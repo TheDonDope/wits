@@ -268,15 +268,9 @@ var jarName = map[journal.Account]string{
 // moment of the grind, so the pair has to be passed over to clear it.
 func Shortfalls(events []journal.Event) []Shortfall {
 	held := map[string]map[journal.Account]journal.Centigrams{}
-	undone := map[string]bool{}
-	for _, e := range events {
-		if e.Reverts != "" {
-			undone[e.Reverts] = true
-		}
-	}
 	var out []Shortfall
-	for _, e := range Chronological(events) {
-		if e.Product == "" || e.Reverts != "" || undone[e.Hash] {
+	for _, e := range Standing(events) {
+		if e.Product == "" {
 			continue
 		}
 		jar := held[e.Product]
@@ -678,4 +672,134 @@ func PlanRefill(c *Cycle, now time.Time, lead int) (Refill, bool) {
 func midnight(t time.Time) time.Time {
 	y, m, d := t.Date()
 	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
+}
+
+// Standing is the entries that stand, in the order they happened: an undone
+// entry and the undo that undid it moved nothing between them, and neither
+// counts.
+func Standing(events []journal.Event) []journal.Event {
+	undone := map[string]bool{}
+	for _, e := range events {
+		if e.Reverts != "" {
+			undone[e.Reverts] = true
+		}
+	}
+	var out []journal.Event
+	for _, e := range Chronological(events) {
+		if e.Reverts == "" && !undone[e.Hash] {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// Uncollected is, by device, the sessions put through it since its last
+// collection, up to at: what the AVB weighed out of it now came from. A
+// session named no device is under "".
+func Uncollected(events []journal.Event, at time.Time) map[string][]journal.Event {
+	out := map[string][]journal.Event{}
+	for _, e := range Standing(events) {
+		if e.OccurredAt.After(at) {
+			break
+		}
+		switch e.Type {
+		case journal.Sesh:
+			out[e.Device] = append(out[e.Device], e)
+		case journal.AVBCollect:
+			delete(out, e.Device)
+		}
+	}
+	return out
+}
+
+// Yield is one emptying of a vaporizer: the AVB weighed out of it, against
+// the grams its sessions put in since the last.
+type Yield struct {
+	At        time.Time
+	Device    string
+	Collected float64
+	From      float64
+	Sessions  int
+}
+
+// Ratio is the share of what went in that came back out as AVB.
+func (y Yield) Ratio() float64 {
+	if y.From <= 0 {
+		return 0
+	}
+	return y.Collected / y.From
+}
+
+// Yields is every collection, oldest first. A collection is written as an
+// entry a product, all at one moment from one device, so the entries are put
+// back together by moment and device.
+func Yields(events []journal.Event) []Yield {
+	type pending struct {
+		grams    journal.Centigrams
+		sessions int
+	}
+	put := map[string]*pending{}
+	var out []Yield
+	for _, e := range Standing(events) {
+		switch e.Type {
+		case journal.Sesh:
+			p := put[e.Device]
+			if p == nil {
+				p = &pending{}
+				put[e.Device] = p
+			}
+			p.grams += journal.CG(e.Grams)
+			p.sessions++
+		case journal.AVBCollect:
+			if n := len(out); n > 0 && out[n-1].At.Equal(e.OccurredAt) && out[n-1].Device == e.Device {
+				out[n-1].Collected = plus(out[n-1].Collected, e.Grams)
+				continue
+			}
+			y := Yield{At: e.OccurredAt, Device: e.Device, Collected: e.Grams}
+			if p := put[e.Device]; p != nil {
+				y.From, y.Sessions = p.grams.Grams(), p.sessions
+			}
+			delete(put, e.Device)
+			out = append(out, y)
+		}
+	}
+	return out
+}
+
+// Split shares total out between the keys in proportion to their weights,
+// in whole centigrams that add up to it exactly: each its share rounded down,
+// and the centigrams left over to the largest remainders, ties by key. A key
+// whose share is nothing is left out.
+func Split(total journal.Centigrams, weights map[string]journal.Centigrams) map[string]journal.Centigrams {
+	var sum journal.Centigrams
+	keys := make([]string, 0, len(weights))
+	for k, w := range weights {
+		if w > 0 {
+			sum += w
+			keys = append(keys, k)
+		}
+	}
+	out := map[string]journal.Centigrams{}
+	if sum == 0 || total <= 0 {
+		return out
+	}
+	sort.Strings(keys)
+	rest := map[string]journal.Centigrams{}
+	left := total
+	for _, k := range keys {
+		out[k] = total * weights[k] / sum
+		rest[k] = total * weights[k] % sum
+		left -= out[k]
+	}
+	sort.SliceStable(keys, func(i, j int) bool { return rest[keys[i]] > rest[keys[j]] })
+	for i := 0; left > 0; i++ {
+		out[keys[i%len(keys)]]++
+		left--
+	}
+	for k, v := range out {
+		if v == 0 {
+			delete(out, k)
+		}
+	}
+	return out
 }

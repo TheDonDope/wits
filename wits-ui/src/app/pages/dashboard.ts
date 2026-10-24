@@ -77,6 +77,10 @@ import { ProjectionChart } from '../viz/projection-chart';
               <span class="eyebrow">{{ t.label }} <span class="scope">the shelf</span></span>
               <span class="tile-v num"><w-count [value]="t.grams" /><small> g</small></span>
               <div class="bar"><div [style.width.%]="t.share"></div></div>
+              @if (t.label === 'AVB' && lastYield(); as y) {
+                <span class="yield">last emptying gave back {{ y.ratio * 100 | number: '1.0-0' }}% —
+                  {{ y.collected | number: '1.2-2' }} g of {{ y.from | number: '1.2-2' }} g</span>
+              }
             </div>
           }
         </section>
@@ -191,6 +195,7 @@ import { ProjectionChart } from '../viz/projection-chart';
     .refill { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; color: var(--mat-sys-on-surface); }
     .refill mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--w-mint); }
     .refill .dim { color: var(--w-dim); }
+    .yield { display: block; margin-top: 8px; font-size: 12px; color: var(--w-dim); }
     header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
     .row { display: flex; gap: 28px; flex-wrap: wrap; justify-content: space-around; }
     figure { margin: 0; display: grid; justify-items: center; gap: 10px; width: 150px; }
@@ -216,6 +221,9 @@ export class Dashboard {
       avb: ps.reduce((s, p) => s + p.avb, 0),
     };
   });
+
+  /** The newest collection's yield, for the AVB tile. */
+  protected readonly lastYield = computed(() => this.wits.avb.value()?.yields.at(-1));
 
   protected readonly tiles = computed(() => {
     const s = this.wits.overview.value()?.shelf;

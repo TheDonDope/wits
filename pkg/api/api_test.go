@@ -237,3 +237,26 @@ func TestEffects(t *testing.T) {
 	w = call(t, s, "POST", "/api/rate", `{"session":"`+ov.Unrated[0].Hash+`","scores":{"overall":7}}`)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestAVB(t *testing.T) {
+	s, _ := server(t, "")
+	before := decodeInto[avb](t, call(t, s, "GET", "/api/avb", ""))
+	require.Len(t, before.Waiting, 1, "the volcano's session, waiting to be collected")
+	assert.Equal(t, waiting{Device: "volcano", Grams: 0.5, Sessions: 1}, before.Waiting[0])
+
+	w := call(t, s, "POST", "/api/avb/collect", `{"grams":0.15}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Equal(t, "collected 0.15 g of AVB from 0.50 g: 30% back", decodeInto[flushed](t, w).Message)
+
+	after := decodeInto[avb](t, call(t, s, "GET", "/api/avb", ""))
+	assert.Equal(t, 0.15, after.Held)
+	assert.Empty(t, after.Waiting, "nothing waits once it is emptied")
+	require.Len(t, after.Yields, 1)
+	assert.InDelta(t, 0.3, after.Yields[0].Ratio, 1e-9)
+
+	w = call(t, s, "POST", "/api/avb/use", `{"grams":0.5}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code, "more than the jar holds")
+	w = call(t, s, "POST", "/api/avb/use", `{"grams":0.1,"note":"butter"}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Equal(t, 0.05, decodeInto[avb](t, call(t, s, "GET", "/api/avb", "")).Held)
+}
