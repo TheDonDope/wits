@@ -570,3 +570,26 @@ func TestRestoreWarnsOfWhatWasNotThere(t *testing.T) {
 	require.NoError(t, err, "A backup gives back what it holds")
 	assert.Contains(t, out, "⚠ 1 entry takes grams that were not in the jar at the time; wits fsck lists them")
 }
+
+func TestRateCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	require.NoError(t, err)
+
+	_, err = run(t, dir, Rate, "last", "overall=4")
+	assert.ErrorContains(t, err, "no session to rate yet")
+
+	_, err = run(t, dir, Sesh, "wedding", "0.3", "--date", "2026-07-02")
+	require.NoError(t, err)
+	out, err := run(t, dir, Rate, "last", "overall=4", "Sleep=5", "--note", "slept")
+	require.NoError(t, err)
+	assert.Contains(t, out, "overall 4, sleep 5")
+
+	_, err = run(t, dir, Rate, "last", "sleep")
+	assert.ErrorContains(t, err, "dimension=1 to 5")
+
+	fsck, err := run(t, dir, Fsck)
+	require.NoError(t, err, fsck)
+}

@@ -66,6 +66,7 @@ var Bundle = &cobra.Command{
 			Products: s.Products,
 			Devices:  s.Devices,
 			Events:   events,
+			Ratings:  s.Ratings,
 		}); err != nil {
 			return err
 		}
@@ -168,6 +169,17 @@ func restore(r *repo.Repo, contents *bundle.Contents, step func(string)) error {
 	step("verifying the chain")
 	if err := r.Journal().Verify(); err != nil {
 		return fmt.Errorf("the restored journal does not verify: %w", err)
+	}
+	if len(contents.Ratings) > 0 {
+		step("restoring " + plural(len(contents.Ratings), "rating"))
+		for _, rating := range contents.Ratings {
+			if _, err := r.Effects().Append(rating); err != nil {
+				return fmt.Errorf("restoring the effect log: %w", err)
+			}
+		}
+		if err := r.Effects().Verify(); err != nil {
+			return fmt.Errorf("the restored effect log does not verify: %w", err)
+		}
 	}
 	return nil
 }

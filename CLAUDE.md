@@ -119,6 +119,12 @@ only against today's balance. Grams are physical: nothing models a negative
 balance or an overdraft — an entry either had its grams in the jar or is
 refused.
 
+The **effect log** (`pkg/effects`, `.wits/effects.ndjson`) sits beside the
+journal, not in it: a rating moves no grams, and the journal's every entry is a
+transfer. It has its own hash chain and lock, names sessions by hash, and a
+re-rating supersedes (`effects.Latest`). Anything that copies the repository —
+bundles, restore, fsck — must carry it too.
+
 Grams move between four accounts (storage → stash → consumed → avb), one stash
 per product, every entry a transfer — mass is conserved end to end. Add amounts
 in `journal.Centigrams` (`journal.CG`), not floats with `ledger.Round` after;

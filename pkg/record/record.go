@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
@@ -579,6 +580,30 @@ func (r *Recorder) Flush(refs []string) ([]journal.Event, error) {
 			return nil, ErrNothingToReconcile
 		}
 		return batch, nil
+	})
+}
+
+// Rate records what a session did: scores from 1 to 5 on any of the
+// dimensions, and a note. The session is named by its hash, abbreviated or
+// not; it must be a session, and one that stands — rating an undone session
+// would rate grams that never went through a device. Rating a session again
+// supersedes the earlier rating; the log keeps both.
+func (r *Recorder) Rate(session string, scores map[effects.Dimension]int, note string, at time.Time) (effects.Rating, error) {
+	e, err := r.Find(session)
+	if err != nil {
+		return effects.Rating{}, err
+	}
+	if e.Type != journal.Sesh {
+		return effects.Rating{}, fmt.Errorf("%s is a %s, not a session; only a session is rated", short(e.Hash), e.Type)
+	}
+	if r.RevertOf(e.Hash) != nil {
+		return effects.Rating{}, fmt.Errorf("the session %s was undone", short(e.Hash))
+	}
+	return r.repo.Effects().Append(effects.Rating{
+		Session: e.Hash,
+		At:      at,
+		Scores:  scores,
+		Note:    strings.TrimSpace(note),
 	})
 }
 

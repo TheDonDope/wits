@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 )
 
@@ -15,6 +18,8 @@ type Contents struct {
 	Products *catalog.Catalog
 	Devices  *catalog.Devices
 	Events   []journal.Event
+	// Ratings is the effect log, superseded ratings included.
+	Ratings []effects.Rating
 }
 
 // Write encodes the contents as a bundle.
@@ -58,6 +63,7 @@ func Write(w io.Writer, c Contents) error {
 			return err
 		}
 	}
+	writeRatings(out, c.Ratings)
 	return out.Flush()
 }
 
@@ -299,4 +305,28 @@ func noteIndex(events []journal.Event) notesIdx {
 		idx.index[n] = i
 	}
 	return idx
+}
+
+// writeRatings appends the effect log after the events, behind its own
+// separator: a line a rating, the session it rates by hash, the moment it was
+// rated, its scores, and its note. Format 3 added the section; a bundle without
+// ratings writes none, and reads in any build that knows the format.
+func writeRatings(out io.Writer, ratings []effects.Rating) {
+	if len(ratings) == 0 {
+		return
+	}
+	fmt.Fprintln(out, ratingsSeparator)
+	for _, r := range ratings {
+		scores := make([]string, 0, len(r.Scores))
+		for _, d := range effects.Dimensions {
+			if v, ok := r.Scores[d]; ok {
+				scores = append(scores, fmt.Sprintf("%s:%d", d, v))
+			}
+		}
+		fmt.Fprintf(out, "R %s %s %s", r.Session, r.At.Format(time.RFC3339), strings.Join(scores, ","))
+		if r.Note != "" {
+			fmt.Fprintf(out, " n=%s", escape(r.Note))
+		}
+		fmt.Fprint(out, "\n")
+	}
 }

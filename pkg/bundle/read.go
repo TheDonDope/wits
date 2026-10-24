@@ -11,6 +11,7 @@ import (
 
 	cannabis "github.com/TheDonDope/wits/pkg/cannabis"
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 )
 
@@ -39,6 +40,9 @@ func Read(r io.Reader) (*Contents, error) {
 		return nil, err
 	}
 	if c.Events, err = rd.events(refs); err != nil {
+		return nil, err
+	}
+	if c.Ratings, err = rd.ratings(); err != nil {
 		return nil, err
 	}
 	if version < 2 {
@@ -132,6 +136,9 @@ func (rd *reader) events(t refs) ([]journal.Event, error) {
 		if text == "" || strings.HasPrefix(text, "#") {
 			continue
 		}
+		if text == ratingsSeparator {
+			break
+		}
 		e, next, err := readEvent(text, rd.line, t, st)
 		if err != nil {
 			return nil, err
@@ -140,6 +147,54 @@ func (rd *reader) events(t refs) ([]journal.Event, error) {
 		events = append(events, e)
 	}
 	return events, rd.sc.Err()
+}
+
+// ratings reads the effect log after the events, if the bundle carries one.
+func (rd *reader) ratings() ([]effects.Rating, error) {
+	var out []effects.Rating
+	for {
+		text, ok := rd.next()
+		if !ok {
+			return out, rd.sc.Err()
+		}
+		if text == "" || strings.HasPrefix(text, "#") {
+			continue
+		}
+		r, err := readRating(text, rd.line)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+}
+
+// readRating decodes one rating line: R <session> <at> <dim:score,…> [n=<note>].
+func readRating(text string, line int) (effects.Rating, error) {
+	parts := strings.Fields(text)
+	if len(parts) < 4 || parts[0] != "R" {
+		return effects.Rating{}, errorf(line, "a rating needs a session, a time and its scores")
+	}
+	at, err := time.Parse(time.RFC3339, parts[2])
+	if err != nil {
+		return effects.Rating{}, errorf(line, "unreadable rating time %q", parts[2])
+	}
+	r := effects.Rating{Session: parts[1], At: at, Scores: map[effects.Dimension]int{}}
+	for _, s := range strings.Split(parts[3], ",") {
+		d, v, ok := strings.Cut(s, ":")
+		n, err := strconv.Atoi(v)
+		if !ok || err != nil {
+			return effects.Rating{}, errorf(line, "unreadable score %q", s)
+		}
+		r.Scores[effects.Dimension(d)] = n
+	}
+	for _, attr := range parts[4:] {
+		if key, value := field(attr); key == "n" {
+			r.Note = unescape(value)
+		} else {
+			return effects.Rating{}, errorf(line, "unknown rating attribute %q", key)
+		}
+	}
+	return r, nil
 }
 
 // checkHeader validates the magic line and returns the format version.

@@ -79,6 +79,7 @@ func fsck(ws *workspace.Workspace) []string {
 	if ws.Chain != nil {
 		problems = append(problems, ws.Chain.Error())
 	}
+	problems = append(problems, effectProblems(ws)...)
 	// Written past the recorder — imported, restored, edited by hand — an
 	// entry can take grams that were not in the jar at its moment.
 	for _, short := range ledger.Shortfalls(ws.State.Events) {
@@ -93,6 +94,28 @@ func fsck(ws *workspace.Workspace) []string {
 		}
 	}
 	return append(problems, dangling(ws)...)
+}
+
+// effectProblems is what is wrong with the effect log: a chain that does not
+// verify, and ratings of anything that is not a session the journal holds.
+func effectProblems(ws *workspace.Workspace) []string {
+	var problems []string
+	if ws.EffectsChain != nil {
+		problems = append(problems, ws.EffectsChain.Error())
+	}
+	sessions := map[string]bool{}
+	for _, e := range ws.State.Events {
+		if e.Type == journal.Sesh {
+			sessions[e.Hash] = true
+		}
+	}
+	for _, r := range ws.Ratings {
+		if !sessions[r.Session] {
+			problems = append(problems, fmt.Sprintf("rating %s rates %s, which is not a session in the journal",
+				shortHash(r.Hash), shortHash(r.Session)))
+		}
+	}
+	return problems
 }
 
 // dangling lists entries that point at something that is not there: a

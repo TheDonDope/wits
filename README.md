@@ -202,6 +202,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
+| `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
 | `wits status` | What is left, and how long it will last |
 | `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
 | `wits revert <entry>` | Undo an entry by recording a correction |
@@ -300,6 +301,7 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
   products.yml    # the catalog
   devices.yml     # vaporizers and their temperature ranges
   journal.ndjson  # append-only, one entry per line, never rewritten
+  effects.ndjson  # the effect log: ratings of sessions, append-only too
   index/          # reserved for a cached fold; nothing writes it yet
   *.lock          # empty; what two writers of one file take turns on
 ```
@@ -344,7 +346,7 @@ every entry in one go and checks the chain it made; a bundle that does not
 restore whole restores nothing. Bundles written before v0.41.0 left out the
 accounts of undos and weighings; they are recovered when such a bundle is
 restored, and one that cannot be recovered is refused rather than restored
-wrong.
+wrong. The effect log travels in the bundle too, after the entries.
 
 It is plain text, so the record stays legible with nothing but a text editor and
 diffs cleanly in git. Small, too, because most of what the journal stores is
@@ -419,8 +421,18 @@ On the jars, tick the cards — or **Select all** — and **Clear stash** record
 their stashes as consumed, one adjustment each in a single write: the
 terminal's history clean-up, for the stashes you choose.
 
+**Effects** is the effect log. Each session waits to be rated — 1 to 5, tapped,
+on how it went overall and on pain, sleep, calm, mood, focus or appetite, any of
+them — and what the ratings add up to is drawn three ways: every product against
+every dimension, each dimension by temperature band, and by time of day as a
+wheel. Every mean says how many ratings it stands on, and one that stands on a
+single rating is hatched: a rating, not a finding. `wits rate last sleep=5`
+does the same from the terminal.
+
+![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
+
 Every key the terminal has is here too, and the footer shows the ones the page
-answers: `g` `s` `b` `r` to record, `1`–`5` or `h`/`l` between pages, `p` to
+answers: `g` `s` `b` `r` to record, `1`–`6` or `h`/`l` between pages, `p` to
 replay, `j`/`k` to move, `space` to tick, and `?` for all of them.
 
 It answers this machine only. The server listens on a loopback address and

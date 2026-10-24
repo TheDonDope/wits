@@ -445,6 +445,25 @@ stashes cleared together through `Recorder.Flush` — one batch, all or none.
 Every key is declared once in `Keys`, page layers over the shell's, and the
 footer is drawn from the same list, so it can only show keys that answer.
 
+### The effect log — `wits rate`
+
+What a session did, rated afterwards from 1 to 5 on any of overall, pain,
+sleep, calm, mood, focus and appetite. It is kept beside the journal in
+`effects.ndjson`, not in it: the journal's every entry is a transfer and a
+rating moves no grams. It keeps the journal's other disciplines — append-only,
+written under a lock, hash-chained and verified over the stored bytes, a line
+cut short left out. A rating names its session by hash; rating it again
+supersedes the earlier rating, and the log keeps both. Only a session that
+stands can be rated. `fsck` checks the log's chain and that every rating rates
+a session the journal holds; bundle format 3 carries the log after the events,
+behind `==`, and a restore gives it back byte for byte.
+
+`effects.Analyse` groups each session's standing rating by product, by
+ten-degree temperature band and by part of the day, leaving undone sessions
+out; every mean carries its count. In the browser, `/effects` rates the waiting
+sessions with a tap a dimension and draws the three groupings: a matrix, bars,
+and a wheel of the day.
+
 ---
 
 ## 📌 Planned

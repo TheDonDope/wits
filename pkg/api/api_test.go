@@ -210,3 +210,26 @@ func TestFlush(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), "nothing in those stashes")
 }
+
+func TestEffects(t *testing.T) {
+	s, _ := server(t, "")
+	ov := decodeInto[struct {
+		Unrated []entry `json:"unrated"`
+	}](t, call(t, s, "GET", "/api/effects", ""))
+	require.Len(t, ov.Unrated, 1, "the one session, waiting")
+
+	w := call(t, s, "POST", "/api/rate", `{"session":"`+ov.Unrated[0].Hash+`","scores":{"overall":4,"sleep":5},"note":"slept"}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "rated the session of 0.50 g of Enua 22/1 Wedding Cake")
+
+	log := decodeInto[effectLog](t, call(t, s, "GET", "/api/effects", ""))
+	assert.Empty(t, log.Unrated)
+	require.Len(t, log.Rated, 1)
+	assert.Equal(t, 5, log.Rated[0].Scores["sleep"])
+	assert.Equal(t, 1, log.Insights.Rated)
+	require.Len(t, log.Insights.ByTemp, 1)
+	assert.Equal(t, "180–189", log.Insights.ByTemp[0].Key, "the device's default, 185")
+
+	w = call(t, s, "POST", "/api/rate", `{"session":"`+ov.Unrated[0].Hash+`","scores":{"overall":7}}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}

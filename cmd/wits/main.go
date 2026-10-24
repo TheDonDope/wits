@@ -37,6 +37,7 @@ func init() {
 		commands.Grind,
 		commands.Import,
 		commands.Sesh,
+		commands.Rate,
 		commands.Device,
 		commands.Temps,
 		commands.Status,

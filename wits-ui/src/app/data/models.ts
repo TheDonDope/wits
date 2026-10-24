@@ -125,3 +125,37 @@ export interface Written {
   entry: Entry;
   message: string;
 }
+
+/** What a session can be rated on, 1 to 5. */
+export type Dimension = 'overall' | 'pain' | 'sleep' | 'calm' | 'mood' | 'focus' | 'appetite';
+
+/** A session's standing rating, with the session it rates. */
+export interface Rated {
+  hash: string;
+  at: string;
+  scores: Partial<Record<Dimension, number>>;
+  note?: string;
+  session: Entry;
+}
+
+/** What one kind of session did on average, and over how many ratings. */
+export interface EffectGroup {
+  key: string;
+  label: string;
+  count: number;
+  means: Partial<Record<Dimension, number>>;
+  counts: Partial<Record<Dimension, number>>;
+}
+
+/** The effect log: what can be rated, what has been, what waits, what it says. */
+export interface EffectLog {
+  dimensions: Dimension[];
+  rated: Rated[];
+  unrated: Entry[];
+  insights: {
+    rated: number;
+    by_product: EffectGroup[];
+    by_temperature: EffectGroup[];
+    by_time_of_day: EffectGroup[];
+  };
+}

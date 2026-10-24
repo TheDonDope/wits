@@ -43,6 +43,7 @@ export class App {
     { path: '/', label: 'Dashboard', icon: 'space_dashboard' },
     { path: '/journal', label: 'Journal', icon: 'receipt_long' },
     { path: '/analysis', label: 'Analysis', icon: 'monitoring' },
+    { path: '/effects', label: 'Effects', icon: 'psychology' },
     { path: '/jars', label: 'Jars', icon: 'inventory_2' },
     { path: '/history', label: 'History', icon: 'insights' },
   ];

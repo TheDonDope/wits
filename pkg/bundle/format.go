@@ -12,14 +12,19 @@ import (
 // Magic identifies a bundle, and Version is the format it is written in.
 //
 // Version 2 writes an event's accounts when its type does not imply them; a
-// version 1 bundle is still read, its adjustments' accounts recovered.
+// version 1 bundle is still read, its adjustments' accounts recovered. Version
+// 3 carries the effect log after the events.
 const (
 	Magic   = "wits-bundle"
-	Version = 2
+	Version = 3
 )
 
-// separator ends the header and begins the events.
-const separator = "--"
+// separator ends the header and begins the events; ratingsSeparator ends the
+// events and begins the effect log.
+const (
+	separator        = "--"
+	ratingsSeparator = "=="
+)
 
 // typeCodes abbreviate the event types to a single character. The codes are
 // part of the format, so they may be added to but never reused for something
