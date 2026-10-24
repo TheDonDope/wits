@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"text/tabwriter"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -24,9 +27,133 @@ var Status = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		warnChain(cmd.ErrOrStderr(), s.Workspace)
 		writeStatus(cmd.OutOrStdout(), s.State)
 		return nil
 	},
+}
+
+// warnChain says so when the journal's hash chain does not verify.
+func warnChain(out io.Writer, ws *workspace.Workspace) {
+	if ws.Chain != nil {
+		fmt.Fprintln(out, "⚠ the journal was changed outside wits; wits fsck says where")
+	}
+}
+
+// Fsck is the `wits fsck` command.
+var Fsck = &cobra.Command{
+	Use:   "fsck",
+	Short: "Check the journal and the catalogs for damage",
+	Long: "Check that the journal's hash chain verifies, that no account was ever\n" +
+		"drawn below zero, that every entry names a product and device the\n" +
+		"catalogs know, that every correction corrects something, and that every\n" +
+		"gram that came in is either held or went out.\n\n" +
+		"Nothing is changed. A problem is reported, and the command fails.",
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		out := cmd.OutOrStdout()
+		problems := fsck(s.Workspace)
+		fmt.Fprintf(out, "%s, %s, %s\n", entries(len(s.State.Events)),
+			plural(len(s.Products.Products), "product"), plural(len(s.Devices.Devices), "device"))
+		fmt.Fprintln(out, massLine(s.State))
+		if len(problems) == 0 {
+			fmt.Fprintln(out, "✓ the chain verifies, and nothing is out of place")
+			return nil
+		}
+		for _, p := range problems {
+			fmt.Fprintln(out, "✗ "+p)
+		}
+		return fmt.Errorf("%s found", plural(len(problems), "problem"))
+	},
+}
+
+// fsck lists what is wrong with a repository, chain first.
+func fsck(ws *workspace.Workspace) []string {
+	var problems []string
+	if ws.Chain != nil {
+		problems = append(problems, ws.Chain.Error())
+	}
+	for _, o := range ws.State.Overdrawn {
+		problems = append(problems, fmt.Sprintf("%s %s on %s left %s at %.2fg",
+			shortHash(o.Event.Hash), o.Event.Type, o.Event.OccurredAt.Format(time.DateOnly), o.Account, o.Grams))
+	}
+	return append(problems, dangling(ws)...)
+}
+
+// dangling lists entries that point at something that is not there: a
+// product or device missing from its catalog — one line for each, however
+// many entries name it — or a correction of nothing.
+func dangling(ws *workspace.Workspace) []string {
+	var problems []string
+	hashes := map[string]bool{}
+	for _, e := range ws.State.Events {
+		hashes[e.Hash] = true
+	}
+	products, devices := map[string]int{}, map[string]int{}
+	for _, e := range ws.State.Events {
+		if e.Product != "" && ws.Products.Exact(e.Product) == nil {
+			products[e.Product]++
+		}
+		if _, err := ws.Devices.Find(e.Device); e.Device != "" && err != nil {
+			devices[e.Device]++
+		}
+		if e.Reverts != "" && !hashes[e.Reverts] {
+			problems = append(problems, fmt.Sprintf("%s corrects %s, which is not in the journal", shortHash(e.Hash), shortHash(e.Reverts)))
+		}
+	}
+	problems = append(problems, missing(products, "product")...)
+	return append(problems, missing(devices, "device")...)
+}
+
+// missing describes the slugs entries name that a catalog lacks.
+func missing(named map[string]int, catalog string) []string {
+	slugs := make([]string, 0, len(named))
+	for slug := range named {
+		slugs = append(slugs, slug)
+	}
+	sort.Strings(slugs)
+	out := make([]string, 0, len(slugs))
+	for _, slug := range slugs {
+		out = append(out, fmt.Sprintf("%s is named by %s but is not in the %s catalog",
+			slug, entries(named[slug]), catalog))
+	}
+	return out
+}
+
+// entries counts entries, which plural would spell "entrys".
+func entries(n int) string {
+	if n == 1 {
+		return "1 entry"
+	}
+	return fmt.Sprintf("%d entries", n)
+}
+
+// massLine adds the grams up straight from the entries, apart from the fold:
+// what came in from outside, what went out, and what the accounts hold. The
+// first less the second must be the third, or a gram has gone missing.
+func massLine(state *ledger.State) string {
+	var in, out, held float64
+	for _, e := range state.Events {
+		if e.From == journal.External && e.To != journal.External {
+			in += e.Grams
+		}
+		if e.To == journal.External && e.From != journal.External {
+			out += e.Grams
+		}
+	}
+	for _, b := range state.Balances {
+		held += b.Storage + b.Stash + b.Consumed + b.AVB
+	}
+	in, out, held = ledger.Round(in), ledger.Round(out), ledger.Round(held)
+	line := fmt.Sprintf("%.2f g came in, %.2f g went out, %.2f g held", in, out, held)
+	if ledger.Round(in-out) != held {
+		return line + fmt.Sprintf(" — %.2f g unaccounted for", ledger.Round(in-out-held))
+	}
+	return line + " — every gram accounted for"
 }
 
 // writeStatus renders the state as a table.

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"github.com/TheDonDope/wits/pkg/repo"
 	"io"
 	"log"
 	"os"
@@ -444,4 +445,53 @@ func TestBundleKeepsTheRecordedOrder(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(again, ".wits", "journal.ndjson"))
 	require.NoError(t, err)
 	assert.Equal(t, string(want), string(got), "The restored journal should be byte for byte the original")
+}
+
+func TestFsckCommand(t *testing.T) {
+	t.Run("ACleanRepository", func(t *testing.T) {
+		dir := repository(t)
+		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+		require.NoError(t, err)
+		_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+		require.NoError(t, err)
+
+		out, err := run(t, dir, Fsck)
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "2 entries, 1 product, 0 devices")
+		assert.Contains(t, out, "20.00 g came in, 0.00 g went out, 20.00 g held — every gram accounted for")
+		assert.Contains(t, out, "✓ the chain verifies")
+	})
+
+	t.Run("ReportsWhatIsWrongAndFails", func(t *testing.T) {
+		dir := repository(t)
+		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "1g", "--date", "2026-07-01")
+		require.NoError(t, err)
+		r, err := repo.Discover(dir)
+		require.NoError(t, err)
+		// Written past the recorder, the way an old import or a hand edit
+		// could: more ground than there was, and a product nobody defined.
+		for _, e := range []journal.Event{
+			{Type: journal.Grind, Product: "wcake-221", Grams: 5, OccurredAt: time.Date(2026, 7, 2, 0, 0, 0, 0, time.Local)},
+			{Type: journal.Purchase, Product: "ghost", Grams: 2, OccurredAt: time.Date(2026, 7, 3, 0, 0, 0, 0, time.Local)},
+		} {
+			_, err := r.Journal().Append(e)
+			require.NoError(t, err)
+		}
+		path := r.JournalPath()
+		data, err := os.ReadFile(path)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(path, bytes.Replace(data, []byte(`"grams":1,`), []byte(`"grams":1.0,`), 1), 0600))
+
+		out, err := run(t, dir, Fsck)
+
+		assert.EqualError(t, err, "3 problems found")
+		assert.Contains(t, out, "✗ journal hash chain is broken: event 1")
+		assert.Contains(t, out, "left storage at")
+		assert.Contains(t, out, "✗ ghost is named by 1 entry but is not in the product catalog")
+
+		status, err := run(t, dir, Status)
+		require.NoError(t, err)
+		assert.Contains(t, status, "⚠ the journal was changed outside wits", "status should say so too")
+	})
 }

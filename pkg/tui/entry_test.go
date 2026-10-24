@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"bytes"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -572,4 +574,20 @@ func TestDeviceFormKeepsADeviceAddedElsewhere(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Volcano Hybrid", renamed.Name)
 	assert.Len(t, app.data.Devices.Devices, 2, "and the screen's copy should have caught up")
+}
+
+func TestABrokenChainIsSaidOnOpening(t *testing.T) {
+	app := liveApp(t)
+	assert.Empty(t, app.notice, "A journal that verifies says nothing")
+
+	path := app.data.Repo.JournalPath()
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, bytes.Replace(data, []byte(`"grams":20`), []byte(`"grams":21`), 1), 0600))
+	reloaded, err := Load(app.data.Repo)
+	require.NoError(t, err, "A broken chain still opens; nothing could be done about it otherwise")
+
+	opened := New(reloaded)
+	assert.Contains(t, opened.notice, "changed outside wits")
+	assert.True(t, opened.failed)
 }

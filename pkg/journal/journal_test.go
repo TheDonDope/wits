@@ -2,12 +2,15 @@ package journal
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -459,4 +462,64 @@ func TestWriteFile(t *testing.T) {
 
 	err = WriteFile(filepath.Join(dir, "missing", "products.yml"), []byte("x"))
 	assert.Error(t, err, "Should report a directory it cannot write into")
+}
+
+// TestHashIsPinned holds the hash of one known entry fixed. Every entry ever
+// recorded was hashed over how Event encodes; if that changes — a field
+// renamed, reordered, or added without omitempty — new entries would hash
+// differently from old ones made the same way, and a bundle restored by a
+// newer build would no longer verify against the journal it came from.
+func TestHashIsPinned(t *testing.T) {
+	at := time.Date(2026, time.July, 9, 10, 30, 0, 0, time.FixedZone("CEST", 2*60*60))
+	j := testJournal(t)
+	e, err := j.Append(Event{
+		Type: Sesh, Product: "wcake-221", Grams: 0.35, OccurredAt: at, RecordedAt: at.Add(time.Hour),
+		Device: "volcano", Temperature: 185, Note: "evening",
+	})
+	require.NoError(t, err)
+
+	line, err := os.ReadFile(j.Path())
+	require.NoError(t, err)
+	assert.Equal(t, pinnedLine+"\n", string(line), "The encoding entries are hashed over has changed")
+	assert.Equal(t, pinnedHash, e.Hash)
+	assert.NoError(t, j.Verify())
+}
+
+const (
+	pinnedHash = "7f8219525da3f0857a17dd961fcbca37f34771d391ea7d5047a655247ed9d941"
+	pinnedLine = `{"seq":1,"type":"sesh","occurred_at":"2026-07-09T10:30:00+02:00","recorded_at":"2026-07-09T11:30:00+02:00",` +
+		`"product":"wcake-221","grams":0.35,"from":"stash","to":"consumed","device":"volcano","temperature":185,` +
+		`"note":"evening","prev":"","hash":"` + pinnedHash + `"}`
+)
+
+func TestVerifyReadsTheBytesOnDisk(t *testing.T) {
+	t.Run("AFieldThisBuildDoesNotKnowIsStillChecked", func(t *testing.T) {
+		// A line written by a build whose Event had a field this one lacks,
+		// hashed with it: the bytes are what was hashed, so it verifies, and
+		// changing that unknown field is still caught.
+		path := filepath.Join(t.TempDir(), "journal.ndjson")
+		payload := `{"seq":1,"type":"grind","occurred_at":"2026-07-09T10:30:00Z","recorded_at":"2026-07-09T10:30:00Z",` +
+			`"product":"wcake","grams":1,"from":"storage","to":"stash","mood":"calm","prev":"","hash":""}`
+		sum := sha256.Sum256([]byte(payload))
+		hash := hex.EncodeToString(sum[:])
+		line := strings.Replace(payload, `"hash":""`, `"hash":"`+hash+`"`, 1)
+		require.NoError(t, os.WriteFile(path, []byte(line+"\n"), 0600))
+
+		assert.NoError(t, Open(path).Verify(), "Should verify what was hashed, whatever this build's Event holds")
+
+		edited := strings.Replace(line, `"mood":"calm"`, `"mood":"tense"`, 1)
+		require.NoError(t, os.WriteFile(path, []byte(edited+"\n"), 0600))
+		assert.ErrorIs(t, Open(path).Verify(), ErrBrokenChain, "and catch an edit to a field it cannot decode")
+	})
+
+	t.Run("AnEditToSpacingIsAnEdit", func(t *testing.T) {
+		j := testJournal(t)
+		_, err := j.Append(Event{Type: Grind, Product: "wcake", Grams: 1})
+		require.NoError(t, err)
+		data, err := os.ReadFile(j.Path())
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(j.Path(), bytes.Replace(data, []byte(`"grams":1`), []byte(`"grams": 1`), 1), 0600))
+
+		assert.ErrorIs(t, j.Verify(), ErrBrokenChain, "The same event, written differently, is not the line that was hashed")
+	})
 }

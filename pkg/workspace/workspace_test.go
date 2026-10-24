@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"os"
@@ -168,4 +169,23 @@ func TestReadRefusesABrokenJournal(t *testing.T) {
 	_, err = Read(r)
 
 	assert.Error(t, err, "Should refuse to open rather than fold a journal it could not read")
+}
+
+func TestOpenChecksTheChain(t *testing.T) {
+	dir := t.TempDir()
+	r, err := repo.Init(dir)
+	require.NoError(t, err)
+	_, err = r.Journal().Append(journal.Event{Type: journal.Purchase, Product: "wcake", Grams: 20})
+	require.NoError(t, err)
+
+	ws, err := Open(dir)
+	require.NoError(t, err)
+	assert.NoError(t, ws.Chain)
+
+	data, err := os.ReadFile(r.JournalPath())
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(r.JournalPath(), bytes.Replace(data, []byte(`"grams":20`), []byte(`"grams":2`), 1), 0600))
+	ws, err = Open(dir)
+	require.NoError(t, err)
+	assert.ErrorIs(t, ws.Chain, journal.ErrBrokenChain)
 }

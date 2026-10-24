@@ -123,8 +123,8 @@ write, so nothing can land between them.
 
 The tip is cached between appends, pinned by the file size: a size that no
 longer matches means another process appended and the tip is re-read. That is
-what keeps restoring a thousand-entry bundle linear instead of re-reading the
-whole journal per line.
+what keeps a run of plain appends linear instead of re-reading the whole journal
+per line.
 
 ### The fold — `pkg/ledger`
 
@@ -146,7 +146,7 @@ record.
 ### The commands
 
 `init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `reconcile`, `device add`
-and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, and `completion`
+and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`, and `completion`
 for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -171,6 +171,26 @@ The whole repository as one plain-text file, restoring to a journal identical
 Plain text and line-oriented on purpose: the record may outlive this program, and
 it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
 saved a few percent and cost the legibility that justifies a text format at all.
+
+A restore is one batch through `AppendWith` — one write, all or nothing, the
+emptiness check under the lock — and verifies what it wrote. An entry at a time
+took 13.04 s on disk for the workbook's bundle; the batch takes 0.07 s.
+
+### Checking — `wits fsck`
+
+The chain is verified **on every open** (`Workspace.Chain`); a broken one does
+not stop the repository opening, but `wits status` and the interface say so.
+`Verify` checks each hash against the line **as stored**, blanking the hash
+field to recover the bytes that were hashed, rather than re-encoding the
+decoded event: a field added to `Event` would otherwise have invalidated every
+entry ever made. A test pins one entry's encoding and hash, so a change to how
+entries encode cannot pass unnoticed.
+
+`wits fsck` reports the chain, every account the replay ever drew below zero,
+entries naming a product or device the catalogs lack (one line per name),
+corrections of entries that do not exist, and the mass balance added up
+straight from the entries — what came in, what went out, what is held. It
+changes nothing, and fails when it finds anything.
 
 ### The spreadsheet importer — `wits import`
 
@@ -334,11 +354,10 @@ range is checked when it is typed rather than later when a session is refused.
   recorded grinding. Nothing was invented to fill that gap, so the stash balance
   of a product recurring across cycles reads high until it is worked down.
 
-### 🔹 `wits show` and `wits fsck`
+### 🔹 `wits show`
 
 - **Status**: Planned
-- `show` for one entry in full. `fsck` to expose `journal.Verify` and check mass
-  conservation on the command line — the chain is already verified on restore.
+- `show` for one entry in full. (`fsck` is built — see Checking above.)
 
 ### 🔹 A cached fold
 
