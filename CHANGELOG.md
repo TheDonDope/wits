@@ -2,10 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.37.0"></a>
+## [v0.37.0] - 2026-10-24
+### Fix
+- **repo:** the catalogs keep each other's changes, and survive a crash
+
+
 <a name="v0.36.0"></a>
 ## [v0.36.0] - 2026-10-24
 ### Chore
 - **vhs:** re-record wits-import.gif because the import now names its stages
+
+### Docs
+- update changelog for v0.36.0
 
 ### Feat
 - **import:** say what it is doing, and do it in one write
@@ -565,7 +574,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.36.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.37.0...HEAD
+[v0.37.0]: https://github.com/TheDonDope/wits/compare/v0.36.0...v0.37.0
 [v0.36.0]: https://github.com/TheDonDope/wits/compare/v0.35.0...v0.36.0
 [v0.35.0]: https://github.com/TheDonDope/wits/compare/v0.34.0...v0.35.0
 [v0.34.0]: https://github.com/TheDonDope/wits/compare/v0.33.0...v0.34.0
