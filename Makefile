@@ -7,7 +7,8 @@ PKG = github.com/TheDonDope/wits/pkg/version
 LDFLAGS = -X $(PKG).Version=$(VERSION) -X $(PKG).CommitSHA=$(COMMIT_SHA) -X $(PKG).CommitDate=$(COMMIT_DATE)
 
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
-	test test-ci cover show-cover vet preflight snap release server ui ui-test serve
+	test test-ci cover show-cover vet preflight snap release server ui ui-test serve \
+	wasm wasm-check pages
 
 .DEFAULT_GOAL := build
 
@@ -106,6 +107,24 @@ ui:
 
 ui-test:
 	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng test --watch=false
+
+# wits for the phone: the repository, recorder and API compiled to
+# WebAssembly, with the Go runtime's loader beside it. Both are build output,
+# copied into the client's public folder and not committed.
+wasm:
+	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w $(LDFLAGS)" -o wits-ui/public/wits.wasm ./cmd/wits-wasm
+	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" wits-ui/public/wasm_exec.js
+
+# The engine on MemFS under Node, synced with the CLI through a folder: what
+# the phone pushes, wits pull reads, and the other way round.
+wasm-check: build wasm
+	./wasm-check.sh
+
+# The phone's build, as GitHub Pages serves it under /wits/. 404.html is the
+# app again, so a link into a page opens it rather than GitHub's 404.
+pages: wasm
+	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng build --configuration pages
+	cp wits-ui/dist/wits-ui/browser/index.html wits-ui/dist/wits-ui/browser/404.html
 
 # The repository in the working directory, in a browser at http://127.0.0.1:7341
 serve: server ui

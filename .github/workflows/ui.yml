@@ -46,3 +46,8 @@ jobs:
 
       - name: Build
         run: npx ng build
+
+      # The phone's build: the same client with the engine switched in and
+      # the service worker. The engine itself is built by the Go workflow.
+      - name: Build for the phone
+        run: npx ng build --configuration pages

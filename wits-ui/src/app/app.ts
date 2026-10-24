@@ -9,6 +9,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { Binding, Keys } from './data/keys';
+import { ENGINE } from './data/mode';
 import { Wits } from './data/wits';
 import { RecordDialog } from './pages/record';
 
@@ -46,6 +47,7 @@ export class App {
     { path: '/effects', label: 'Effects', icon: 'psychology' },
     { path: '/jars', label: 'Jars', icon: 'inventory_2' },
     { path: '/history', label: 'History', icon: 'insights' },
+    ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
   ];
 
   constructor() {

@@ -497,6 +497,43 @@ stashes cleared together through `Recorder.Flush` — one batch, all or none.
 Every key is declared once in `Keys`, page layers over the shell's, and the
 footer is drawn from the same list, so it can only show keys that answer.
 
+### On the phone — `wits-wasm`
+
+The phone keeps its own copy of the journal, so the server keeps answering
+only its own machine. `cmd/wits-wasm` is `pkg/api`'s handler compiled to
+WebAssembly (`GOOS=js`) and run in the page. The client's interceptor
+(`data/engine.ts`) answers `/api/` from it in the `pages` build, so every page
+reads and records as it does against the server, through the same recorder. Go's
+js port calls Node's `fs`; `data/memfs.ts` is the twenty calls it makes, in
+memory, with "no error" passed as `null` (Go reads anything else as an error)
+and only error codes Go has an errno for (any other panics it). Every file the
+engine changes under `/wits` is written to IndexedDB after each call, and the
+page asks for persistent storage. The lock is a no-op there (`lock_js.go`): one
+page, one thread.
+
+Sync is `remote.Pull` and `remote.Push` against a stand-in folder: the
+`wits.age` the phone opens is put there, and what the push writes there is
+shared or downloaded to save back, since a browser cannot write into a folder
+by itself. With nothing yet to save, there is no file. The key is pasted once
+and kept in the phone's `.wits/remote.key`. A phone can also be the first device,
+making the key.
+
+It is served from GitHub Pages (`make pages`, `.github/workflows/pages.yml`):
+installable, with a manifest and Angular's service worker caching everything
+the engine included, and shortcuts to `?record=grind` and `?record=session`. On
+a touchscreen the key hints are hidden. The engine is 8.9 MB, 2.4 MB gzipped;
+`httptest` was swapped for a ten-line recorder, which kept the testing flags out
+rather than saving much — the size is the API and `net/http`. Before this,
+the 5.2 MB of a first build was a stub whose unused imports the linker had
+dropped.
+
+Checked: `make wasm-check` runs the engine on MemFS under Node against the CLI
+through a folder, both ways, and fails unless both end holding the same
+entries. In headless Chromium at phone size, the `pages` build pulled the
+workbook's 1429 entries in 10.5 s, registered its service worker, kept the
+repository in IndexedDB, and drew fill 30 as `wits status` does: day 57, 36.73
+g of 60, 19 days' worth, 8.07 g in 2 older jars.
+
 ### The effect log — `wits rate`
 
 What a session did, rated afterwards from 1 to 5 on any of overall, pain,
@@ -619,12 +656,6 @@ first things wits would send anywhere, so both are opt-in and said plainly.
   still holds its entries and rebases them on its next pull, but the remote
   does not say it lost.
 
-#### 🔹 wits on the phone
-
-- **Status**: Planned
-- wits-ui installable and offline-first, as a PWA: an entry made without the
-  server waits and is appended when it is back, and a shortcut on the home
-  screen records a grind in two taps (`?record=grind` already opens the form).
 
 ### Later · hardware and delight
 
