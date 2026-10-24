@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.57.0"></a>
+## [v0.57.0] - 2026-10-24
+### Feat
+- **remote:** push and pull through a folder, and a pull is a rebase
+
+
 <a name="v0.56.0"></a>
 ## [v0.56.0] - 2026-10-24
+### Docs
+- update changelog for v0.56.0
+
 ### Fix
 - **deps:** take vite 8.3.5 under the angular build, where its six advisories are fixed
 
@@ -765,7 +774,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.56.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.57.0...HEAD
+[v0.57.0]: https://github.com/TheDonDope/wits/compare/v0.56.0...v0.57.0
 [v0.56.0]: https://github.com/TheDonDope/wits/compare/v0.55.0...v0.56.0
 [v0.55.0]: https://github.com/TheDonDope/wits/compare/v0.54.0...v0.55.0
 [v0.54.0]: https://github.com/TheDonDope/wits/compare/v0.53.0...v0.54.0
