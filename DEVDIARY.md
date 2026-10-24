@@ -29,6 +29,76 @@ The afternoon turned to everything around the records. All fifteen Dependabot al
 
 Recording on SteamOS needs help: the Chromium that vhs downloads lacks `libnss3`, `libnspr4` and `libasound`, which SteamOS does not ship. `./doctor.sh install` now unpacks Arch's `nss`, `nspr` and `alsa-lib` into `~/.cache/wits-dev/chromelibs`, and `render-vhs-tapes.sh` points vhs at them, with nothing installed system-wide. Preflight had been skipping lizard and shellcheck all along on this machine; it runs both now. Codacy runs pydocstyle with D212 and D213 both on, which contradict each other for any multi-line docstring, so Python here keeps its docstrings to one line. excelize is pinned to an untagged master commit and should move to v2.11.1 once that is tagged.
 
+### Two reviews, and a window
+
+The rest of the day went from v0.30.0 to v0.50.0. The Séance left the table, twenty editor themes arrived on `t`, and a notice that had sat in the footer forever learned to leave at the next key. Then an architecture review, its findings reproduced before anything was fixed: sessions could not be undone, `buy "Can"` made a third product out of two partial matches, one cut-off line locked the whole repository, a fill dated a month back joined the wrong cycle, and the TUI and a command in another terminal could both take the same jar, leaving storage at -17.10 g. Each was fixed where it lived — the checks now run under the journal's lock against the journal as it stands, the fold replays by date, the catalogs are written atomically under their own locks. A slow import turned out to be 1429 flushes to disk: 13.24 s became 0.25 s, and restore went from 13.04 s to 0.07 s the same way. `wits fsck` was built, the chain is checked on every open, and the ledger now adds in centigrams and refuses what a scale cannot read.
+
+Taking the bundle reader apart for its complexity found a bug in its format: bundles never carried an adjustment's accounts, so every restored undo and weighing moved nothing — wcake came back at 16.90 g instead of 17.95 g, and restore reported success. Format 2 writes them; format 1 bundles are repaired on reading. Typing the three scopes — `Fill`, `Shelf`, `Jar` — made mixing them a compile error and found three mixes the eye had passed. A second review found a fill dated ahead counting as on the shelf, which would have recorded a false 2 g loss at the next weighing, and a journal screen taking 34 ms a frame to draw entries nobody could see, its selection off screen after twenty rows; it draws in 2.3 ms now. The overdraft model went too: grams are flower, not money, and nothing is ever below zero. Every figure was checked against the workbook throughout, and `wits status` read the same at every step that was not meant to change it.
+
+The evening built what the roadmap had planned: `wits-server`, a JSON API that answers this machine only, and `wits-ui`, an Angular client with Angular Material. It draws the fill as a ring, each jar of glass filled to what it holds, the supply as a curve to its empty day, three years as a calendar and every fill as a lane on one timeline — and it reads 36.73 g of 60, day 57, 19 days' worth, what `wits status` says. It got the analysis tab and the replay back, with a scrubber, ticked jars with their stashes cleared in one batch, and every key the terminal has, in a footer drawn from the same list the keys are answered from.
+
+- `ab921ef` docs(diary): the records add up, and so does what surrounds them
+- `aa612bf` feat(tui)!: the séance is over
+- `eeaf3b6` build(preflight): fail on new complexity, as the gate does, not on old
+- `a915cf7` test(witsnap): the camera and the tap, tested at last
+- `14bd5ce` docs: update changelog for v0.30.0
+- `5d626a5` docs(skills): ship from a clean main, and stop when you cannot reach one
+- `ebc7082` feat(tui): twenty editor themes, and t to try them on
+- `e77bf66` docs: update changelog for v0.31.0
+- `2bc40ea` fix(tui): a notice lasts until the next key, not forever
+- `e774aa4` docs: update changelog for v0.32.0
+- `593f1e6` fix: sessions come back, buy stops guessing, and a cut-off line is only a cut-off line
+- `042dc43` docs: update changelog for v0.33.0
+- `b966069` feat(ledger): a fill lands where its date puts it
+- `78bac09` docs: update changelog for v0.34.0
+- `192ad6a` fix(record): the guard rails hold under the lock, against the journal as it stands
+- `32d1919` test(record): compare the undo's moment, not its time zone
+- `c72bf93` docs: update changelog for v0.35.0
+- `64a6d87` feat(import): say what it is doing, and do it in one write
+- `4032407` chore(vhs): re-record wits-import.gif because the import now names its stages
+- `2b6698d` docs: update changelog for v0.36.0
+- `fc829ff` fix(repo): the catalogs keep each other's changes, and survive a crash
+- `f3f5618` docs: update changelog for v0.37.0
+- `a8a94d5` feat: wits fsck, a chain checked on every open, and restore in one write
+- `371c213` chore(vhs): re-record wits-bundle.gif because restore now names its stages
+- `b916408` docs: update changelog for v0.38.0
+- `2441ca6` feat(tui): the screen keeps up, a fill waits for its day, and esc stays in
+- `7737a4a` docs: update changelog for v0.39.0
+- `22592b8` refactor(tui): one slot for the form in front
+- `54eec6a` docs: update changelog for v0.40.0
+- `94b04ad` fix(bundle): undos and weighings come back from a restore
+- `cca3442` docs: update changelog for v0.41.0
+- `c9da754` refactor(ledger): add in centigrams, and refuse what a scale cannot read
+- `995922a` docs: update changelog for v0.42.0
+- `01fddff` refactor(ledger): the three scopes are types, and the mixes they found are gone
+- `e6f4e7c` chore(vhs): re-record four recordings because fills now say what they are worth
+- `258adac` docs(ledger): one comment per scope type, each beginning with its name
+- `00bb26e` docs: update changelog for v0.43.0
+- `b764b63` fix(ledger): flower, not money — no overdrafts, no negative grams
+- `62778c6` docs: update changelog for v0.44.0
+- `25b536e` fix(ledger): what has not arrived is not on the shelf
+- `6f2e90b` docs: what has not arrived is not on the shelf
+- `91320db` docs: update changelog for v0.45.0
+- `4be8f35` feat(fsck): say when an entry took grams that were not in the jar
+- `2a8c3d9` docs: update changelog for v0.46.0
+- `68a411e` perf(tui): the journal draws what fits, and keeps the selection in it
+- `db78d09` docs: update changelog for v0.47.0
+- `588407a` chore: no wits.log, and figures named for what they count
+- `a11c011` docs: update changelog for v0.48.0
+- `95f4d53` feat(server): wits-server, a JSON API over the workspace
+- `f2d1057` feat(server): what the client draws — the shelf's projection, every day, every fill
+- `ddfb167` feat(ui): wits in a browser — Angular, Angular Material, and charts the terminal could not draw
+- `0d86147` docs: wits in a browser — make serve, the screenshots, and how to work on it
+- `3f5494f` ci(ui): lint the client with its types, where the types are
+- `1c1ada1` style(ui): the stylesheets to the standard Codacy's Stylelint applies
+- `e74cc71` docs: update changelog for v0.49.0
+- `f087664` feat(ui): the analysis tab and the replay, ticked jars, and every key
+- `31ec296` docs: update changelog for v0.50.0
+
+### Notes for the rest of 2026-10-24
+
+Codacy's ESLint runs without a project's dependencies, so in the Angular client every `@angular/*` and d3 type is unresolved and its type-aware rules flag every use — a hundred findings on the first pull request, ninety-nine about nothing. `.codacy.yml` excludes `wits-ui` from Codacy's ESLint only; the client is linted with its types by the `wits-ui` workflow and by `./preflight.sh` (`ng lint` with typescript-eslint's strict type-checked rules, and Stylelint). `ng add @angular/material` linked Roboto and the icons from a font service, which would have been the only network call wits made; they ship as npm packages instead. The client is verified by photographing it with the headless Chromium the tapes use, `--force-prefers-reduced-motion` so the count-ups have landed; `?record=`, `?at=` and `?scope=` open a form, a day and a scope for the camera. Node here is v26; Angular 22 built and tested on it without complaint. The `?` help sheet and a real stash-clearing click are covered by tests, not yet by a photograph. Left open from the reviews: AVB tracking, which stays on the roadmap.
+
 ## 2026-08-02
 
 ### From v0.7.0 to v0.20.0 in one day
