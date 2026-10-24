@@ -2,12 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.44.0"></a>
+## [v0.44.0] - 2026-10-24
+### Fix
+- **ledger:** flower, not money — no overdrafts, no negative grams
+
+
 <a name="v0.43.0"></a>
 ## [v0.43.0] - 2026-10-24
 ### Chore
 - **vhs:** re-record four recordings because fills now say what they are worth
 
 ### Docs
+- update changelog for v0.43.0
 - **ledger:** one comment per scope type, each beginning with its name
 
 ### Refactor
@@ -637,7 +644,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.43.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.44.0...HEAD
+[v0.44.0]: https://github.com/TheDonDope/wits/compare/v0.43.0...v0.44.0
 [v0.43.0]: https://github.com/TheDonDope/wits/compare/v0.42.0...v0.43.0
 [v0.42.0]: https://github.com/TheDonDope/wits/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/TheDonDope/wits/compare/v0.40.0...v0.41.0
