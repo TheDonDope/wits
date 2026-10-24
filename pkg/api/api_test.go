@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -319,4 +320,35 @@ func TestStrains(t *testing.T) {
 	assert.Equal(t, "Enua 22/1 Wedding Cake", got[0].Name)
 	assert.Equal(t, 20.0, got[0].Dispensed)
 	assert.Empty(t, got[0].Like, "Nothing else to be like")
+}
+
+func TestSnapshotsAreShared(t *testing.T) {
+	s, r := server(t, "")
+	paths := []string{"/api/overview", "/api/jars", "/api/cycles", "/api/devices", "/api/days", "/api/effects",
+		"/api/journal?limit=100&all=1", "/api/avb", "/api/costs", "/api/unpriced", "/api/strains", "/api/carry",
+		"/api/report.pdf"}
+
+	// Every view at once, from one snapshot: the race detector says whether
+	// any of them writes to what they share.
+	var wg sync.WaitGroup
+	for range 4 {
+		for _, p := range paths {
+			wg.Go(func() {
+				w := call(t, s, "GET", p, "")
+				assert.Equal(t, http.StatusOK, w.Code, p)
+			})
+		}
+	}
+	wg.Wait()
+
+	// Written past the server — a command in another terminal — the next read
+	// sees it.
+	ws, err := workspace.Read(r)
+	require.NoError(t, err)
+	_, err = ws.Recorder.Grind("wcake-221", 1, time.Now())
+	require.NoError(t, err)
+	got := decodeInto[struct {
+		Total int `json:"total"`
+	}](t, call(t, s, "GET", "/api/journal?limit=1", ""))
+	assert.Equal(t, 4, got.Total, "Should read the journal again once it has grown")
 }

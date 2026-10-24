@@ -1,9 +1,10 @@
 // Package api serves a wits repository over HTTP as JSON, for clients that are
 // not a terminal — the Angular interface in wits-ui first.
 //
-// It is another caller of pkg/workspace, nothing more. Every request opens the
-// repository afresh, so what it answers is what wits status would say at that
-// moment; every write goes through the recorder, under the journal's lock, with
+// It is another caller of pkg/workspace, nothing more. Every request answers
+// from the repository as it stands — read again whenever a file of it has
+// changed, so what it answers is what wits status would say at that moment;
+// every write goes through the recorder, under the journal's lock, with
 // the same checks the commands and the terminal interface make. Figures keep
 // the scope they have everywhere else — the fill, the shelf, the jar — and the
 // field names say which.
@@ -25,6 +26,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
@@ -44,6 +46,13 @@ import (
 type Server struct {
 	repo *repo.Repo
 	ui   string
+
+	// The repository as last read, and the stamp of its files then: every
+	// GET read and verified the whole journal, 12 ms here and ten times that
+	// on a phone, for a journal that had not changed since the last.
+	mu     sync.Mutex
+	cached *workspace.Workspace
+	stamp  string
 }
 
 // New returns a server for the repository, serving the built interface from
@@ -129,10 +138,31 @@ func spa(dir string) http.Handler {
 	})
 }
 
-// read answers a GET from a fresh snapshot of the repository.
+// snapshot is the repository as it stands: the one read last, when nothing
+// has been written since — its files' sizes and times unchanged — and read
+// afresh when anything has. A snapshot is only read from; the time it
+// measures against is now, whichever read it came from. Writes never use one:
+// they read the journal under its lock, as the recorder does.
+func (s *Server) snapshot() (*workspace.Workspace, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	stamp := workspace.Stamp(s.repo)
+	if s.cached == nil || stamp != s.stamp {
+		ws, err := workspace.Read(s.repo)
+		if err != nil {
+			return nil, err
+		}
+		s.cached, s.stamp = ws, stamp
+	}
+	ws := *s.cached
+	ws.OpenedAt = time.Now()
+	return &ws, nil
+}
+
+// read answers a GET from a snapshot of the repository.
 func (s *Server) read(view func(*workspace.Workspace) any) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		ws, err := workspace.Read(s.repo)
+		ws, err := s.snapshot()
 		if err != nil {
 			fail(w, http.StatusInternalServerError, err)
 			return
@@ -329,7 +359,7 @@ func costsOf(ws *workspace.Workspace) any {
 // unpriced is the purchases without a price, for reconcile purchases: those
 // still in storage, or every one with ?all=1.
 func (s *Server) unpriced(w http.ResponseWriter, r *http.Request) {
-	ws, err := workspace.Read(s.repo)
+	ws, err := s.snapshot()
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return
@@ -406,7 +436,7 @@ func strainsOf(ws *workspace.Workspace) any {
 // products on the shelf, or every jar holding anything with ?all=1. The
 // sealing key is made the first time, as wits carry makes it.
 func (s *Server) carry(w http.ResponseWriter, r *http.Request) {
-	ws, err := workspace.Read(s.repo)
+	ws, err := s.snapshot()
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return
@@ -466,7 +496,7 @@ type carryFill struct {
 // report is the page for the prescriber, as a PDF: the days ?from= to ?to=,
 // both included, the last 90 by default.
 func (s *Server) report(w http.ResponseWriter, r *http.Request) {
-	ws, err := workspace.Read(s.repo)
+	ws, err := s.snapshot()
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return
@@ -845,7 +875,7 @@ func entryOf(e journal.Event, ws *workspace.Workspace, undone map[string]bool) e
 // one kind, and corrected pairs are left out unless all is set — the way the
 // terminal's journal reads.
 func (s *Server) journal(w http.ResponseWriter, r *http.Request) {
-	ws, err := workspace.Read(s.repo)
+	ws, err := s.snapshot()
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return

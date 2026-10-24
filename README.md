@@ -336,7 +336,6 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
   remote.key      # the age key the remote is encrypted to; never in the remote
   seal.key        # the key seals are signed with; yours, and in no bundle or remote
   seals/          # the seals of the journal's head, and their timestamp proofs
-  index/          # reserved for a cached fold; nothing writes it yet
   *.lock          # empty; what two writers of one file take turns on
 ```
 

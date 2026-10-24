@@ -501,8 +501,8 @@ range is checked when it is typed rather than later when a session is refused.
 ### In a browser — `wits-server` and `wits-ui`
 
 `cmd/wits-server` serves `pkg/api`: a JSON API another caller of
-`pkg/workspace`, nothing more. Every request opens the repository fresh, and
-every write — buy, grind, sesh, weigh, undo — goes through the recorder under
+`pkg/workspace`, nothing more. Every request answers from the repository as
+it stands, read again whenever one of its files changed (below), and every write — buy, grind, sesh, weigh, undo — goes through the recorder under
 the journal's lock, so the browser, the terminal and the commands refuse the
 same things in the same words. The figures keep their scopes in their names:
 the fill's `dispensed` and `remaining`, the shelf's projection
@@ -596,6 +596,31 @@ the one that got further. fsck checks every seal: its signature, its head, and
 that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
 verified in place, outside the repository and after a restore, and the sealed
 report's footer read.
+
+### Read once, while nothing changes — the server's snapshot
+
+A cached fold was planned: the replayed state kept in `.wits/index/` so an open
+would not replay the journal. Measured on the workbook, it would have saved
+almost nothing. Opening takes 12.2 ms: reading and decoding the journal 4.3,
+verifying its chain 5.2, the catalogs and the logs about 2, and the fold
+0.63. What a long-lived server spent its time on was reading and verifying,
+on every request, a journal that had not changed since the last. On the
+phone's engine the dashboard's nine requests took about 450 ms and every
+four-second poll 49.
+
+So the server keeps the repository it read last (`api.Server.snapshot`) and
+reads it again only when a file has changed: `workspace.Stamp`, the size and
+time of the journal, the effect and price logs, the catalogs, the config and
+the seals' folder, seven stats instead of a read. A snapshot is only read
+from, and measures against now. Writes read the journal under its lock as
+they always did, and a command in another terminal is seen on the next
+request. The terminal interface's stamp had left out the price log, the
+config and the seals, so a price written elsewhere did not refresh it; it
+uses the same stamp now. On the phone's engine the dashboard takes 21 ms once
+warm, 92 cold, and a poll 0.4. Every view read in parallel from one snapshot
+passes the race detector. Nothing goes on disk, so there is nothing to
+rebuild: `wits init` no longer makes the `index/` nothing ever wrote to, and
+`wits reindex` has nothing to do.
 
 ### The replay as a film — Film, on the Jars page
 
@@ -772,14 +797,6 @@ are the first things wits would send anywhere, so both are opt-in and said
 plainly.
 
 ### 5 · More than one device
-
-#### 🔹 A cached fold
-
-- **Status**: Planned
-- `wits init` creates `.wits/index/` and **nothing writes to it**. Replaying the
-  journal on every open is milliseconds at 1429 entries, so it does not matter
-  yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
-  must stay disposable.
 
 #### 🔹 WebDAV for the remote
 
