@@ -205,6 +205,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
 | `wits status` | What is left, and how long it will last |
 | `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
+| `wits show [entry]` | One entry in full: what it moved, the jar before and after, what corrects it |
 | `wits revert <entry>` | Undo an entry by recording a correction |
 | `wits reconcile [account] [product] [weight]` | Make an account agree with the scale; interactive with no arguments |
 | `wits device add <name>` / `list` | Register a vaporizer and its temperature range; list them |
