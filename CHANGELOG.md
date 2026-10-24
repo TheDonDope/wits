@@ -2,12 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.50.0"></a>
+## [v0.50.0] - 2026-10-24
+### Feat
+- **ui:** the analysis tab and the replay, ticked jars, and every key
+
+
 <a name="v0.49.0"></a>
 ## [v0.49.0] - 2026-10-24
 ### Ci
 - **ui:** lint the client with its types, where the types are
 
 ### Docs
+- update changelog for v0.49.0
 - wits in a browser — make serve, the screenshots, and how to work on it
 
 ### Feat
@@ -701,7 +708,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.49.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.50.0...HEAD
+[v0.50.0]: https://github.com/TheDonDope/wits/compare/v0.49.0...v0.50.0
 [v0.49.0]: https://github.com/TheDonDope/wits/compare/v0.48.0...v0.49.0
 [v0.48.0]: https://github.com/TheDonDope/wits/compare/v0.47.0...v0.48.0
 [v0.47.0]: https://github.com/TheDonDope/wits/compare/v0.46.0...v0.47.0
