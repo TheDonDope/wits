@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"io"
 	"net/http"
@@ -124,4 +125,30 @@ func TestStampAndUpgrade(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, changed, "Nothing left to ask")
 	assert.Equal(t, upgraded, again, "Should write back what it read")
+}
+
+func TestCarry(t *testing.T) {
+	key, _, err := Key(filepath.Join(t.TempDir(), "seal.key"))
+	require.NoError(t, err)
+	items := []Item{
+		{Name: "Sumo 25/1 Papaya Bomb", Sealed: 12.94, Ground: 7.06, Fills: []Dispensed{{Day: "2026-08-29", Grams: 20}}},
+		{Name: "Enua 36/1 Citrus Slap", Sealed: 2.4, Ground: 17.6, AVB: 0.21, Fills: []Dispensed{{Day: "2026-07-09", Grams: 20}}},
+	}
+	c := MakeCarry(key, head, 1429, time.Date(2026, 10, 25, 9, 0, 0, 0, time.UTC), items)
+
+	require.NoError(t, c.Verify())
+	for name, text := range map[string]string{"the statement": c.String(), "its address": c.URL()} {
+		got, err := ParseCarry(text)
+		require.NoError(t, err, name)
+		assert.Equal(t, c, got, "Should read back %s as it was signed", name)
+	}
+	assert.True(t, strings.HasPrefix(c.URL(), VerifyPage+"z"), "Should deflate the statement, and say so")
+	plain := len(VerifyPage) + base64.RawURLEncoding.EncodedLen(len(c.String()))
+	assert.Less(t, len(c.URL()), plain, "Deflated, the address is shorter than the statement in plain base64")
+
+	forged, err := ParseCarry(strings.Replace(c.String(), "12.94", "13.94", 1))
+	require.NoError(t, err)
+	assert.ErrorIs(t, forged.Verify(), ErrForged, "Should refuse a gram changed after signing")
+	_, err = ParseCarry("wits-seal 1\n")
+	assert.Error(t, err)
 }

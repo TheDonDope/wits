@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`, `seal`, `verify`,
+`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`, `seal`, `verify`, `carry`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -597,6 +597,30 @@ that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
 verified in place, outside the repository and after a restore, and the sealed
 report's footer read.
 
+### Proof of what is carried — `wits carry`
+
+What is held, against the fills that dispensed it, as a signed statement
+(`seal.Carry`) and a QR code. Each product gets the jar's own balances, sealed,
+ground and AVB, which are exact, and the fills its sealed grams stand on, or
+its last fill once they are all ground. The stash cannot be split by fill,
+only storage is kept in lots, so nothing pretends to split it. The default is
+the products on the shelf; `--all` adds every jar holding anything, since the
+imported history's stashes, never worked down, read 1209 g. On the workbook
+each of the five jars on the shelf holds exactly its fill's 20 g, 100 g in all.
+
+The code carries `verify.html#z…`: the statement deflated and in base64,
+after the `#` that a browser never sends, so the host never sees it. Deflate
+and the lowest error correction took the code from 117 modules across to 89.
+`verify.html` is plain HTML in the phone's build, cached by its service worker.
+It checks the Ed25519 signature with WebCrypto, or with its own
+implementation of RFC 8032 where WebCrypto lacks it (Chrome before 137: the
+headless Chromium here is 128). Both accepted the statement and refused it
+with one gram changed. `wits verify` takes the statement or its address and
+checks it against the journal too; `/api/carry` and the Jars page's **What I
+carry** show the code. The QR code is drawn with `rsc.io/qr`. It has not yet
+been read by a phone's camera here; that is the check left to do. A phone
+signs with its own key until the computer's is brought to it.
+
 ### Tolerance — the analysis tab
 
 Grams a day against the effect log's ratings, rolling (`data/derive.ts`:
@@ -694,23 +718,13 @@ elsewhere shows within a tick.
 
 ## 📌 Planned
 
-In this order: each phase stands on the ones before it. The first three —
-what was open and quick, the physical record complete, and the report — are
-built, above; the report and the tolerance curve read the effect log, and say
+In this order: each phase stands on the ones before it. The first four —
+what was open and quick, the physical record complete, the report, and trust
+— are built, above; the report and the tolerance curve read the effect log, and say
 so plainly while it holds no ratings. The phone came after sync, because the
 server answers only this machine. Timestamping a chain and syncing over WebDAV
 are the first things wits would send anywhere, so both are opt-in and said
 plainly.
-
-### 4 · Trust
-
-#### 🔹 Proof of what is carried
-
-- **Status**: Planned
-- In Germany a patient must be able to show that what they carry matches what
-  was prescribed. wits knows what is in every jar and which fill dispensed it: a
-  view of the holdings against the prescriptions, as a signed QR code that
-  verifies against the journal's chain.
 
 ### 5 · More than one device
 

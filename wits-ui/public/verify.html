@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>wits · verify</title>
+  <!--
+    The page a QR code from `wits carry` opens. It checks the statement in this
+    browser: the statement rides after the #, which a browser never sends to
+    the server it asks for the page, and nothing here is stored or sent on.
+    Plain HTML on purpose: the one who checks needs nothing of wits but this.
+  -->
+  <style>
+    :root { --bg: #0b0e14; --fg: #e6e9ef; --dim: #7d879c; --ok: #34d39a; --bad: #ff7a8a; --edge: rgb(255 255 255 / 9%); }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .dim { color: var(--dim); }
+    .verdict { margin: 18px 0; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--edge); font-weight: 600; }
+    .verdict.ok { color: var(--ok); border-color: rgb(52 211 154 / 40%); }
+    .verdict.bad { color: var(--bad); border-color: rgb(255 122 138 / 40%); }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { text-align: left; color: var(--dim); font-weight: 500; padding: 6px 4px; }
+    td { padding: 6px 4px; border-top: 1px solid var(--edge); vertical-align: top; }
+    td.n, th.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    code { font-size: 13px; overflow-wrap: anywhere; }
+    textarea { width: 100%; min-height: 160px; background: transparent; color: var(--fg); border: 1px solid var(--edge);
+      border-radius: 10px; padding: 10px; font: 13px ui-monospace, monospace; box-sizing: border-box; }
+    button { margin-top: 8px; padding: 8px 16px; border-radius: 99px; border: 0; background: #d3bbff; color: #1d0b3f; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>What is carried, checked</h1>
+    <p class="dim">A statement signed by the patient's own key, from the record kept by
+      <a href="https://github.com/TheDonDope/wits" style="color: inherit">wits</a>. It is checked here, in this browser.</p>
+    <div id="out"></div>
+    <section id="paste" hidden>
+      <p class="dim">Paste a statement from <code>wits carry --out statement.txt</code>, or open the address its QR code holds.</p>
+      <textarea id="text" spellcheck="false"></textarea>
+      <button id="check">Check</button>
+    </section>
+  </main>
+  <script type="module">
+    const out = document.getElementById('out');
+    const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+    const b64url = (s) => b64(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
+    const plain = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/=+$/, '');
+
+    /** The statement's lines, and the signed part: everything before its sig line. */
+    function read(text) {
+      const lines = text.replace(/\r\n/g, '\n').trimEnd().split('\n');
+      if (lines[0] !== 'wits-carry 1') throw new Error('This is not a wits statement of what is carried.');
+      const sig = lines.at(-1);
+      if (!sig.startsWith('sig ')) throw new Error('The statement has no signature.');
+      const s = { body: lines.slice(0, -1).join('\n') + '\n', sig: b64(sig.slice(4)), items: [] };
+      for (const l of lines.slice(1, -1)) {
+        const [word, ...rest] = l.split(' ');
+        if (word === 'at') s.at = new Date(rest[0]);
+        else if (word === 'head') [s.head, s.entries] = rest;
+        else if (word === 'key') s.key = b64(rest[0].replace(/^ed25519:/, ''));
+        else if (word === 'item') s.items.push({ sealed: +rest[0], ground: +rest[1], avb: +rest[2], name: rest.slice(3).join(' '), fills: [] });
+        else if (word === 'fill') s.items.at(-1).fills.push({ day: rest[0], grams: +rest[1] });
+      }
+      return s;
+    }
+
+    // Ed25519 verification, RFC 8032, for a browser whose WebCrypto lacks it
+    // (Chrome before 137 among them). Slow and plain, which is enough: one
+    // signature, checked once. SHA-512 is the browser's own.
+    const P = 2n ** 255n - 19n;
+    const L = 2n ** 252n + 27742317777372353535851937790883648493n;
+    const mod = (a) => ((a % P) + P) % P;
+    const pow = (b, e) => { let r = 1n; b = mod(b); for (; e > 0n; e >>= 1n, b = (b * b) % P) if (e & 1n) r = (r * b) % P; return r; };
+    const inv = (a) => pow(a, P - 2n);
+    const D = mod(-121665n * inv(121666n));
+    const I = pow(2n, (P - 1n) / 4n);
+    const B = [15112221349535400772501151409588531511454012693041857206046113283949847762202n,
+      46316835694926478169428394003475163141307993866256225615783033603165251855960n];
+    const ext = ([x, y]) => [x, y, 1n, mod(x * y)];
+    function add([X1, Y1, Z1, T1], [X2, Y2, Z2, T2]) {
+      const a = mod((Y1 - X1) * (Y2 - X2)), b = mod((Y1 + X1) * (Y2 + X2));
+      const c = mod(T1 * 2n * D * T2), d = mod(Z1 * 2n * Z2);
+      const e = b - a, f = d - c, g = d + c, h = b + a;
+      return [mod(e * f), mod(g * h), mod(f * g), mod(e * h)];
+    }
+    function mul(pt, n) {
+      let r = [0n, 1n, 1n, 0n];
+      for (; n > 0n; n >>= 1n, pt = add(pt, pt)) if (n & 1n) r = add(r, pt);
+      return r;
+    }
+    const le = (bytes) => bytes.reduceRight((v, b) => (v << 8n) + BigInt(b), 0n);
+    function encode([X, Y, Z]) {
+      const zi = inv(Z), x = mod(X * zi), y = mod(Y * zi);
+      const out = new Uint8Array(32);
+      let v = y | ((x & 1n) << 255n);
+      for (let i = 0; i < 32; i++, v >>= 8n) out[i] = Number(v & 255n);
+      return out;
+    }
+    function decode(bytes) {
+      const v = le(bytes), sign = v >> 255n, y = v & (2n ** 255n - 1n);
+      if (y >= P) return null;
+      const u = mod(y * y - 1n), w = mod(D * y * y + 1n);
+      let x = pow(u * inv(w), (P + 3n) / 8n);
+      if (mod(x * x * w - u) !== 0n) x = mod(x * I);
+      if (mod(x * x * w - u) !== 0n) return null;
+      if ((x & 1n) !== sign) x = mod(-x);
+      return ext([x, y]);
+    }
+    async function ed25519(pub, sig, msg) {
+      if (sig.length !== 64 || pub.length !== 32) return false;
+      const R = decode(sig.slice(0, 32)), A = decode(pub), S = le(sig.slice(32));
+      if (!R || !A || S >= L) return false;
+      const h = le(new Uint8Array(await crypto.subtle.digest('SHA-512', new Uint8Array([...sig.slice(0, 32), ...pub, ...msg])))) % L;
+      const lhs = encode(mul(ext(B), S)), rhs = encode(add(R, mul(A, h)));
+      return lhs.every((b, i) => b === rhs[i]);
+    }
+
+    /** WebCrypto's Ed25519 where the browser has it, the plain one where not. */
+    async function verify(pub, sig, msg) {
+      try {
+        const key = await crypto.subtle.importKey('raw', pub, { name: 'Ed25519' }, false, ['verify']);
+        return await crypto.subtle.verify({ name: 'Ed25519' }, key, sig, msg);
+      } catch {
+        return ed25519(pub, sig, msg);
+      }
+    }
+
+    async function check(text) {
+      let s;
+      try {
+        s = read(text);
+      } catch (e) {
+        out.innerHTML = `<div class="verdict bad">${esc(e.message)}</div>`;
+        return;
+      }
+      const ok = await verify(s.key, s.sig, new TextEncoder().encode(s.body));
+      const print = 'SHA256:' + plain(new Uint8Array(await crypto.subtle.digest('SHA-256', s.key)));
+      const g = (x) => x.toFixed(2) + ' g';
+      const rows = s.items.map((it) => `<tr><td>${esc(it.name)}</td><td class="n">${g(it.sealed)}</td><td class="n">${g(it.ground)}</td>
+        <td class="n">${g(it.avb)}</td><td>${it.fills.map((f) => `${g(f.grams)} on ${esc(f.day)}`).join('<br>')}</td></tr>`).join('');
+      const total = s.items.reduce((t, it) => t + it.sealed + it.ground + it.avb, 0);
+      out.innerHTML = ok
+        ? `<div class="verdict ok">✓ The signature is valid: this is the statement as the key's owner signed it.</div>`
+        : `<div class="verdict bad">✗ The signature does not match: the statement was changed, or not signed with this key.</div>`;
+      out.innerHTML += `
+        <p>Held on <b>${esc(s.at.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' }))}</b>, ${total.toFixed(2)} g in all.</p>
+        <table><thead><tr><th>Product</th><th class="n">Sealed</th><th class="n">Ground</th><th class="n">AVB</th><th>Dispensed</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+        <p class="dim">Signed by the key <code>${esc(print)}</code>. That fingerprint is the patient's: compare it with the one
+          they gave their doctor, or the one printed on a report from wits. The statement names the record it was made from,
+          ${esc(String(s.entries))} entries up to <code>${esc(String(s.head))}</code>, which <code>wits verify</code> checks against the journal itself.</p>`;
+    }
+
+    /** The statement after the #: deflated behind a z, or as it is. */
+    async function unpack(frag) {
+      if (!frag.startsWith('z')) return new TextDecoder().decode(b64url(frag));
+      const stream = new Blob([b64url(frag.slice(1))]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return new Response(stream).text();
+    }
+
+    const frag = location.hash.slice(1);
+    if (frag) {
+      unpack(frag).then(check, () => {
+        out.innerHTML = '<div class="verdict bad">The address does not hold a readable statement.</div>';
+      });
+    } else {
+      document.getElementById('paste').hidden = false;
+      document.getElementById('check').onclick = () => check(document.getElementById('text').value);
+    }
+  </script>
+</body>
+</html>

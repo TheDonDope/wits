@@ -16,6 +16,7 @@ package seal
 
 import (
 	"bytes"
+	"compress/flate"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -613,4 +614,152 @@ func writeVarbytes(b *bytes.Buffer, p []byte) {
 	}
 	b.WriteByte(byte(n))
 	b.Write(p)
+}
+
+// carryMagic opens every statement of what is carried.
+const carryMagic = "wits-carry 1"
+
+// VerifyPage is where a statement's QR code points: a page that checks the
+// signature in the browser, the statement after the # — which a browser
+// never sends to the server it asks for the page.
+const VerifyPage = "https://thedondope.github.io/wits/verify.html#"
+
+// Carry is a signed statement of what is held, and which fills dispensed it:
+// what a patient shows to prove that what they carry is what was prescribed.
+type Carry struct {
+	At      time.Time
+	Head    string
+	Entries int
+	Items   []Item
+	Key     ed25519.PublicKey
+	Sig     []byte
+}
+
+// Item is one product held: sealed, ground and already vaped, and the fills
+// it came from.
+type Item struct {
+	Name                string
+	Sealed, Ground, AVB float64
+	Fills               []Dispensed
+}
+
+// Dispensed is one fill of a product: the day the pharmacy dispensed it, and
+// how much.
+type Dispensed struct {
+	Day   string
+	Grams float64
+}
+
+func (c Carry) body() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s\nat %s\nhead %s %d\n", carryMagic, c.At.UTC().Format(time.RFC3339), c.Head, c.Entries)
+	for _, it := range c.Items {
+		fmt.Fprintf(&b, "item %.2f %.2f %.2f %s\n", it.Sealed, it.Ground, it.AVB, it.Name)
+		for _, f := range it.Fills {
+			fmt.Fprintf(&b, "fill %s %.2f\n", f.Day, f.Grams)
+		}
+	}
+	fmt.Fprintf(&b, "key ed25519:%s\n", base64.StdEncoding.EncodeToString(c.Key))
+	return b.String()
+}
+
+// String is the statement as it is signed and carried.
+func (c Carry) String() string {
+	return c.body() + "sig " + base64.StdEncoding.EncodeToString(c.Sig) + "\n"
+}
+
+// URL is the address the QR code carries: the verify page, and after the #
+// the statement deflated and in base64, behind a z that says so. Deflated it
+// is a third shorter, and a QR code that much smaller is that much easier to
+// read off a phone's screen.
+func (c Carry) URL() string {
+	var b bytes.Buffer
+	w, _ := flate.NewWriter(&b, flate.BestCompression) // a valid level cannot fail
+	_, _ = w.Write([]byte(c.String()))
+	_ = w.Close()
+	return VerifyPage + "z" + base64.RawURLEncoding.EncodeToString(b.Bytes())
+}
+
+// MakeCarry signs a statement of what is held.
+func MakeCarry(key ed25519.PrivateKey, head string, entries int, at time.Time, items []Item) Carry {
+	c := Carry{At: at.Truncate(time.Second), Head: head, Entries: entries, Items: items, Key: key.Public().(ed25519.PublicKey)}
+	c.Sig = ed25519.Sign(key, []byte(c.body()))
+	return c
+}
+
+// Verify reports whether the statement's signature is over its lines, by its key.
+func (c Carry) Verify() error {
+	if len(c.Key) != ed25519.PublicKeySize || !ed25519.Verify(c.Key, []byte(c.body()), c.Sig) {
+		return ErrForged
+	}
+	return nil
+}
+
+// ParseCarry reads a statement as written, or from its verify page's address.
+func ParseCarry(text string) (Carry, error) {
+	if _, frag, ok := strings.Cut(text, "#"); ok {
+		raw, err := fragment(frag)
+		if err != nil {
+			return Carry{}, fmt.Errorf("unreadable statement: %w", err)
+		}
+		text = string(raw)
+	}
+	lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
+	if len(lines) < 5 || lines[0] != carryMagic {
+		return Carry{}, errors.New("not a wits statement of what is carried")
+	}
+	var c Carry
+	for _, l := range lines[1:] {
+		if err := c.readLine(l); err != nil {
+			return Carry{}, fmt.Errorf("unreadable statement: %w", err)
+		}
+	}
+	return c, nil
+}
+
+// fragment is the statement an address carries after its #: deflated
+// behind a z, or as it is.
+func fragment(frag string) ([]byte, error) {
+	packed, deflated := strings.CutPrefix(frag, "z")
+	raw, err := base64.RawURLEncoding.DecodeString(packed)
+	if err != nil || !deflated {
+		return raw, err
+	}
+	return io.ReadAll(io.LimitReader(flate.NewReader(bytes.NewReader(raw)), 1<<16))
+}
+
+// readLine reads one line of a statement into it.
+func (c *Carry) readLine(l string) error {
+	word, rest, _ := strings.Cut(l, " ")
+	var err error
+	switch word {
+	case "at":
+		c.At, err = time.Parse(time.RFC3339, rest)
+	case "head":
+		_, err = fmt.Sscanf(rest, "%s %d", &c.Head, &c.Entries)
+	case "item":
+		var it Item
+		parts := strings.SplitN(rest, " ", 4)
+		if len(parts) != 4 {
+			return errors.New("an item is three amounts and a name")
+		}
+		_, err = fmt.Sscanf(strings.Join(parts[:3], " "), "%f %f %f", &it.Sealed, &it.Ground, &it.AVB)
+		it.Name = parts[3]
+		c.Items = append(c.Items, it)
+	case "fill":
+		if len(c.Items) == 0 {
+			return errors.New("a fill before any item")
+		}
+		var f Dispensed
+		_, err = fmt.Sscanf(rest, "%s %f", &f.Day, &f.Grams)
+		last := &c.Items[len(c.Items)-1]
+		last.Fills = append(last.Fills, f)
+	case "key":
+		c.Key, err = base64.StdEncoding.DecodeString(strings.TrimPrefix(rest, "ed25519:"))
+	case "sig":
+		c.Sig, err = base64.StdEncoding.DecodeString(rest)
+	default:
+		err = fmt.Errorf("unknown line %q", word)
+	}
+	return err
 }

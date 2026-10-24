@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -117,4 +118,25 @@ func TestTheReportNamesItsSeal(t *testing.T) {
 	var buf bytes.Buffer
 	require.NoError(t, PDF(&buf, r))
 	assert.Contains(t, buf.String(), seal.Fingerprint(s.Key), "Should print the key's fingerprint")
+}
+
+func TestHoldings(t *testing.T) {
+	ws, start := fixture(t)
+
+	items := Holdings(ws, false)
+
+	require.Len(t, items, 1)
+	it := items[0]
+	assert.Equal(t, "Enua 22/1 Wedding Cake", it.Name)
+	assert.Equal(t, 14.0, it.Sealed)
+	assert.Equal(t, 5.5, it.Ground, "Ground six, half a gram through a session")
+	require.Len(t, it.Fills, 1)
+	assert.Equal(t, seal.Dispensed{Day: start.Format(time.DateOnly), Grams: 20}, it.Fills[0], "The fill its sealed grams stand on")
+}
+
+func TestQR(t *testing.T) {
+	svg, err := QR("https://thedondope.github.io/wits/verify.html#z")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(svg, `<svg xmlns="http://www.w3.org/2000/svg"`))
+	assert.Contains(t, svg, "h1v1h-1z", "Should draw the dark modules")
 }

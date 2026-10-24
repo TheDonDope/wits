@@ -14,6 +14,7 @@ require (
 	github.com/xuri/excelize/v2 v2.11.1-0.20261020033641-611b222fd8f7
 	golang.org/x/sys v0.48.0
 	gopkg.in/yaml.v3 v3.0.1
+	rsc.io/qr v0.2.0
 )
 
 require (

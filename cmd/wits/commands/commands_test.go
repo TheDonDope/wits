@@ -956,3 +956,28 @@ func TestSealTimestamp(t *testing.T) {
 	out, err = run(t, dir, Fsck)
 	require.NoError(t, err, out)
 }
+
+func TestCarryCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "2", "--date", "2026-07-02")
+	require.NoError(t, err)
+	out := t.TempDir()
+
+	text, err := run(t, dir, Carry, "--out", filepath.Join(out, "carry.txt"))
+	require.NoError(t, err)
+	assert.Contains(t, text, "18.00g  2.00g   0.00g  20.00g on 2026-07-01", "Should list what is held against its fill")
+	for _, name := range []string{"carry.svg", "carry.png"} {
+		_, err = run(t, dir, Carry, "--out", filepath.Join(out, name))
+		require.NoError(t, err, name)
+		assert.FileExists(t, filepath.Join(out, name))
+	}
+	_, err = run(t, dir, Carry, "--out", filepath.Join(out, "carry.pdf"))
+	assert.ErrorContains(t, err, ".svg or .png")
+
+	verified, err := run(t, dir, Verify, filepath.Join(out, "carry.txt"))
+	require.NoError(t, err)
+	assert.Contains(t, verified, "✓ signed by SHA256:")
+	assert.Contains(t, verified, "holds what was sealed", "Should check it against the journal here")
+}

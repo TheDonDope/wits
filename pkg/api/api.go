@@ -35,6 +35,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/report"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/version"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
@@ -76,6 +77,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/unpriced", s.unpriced)
 	mux.HandleFunc("POST /api/price", s.price)
 	mux.HandleFunc("GET /api/report.pdf", s.report)
+	mux.HandleFunc("GET /api/carry", s.carry)
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
@@ -371,6 +373,67 @@ func (s *Server) price(w http.ResponseWriter, r *http.Request) {
 	e, _ := ws.Recorder.Find(p.Purchase)
 	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g of %s",
 		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
+}
+
+// carry is a signed statement of what is held, with its QR code: the
+// products on the shelf, or every jar holding anything with ?all=1. The
+// sealing key is made the first time, as wits carry makes it.
+func (s *Server) carry(w http.ResponseWriter, r *http.Request) {
+	ws, err := workspace.Read(s.repo)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	items := report.Holdings(ws, r.URL.Query().Get("all") == "1")
+	events, err := ws.Journal().Events()
+	if err == nil && (len(items) == 0 || len(events) == 0) {
+		err = errors.New("nothing is held: there is nothing to show")
+	}
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	key, _, err := seal.Key(ws.Repo.SealKeyPath())
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	c := seal.MakeCarry(key, events[len(events)-1].Hash, len(events), ws.OpenedAt, items)
+	svg, err := report.QR(c.URL())
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	out := struct {
+		Statement   string      `json:"statement"`
+		URL         string      `json:"url"`
+		Fingerprint string      `json:"fingerprint"`
+		QR          string      `json:"qr"`
+		Items       []carryItem `json:"items"`
+	}{c.String(), c.URL(), seal.Fingerprint(c.Key), svg, make([]carryItem, 0, len(items))}
+	for _, it := range items {
+		ci := carryItem{Name: it.Name, Sealed: it.Sealed, Ground: it.Ground, AVB: it.AVB, Fills: []carryFill{}}
+		for _, f := range it.Fills {
+			ci.Fills = append(ci.Fills, carryFill(f))
+		}
+		out.Items = append(out.Items, ci)
+	}
+	reply(w, http.StatusOK, out)
+}
+
+// carryItem is one product held, as a client reads it.
+type carryItem struct {
+	Name   string      `json:"name"`
+	Sealed float64     `json:"sealed"`
+	Ground float64     `json:"ground"`
+	AVB    float64     `json:"avb"`
+	Fills  []carryFill `json:"fills"`
+}
+
+// carryFill is one fill a product held came from.
+type carryFill struct {
+	Day   string  `json:"day"`
+	Grams float64 `json:"grams"`
 }
 
 // report is the page for the prescriber, as a PDF: the days ?from= to ?to=,
