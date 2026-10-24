@@ -3,7 +3,6 @@ package tui
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -45,20 +44,8 @@ func Load(r *repo.Repo) (Data, error) {
 	return d, nil
 }
 
-// stamp sums up the size and modification time of the files a snapshot is
-// read from. Comparing two is a stat of three files, cheap enough for every
-// tick of the clock.
-func stamp(r *repo.Repo) string {
-	var b strings.Builder
-	for _, path := range []string{r.JournalPath(), r.ProductsPath(), r.DevicesPath(), r.EffectsPath()} {
-		if info, err := os.Stat(path); err == nil {
-			fmt.Fprintf(&b, "%d:%d;", info.Size(), info.ModTime().UnixNano())
-		} else {
-			b.WriteString("-;")
-		}
-	}
-	return b.String()
-}
+// stamp is workspace.Stamp: whether anything was written since a snapshot.
+func stamp(r *repo.Repo) string { return workspace.Stamp(r) }
 
 // Cycle returns the fill in progress at the frame's moment — the one every
 // figure on screen is computed against.

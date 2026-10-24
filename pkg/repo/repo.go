@@ -23,7 +23,6 @@ const (
 	journalFile  = "journal.ndjson"
 	effectsFile  = "effects.ndjson"
 	pricesFile   = "prices.ndjson"
-	indexDir     = "index"
 	// remoteKeyFile is the age identity push and pull encrypt to.
 	remoteKeyFile = "remote.key"
 	// sealKeyFile is the Ed25519 key seals are signed with, and sealsDir
@@ -108,7 +107,7 @@ func Init(dir string) (*Repo, error) {
 		return nil, err
 	}
 
-	if err := os.MkdirAll(filepath.Join(root, indexDir), dirPerm); err != nil {
+	if err := os.MkdirAll(root, dirPerm); err != nil {
 		return nil, err
 	}
 
@@ -175,6 +174,9 @@ func (r *Repo) Root() string { return r.root }
 
 // WorkTree returns the directory the repository lives in.
 func (r *Repo) WorkTree() string { return filepath.Dir(r.root) }
+
+// ConfigPath returns the path of the configuration.
+func (r *Repo) ConfigPath() string { return filepath.Join(r.root, configFile) }
 
 // ProductsPath returns the path of the product catalog.
 func (r *Repo) ProductsPath() string { return filepath.Join(r.root, productsFile) }

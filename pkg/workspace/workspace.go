@@ -12,7 +12,9 @@
 package workspace
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
@@ -137,4 +139,22 @@ func (w *Workspace) ProductName(slug string) string {
 		}
 	}
 	return slug
+}
+
+// Stamp sums up the size and modification time of every file a workspace is
+// read from: the journal, the effect and price logs, the catalogs, the
+// config, and the folder of seals. Two stamps alike, nothing was written in
+// between, and a workspace read before still says what one read now would —
+// a stat of seven files instead of reading and verifying the whole journal.
+func Stamp(r *repo.Repo) string {
+	var b strings.Builder
+	for _, path := range []string{r.JournalPath(), r.EffectsPath(), r.PricesPath(), r.ProductsPath(),
+		r.DevicesPath(), r.ConfigPath(), r.SealsDir()} {
+		if info, err := os.Stat(path); err == nil {
+			fmt.Fprintf(&b, "%d:%d;", info.Size(), info.ModTime().UnixNano())
+		} else {
+			b.WriteString("-;")
+		}
+	}
+	return b.String()
 }
