@@ -260,7 +260,10 @@ the ground product the same way — the stashes holding something above, and
 under them every stash worked down to nothing, grouped under the day it was
 consumed. The sessions screen tells the other half of the story: how much came
 out of the stash, when, through which device and how hot, drawn with the same
-charts the analysis view uses. Space ticks jars in either table and `r` weighs
+charts the analysis view uses. Its newest sessions are listed with what each
+was rated; `e` rates the one under the cursor — a line a dimension, `←`/`→` or
+`1`–`5` to score, `0` to leave one out — and under the list each product's
+overall rating, with how many ratings it stands on. Space ticks jars in either table and `r` weighs
 the ticked ones together; `e` corrects a name; `c` records stale stash
 remainders from earlier cycles as consumed, which is what four imported years of
 grind-only records leave behind. Product names are never abbreviated — the name
@@ -427,7 +430,8 @@ them — and what the ratings add up to is drawn three ways: every product again
 every dimension, each dimension by temperature band, and by time of day as a
 wheel. Every mean says how many ratings it stands on, and one that stands on a
 single rating is hatched: a rating, not a finding. `wits rate last sleep=5`
-does the same from the terminal.
+does the same from the command line, and `e` on the terminal interface's
+sessions screen.
 
 ![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
 
