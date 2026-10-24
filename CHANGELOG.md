@@ -2,9 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v0.52.0"></a>
+## [v0.52.0] - 2026-10-24
+### Feat
+- **tui:** the sessions screen rates, a line a dimension
+
+
 <a name="v0.51.0"></a>
 ## [v0.51.0] - 2026-10-24
 ### Docs
+- update changelog for v0.51.0
 - **diary:** two reviews, and a window
 - **roadmap:** what wits could become — thirteen ideas, planned
 
@@ -721,7 +728,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.51.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.52.0...HEAD
+[v0.52.0]: https://github.com/TheDonDope/wits/compare/v0.51.0...v0.52.0
 [v0.51.0]: https://github.com/TheDonDope/wits/compare/v0.50.0...v0.51.0
 [v0.50.0]: https://github.com/TheDonDope/wits/compare/v0.49.0...v0.50.0
 [v0.49.0]: https://github.com/TheDonDope/wits/compare/v0.48.0...v0.49.0
