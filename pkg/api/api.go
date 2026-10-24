@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
@@ -58,6 +59,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
 	mux.HandleFunc("GET /api/days", s.read(daysOf))
+	mux.HandleFunc("GET /api/effects", s.read(effectsOf))
+	mux.HandleFunc("POST /api/rate", s.rate)
 	mux.HandleFunc("POST /api/buy", s.write(buy))
 	mux.HandleFunc("POST /api/grind", s.write(grind))
 	mux.HandleFunc("POST /api/sesh", s.write(sesh))
@@ -195,6 +198,73 @@ func (s *Server) flush(w http.ResponseWriter, r *http.Request) {
 type flushed struct {
 	Entries []entry `json:"entries"`
 	Message string  `json:"message"`
+}
+
+// rated is a session's standing rating, with the session it rates.
+type rated struct {
+	Hash    string                    `json:"hash"`
+	At      time.Time                 `json:"at"`
+	Scores  map[effects.Dimension]int `json:"scores"`
+	Note    string                    `json:"note,omitempty"`
+	Session entry                     `json:"session"`
+}
+
+// effectLog is the effect log as a client shows it: what can be rated, what
+// has been, what is waiting, and what it adds up to.
+type effectLog struct {
+	Dimensions []effects.Dimension `json:"dimensions"`
+	Rated      []rated             `json:"rated"`
+	Unrated    []entry             `json:"unrated"`
+	Insights   effects.Insights    `json:"insights"`
+}
+
+// effectsOf answers the effect log: every session's standing rating, newest
+// session first; the latest sessions not yet rated; and the insights.
+func effectsOf(ws *workspace.Workspace) any {
+	latest := effects.Latest(ws.Ratings)
+	undone := record.Reverted(ws.State.Events)
+	out := effectLog{Dimensions: effects.Dimensions, Rated: []rated{}, Unrated: []entry{}}
+	for i := len(ws.State.Events) - 1; i >= 0; i-- {
+		e := ws.State.Events[i]
+		if e.Type != journal.Sesh || undone[e.Hash] || e.OccurredAt.After(ws.OpenedAt) {
+			continue
+		}
+		if r, ok := latest[e.Hash]; ok {
+			out.Rated = append(out.Rated, rated{Hash: r.Hash, At: r.At, Scores: r.Scores, Note: r.Note,
+				Session: entryOf(e, ws, nil)})
+		} else if len(out.Unrated) < 12 {
+			out.Unrated = append(out.Unrated, entryOf(e, ws, nil))
+		}
+	}
+	out.Insights = effects.Analyse(ws.Ratings, ws.State.Applied(), ws.ProductName)
+	return out
+}
+
+// rate records a rating of a session.
+func (s *Server) rate(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.writable(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		Session string                    `json:"session"`
+		Scores  map[effects.Dimension]int `json:"scores"`
+		Note    string                    `json:"note"`
+	}
+	if err := decode(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	rating, err := ws.Recorder.Rate(req.Session, req.Scores, req.Note, time.Now())
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	e, _ := ws.Recorder.Find(rating.Session)
+	reply(w, http.StatusCreated, map[string]any{
+		"rating":  rated{Hash: rating.Hash, At: rating.At, Scores: rating.Scores, Note: rating.Note, Session: entryOf(e, ws, nil)},
+		"message": fmt.Sprintf("rated the session of %.2f g of %s", e.Grams, ws.ProductName(e.Product)),
+	})
 }
 
 // written is the answer to a write.

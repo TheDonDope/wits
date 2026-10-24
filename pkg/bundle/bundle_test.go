@@ -2,6 +2,7 @@ package bundle
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -277,7 +279,7 @@ func TestReadsFormat1Bundles(t *testing.T) {
 	format1 := func(t *testing.T, stored []journal.Event) string {
 		var buf bytes.Buffer
 		require.NoError(t, Write(&buf, Contents{Events: stored}))
-		text := strings.Replace(buf.String(), "wits-bundle 2", "wits-bundle 1", 1)
+		text := strings.Replace(buf.String(), fmt.Sprintf("wits-bundle %d", Version), "wits-bundle 1", 1)
 		return regexp.MustCompile(` f=[a-z]+>[a-z]+`).ReplaceAllString(text, "")
 	}
 
@@ -312,4 +314,26 @@ func TestReadsFormat1Bundles(t *testing.T) {
 func TestReadRejectsUnknownAccounts(t *testing.T) {
 	_, err := Read(bytes.NewBufferString("wits-bundle 2\nP0 wcake\n--\na0 0 100 f=storage>nowhere\n"))
 	assert.ErrorContains(t, err, "unreadable accounts")
+}
+
+func TestRatingsTravelInTheBundle(t *testing.T) {
+	ratings := []effects.Rating{
+		{Session: strings.Repeat("a", 64), At: time.Date(2026, 7, 9, 21, 0, 0, 0, berlin),
+			Scores: map[effects.Dimension]int{effects.Overall: 4, effects.Sleep: 5}, Note: "slept, with a space"},
+		{Session: strings.Repeat("a", 64), At: time.Date(2026, 7, 10, 8, 0, 0, 0, berlin),
+			Scores: map[effects.Dimension]int{effects.Overall: 5}},
+	}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Ratings: ratings}))
+	assert.Contains(t, buf.String(), "\n==\n", "behind their own separator")
+
+	got, err := Read(&buf)
+	require.NoError(t, err)
+	require.Len(t, got.Ratings, 2)
+	assert.Equal(t, ratings[0].Scores, got.Ratings[0].Scores)
+	assert.Equal(t, "slept, with a space", got.Ratings[0].Note)
+	assert.True(t, ratings[1].At.Equal(got.Ratings[1].At))
+
+	_, err = Read(bytes.NewBufferString("wits-bundle 3\nP0 w\n--\n==\nR abc soon overall:4\n"))
+	assert.ErrorContains(t, err, "unreadable rating time")
 }

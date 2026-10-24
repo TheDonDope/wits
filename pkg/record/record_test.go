@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
@@ -726,4 +727,27 @@ func TestFlush(t *testing.T) {
 		_, err := setup(t).Flush([]string{"nothing-like-it"})
 		assert.Error(t, err)
 	})
+}
+
+func TestRate(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 10, time.Now().AddDate(0, 0, -1))
+	require.NoError(t, err)
+	grind, err := rec.Grind("wcake", 2, time.Now().AddDate(0, 0, -1))
+	require.NoError(t, err)
+	sesh, err := rec.Session("wcake", 0.3, time.Now(), "", 0, "")
+	require.NoError(t, err)
+
+	r, err := rec.Rate(sesh.Hash[:7], map[effects.Dimension]int{effects.Overall: 4}, " good ", time.Now())
+	require.NoError(t, err, "a session, named by an abbreviated hash")
+	assert.Equal(t, sesh.Hash, r.Session, "stored under its full hash")
+	assert.Equal(t, "good", r.Note)
+
+	_, err = rec.Rate(grind.Hash, map[effects.Dimension]int{effects.Overall: 4}, "", time.Now())
+	assert.ErrorContains(t, err, "not a session")
+
+	_, err = rec.Revert(sesh.Hash, "")
+	require.NoError(t, err)
+	_, err = rec.Rate(sesh.Hash, map[effects.Dimension]int{effects.Overall: 4}, "", time.Now())
+	assert.ErrorContains(t, err, "was undone")
 }

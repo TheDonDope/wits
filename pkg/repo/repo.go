@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"gopkg.in/yaml.v3"
 )
@@ -19,6 +20,7 @@ const (
 	productsFile = "products.yml"
 	devicesFile  = "devices.yml"
 	journalFile  = "journal.ndjson"
+	effectsFile  = "effects.ndjson"
 	indexDir     = "index"
 )
 
@@ -64,6 +66,7 @@ type Repo struct {
 	root    string
 	Config  Config
 	journal *journal.Journal
+	effects *effects.Log
 }
 
 // Init creates a repository under dir and returns it. It refuses to touch an
@@ -165,6 +168,18 @@ func (r *Repo) Journal() *journal.Journal {
 		r.journal = journal.Open(r.JournalPath())
 	}
 	return r.journal
+}
+
+// EffectsPath returns the path of the effect log.
+func (r *Repo) EffectsPath() string { return filepath.Join(r.root, effectsFile) }
+
+// Effects returns the repository's effect log — the same instance every time,
+// as the journal is, so its mutex means something.
+func (r *Repo) Effects() *effects.Log {
+	if r.effects == nil {
+		r.effects = effects.Open(r.EffectsPath())
+	}
+	return r.effects
 }
 
 // SetTheme records the interface theme and persists it, under the config's

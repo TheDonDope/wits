@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
@@ -36,6 +37,11 @@ type Workspace struct {
 	// opening, since nothing could then be done about it — wits fsck says
 	// where the chain breaks.
 	Chain error
+
+	// Ratings is the effect log, every rating, superseded ones included;
+	// EffectsChain is why its chain does not verify, or nil.
+	Ratings      []effects.Rating
+	EffectsChain error
 
 	// OpenedAt is when the snapshot was taken. Anything reporting "how long has
 	// this cycle been running" should measure against it rather than call
@@ -75,6 +81,10 @@ func Read(r *repo.Repo) (*Workspace, error) {
 	if err != nil {
 		return nil, err
 	}
+	ratings, err := r.Effects().All()
+	if err != nil {
+		return nil, err
+	}
 	// One moment for the snapshot: what it holds is what had happened by
 	// then, and what it reports is measured against the same instant.
 	now := time.Now()
@@ -87,6 +97,9 @@ func Read(r *repo.Repo) (*Workspace, error) {
 		Recorder: record.New(r, products, devices, state),
 		Chain:    r.Journal().Verify(),
 		OpenedAt: now,
+
+		Ratings:      ratings,
+		EffectsChain: r.Effects().Verify(),
 	}, nil
 }
 

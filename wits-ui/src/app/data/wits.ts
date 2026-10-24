@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/htt
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { Cycle, Day, Device, Entry, Jar, Overview, Written } from './models';
+import { Cycle, Day, Device, Dimension, EffectLog, Entry, Jar, Overview, Written } from './models';
 
 /**
  * The repository, as wits-server answers for it.
@@ -22,6 +22,7 @@ export class Wits {
   readonly cycles = httpResource<Cycle[]>(() => `/api/cycles?v=${this.version()}`, { defaultValue: [] });
   readonly devices = httpResource<Device[]>(() => `/api/devices?v=${this.version()}`, { defaultValue: [] });
   readonly days = httpResource<Day[]>(() => `/api/days?v=${this.version()}`, { defaultValue: [] });
+  readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
   readonly journal = httpResource<{ entries: Entry[]; total: number }>(
     () => `/api/journal?limit=100000&v=${this.version()}`,
     { defaultValue: { entries: [], total: 0 } },
@@ -74,6 +75,11 @@ export class Wits {
 
   undo(hash: string) {
     return this.write('undo', { hash });
+  }
+
+  /** Rates what a session did. */
+  rate(session: string, scores: Partial<Record<Dimension, number>>, note: string) {
+    return this.write<{ message: string }>('rate', { session, scores, note });
   }
 
   /** Records the named stashes as consumed, as one batch. */
