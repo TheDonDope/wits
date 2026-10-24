@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.33.0"></a>
+## [v0.33.0] - 2026-10-24
+### Fix
+- sessions come back, buy stops guessing, and a cut-off line is only a cut-off line
+
+
 <a name="v0.32.0"></a>
 ## [v0.32.0] - 2026-10-24
+### Docs
+- update changelog for v0.32.0
+
 ### Fix
 - **tui:** a notice lasts until the next key, not forever
 
@@ -523,7 +532,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.33.0...HEAD
+[v0.33.0]: https://github.com/TheDonDope/wits/compare/v0.32.0...v0.33.0
 [v0.32.0]: https://github.com/TheDonDope/wits/compare/v0.31.0...v0.32.0
 [v0.31.0]: https://github.com/TheDonDope/wits/compare/v0.30.0...v0.31.0
 [v0.30.0]: https://github.com/TheDonDope/wits/compare/v0.29.0...v0.30.0
