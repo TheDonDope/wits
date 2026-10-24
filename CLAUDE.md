@@ -12,6 +12,8 @@ make build             # ./bin/wits
 make snap              # ./bin/witsnap — rebuild BOTH after TUI changes
 make test              # go test -race ./... with coverage
 ./preflight.sh         # what CI and Codacy will say, said first — before every push
+make serve             # wits-server + the Angular client on http://127.0.0.1:7341
+make ui-test           # the client's Vitest suite (Node and npm; nothing else needs them)
 ```
 
 Single test: `go test ./pkg/ledger -run TestCycleGap -v`. TUI tests live in
@@ -185,6 +187,24 @@ are reconciled against the cells read **independently of the importer**
 (`.claude/skills/workbook/cells.py`). When a screen's arithmetic changes,
 verify it against the imported workbook via witsnap, not only against synthetic
 events.
+
+## The browser interface
+
+`pkg/api` is the server, `cmd/wits-server` only wires it; `wits-ui/` is the
+Angular client (signals, zoneless, standalone components, `httpResource`).
+
+- Every write goes through `ws.Recorder` — the API adds no checks of its own and
+  must not skip any. Name a figure for its scope (`dispensed`, `shelf_projection`).
+- The client fetches nothing from the network: fonts and icons are npm packages
+  (`@fontsource-variable/*`, `material-symbols`). An `ng add` that links a font
+  service has to be undone.
+- Charts are SVG drawn by components in `wits-ui/src/app/viz`, geometry from d3
+  (`d3-shape`, `d3-scale`), never a chart library. Honour reduced motion.
+- **Verify by looking**: `make serve` on a copy of the workbook, then a headless
+  Chromium screenshot (`~/.cache/rod/browser/*/chrome --headless=new
+  --force-prefers-reduced-motion --screenshot=… --window-size=1440,1700 <url>`,
+  with `./doctor.sh env` for its libraries) and read the PNG.
+  `?record=grind|session|fill|weigh` opens the form, for photographing it.
 
 ## Process
 
