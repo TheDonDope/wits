@@ -64,6 +64,9 @@ The gate refuses any **new** issue. `./preflight.sh` mirrors it:
   because revive runs per file and can't see `doc.go`. Grow an existing file
   where it fits.
 - **Shell scripts** go through shellcheck — skill helpers in `.claude/` too.
+- **Python** (the workbook helper) goes through pydocstyle, which wants a
+  multi-line docstring's summary on its second line (D213). Preflight doesn't
+  check Python; mind it by hand.
 
 `./preflight.sh watch <pr>` polls a PR and prints the issues Codacy will
 refuse. It can return while `build` is still pending; confirm with
