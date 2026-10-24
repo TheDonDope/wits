@@ -110,8 +110,8 @@ func Read(path string) (*Result, error) {
 	}
 
 	// The journal is a chronology, but the worksheets are not in date order:
-	// several are named for a month that begins a few days earlier, and one is
-	// dated a year early outright. A stable sort keeps a sheet's own fills ahead
+	// several are named for a month that begins a few days earlier, and a sheet
+	// can be dated a year early outright. A stable sort keeps a sheet's own fills ahead
 	// of its first grind, which share a date.
 	sort.SliceStable(result.Events, func(i, j int) bool {
 		return result.Events[i].OccurredAt.Before(result.Events[j].OccurredAt)

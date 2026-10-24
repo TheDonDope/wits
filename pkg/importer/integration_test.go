@@ -19,9 +19,9 @@ import (
 // fixtures built to suit it.
 //
 // Fixtures agree with whatever the code believes. This does not: it has stale
-// dropdown labels, a sheet dated a year early, a 0.01 g fill, and two products
-// spelled more than one way. Every figure asserted here
-// was reconciled against the workbook read independently of this package.
+// dropdown labels, sheets named for a month their entries begin before, and
+// two cultivars dispensed at two strengths. Every figure asserted here was
+// reconciled against the workbook read independently of this package.
 const workbook = "../../assets/Tracking.2022.cleaned.xlsx"
 
 // realWorkbook returns the path, skipping if it is not present.
@@ -42,13 +42,13 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 
 		assert.Len(t, result.Sheets, 30, "one worksheet is one prescription cycle")
 		assert.Len(t, result.Products, 53, "53 distinct products, two pairs of them differing only in strength")
-		assert.InDelta(t, 1244.01, purchased, 0.005, "grams dispensed, per the sheet headers")
-		assert.InDelta(t, 1199.21, ground, 0.005, "grams the daily rows account for")
+		assert.InDelta(t, 1254.00, purchased, 0.005, "grams dispensed, per the sheet headers")
+		assert.InDelta(t, 1209.20, ground, 0.005, "grams the daily rows account for")
 
 		counts := result.Counts()
 		assert.Equal(t, 88, counts[journal.Purchase], "one fill per product per sheet")
-		assert.Equal(t, 1332, counts[journal.Grind],
-			"1332 rows carry an amount, every one of them against a product")
+		assert.Equal(t, 1341, counts[journal.Grind],
+			"1341 rows carry an amount, every one of them against a product")
 	})
 
 	t.Run("Span", func(t *testing.T) {
@@ -81,14 +81,12 @@ func TestImportsTheRealWorkbook(t *testing.T) {
 		assert.Positive(t, sheet.Products[0].Ground, "and grams reached the first of them")
 	})
 
-	t.Run("ReportsWhatDoesNotAddUp", func(t *testing.T) {
-		anomalies := result.Anomalies()
-		require.Len(t, anomalies, 2, "no more and no fewer than the two known problems")
-
-		assert.Contains(t, anomalies[0], "2025-03")
-		assert.Contains(t, anomalies[0], "fall in 2024", "a sheet dated a year early")
-		assert.Contains(t, anomalies[1], "2025-06")
-		assert.Contains(t, anomalies[1], "typo", "a 0.01 g fill")
+	// Every problem the importer once found here has been corrected at the
+	// source: the sheet dated a year early, the 0.01 g fill, the grams logged
+	// against no product, the leftovers that never reached zero. The detectors
+	// keep their fixture tests; this pins that the records now add up.
+	t.Run("FindsNothingThatDoesNotAddUp", func(t *testing.T) {
+		assert.Empty(t, result.Anomalies(), "the records reconcile with themselves")
 	})
 
 	// Two cultivars in these records were dispensed at two strengths, and each
@@ -130,7 +128,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("EverythingLands", func(t *testing.T) {
-		assert.Len(t, events, 1420, "every entry reaches the journal")
+		assert.Len(t, events, 1429, "every entry reaches the journal")
 		assert.NoError(t, r.Journal().Verify(), "and the hash chain verifies over all of it")
 	})
 
@@ -149,7 +147,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 		_, sheetGround := result.Grams()
 		assert.InDelta(t, sheetGround, ground, 0.005,
 			"everything ground is in a stash, since the sheets record no sessions")
-		assert.InDelta(t, 1244.01, held+ground, 0.005,
+		assert.InDelta(t, 1254.00, held+ground, 0.005,
 			"and storage plus stashes equals what was dispensed")
 	})
 
@@ -159,7 +157,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 		assert.ErrorIs(t, err, ErrNotEmpty, "a second import would double every gram")
 		after, readErr := r.Journal().Events()
 		require.NoError(t, readErr)
-		assert.Len(t, after, 1420, "and nothing was added")
+		assert.Len(t, after, 1429, "and nothing was added")
 	})
 }
 
