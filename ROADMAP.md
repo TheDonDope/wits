@@ -474,7 +474,42 @@ elsewhere shows within a tick.
 
 ## 📌 Planned
 
-### 🔹 AVB tracking
+In this order: each phase stands on the ones before it. AVB tracking and prices
+both change the journal and the bundle, so they land together, in one format.
+The report waits for weeks of real ratings, which is also what the tolerance
+curve needs. The phone comes after sync, because the server answers only this
+machine: a phone keeps its own copy of the journal and syncs it, rather than
+the server opening up. Timestamping a chain and syncing over WebDAV are the
+first things wits would send anywhere, so both are opt-in and said plainly.
+
+### 1 · What is open, and what is quick
+
+#### 🔹 `wits show`
+
+- **Status**: Planned
+- `show` for one entry in full. (`fsck` is built — see Checking above.)
+
+#### 🔹 Markdown export for publishing
+
+- **Status**: In Progress
+- `wits export` writes one Markdown file. For GitHub Pages it needs site
+  structure: a page per cycle, an index, and something to link them.
+
+#### 🔹 A date range for export
+
+- **Status**: Planned
+- Export takes whole cycles or everything. A range would be more use for an
+  appointment.
+
+#### 🔹 A refill planner
+
+- **Status**: Planned
+- The shelf's projection, less the pharmacy's lead time: "order the next
+  prescription by 9 November", with an `.ics` reminder to put in a calendar.
+
+### 2 · The physical record, complete
+
+#### 🔹 AVB tracking
 
 - **Status**: Planned
 - The event types and the account exist and the fold handles them, and the AVB
@@ -486,68 +521,46 @@ elsewhere shows within a tick.
   recorded grinding. Nothing was invented to fill that gap, so the stash balance
   of a product recurring across cycles reads high until it is worked down.
 
-### 🔹 `wits show`
+#### 🔹 What it costs
 
 - **Status**: Planned
-- `show` for one entry in full. (`fsck` is built — see Checking above.)
+- The price paid per fill: euros per gram, per month, and — with the effect log
+  — per session that helped.
+- A price given when buying (`wits buy … --price`), or afterwards. A purchase is
+  never edited in place, so a price given later is recorded beside the journal
+  the way a rating is — append-only, chained, naming the purchase by hash — not
+  as a journal entry, which would be a transfer of no grams.
+- **Reconcile purchases**: one function, in the TUI, the browser and the command
+  line, that selects every purchase still standing in storage without a price
+  and presents them one by one in an editor, to document after the fact what
+  was paid.
 
-### 🔹 A cached fold
+### 3 · The report
 
-- **Status**: Planned
-- `wits init` creates `.wits/index/` and **nothing writes to it**. Replaying the
-  journal on every open is milliseconds at 1429 entries, so it does not matter
-  yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
-  must stay disposable.
-
-### 🔹 Markdown export for publishing
-
-- **Status**: In Progress
-- `wits export` writes one Markdown file. For GitHub Pages it needs site
-  structure: a page per cycle, an index, and something to link them.
-
-### 🔹 A date range for export
-
-- **Status**: Planned
-- Export takes whole cycles or everything. A range would be more use for an
-  appointment.
-
-### 🔹 A tolerance curve
-
-- **Status**: Planned
-- Grams a day against the effect log's ratings, rolling: tolerance creep is the
-  dose climbing while the effect stays flat. Breaks marked where the grinding
-  stopped, and the replay showing the curve bend through them.
-
-### 🔹 A report for the doctor
+#### 🔹 A report for the doctor
 
 - **Status**: Planned
 - One page for the prescriber: the months asked for, grams a day, which
   strains, what they did by the effect log, and what is left of the fill in
   progress. A PDF, built from `export` with the date range above.
 
-### 🔹 The vaporizer over Web Bluetooth
+#### 🔹 A tolerance curve
 
 - **Status**: Planned
-- Storz & Bickel's devices — the Volcano, the Mighty+ — speak Web Bluetooth;
-  their own web app drives them that way. wits-ui could log a session as it
-  happens, with the temperature curve it really ran, and say which terpenes and
-  cannabinoids each step released from the boiling points wits already knows.
+- Grams a day against the effect log's ratings, rolling: tolerance creep is the
+  dose climbing while the effect stays flat. Breaks marked where the grinding
+  stopped, and the replay showing the curve bend through them.
 
-### 🔹 The scale over USB or Bluetooth
+### 4 · Trust
 
-- **Status**: Planned
-- Jewellers' scales report over serial or Bluetooth; WebSerial and Web Bluetooth
-  read them from the browser. Weighing becomes putting the jar on the scale —
-  the reading lands in the form, nothing typed.
-
-### 🔹 Reading the pharmacy label
+#### 🔹 A chain others can check
 
 - **Status**: Planned
-- Photograph the label and fill the buy form from it: name, ratio, grams. The
-  OCR runs on the device (Tesseract compiled to WebAssembly) — a photograph of
-  a prescription leaves the machine for nothing.
+- Sign the chain's head with a key of one's own and anchor it with
+  OpenTimestamps, so a doctor or an authority can check a report against it
+  without trusting the patient or wits.
 
-### 🔹 Proof of what is carried
+#### 🔹 Proof of what is carried
 
 - **Status**: Planned
 - In Germany a patient must be able to show that what they carry matches what
@@ -555,7 +568,17 @@ elsewhere shows within a tick.
   view of the holdings against the prescriptions, as a signed QR code that
   verifies against the journal's chain.
 
-### 🔹 Sync without a server
+### 5 · More than one device
+
+#### 🔹 A cached fold
+
+- **Status**: Planned
+- `wits init` creates `.wits/index/` and **nothing writes to it**. Replaying the
+  journal on every open is milliseconds at 1429 entries, so it does not matter
+  yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
+  must stay disposable.
+
+#### 🔹 Sync without a server
 
 - **Status**: Planned
 - The journal is append-only and hash-chained, the way git is: two devices'
@@ -563,44 +586,49 @@ elsewhere shows within a tick.
   `wits push` and `wits pull` over any dumb storage — Syncthing, WebDAV, a USB
   stick — end-to-end encrypted with age.
 
-### 🔹 A chain others can check
+#### 🔹 wits on the phone
 
 - **Status**: Planned
-- Sign the chain's head with a key of one's own and anchor it with
-  OpenTimestamps, so a doctor or an authority can check a report against it
-  without trusting the patient or wits.
+- wits-ui installable and offline-first, as a PWA: an entry made without the
+  server waits and is appended when it is back, and a shortcut on the home
+  screen records a grind in two taps (`?record=grind` already opens the form).
 
-### 🔹 A refill planner
+### Later · hardware and delight
 
-- **Status**: Planned
-- The shelf's projection, less the pharmacy's lead time: "order the next
-  prescription by 9 November", with an `.ics` reminder to put in a calendar.
-
-### 🔹 What it costs
+#### 🔹 The scale over USB or Bluetooth
 
 - **Status**: Planned
-- The price paid per fill: euros per gram, per month, and — with the effect log
-  — per session that helped.
+- Jewellers' scales report over serial or Bluetooth; WebSerial and Web Bluetooth
+  read them from the browser. Weighing becomes putting the jar on the scale —
+  the reading lands in the form, nothing typed.
 
-### 🔹 The replay as a film
+#### 🔹 The vaporizer over Web Bluetooth
 
 - **Status**: Planned
-- Render the replay to MP4 or GIF: three years of the shelf filling and
-  draining in thirty seconds, from the same frames the browser draws.
+- Storz & Bickel's devices — the Volcano, the Mighty+ — speak Web Bluetooth;
+  their own web app drives them that way. wits-ui could log a session as it
+  happens, with the temperature curve it really ran, and say which terpenes and
+  cannabinoids each step released from the boiling points wits already knows.
 
-### 🔹 A map of the strains
+#### 🔹 Reading the pharmacy label
+
+- **Status**: Planned
+- Photograph the label and fill the buy form from it: name, ratio, grams. The
+  OCR runs on the device (Tesseract compiled to WebAssembly) — a photograph of
+  a prescription leaves the machine for nothing.
+
+#### 🔹 A map of the strains
 
 - **Status**: Planned
 - Every product placed by its terpene and cannabinoid profile, coloured by what
   the effect log says it did. "Something like the Wedding Cake" becomes its
   nearest neighbours.
 
-### 🔹 wits on the phone
+#### 🔹 The replay as a film
 
 - **Status**: Planned
-- wits-ui installable and offline-first, as a PWA: an entry made without the
-  server waits and is appended when it is back, and a shortcut on the home
-  screen records a grind in two taps (`?record=grind` already opens the form).
+- Render the replay to MP4 or GIF: three years of the shelf filling and
+  draining in thirty seconds, from the same frames the browser draws.
 
 
 ## 🩺 Findings in the imported records
