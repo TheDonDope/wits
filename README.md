@@ -212,6 +212,8 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
 | `wits bundle` | The whole repository as one compact file; `--gzip` to compress it |
 | `wits restore <file>` | Rebuild a repository from a bundle |
+| `wits remote add <folder>` | Share the repository through a folder; `--key` on every device after the first |
+| `wits push` / `wits pull` | Write the repository to the folder; bring in what other devices wrote there |
 | `wits fsck` | Check the journal and the catalogs for damage |
 | `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
 
@@ -302,8 +304,10 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
   config.yml      # settings — the interface theme
   products.yml    # the catalog
   devices.yml     # vaporizers and their temperature ranges
-  journal.ndjson  # append-only, one entry per line, never rewritten
+  journal.ndjson  # append-only, one entry per line; only a pull rewrites it
+  journal.ndjson.orig  # the journal as it was before a pull chained entries again
   effects.ndjson  # the effect log: ratings of sessions, append-only too
+  remote.key      # the age key the remote is encrypted to; never in the remote
   index/          # reserved for a cached fold; nothing writes it yet
   *.lock          # empty; what two writers of one file take turns on
 ```
@@ -337,7 +341,9 @@ $ wits fsck
 ```
 
 The directory is created `0700` and its files `0600`. Nothing is transmitted
-anywhere; the application makes no network calls at all.
+anywhere; the application makes no network calls at all. `wits push` writes to a
+folder you name, encrypted, and what carries the folder further is yours to
+choose.
 
 ## Bundles
 
@@ -364,6 +370,48 @@ Three years of real history, 1429 entries across 53 products:
 | bundle, `--gzip` | 6,693 | 79× |
 
 ![Bundling and restoring](./assets/wits-bundle.gif)
+
+## More than one device
+
+`wits push` and `wits pull` keep one repository on several devices through a
+folder they can all reach: a Syncthing share, a USB stick, anything that
+carries files. The folder holds one file, `wits.age`: the repository as a
+compressed bundle, encrypted with [age](https://age-encryption.org) to a key
+in `.wits/remote.key`. The key never goes in the folder. Bring it to each other
+device yourself, and pass it to `wits remote add --key` there. The whole
+workbook, 1429 entries, is 6,911 bytes in the folder.
+
+```console
+$ wits remote add ~/Sync/wits
+Remote set to ~/Sync/wits. Its key is ~/wits/.wits/remote.key: bring it to every other device, and nowhere else.
+$ wits push
+Pushed 1429 entries and 0 ratings.
+$ wits pull   # on the phone
+Pulled 1429 entries and 0 ratings.
+Took the remote's 53 products and 0 devices.
+$ wits push   # on the deck, after both recorded a grind
+🚨 the remote holds entries this device does not: wits pull first
+$ wits pull
+Pulled 1 entry and 0 ratings.
+Chained 1 entry of this device's on top, with new hashes.
+$ wits push
+Pushed 1 entry and 0 ratings.
+```
+
+A pull works the way `git rebase` does. The entries both devices share are
+kept, the remote's are taken as they are, and this device's own are chained
+again on top of them. Those get new hashes, since a hash names a place in the
+chain, and undos and ratings are pointed at the new ones. The journal as it
+was is kept as `.wits/journal.ndjson.orig`. A push is refused until the
+device holds everything on the remote, so nothing another device wrote is
+written over. Where the remote holds a product or a device differently, the
+remote's version stands.
+
+Two devices can each record the same last grams of a jar. Both entries are
+kept as written, and `wits pull`, `wits status` and `wits fsck` name the one
+that took grams that weren't there. The jar takes nothing more except an undo
+until one of the two is reverted with `wits revert`. Every other jar records
+as usual.
 
 ## Temperatures
 

@@ -48,6 +48,9 @@ func init() {
 		commands.Revert,
 		commands.Export,
 		commands.Fsck,
+		commands.Remote,
+		commands.Push,
+		commands.Pull,
 	)
 }
 

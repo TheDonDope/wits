@@ -105,9 +105,11 @@ and parallel renders have OOM-killed this machine.
 Wits is a **ledger**. `.wits/journal.ndjson` is an append-only, hash-chained
 event log; everything on screen is derived by replaying it (`ledger.Fold`).
 Nothing is edited in place — corrections are compensating entries (`wits
-revert`, adjustments), and the log keeps both. This is load-bearing: the replay
-transport and witsnap's JSON both exist because any state can be
-rebuilt from any prefix of events.
+revert`, adjustments), and the log keeps both. The one rewrite is `wits pull`
+(`Journal.Rebase`): entries not yet pushed are chained again on top of the
+remote's, with new hashes, and the effect log follows them. This is
+load-bearing: the replay transport and witsnap's JSON both exist because any
+state can be rebuilt from any prefix of events.
 
 Two orders, never mixed: the journal is in **recorded order** (the hash chain),
 the fold in **occurred order** (`ledger.Chronological`, ties kept recorded).
@@ -118,13 +120,15 @@ no "upcoming". Entries can be backdated anywhere, so the recorder
 checks a new one against every date in the replay (`ledger.Shortfalls`), not
 only against today's balance. Grams are physical: nothing models a negative
 balance or an overdraft — an entry either had its grams in the jar or is
-refused.
+refused. A pull can bring one in that did not (two devices, the same last
+grams); the jar then takes nothing but an undo (`record.ErrClash`) until one
+of the two is reverted.
 
 The **effect log** (`pkg/effects`, `.wits/effects.ndjson`) sits beside the
 journal, not in it: a rating moves no grams, and the journal's every entry is a
 transfer. It has its own hash chain and lock, names sessions by hash, and a
 re-rating supersedes (`effects.Latest`). Anything that copies the repository —
-bundles, restore, fsck — must carry it too.
+bundles, restore, fsck, push and pull — must carry it too.
 
 Grams move between four accounts (storage → stash → consumed → avb), one stash
 per product, every entry a transfer — mass is conserved end to end. Add amounts

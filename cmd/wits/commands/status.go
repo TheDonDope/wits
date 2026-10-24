@@ -28,6 +28,7 @@ var Status = &cobra.Command{
 			return err
 		}
 		warnChain(cmd.ErrOrStderr(), s.Workspace)
+		warnClashes(cmd.ErrOrStderr(), s.State)
 		writeStatus(cmd.OutOrStdout(), s.State, s.Cycle())
 		return nil
 	},
@@ -37,6 +38,15 @@ var Status = &cobra.Command{
 func warnChain(out io.Writer, ws *workspace.Workspace) {
 	if ws.Chain != nil {
 		fmt.Fprintln(out, "⚠ the journal was changed outside wits; wits fsck says where")
+	}
+}
+
+// warnClashes names every entry that took grams that were not in its jar —
+// the same last grams recorded on two devices, once pulled together. The jar
+// takes nothing more but an undo until one of them is reverted.
+func warnClashes(out io.Writer, state *ledger.State) {
+	for _, short := range ledger.Shortfalls(state.Events) {
+		fmt.Fprintf(out, "🚨 %s %s: wits revert it, or the entry it clashes with\n", shortHash(short.Event.Hash), short)
 	}
 }
 

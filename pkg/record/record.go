@@ -293,6 +293,10 @@ func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event
 // happened yet is a plan, not a record.
 var ErrAhead = errors.New("an entry is recorded once it has happened")
 
+// ErrClash is why a jar holding an impossible entry takes nothing more but an
+// undo.
+var ErrClash = errors.New("this jar's record does not add up")
+
 // notAhead refuses an entry dated after now.
 func notAhead(e journal.Event, now time.Time) error {
 	if e.OccurredAt.After(now) {
@@ -315,10 +319,23 @@ func (r *Recorder) one(build func() (journal.Event, error)) (journal.Event, erro
 
 // impossible refuses entries that take grams that were not there to take at
 // their moment, or that leave a later entry without the grams it took.
+//
+// A jar that already holds an impossible entry — two devices' journals merged
+// into one, each having ground its last grams — takes nothing more but an
+// undo until it is resolved: anything recorded on top of it would be built on
+// grams that may not be there.
 func (r *Recorder) impossible(batch []journal.Event) error {
 	before := map[string]bool{}
+	clashed := map[string]string{}
 	for _, short := range ledger.Shortfalls(r.state.Events) {
 		before[short.Event.Hash] = true
+		clashed[short.Event.Product] = short.Event.Hash
+	}
+	for _, e := range batch {
+		if hash, ok := clashed[e.Product]; ok && e.Reverts == "" {
+			return fmt.Errorf("%w: %s took grams that were not in %s; wits revert it, or the entry it clashes with, first",
+				ErrClash, short(hash), e.Product)
+		}
 	}
 	for _, short := range ledger.Shortfalls(append(slices.Clip(r.state.Events), batch...)) {
 		e := short.Event

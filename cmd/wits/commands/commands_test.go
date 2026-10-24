@@ -721,3 +721,45 @@ func lastOf(t *testing.T, dir string, typ journal.Type) string {
 	t.Fatalf("no %s entry", typ)
 	return ""
 }
+
+func TestSyncCommands(t *testing.T) {
+	share := t.TempDir()
+	deck, phone := repository(t), repository(t)
+	_, err := run(t, deck, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+
+	_, err = run(t, deck, Remote)
+	assert.ErrorContains(t, err, "no remote is set", "Should say how to set one")
+
+	out, err := run(t, deck, Remote, "add", share)
+	require.NoError(t, err)
+	assert.Contains(t, out, "bring it to every other device", "Should say what to do with the key")
+
+	out, err = run(t, deck, Push)
+	require.NoError(t, err)
+	assert.Contains(t, out, "Pushed 1 entry and 0 ratings.")
+
+	_, err = run(t, phone, Remote, "add", share, "--key", filepath.Join(deck, ".wits", "remote.key"))
+	require.NoError(t, err)
+	out, err = run(t, phone, Pull)
+	require.NoError(t, err)
+	assert.Contains(t, out, "Pulled 1 entry and 0 ratings.")
+	assert.Contains(t, out, "Took the remote's wcake-221.", "Should name the product it brought")
+
+	_, err = run(t, phone, Grind, "wedding", "1", "--date", "2026-07-02")
+	require.NoError(t, err)
+	_, err = run(t, phone, Push)
+	require.NoError(t, err)
+	_, err = run(t, deck, Grind, "wedding", "2", "--date", "2026-07-03")
+	require.NoError(t, err)
+
+	_, err = run(t, deck, Push)
+	assert.ErrorContains(t, err, "wits pull first", "Should not write over the phone's grind")
+	out, err = run(t, deck, Pull)
+	require.NoError(t, err)
+	assert.Contains(t, out, "Chained 1 entry of this device's on top, with new hashes.")
+
+	out, err = run(t, deck, Pull)
+	require.NoError(t, err)
+	assert.Contains(t, out, "Already up to date.")
+}

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 )
@@ -159,12 +160,7 @@ func (j *Journal) append(fresh bool, build func([]Event) ([]Event, error)) ([]Ev
 	seq, tip := j.seq, j.tip
 	stored := make([]Event, 0, len(batch))
 	for _, e := range batch {
-		e = withDefaults(e)
-		if err := e.Validate(); err != nil {
-			return nil, err
-		}
-		e.Seq, e.Prev = seq+1, tip
-		if e.Hash, err = e.sum(tip); err != nil {
+		if e, err = seal(e, seq, tip); err != nil {
 			return nil, err
 		}
 		line, err := json.Marshal(e)
@@ -225,6 +221,35 @@ func (j *Journal) prime(fresh bool) ([]Event, error) {
 	j.size = size
 	j.primed = true
 	return events, nil
+}
+
+// seal makes an entry what the journal stores after seq entries ending in
+// tip: its defaults filled in, checked, numbered and chained.
+func seal(e Event, seq int, tip string) (Event, error) {
+	e = withDefaults(e)
+	if err := e.Validate(); err != nil {
+		return e, err
+	}
+	e.Seq, e.Prev = seq+1, tip
+	var err error
+	e.Hash, err = e.sum(tip)
+	return e, err
+}
+
+// Chain seals entries one onto the next from the start of a journal, as
+// appending them to an empty one would: what a bundle's entries hash to once
+// restored, read without restoring them.
+func Chain(events []Event) ([]Event, error) {
+	out := make([]Event, len(events))
+	tip := ""
+	for i, e := range events {
+		var err error
+		if out[i], err = seal(e, i, tip); err != nil {
+			return nil, err
+		}
+		tip = out[i].Hash
+	}
+	return out, nil
 }
 
 // withDefaults fills in the fields a caller may leave to the journal: the
@@ -357,4 +382,127 @@ func (j *Journal) lines() ([][]byte, int64, error) {
 		}
 	}
 	return lines, int64(len(data)), nil
+}
+
+// Rebased is what a Rebase did: how many of the other chain's entries this
+// journal lacked, and which of its own it chained again on top of them, by
+// the hash each had and the hash it has now.
+type Rebased struct {
+	Fetched int
+	Moved   map[string]string
+}
+
+// Rebase brings in another device's copy of the journal. The entries the two
+// share are kept; the ones only the other holds are taken as they are, hashes
+// and all; and the ones only this journal holds are chained again on top of
+// them, the way git rebases a branch that was never pushed. Those get new
+// hashes — a hash names a place in the chain — and an undo among them is
+// pointed at the new hash of what it undoes. The journal is rewritten whole,
+// atomically, and the old one kept beside it as journal.ndjson.orig.
+//
+// then runs under the journal's lock once the journal is written, so the
+// effect log can follow the sessions that moved before anything else can
+// record against their old hashes.
+func (j *Journal) Rebase(onto []Event, then func(Rebased) error) (Rebased, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	release, err := j.lock()
+	if err != nil {
+		return Rebased{}, err
+	}
+	defer release()
+	if err := chained(onto); err != nil {
+		return Rebased{}, err
+	}
+	// prime, not read: it cuts away a write that never finished, which a
+	// fast-forward would otherwise append onto.
+	local, err := j.prime(true)
+	if err != nil {
+		return Rebased{}, err
+	}
+	k := shared(local, onto)
+	done := Rebased{Fetched: len(onto) - k, Moved: map[string]string{}}
+	if done.Fetched > 0 {
+		if err := j.rewrite(local, onto, k, done.Moved); err != nil {
+			return Rebased{}, err
+		}
+	}
+	return done, then(done)
+}
+
+// rewrite puts onto in place of the journal's first k entries, the ones
+// after them chained on top, recording in moved each hash that changed.
+func (j *Journal) rewrite(local, onto []Event, k int, moved map[string]string) error {
+	j.primed = false
+	if k == len(local) {
+		return j.write(encode(onto[k:]))
+	}
+	merged := slices.Clone(onto)
+	for _, e := range local[k:] {
+		if to, ok := moved[e.Reverts]; ok {
+			e.Reverts = to
+		}
+		old := e.Hash
+		e.Seq, e.Prev = len(merged)+1, merged[len(merged)-1].Hash
+		var err error
+		if e.Hash, err = e.sum(e.Prev); err != nil {
+			return err
+		}
+		moved[old] = e.Hash
+		merged = append(merged, e)
+	}
+	if err := copyFile(j.path, j.path+".orig"); err != nil {
+		return err
+	}
+	return WriteFile(j.path, encode(merged))
+}
+
+// chained reports whether events form a whole chain from the start: each
+// numbered in turn, naming the one before, and hashing to its own hash.
+func chained(events []Event) error {
+	prev := ""
+	for i, e := range events {
+		sum, err := e.sum(prev)
+		if err != nil {
+			return err
+		}
+		if e.Seq != i+1 || e.Prev != prev || e.Hash != sum {
+			return fmt.Errorf("%w: entry %d of the other copy", ErrBrokenChain, i+1)
+		}
+		prev = e.Hash
+	}
+	return nil
+}
+
+// shared is how many entries two chains begin with in common. Each hash
+// covers everything before it, so the first that differs ends what is shared.
+func shared(a, b []Event) int {
+	k := 0
+	for k < len(a) && k < len(b) && a[k].Hash == b[k].Hash {
+		k++
+	}
+	return k
+}
+
+// encode writes events as they are stored, a line each.
+func encode(events []Event) []byte {
+	var buf bytes.Buffer
+	for _, e := range events {
+		line, _ := json.Marshal(e) // an Event always encodes
+		buf.Write(line)
+		buf.WriteByte('\n')
+	}
+	return buf.Bytes()
+}
+
+// copyFile copies a file whole, atomically; a missing one copies nothing.
+func copyFile(from, to string) error {
+	data, err := os.ReadFile(from)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return WriteFile(to, data)
 }

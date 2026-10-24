@@ -116,3 +116,58 @@ func labels(gs []Group) []string {
 	}
 	return out
 }
+
+func TestRebase(t *testing.T) {
+	at := time.Date(2026, time.July, 1, 20, 0, 0, 0, time.UTC)
+	rating := func(session string, calm int) Rating {
+		return Rating{Session: session, At: at, Scores: map[Dimension]int{Calm: calm}}
+	}
+
+	t.Run("FollowsASessionThatMoved", func(t *testing.T) {
+		phone, deck := testLog(t), testLog(t)
+		_, err := phone.Append(rating("theirs", 3))
+		require.NoError(t, err)
+		_, err = deck.Append(rating("old", 4))
+		require.NoError(t, err)
+		theirs, err := phone.All()
+		require.NoError(t, err)
+
+		fetched, rechained, err := deck.Rebase(theirs, map[string]string{"old": "new"})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, fetched, "Should take the rating it lacked")
+		assert.Equal(t, 1, rechained, "Should chain its own again")
+		require.NoError(t, deck.Verify(), "Should leave a chain that verifies")
+		ours, err := deck.All()
+		require.NoError(t, err)
+		require.Len(t, ours, 2)
+		assert.Equal(t, theirs[0], ours[0], "Should keep the other copy's rating as it is")
+		assert.Equal(t, "new", ours[1].Session, "Should rate the session by its new hash")
+	})
+
+	t.Run("RewritesWhenOnlyASessionMoved", func(t *testing.T) {
+		deck := testLog(t)
+		_, err := deck.Append(rating("old", 4))
+		require.NoError(t, err)
+
+		_, _, err = deck.Rebase(nil, map[string]string{"old": "new"})
+
+		require.NoError(t, err)
+		ours, err := deck.All()
+		require.NoError(t, err)
+		assert.Equal(t, "new", ours[0].Session, "Should follow the session though nothing else came in")
+	})
+
+	t.Run("RefusesABrokenChain", func(t *testing.T) {
+		phone := testLog(t)
+		_, err := phone.Append(rating("theirs", 3))
+		require.NoError(t, err)
+		theirs, err := phone.All()
+		require.NoError(t, err)
+		theirs[0].Note = "changed"
+
+		_, _, err = testLog(t).Rebase(theirs, nil)
+
+		assert.ErrorIs(t, err, ErrBrokenChain, "Should not take ratings that do not hash to their hashes")
+	})
+}
