@@ -71,9 +71,16 @@ func TestThemePicker(t *testing.T) {
 	m, _ = send(m, tea.KeyPressMsg{Code: 't', Text: "t"})
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyDown})
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyDown})
-	_, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Nil(t, app.picker, "enter should close the picker")
 	assert.Equal(t, "light-plus", app.theme.ID)
+	assert.Contains(t, stripANSI(app.View().Content), "✓ theme light-plus", "The footer should say what was chosen")
+
+	_, _ = send(m, tea.KeyPressMsg{Code: tea.KeyTab})
+	footer := stripANSI(app.View().Content)
+	assert.NotContains(t, footer, "theme light-plus", "The next key should dismiss the notice")
+	assert.Contains(t, footer, "? help", "The key hints should be back")
+	assert.Equal(t, journalScreen, app.screen, "The dismissing key should still do its job")
 
 	reopened, err := repo.Discover(data.Repo.WorkTree())
 	require.NoError(t, err)

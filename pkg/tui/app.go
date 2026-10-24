@@ -236,6 +236,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, nil
 
 	case tea.KeyPressMsg:
+		// A notice lasts until the next key, which then does what it always
+		// does — otherwise the outcome of the last entry hides the key hints.
+		if a.picker == nil && a.device == nil && a.entry == nil {
+			a.notice = ""
+		}
 		if handled, cmd := a.formKey(msg); handled {
 			return a, cmd
 		}
