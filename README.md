@@ -291,7 +291,14 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
   devices.yml     # vaporizers and their temperature ranges
   journal.ndjson  # append-only, one entry per line, never rewritten
   index/          # reserved for a cached fold; nothing writes it yet
+  *.lock          # empty; what two writers of one file take turns on
 ```
+
+The catalogs and the config are rewritten whole, so they are written to a
+temporary file and renamed into place — a crash leaves the old file or the new
+one, never an empty one — and every change to one is made under its lock, onto
+the file as it stands: a product added in one terminal survives a rename made
+in the TUI from a copy read before it.
 
 The journal is only ever appended to, and each entry is chained to the one before
 it with a SHA-256 hash, so an edit made outside Wits is detectable. Appending

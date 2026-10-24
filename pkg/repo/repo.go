@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"gopkg.in/yaml.v3"
 )
@@ -168,8 +169,21 @@ func (r *Repo) Journal() *journal.Journal {
 	return r.journal
 }
 
-// SetTheme records the interface theme and persists it.
+// SetTheme records the interface theme and persists it, under the config's
+// lock and onto the config as it stands on disk, so a setting changed by
+// another process in the meantime is kept rather than written over.
 func (r *Repo) SetTheme(name string) error {
+	path := filepath.Join(r.root, configFile)
+	release, err := journal.Lock(path)
+	if err != nil {
+		return err
+	}
+	defer release()
+	fresh, err := open(r.root)
+	if err != nil {
+		return err
+	}
+	r.Config = fresh.Config
 	r.Config.Theme = name
 	return r.writeConfig()
 }
@@ -180,5 +194,44 @@ func (r *Repo) writeConfig() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(r.root, configFile), data, filePerm)
+	return journal.WriteFile(filepath.Join(r.root, configFile), data)
+}
+
+// UpdateProducts changes the product catalog: under its lock, it reads the
+// catalog as it stands on disk, applies change, and writes it back whole.
+// The catalog it wrote is returned, for the caller to adopt.
+//
+// The catalogs are files read, changed and written back. Done from a copy
+// read earlier — the TUI's, say, read when it opened — the write puts back
+// everything else as it was then, and a product added by wits buy in another
+// terminal meanwhile is gone, its entries left naming a slug nothing defines.
+// A change that returns an error writes nothing.
+func (r *Repo) UpdateProducts(change func(*catalog.Catalog) error) (*catalog.Catalog, error) {
+	return update(r.ProductsPath(), catalog.Load, change)
+}
+
+// UpdateDevices is UpdateProducts for the device catalog.
+func (r *Repo) UpdateDevices(change func(*catalog.Devices) error) (*catalog.Devices, error) {
+	return update(r.DevicesPath(), catalog.LoadDevices, change)
+}
+
+// update is the read-change-write of a catalog file, under its lock.
+func update[T interface{ Save(string) error }](path string, load func(string) (T, error), change func(T) error) (T, error) {
+	var zero T
+	release, err := journal.Lock(path)
+	if err != nil {
+		return zero, err
+	}
+	defer release()
+	fresh, err := load(path)
+	if err != nil {
+		return zero, err
+	}
+	if err := change(fresh); err != nil {
+		return zero, err
+	}
+	if err := fresh.Save(path); err != nil {
+		return zero, err
+	}
+	return fresh, nil
 }

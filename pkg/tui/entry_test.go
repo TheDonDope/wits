@@ -543,3 +543,33 @@ func TestDevicesScreenKeys(t *testing.T) {
 	assert.Contains(t, help, "add", "Should mention adding")
 	assert.Contains(t, help, "remove", "Should mention removing")
 }
+
+func TestDeviceFormKeepsADeviceAddedElsewhere(t *testing.T) {
+	app := liveApp(t)
+	_, err := app.data.Repo.UpdateDevices(func(d *catalog.Devices) error {
+		return d.Add(&catalog.Device{Name: "Volcano", MaxTemp: 230})
+	})
+	require.NoError(t, err)
+	app.data, err = Load(app.data.Repo)
+	require.NoError(t, err)
+	volcano, err := app.data.Devices.Find("volcano")
+	require.NoError(t, err)
+
+	// wits device add, in another terminal, after the screen was drawn.
+	other, err := repo.Discover(app.data.Repo.WorkTree())
+	require.NoError(t, err)
+	_, err = other.UpdateDevices(func(d *catalog.Devices) error { return d.Add(&catalog.Device{Name: "Mighty"}) })
+	require.NoError(t, err)
+
+	f := newDeviceForm(volcano, app)
+	f.name = "Volcano Hybrid"
+	require.NoError(t, f.commit(app))
+
+	onDisk, err := catalog.LoadDevices(app.data.Repo.DevicesPath())
+	require.NoError(t, err)
+	require.Len(t, onDisk.Devices, 2, "Saving the edit should not write back a catalog without the Mighty")
+	renamed, err := onDisk.Find("volcano")
+	require.NoError(t, err)
+	assert.Equal(t, "Volcano Hybrid", renamed.Name)
+	assert.Len(t, app.data.Devices.Devices, 2, "and the screen's copy should have caught up")
+}

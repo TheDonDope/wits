@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -42,13 +43,19 @@ type Journal struct {
 	primed bool
 }
 
-// lockPath is the file the cross-process lock is taken on. It is separate from
-// the journal so that taking it never opens the journal for writing.
-func (j *Journal) lockPath() string { return j.path + ".lock" }
-
 // lock takes the cross-process append lock, returning the release function.
-func (j *Journal) lock() (func(), error) {
-	f, err := os.OpenFile(j.lockPath(), os.O_CREATE|os.O_RDWR, 0600)
+func (j *Journal) lock() (func(), error) { return Lock(j.path) }
+
+// Lock takes an exclusive advisory lock for the file at path, waiting for any
+// other holder, and returns the function that releases it. The lock is taken
+// on a file beside it, path + ".lock", so that taking it never opens the file
+// itself for writing.
+//
+// It is the journal's, exported because the repository's other files need the
+// same discipline: a catalog is read, changed and written back, and two
+// processes doing that at once lose one of the changes.
+func Lock(path string) (func(), error) {
+	f, err := os.OpenFile(path+".lock", os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +67,34 @@ func (j *Journal) lock() (func(), error) {
 		unlockFile(f)
 		f.Close()
 	}, nil
+}
+
+// WriteFile replaces the file at path with data, so that a crash leaves either
+// the old file or the new one and never a part of either. The data goes to a
+// temporary file beside it, which is flushed and then renamed over the old
+// one; a rename within a directory is atomic.
+//
+// The journal is only ever appended to; this is for the files that are
+// rewritten whole — the catalogs and the config — which os.WriteFile truncates
+// first, so a crash between the truncate and the write left them empty.
+func WriteFile(path string, data []byte) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name()) // a no-op once renamed
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
 
 // Open returns the journal stored at path. The file is created on the first

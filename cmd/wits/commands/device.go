@@ -33,7 +33,6 @@ var deviceAdd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		devices := s.Devices
 		device := &catalog.Device{
 			Name:        args[0],
 			Kind:        deviceKind,
@@ -41,10 +40,9 @@ var deviceAdd = &cobra.Command{
 			MaxTemp:     deviceMaxTemp,
 			DefaultTemp: deviceDefault,
 		}
-		if err := devices.Add(device); err != nil {
-			return err
-		}
-		if err := devices.Save(s.Repo.DevicesPath()); err != nil {
+		if _, err := s.Repo.UpdateDevices(func(d *catalog.Devices) error {
+			return d.Add(device)
+		}); err != nil {
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Added device %s (%s)\n", device.Slug, device.Name)

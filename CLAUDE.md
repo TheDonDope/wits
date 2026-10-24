@@ -113,7 +113,10 @@ per product, every entry a transfer — mass is conserved end to end.
 the CLI commands and the TUI forms both go through it, so they cannot disagree.
 Every recorder entry is a builder run by `Journal.AppendWith`, under the lock,
 against a fold of the journal as it stands — a check made outside a builder is
-a check of a snapshot another process may have overtaken.
+a check of a snapshot another process may have overtaken. The same goes for the
+catalogs and the config: change them through `repo.UpdateProducts` /
+`UpdateDevices` / `SetTheme` (locked, re-read, written atomically), never by
+saving a copy held in memory.
 
 Dependencies point strictly downward: `pkg/journal` depends on nothing
 internal; `workspace` opens a repository and holds state; `tui` and `cmd/*`

@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -621,4 +622,28 @@ func TestAmendWritesBothEntriesTogether(t *testing.T) {
 	assert.Equal(t, grind.Hash, events[2].Reverts, "The undo comes first")
 	assert.Equal(t, corrected.Hash, events[3].Hash, "and the re-recorded entry straight after it")
 	assert.Equal(t, events[2].Hash, events[3].Prev)
+}
+
+func TestCatalogChangesKeepEachOther(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now().AddDate(0, 0, -1))
+	require.NoError(t, err)
+	tui := New(rec.repo, &catalog.Catalog{Products: slices.Clone(rec.products.Products)}, rec.devices, rec.state)
+
+	// Another terminal buys a new product the TUI's copy has never seen.
+	_, _, added, err := rec.Buy("Cannamedical 28/1 Lemon Cookie", "", 10, time.Now())
+	require.NoError(t, err)
+	require.True(t, added)
+
+	_, err = tui.Rename("wcake-221", "Wedding Cake")
+	require.NoError(t, err)
+
+	onDisk, err := catalog.Load(rec.repo.ProductsPath())
+	require.NoError(t, err)
+	assert.Len(t, onDisk.Products, 2, "The rename should not write back a catalog without the Lemon Cookie")
+	assert.Len(t, tui.products.Products, 2, "and the TUI's copy should have caught up")
+
+	_, _, added, err = tui.Buy("Cannamedical 28/1 Lemon Cookie", "", 5, time.Now())
+	require.NoError(t, err)
+	assert.False(t, added, "A product added elsewhere should be used, not added twice")
 }

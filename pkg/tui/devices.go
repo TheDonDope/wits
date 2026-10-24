@@ -255,14 +255,27 @@ type deviceDoneMsg struct {
 	err  error
 }
 
-// commit writes the catalog back.
+// commit writes the change to the device catalog as it stands on disk, under
+// its lock, and adopts what was written. The form was filled in against the
+// screen's copy; writing that copy back would undo a device added by wits
+// device add in another terminal meanwhile.
 func (f *deviceForm) commit(a *App) error {
-	devices := a.data.Devices
+	if f.remove && !f.confirm {
+		return errCancelled
+	}
+	fresh, err := a.data.Repo.UpdateDevices(f.apply)
+	if err != nil {
+		return err
+	}
+	*a.data.Devices = *fresh
+	return nil
+}
+
+// apply makes the form's change to a device catalog. The device being edited
+// or removed is found again by its slug, since the catalog is a fresh read.
+func (f *deviceForm) apply(devices *catalog.Devices) error {
 	switch {
 	case f.remove:
-		if !f.confirm {
-			return errCancelled
-		}
 		kept := devices.Devices[:0]
 		for _, d := range devices.Devices {
 			if d.Slug != f.editing.Slug {
@@ -273,12 +286,14 @@ func (f *deviceForm) commit(a *App) error {
 		f.name = f.editing.Name
 
 	case f.editing != nil:
-		f.editing.Name = strings.TrimSpace(f.name)
-		f.editing.Kind = strings.TrimSpace(f.kind)
-		f.editing.MinTemp, f.editing.MaxTemp, f.editing.DefaultTemp = atoiBlank(f.min), atoiBlank(f.max), atoiBlank(f.def)
-		if err := validTemps(f.editing); err != nil {
+		d, err := devices.Find(f.editing.Slug)
+		if err != nil {
 			return err
 		}
+		d.Name = strings.TrimSpace(f.name)
+		d.Kind = strings.TrimSpace(f.kind)
+		d.MinTemp, d.MaxTemp, d.DefaultTemp = atoiBlank(f.min), atoiBlank(f.max), atoiBlank(f.def)
+		return validTemps(d)
 
 	default:
 		d := &catalog.Device{
@@ -291,11 +306,9 @@ func (f *deviceForm) commit(a *App) error {
 		if err := validTemps(d); err != nil {
 			return err
 		}
-		if err := devices.Add(d); err != nil {
-			return err
-		}
+		return devices.Add(d)
 	}
-	return devices.Save(a.data.Repo.DevicesPath())
+	return nil
 }
 
 // validTemps rejects a range that cannot be set, which would otherwise only

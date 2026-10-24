@@ -89,6 +89,14 @@ by walking up from the working directory. Configuration lives in `config.yml`;
 there is no `.env` and no environment to set. The directory is `0700` and its
 files `0600`, because it is health data.
 
+The files rewritten whole — `products.yml`, `devices.yml`, `config.yml` — are
+written to a temporary file and renamed into place (`journal.WriteFile`); they
+were truncated and then written, so a crash between the two left them empty.
+Every change to one goes through `repo.UpdateProducts`, `repo.UpdateDevices`
+or `SetTheme`: under the file's lock, the file is read as it stands, changed,
+and written back. Changed from a copy read earlier, a rename in the TUI wrote
+back a catalog without the product `wits buy` had added in another terminal.
+
 ### The journal
 
 Newline-delimited JSON, opened `O_APPEND`, never rewritten — so a failed write
