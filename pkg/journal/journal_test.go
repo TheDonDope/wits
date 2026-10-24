@@ -183,6 +183,18 @@ func TestEvents(t *testing.T) {
 		assert.Error(t, err, "Should not silently skip a line it cannot parse")
 	})
 
+	t.Run("UnfinishedLastLineIsLeftOut", func(t *testing.T) {
+		j := testJournal(t)
+		_, err := j.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 0.5})
+		require.NoError(t, err)
+		torn(t, j.Path())
+
+		events, err := j.Events()
+
+		require.NoError(t, err, "A write cut off before its newline should not lock the journal")
+		assert.Len(t, events, 1, "Should keep every complete line")
+	})
+
 	t.Run("PreservesOrder", func(t *testing.T) {
 		j := testJournal(t)
 		for i := 0; i < 5; i++ {
@@ -331,4 +343,34 @@ func TestVerifyReportsAnUnreadableJournal(t *testing.T) {
 	err := Open(path).Verify()
 
 	assert.Error(t, err, "Should not report a journal it cannot read as verified")
+}
+
+// torn appends the start of a line and no newline, the way a write cut off
+// by a crash or a full disk leaves the file.
+func torn(t *testing.T, path string) {
+	t.Helper()
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0600)
+	require.NoError(t, err)
+	_, err = f.WriteString(`{"seq":2,"type":"gri`)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+}
+
+func TestAppendCutsAwayAnUnfinishedLine(t *testing.T) {
+	j := testJournal(t)
+	first, err := j.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 0.5})
+	require.NoError(t, err)
+	torn(t, j.Path())
+
+	// A fresh value, as the next process to open the repository would have.
+	again := Open(j.Path())
+	second, err := again.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 0.25})
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, second.Seq, "Should number on from the last complete entry")
+	assert.Equal(t, first.Hash, second.Prev, "Should chain onto the last complete entry")
+	assert.NoError(t, again.Verify(), "The chain should verify with the fragment gone")
+	events, err := again.Events()
+	require.NoError(t, err)
+	assert.Len(t, events, 2)
 }
