@@ -5,6 +5,8 @@ import (
 	"github.com/TheDonDope/wits/pkg/repo"
 	"io"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -887,4 +890,69 @@ func TestSealCommands(t *testing.T) {
 	out, err = run(t, dir, Fsck)
 	assert.Error(t, err)
 	assert.Contains(t, out, "signature does not match", "fsck should name it too")
+}
+
+// fakeCalendar answers like an OpenTimestamps calendar: a promise for a
+// digest, and a Bitcoin block once asked again.
+func fakeCalendar(t *testing.T) *httptest.Server {
+	t.Helper()
+	varbytes := func(b *bytes.Buffer, p []byte) {
+		b.WriteByte(byte(len(p)))
+		b.Write(p)
+	}
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b bytes.Buffer
+		switch {
+		case r.URL.Path == "/digest":
+			b.Write([]byte{0x08, 0x00, 0x83, 0xdf, 0xe3, 0x0d, 0x2e, 0xf9, 0x0c, 0x8e}) // sha256, pending
+			var uri bytes.Buffer
+			varbytes(&uri, []byte(srv.URL))
+			varbytes(&b, uri.Bytes())
+		case strings.HasPrefix(r.URL.Path, "/timestamp/"):
+			b.Write([]byte{0x08, 0x00, 0x05, 0x88, 0x96, 0x0d, 0x73, 0xd7, 0x19, 0x01}) // sha256, bitcoin
+			varbytes(&b, []byte{0xb4, 0xd6, 0x37})                                      // block 912180
+		default:
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write(b.Bytes())
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestSealTimestamp(t *testing.T) {
+	srv := fakeCalendar(t)
+	saved := seal.Calendars
+	seal.Calendars = []string{srv.URL}
+	t.Cleanup(func() { seal.Calendars = saved })
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Seal, "--timestamp")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Sent the seal's SHA-256, and nothing else, to 1 calendar")
+	seals, err := filepath.Glob(filepath.Join(dir, ".wits", "seals", "*.seal"))
+	require.NoError(t, err)
+	require.Len(t, seals, 1)
+	out, err = run(t, dir, Verify, seals[0])
+	require.NoError(t, err)
+	assert.Contains(t, out, "timestamp pending at 1 calendar")
+
+	out, err = run(t, dir, Seal, "--upgrade")
+	require.NoError(t, err)
+	assert.Contains(t, out, "in Bitcoin block 912180")
+	out, err = run(t, dir, Verify, seals[0])
+	require.NoError(t, err)
+	assert.Contains(t, out, "timestamped in Bitcoin block 912180")
+	out, err = run(t, dir, Seal, "--upgrade")
+	require.NoError(t, err)
+	assert.Contains(t, out, "No seal is waiting for its proof.")
+	out, err = run(t, dir, Seal, "--key")
+	require.NoError(t, err)
+	assert.Contains(t, out, "SHA256:")
+	out, err = run(t, dir, Fsck)
+	require.NoError(t, err, out)
 }
