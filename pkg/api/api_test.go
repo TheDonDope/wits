@@ -309,3 +309,14 @@ func TestCarry(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, c.Verify(), "The address holds the signed statement")
 }
+
+func TestStrains(t *testing.T) {
+	s, _ := server(t, "")
+
+	got := decodeInto[[]strain](t, call(t, s, "GET", "/api/strains", ""))
+
+	require.Len(t, got, 1, "The one product dispensed")
+	assert.Equal(t, "Enua 22/1 Wedding Cake", got[0].Name)
+	assert.Equal(t, 20.0, got[0].Dispensed)
+	assert.Empty(t, got[0].Like, "Nothing else to be like")
+}

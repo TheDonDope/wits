@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`, `seal`, `verify`, `carry`,
+`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`, `seal`, `verify`, `carry`, `describe`, `like`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -597,6 +597,29 @@ that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
 verified in place, outside the repository and after a restore, and the sealed
 report's footer read.
 
+### A map of the strains — `wits like`, the Effects page
+
+Every product dispensed, placed by its profile (`report.Strains`). Across is
+its THC, readable off the map; up and down is the rest of the profile — the
+words of the cultivar's name without their digits, so "MAC1+", "MAC 1" and
+"MAC3" are one family, and the terpenes where both products have them, dominant
+first, as a weighted Jaccard — laid on one line by classical multidimensional
+scaling and spread by rank. Two axes of scaling alone were tried first and
+crowded the products the workbook knows only by THC into a corner. What a
+product is most like is the whole distance, cannabinoids included, and a
+terpene profile not written down counts as halfway alike, not as alike: at
+first it made two unknown profiles nearer than two matching ones. Each point
+is coloured by the effect log's overall mean and sized by the grams dispensed.
+
+Terpenes are written down with `wits describe --terpenes` or on the second
+page of the terminal's product form; that form is two pages so it does not
+outgrow the terminal. "Myrcen" and "β-Myrcene" are one terpene
+(`catalog.TerpeneKey`). Bundles had never carried a product's terpenes, so a
+restore dropped them; format 6 carries them. The workbook lists none, so it
+places by name and THC for now: the two Wedding Cakes find each other first,
+then the other Cakes, and the MAC1s find their family. A tested profile shows
+the terpenes pulling two products together past one nearer in THC.
+
 ### Proof of what is carried — `wits carry`
 
 What is held, against the fills that dispensed it, as a signed statement
@@ -770,13 +793,6 @@ plainly.
 - Photograph the label and fill the buy form from it: name, ratio, grams. The
   OCR runs on the device (Tesseract compiled to WebAssembly) — a photograph of
   a prescription leaves the machine for nothing.
-
-#### 🔹 A map of the strains
-
-- **Status**: Planned
-- Every product placed by its terpene and cannabinoid profile, coloured by what
-  the effect log says it did. "Something like the Wedding Cake" becomes its
-  nearest neighbours.
 
 #### 🔹 The replay as a film
 

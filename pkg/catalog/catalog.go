@@ -443,3 +443,26 @@ func (c *Catalog) Taken(slug string) bool {
 	}
 	return false
 }
+
+// ParseTerpenes reads terpenes as a label lists them, dominant first, by
+// commas or semicolons: "Myrcen, Limonen; β-Caryophyllen".
+func ParseTerpenes(s string) []string {
+	var out []string
+	for _, t := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ';' }) {
+		if t = strings.TrimSpace(t); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// TerpeneKey is a terpene's name as two labels agree on it: lowercase, without
+// its α or β, and without the e German leaves off — "β-Myrcen" and "myrcene"
+// are one terpene.
+func TerpeneKey(name string) string {
+	k := strings.ToLower(strings.TrimSpace(name))
+	for _, prefix := range []string{"α-", "β-", "γ-", "δ-", "alpha-", "beta-", "alpha ", "beta ", "a-", "b-"} {
+		k = strings.TrimPrefix(k, prefix)
+	}
+	return strings.TrimSuffix(strings.TrimSpace(k), "e")
+}

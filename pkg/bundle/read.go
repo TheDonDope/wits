@@ -506,6 +506,8 @@ func readProduct(text string, line int) (string, *catalog.Product, error) {
 			p.Genetic = can(g)
 		case "r":
 			p.Radiated = value == "1"
+		case "tp":
+			p.Terpenes = catalog.ParseTerpenes(unescape(value))
 		case "a":
 			var at int64
 			if at, err = parseNum(value); err == nil {

@@ -377,3 +377,18 @@ func TestSealsTravelInTheBundle(t *testing.T) {
 	_, err = Read(bytes.NewBufferString("wits-bundle 5\nP0 w\n--\n==\nK name !!!\n"))
 	assert.ErrorContains(t, err, "unreadable seal")
 }
+
+func TestTerpenesTravelInTheBundle(t *testing.T) {
+	products := &catalog.Catalog{Products: []*catalog.Product{
+		{Slug: "wcake", Name: "Enua 22/1 Wedding Cake", Terpenes: []string{"β-Caryophyllen", "Limonen", "Myrcen"}},
+	}}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Products: products}))
+
+	got, err := Read(&buf)
+
+	require.NoError(t, err)
+	require.Len(t, got.Products.Products, 1)
+	assert.Equal(t, []string{"β-Caryophyllen", "Limonen", "Myrcen"}, got.Products.Products[0].Terpenes,
+		"Should bring the terpenes back, in their order: every format before 6 dropped them")
+}

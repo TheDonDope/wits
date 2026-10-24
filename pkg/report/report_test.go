@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -139,4 +140,47 @@ func TestQR(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(svg, `<svg xmlns="http://www.w3.org/2000/svg"`))
 	assert.Contains(t, svg, "h1v1h-1z", "Should draw the dark modules")
+}
+
+func TestStrains(t *testing.T) {
+	r, err := repo.Init(t.TempDir())
+	require.NoError(t, err)
+	ws, err := workspace.Read(r)
+	require.NoError(t, err)
+	at := time.Now().AddDate(0, 0, -10)
+	for _, name := range []string{"Enua 22/1 Wedding Cake", "Khiron 20/1 Wedding Cake", "Cantourage 25/1 MAC1+",
+		"Barongo 27/1 MAC3", "Sumo 25/1 Papaya Bomb"} {
+		_, _, _, err = ws.Recorder.Buy(name, "", 10, at)
+		require.NoError(t, err)
+	}
+	ws, err = workspace.Read(r)
+	require.NoError(t, err)
+	// like is what a product is most like, by name, first.
+	like := func(ws *workspace.Workspace, name string) (Strain, string) {
+		all := Strains(ws)
+		i := slices.IndexFunc(all, func(s Strain) bool { return s.Name == name })
+		require.GreaterOrEqual(t, i, 0, name)
+		j := slices.IndexFunc(all, func(s Strain) bool { return s.Slug == all[i].Like[0] })
+		return all[i], all[j].Name
+	}
+
+	require.Len(t, Strains(ws), 5)
+	wcake, first := like(ws, "Enua 22/1 Wedding Cake")
+	assert.Equal(t, "Khiron 20/1 Wedding Cake", first, "The other Wedding Cake first")
+	assert.Equal(t, 22.0, wcake.X, "Across by THC")
+	_, first = like(ws, "Cantourage 25/1 MAC1+")
+	assert.Equal(t, "Barongo 27/1 MAC3", first, "MAC1+ and MAC3 are one family")
+
+	// A shared terpene profile brings together two products that share no
+	// word, past one nearer in THC whose terpenes are not known.
+	_, first = like(ws, "Sumo 25/1 Papaya Bomb")
+	require.Equal(t, "Cantourage 25/1 MAC1+", first, "At first the nearest THC, 25 against 25")
+	for _, name := range []string{"Sumo 25/1 Papaya Bomb", "Khiron 20/1 Wedding Cake"} {
+		_, err = ws.Recorder.Terpenes(name, []string{"Myrcen", "Limonen", "Caryophyllen"})
+		require.NoError(t, err)
+	}
+	ws, err = workspace.Read(r)
+	require.NoError(t, err)
+	_, first = like(ws, "Sumo 25/1 Papaya Bomb")
+	assert.Equal(t, "Khiron 20/1 Wedding Cake", first, "Alike in terpenes, alike on the map")
 }

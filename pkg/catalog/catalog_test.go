@@ -274,3 +274,12 @@ func TestTaken(t *testing.T) {
 	assert.True(t, c.Taken("wcake"), "Should know what it holds")
 	assert.False(t, c.Taken("lcook"), "and what it does not")
 }
+
+func TestTerpenes(t *testing.T) {
+	assert.Equal(t, []string{"Myrcen", "Limonen", "β-Caryophyllen"}, ParseTerpenes(" Myrcen, Limonen; β-Caryophyllen ,"))
+	assert.Empty(t, ParseTerpenes(""))
+	for _, same := range [][2]string{{"β-Myrcen", "myrcene"}, {"Limonen", "limonene"}, {"alpha-Pinene", "α-Pinen"}} {
+		assert.Equal(t, TerpeneKey(same[0]), TerpeneKey(same[1]), "%s and %s are one terpene", same[0], same[1])
+	}
+	assert.NotEqual(t, TerpeneKey("Linalool"), TerpeneKey("Limonen"))
+}

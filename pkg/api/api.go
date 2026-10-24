@@ -78,6 +78,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/price", s.price)
 	mux.HandleFunc("GET /api/report.pdf", s.report)
 	mux.HandleFunc("GET /api/carry", s.carry)
+	mux.HandleFunc("GET /api/strains", s.read(strainsOf))
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
@@ -373,6 +374,32 @@ func (s *Server) price(w http.ResponseWriter, r *http.Request) {
 	e, _ := ws.Recorder.Find(p.Purchase)
 	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g of %s",
 		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
+}
+
+// strain is one product on the map of the strains, as a client reads it.
+type strain struct {
+	Slug      string   `json:"slug"`
+	Name      string   `json:"name"`
+	X         float64  `json:"x"`
+	Y         float64  `json:"y"`
+	THC       float64  `json:"thc"`
+	CBD       float64  `json:"cbd"`
+	Terpenes  []string `json:"terpenes"`
+	Dispensed float64  `json:"dispensed"`
+	Overall   float64  `json:"overall,omitempty"`
+	Ratings   int      `json:"ratings"`
+	Like      []string `json:"like"`
+}
+
+func strainsOf(ws *workspace.Workspace) any {
+	all := report.Strains(ws)
+	out := make([]strain, 0, len(all))
+	for _, s := range all {
+		out = append(out, strain{Slug: s.Slug, Name: s.Name, X: s.X, Y: s.Y, THC: s.THC, CBD: s.CBD,
+			Terpenes: append([]string{}, s.Terpenes...), Dispensed: s.Dispensed, Overall: s.Overall,
+			Ratings: s.Ratings, Like: append([]string{}, s.Like...)})
+	}
+	return out
 }
 
 // carry is a signed statement of what is held, with its QR code: the

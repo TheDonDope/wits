@@ -170,6 +170,9 @@ func writeProduct(out io.Writer, p *catalog.Product) {
 	if p.Genetic != 0 {
 		fmt.Fprintf(out, " g=%d", int(p.Genetic))
 	}
+	if len(p.Terpenes) > 0 {
+		fmt.Fprintf(out, " tp=%s", escape(strings.Join(p.Terpenes, ",")))
+	}
 	if p.Radiated {
 		fmt.Fprint(out, " r=1")
 	}
