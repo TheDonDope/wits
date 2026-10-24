@@ -2,8 +2,23 @@
 ## [Unreleased]
 
 
+<a name="v0.43.0"></a>
+## [v0.43.0] - 2026-10-24
+### Chore
+- **vhs:** re-record four recordings because fills now say what they are worth
+
+### Docs
+- **ledger:** one comment per scope type, each beginning with its name
+
+### Refactor
+- **ledger:** the three scopes are types, and the mixes they found are gone
+
+
 <a name="v0.42.0"></a>
 ## [v0.42.0] - 2026-10-24
+### Docs
+- update changelog for v0.42.0
+
 ### Refactor
 - **ledger:** add in centigrams, and refuse what a scale cannot read
 
@@ -622,7 +637,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.42.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.43.0...HEAD
+[v0.43.0]: https://github.com/TheDonDope/wits/compare/v0.42.0...v0.43.0
 [v0.42.0]: https://github.com/TheDonDope/wits/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/TheDonDope/wits/compare/v0.40.0...v0.41.0
 [v0.40.0]: https://github.com/TheDonDope/wits/compare/v0.39.0...v0.40.0
