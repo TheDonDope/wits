@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.66.0"></a>
+## [v0.66.0] - 2026-10-25
+### Feat
+- **strains:** a map of the strains, and what each is like
+
+
 <a name="v0.65.0"></a>
 ## [v0.65.0] - 2026-10-25
+### Docs
+- update changelog for v0.65.0
+
 ### Feat
 - **carry:** what is held, against what was dispensed, as a signed QR code
 
@@ -853,7 +862,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.65.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.66.0...HEAD
+[v0.66.0]: https://github.com/TheDonDope/wits/compare/v0.65.0...v0.66.0
 [v0.65.0]: https://github.com/TheDonDope/wits/compare/v0.64.0...v0.65.0
 [v0.64.0]: https://github.com/TheDonDope/wits/compare/v0.63.0...v0.64.0
 [v0.63.0]: https://github.com/TheDonDope/wits/compare/v0.62.0...v0.63.0
