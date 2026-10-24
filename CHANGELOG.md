@@ -2,10 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.59.0"></a>
+## [v0.59.0] - 2026-10-24
+### Docs
+- **diary:** one ledger, two pockets
+
+### Feat
+- **refill:** order by the day the shelf runs out, less the pharmacy's days
+
+
 <a name="v0.58.0"></a>
 ## [v0.58.0] - 2026-10-24
 ### Chore
 - **journal:** the browser's lock names its package
+
+### Docs
+- update changelog for v0.58.0
 
 ### Feat
 - **phone:** wits in the page, its own journal, synced by hand
@@ -786,7 +798,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.58.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.59.0...HEAD
+[v0.59.0]: https://github.com/TheDonDope/wits/compare/v0.58.0...v0.59.0
 [v0.58.0]: https://github.com/TheDonDope/wits/compare/v0.57.0...v0.58.0
 [v0.57.0]: https://github.com/TheDonDope/wits/compare/v0.56.0...v0.57.0
 [v0.56.0]: https://github.com/TheDonDope/wits/compare/v0.55.0...v0.56.0
