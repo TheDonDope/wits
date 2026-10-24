@@ -549,3 +549,76 @@ func TestRenameAndDescribe(t *testing.T) {
 			"and its balances should be unchanged")
 	})
 }
+
+// snapshot opens the repository again, the way a second process would: its own
+// repository value, its own journal handle, its own fold.
+func snapshot(t *testing.T, rec *Recorder) *Recorder {
+	t.Helper()
+	r, err := repo.Discover(rec.repo.WorkTree())
+	require.NoError(t, err)
+	events, err := r.Journal().Events()
+	require.NoError(t, err)
+	return New(r, rec.products, rec.devices, ledger.Fold(events))
+}
+
+func TestChecksTheJournalNotTheSnapshot(t *testing.T) {
+	setup := func(t *testing.T) (tui, cli *Recorder) {
+		rec := recorder(t)
+		_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 10, time.Now().AddDate(0, 0, -1))
+		require.NoError(t, err)
+		return snapshot(t, rec), snapshot(t, rec)
+	}
+
+	t.Run("TwoGrindsOfOneJar", func(t *testing.T) {
+		tui, cli := setup(t)
+		_, err := cli.Grind("wedding", 10, time.Now())
+		require.NoError(t, err)
+
+		_, err = tui.Grind("wedding", 10, time.Now())
+
+		assert.ErrorContains(t, err, "only 0.00g", "The TUI's snapshot still says 10 g; the journal says none")
+		assert.Equal(t, 0.0, snapshot(t, cli).Available("wcake-221", journal.Storage), "Storage should not go below zero")
+	})
+
+	t.Run("TwoUndoesOfOneEntry", func(t *testing.T) {
+		tui, cli := setup(t)
+		grind, err := cli.Grind("wedding", 2, time.Now())
+		require.NoError(t, err)
+		tui = snapshot(t, tui)
+		_, err = cli.Revert(grind.Hash, "")
+		require.NoError(t, err)
+
+		_, err = tui.Revert(grind.Hash, "")
+
+		assert.ErrorContains(t, err, "already been corrected", "Undoing twice would put the grams back twice")
+	})
+
+	t.Run("AWeighingAfterAGrindElsewhere", func(t *testing.T) {
+		tui, cli := setup(t)
+		_, err := cli.Grind("wedding", 3, time.Now())
+		require.NoError(t, err)
+
+		// The scale reads what the jar holds: 7 g. The snapshot expects 10.
+		_, err = tui.Reconcile("wedding", journal.Storage, 7, "")
+
+		assert.ErrorIs(t, err, ErrNothingToReconcile, "The grind elsewhere already accounts for the 3 g")
+	})
+}
+
+func TestAmendWritesBothEntriesTogether(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now().AddDate(0, 0, -1))
+	require.NoError(t, err)
+	grind, err := rec.Grind("wedding", 2, time.Now())
+	require.NoError(t, err)
+
+	corrected, err := rec.Amend(grind.Hash, 1.5, "")
+	require.NoError(t, err)
+
+	events, err := rec.repo.Journal().Events()
+	require.NoError(t, err)
+	require.Len(t, events, 4)
+	assert.Equal(t, grind.Hash, events[2].Reverts, "The undo comes first")
+	assert.Equal(t, corrected.Hash, events[3].Hash, "and the re-recorded entry straight after it")
+	assert.Equal(t, events[2].Hash, events[3].Prev)
+}

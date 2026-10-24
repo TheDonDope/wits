@@ -104,6 +104,15 @@ one process. Two writers reading the same tip would append entries claiming the
 same predecessor and fork the chain. That matters as soon as anything other than
 a single command talks to a repository.
 
+The guard rails hold under the same lock. `AppendWith` hands a builder the
+journal as it stands, read fresh inside the lock, and writes what it returns in
+a single write; every recorder entry is built that way, so its checks — enough
+in the jar, not already undone, the difference a weighing makes — are checks of
+the history, not of the snapshot a screen was drawn from. Checked against the
+snapshot, a grind in one terminal and the same grind in the TUI both passed and
+left storage at -17.10 g. An amendment's undo and its re-recorded entry are one
+write, so nothing can land between them.
+
 The tip is cached between appends, pinned by the file size: a size that no
 longer matches means another process appended and the tip is re-read. That is
 what keeps restoring a thousand-entry bundle linear instead of re-reading the

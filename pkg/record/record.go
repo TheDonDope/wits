@@ -66,11 +66,13 @@ func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.
 		}
 		added = true
 	}
-	e, err := r.append(journal.Event{
-		Type:       journal.Purchase,
-		Product:    product.Slug,
-		Grams:      grams,
-		OccurredAt: at,
+	e, err := r.one(func() (journal.Event, error) {
+		return journal.Event{
+			Type:       journal.Purchase,
+			Product:    product.Slug,
+			Grams:      grams,
+			OccurredAt: at,
+		}, nil
 	})
 	return e, product, added, err
 }
@@ -107,14 +109,16 @@ func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event
 	if err != nil {
 		return journal.Event{}, err
 	}
-	if err := r.check(product.Slug, grams, journal.Storage); err != nil {
-		return journal.Event{}, err
-	}
-	return r.append(journal.Event{
-		Type:       journal.Grind,
-		Product:    product.Slug,
-		Grams:      grams,
-		OccurredAt: at,
+	return r.one(func() (journal.Event, error) {
+		if err := r.check(product.Slug, grams, journal.Storage); err != nil {
+			return journal.Event{}, err
+		}
+		return journal.Event{
+			Type:       journal.Grind,
+			Product:    product.Slug,
+			Grams:      grams,
+			OccurredAt: at,
+		}, nil
 	})
 }
 
@@ -139,17 +143,19 @@ func (r *Recorder) Session(ref string, grams float64, at time.Time, device strin
 			return journal.Event{}, fmt.Errorf("%s only goes up to %d°C", d.Name, d.MaxTemp)
 		}
 	}
-	if err := r.check(product.Slug, grams, journal.Stash); err != nil {
-		return journal.Event{}, err
-	}
-	return r.append(journal.Event{
-		Type:        journal.Sesh,
-		Product:     product.Slug,
-		Grams:       grams,
-		OccurredAt:  at,
-		Device:      slug,
-		Temperature: temp,
-		Note:        note,
+	return r.one(func() (journal.Event, error) {
+		if err := r.check(product.Slug, grams, journal.Stash); err != nil {
+			return journal.Event{}, err
+		}
+		return journal.Event{
+			Type:        journal.Sesh,
+			Product:     product.Slug,
+			Grams:       grams,
+			OccurredAt:  at,
+			Device:      slug,
+			Temperature: temp,
+			Note:        note,
+		}, nil
 	})
 }
 
@@ -185,43 +191,74 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 	return fmt.Errorf("only %.2fg of %s %s, cannot take %.2fg", have, slug, where, grams)
 }
 
-// append writes the event and folds it into the running state, so a recorder
-// used twice in a row sees its own first entry.
+// write appends the entries build makes, and folds them into the running
+// state, so a recorder used twice in a row sees its own first entry.
+//
+// build runs under the journal's locks, against a state folded from the
+// journal as it stands at that moment — not the snapshot the recorder was
+// made from, which a command in another terminal may have overtaken. Every
+// check a builder makes is therefore a check of the real history; made
+// against the snapshot, two grinds of the same jar both passed and left
+// storage at -17.10 g.
 //
 // The ledger folds entries by date, so a backdated one can overdraw an account
 // in the past while today's balance looks fine — a grind dated before the fill
-// it draws on. check only sees today; this sees every day.
-func (r *Recorder) append(e journal.Event) (journal.Event, error) {
-	if e.OccurredAt.IsZero() {
-		e.OccurredAt = time.Now()
-	}
-	// The journal fills the accounts in on append; the trial fold needs them
-	// now, or the entry moves nothing and cannot overdraw anything.
-	if e.From == "" && e.To == "" {
-		e.From, e.To, _ = journal.Flow(e.Type)
-	}
-	if err := r.overdraws(e); err != nil {
-		return journal.Event{}, err
-	}
-	stored, err := r.repo.Journal().Append(e)
+// it draws on. check only sees today; overdraws sees every day.
+func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event, error) {
+	stored, err := r.repo.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
+		r.state = ledger.Fold(events)
+		batch, err := build()
+		if err != nil {
+			return nil, err
+		}
+		for i := range batch {
+			if batch[i].OccurredAt.IsZero() {
+				batch[i].OccurredAt = time.Now()
+			}
+			// The journal fills the accounts in on append; the trial fold
+			// needs them now, or the entry moves nothing and cannot overdraw.
+			if batch[i].From == "" && batch[i].To == "" {
+				batch[i].From, batch[i].To, _ = journal.Flow(batch[i].Type)
+			}
+		}
+		return batch, r.overdraws(batch)
+	})
 	if err != nil {
-		return journal.Event{}, err
+		return nil, err
 	}
-	r.state = ledger.Fold(append(slices.Clip(r.state.Events), stored))
+	r.state = ledger.Fold(append(slices.Clip(r.state.Events), stored...))
 	return stored, nil
 }
 
-// overdraws refuses an entry that would leave an account below zero at any
+// one is write for a single entry.
+func (r *Recorder) one(build func() (journal.Event, error)) (journal.Event, error) {
+	stored, err := r.write(func() ([]journal.Event, error) {
+		e, err := build()
+		return []journal.Event{e}, err
+	})
+	if err != nil {
+		return journal.Event{}, err
+	}
+	return stored[0], nil
+}
+
+// overdraws refuses entries that would leave an account below zero at any
 // point in the replay, where none was before.
-func (r *Recorder) overdraws(e journal.Event) error {
+func (r *Recorder) overdraws(batch []journal.Event) error {
 	before := map[string]bool{}
 	for _, o := range r.state.Overdrawn {
 		before[o.Event.Hash] = true
 	}
-	next := ledger.Fold(append(slices.Clip(r.state.Events), e))
+	next := ledger.Fold(append(slices.Clip(r.state.Events), batch...))
 	for _, o := range next.Overdrawn {
 		if o.Event.Hash != "" && before[o.Event.Hash] {
 			continue
+		}
+		// Name the new entry: the overdrawn one is either it, or an older
+		// entry it has taken the grams from under.
+		e := batch[len(batch)-1]
+		if o.Event.Hash == "" {
+			e = o.Event
 		}
 		where := string(o.Account)
 		if name, ok := reconcilable[o.Account]; ok {
@@ -245,6 +282,11 @@ func (r *Recorder) State() *ledger.State { return r.state }
 // the entry it reverses, so the pair can be recognised and hidden from a view
 // that wants to show only what currently stands.
 func (r *Recorder) Revert(hash string, reason string) (journal.Event, error) {
+	return r.one(func() (journal.Event, error) { return r.undo(hash, reason) })
+}
+
+// undo builds the correction of an entry without recording it.
+func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 	original, err := r.Find(hash)
 	if err != nil {
 		return journal.Event{}, err
@@ -270,7 +312,7 @@ func (r *Recorder) Revert(hash string, reason string) (journal.Event, error) {
 	if original.OccurredAt.After(at) {
 		at = original.OccurredAt
 	}
-	return r.append(journal.Event{
+	return journal.Event{
 		Type:       journal.Adjust,
 		Product:    original.Product,
 		Grams:      original.Grams,
@@ -279,42 +321,48 @@ func (r *Recorder) Revert(hash string, reason string) (journal.Event, error) {
 		OccurredAt: at,
 		Reverts:    original.Hash,
 		Note:       reason,
-	})
+	}, nil
 }
 
 // Amend corrects the amount of an earlier entry, by reverting it and recording
 // it again as it should have been.
 //
-// The two appends are not a transaction, so everything that could refuse the
-// second one is checked before the first is written. Reverting and then
-// failing to re-record would leave the entry silently undone, which is worse
-// than either refusing outright or recording the correction.
+// The correction and the re-recorded entry are written together, under one
+// lock and in one write, so another writer cannot slip between them and leave
+// the entry undone but not re-recorded.
 func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event, error) {
-	original, err := r.Find(hash)
-	if err != nil {
-		return journal.Event{}, err
-	}
 	if grams <= 0 {
 		return journal.Event{}, fmt.Errorf("grams must be positive, got %v", grams)
 	}
-	// The revert frees the original amount back into the source account, so
-	// only the difference beyond it has to be there already.
-	if extra := round(grams - original.Grams); extra > 0 {
-		if err := r.check(original.Product, extra, original.From); err != nil {
-			return journal.Event{}, fmt.Errorf("cannot amend %s to %.2fg: %w", short(hash), grams, err)
+	stored, err := r.write(func() ([]journal.Event, error) {
+		original, err := r.Find(hash)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if _, err := r.Revert(hash, "amended"); err != nil {
+		// The revert frees the original amount back into the source account,
+		// so only the difference beyond it has to be there already.
+		if extra := round(grams - original.Grams); extra > 0 {
+			if err := r.check(original.Product, extra, original.From); err != nil {
+				return nil, fmt.Errorf("cannot amend %s to %.2fg: %w", short(hash), grams, err)
+			}
+		}
+		undo, err := r.undo(hash, "amended")
+		if err != nil {
+			return nil, err
+		}
+		corrected := original
+		corrected.Grams = grams
+		corrected.Hash, corrected.Prev, corrected.Seq = "", "", 0
+		corrected.RecordedAt = time.Time{}
+		if note != "" {
+			corrected.Note = note
+		}
+		return []journal.Event{undo, corrected}, nil
+	})
+	if err != nil {
 		return journal.Event{}, err
 	}
-	corrected := original
-	corrected.Grams = grams
-	corrected.Hash, corrected.Prev, corrected.Seq = "", "", 0
-	corrected.RecordedAt = time.Time{}
-	if note != "" {
-		corrected.Note = note
-	}
-	return r.append(corrected)
+	return stored[1], nil
 }
 
 // Find returns the event with the given hash, which may be abbreviated.
@@ -389,7 +437,7 @@ var reconcilable = map[journal.Account]string{
 // amount, and by how much. The difference becomes an adjustment, which the fold
 // applies like any other transfer.
 func (r *Recorder) Reconcile(ref string, account journal.Account, weighed float64, note string) (journal.Event, error) {
-	where, ok := reconcilable[account]
+	_, ok := reconcilable[account]
 	if !ok {
 		return journal.Event{}, fmt.Errorf("%s cannot be weighed", account)
 	}
@@ -401,7 +449,18 @@ func (r *Recorder) Reconcile(ref string, account journal.Account, weighed float6
 		return journal.Event{}, fmt.Errorf("a weight cannot be negative, got %.2f", weighed)
 	}
 
-	expected := r.Available(product.Slug, account)
+	return r.one(func() (journal.Event, error) {
+		return r.adjustment(product.Slug, account, weighed, note)
+	})
+}
+
+// adjustment builds the entry that brings an account to what was weighed.
+// It runs under the journal's lock, so the difference is taken from the
+// balance as it stands — a grind recorded elsewhere since the snapshot would
+// otherwise be booked again as a loss.
+func (r *Recorder) adjustment(slug string, account journal.Account, weighed float64, note string) (journal.Event, error) {
+	where := reconcilable[account]
+	expected := r.Available(slug, account)
 	difference := round(weighed - expected)
 	if difference == 0 {
 		return journal.Event{}, fmt.Errorf("%w: %.2f g in %s", ErrNothingToReconcile, expected, where)
@@ -417,15 +476,15 @@ func (r *Recorder) Reconcile(ref string, account journal.Account, weighed float6
 	if note == "" {
 		note = fmt.Sprintf("reconciled %s: %.2f g weighed, %.2f g expected", where, weighed, expected)
 	}
-	return r.append(journal.Event{
+	return journal.Event{
 		Type:       journal.Adjust,
-		Product:    product.Slug,
+		Product:    slug,
 		Grams:      math.Abs(difference),
 		From:       from,
 		To:         to,
 		OccurredAt: time.Now(),
 		Note:       note,
-	})
+	}, nil
 }
 
 // Difference reports what reconciling an account to a weighed amount would

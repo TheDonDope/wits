@@ -75,45 +75,83 @@ func (j *Journal) Path() string { return j.path }
 // single line. The stored event is returned with its Seq, Prev and Hash filled
 // in.
 func (j *Journal) Append(e Event) (Event, error) {
+	stored, err := j.append(false, func([]Event) ([]Event, error) { return []Event{e}, nil })
+	if err != nil {
+		return Event{}, err
+	}
+	return stored[0], nil
+}
+
+// AppendWith builds entries from the journal as it stands and appends them,
+// all under the locks, so nothing can be appended in between. build gets every
+// entry, read fresh, and returns the ones to append, or an error to append
+// nothing; returning none is not an error.
+//
+// It is how a check against the history holds. Checked anywhere else, it is a
+// check of a copy: a command in another terminal can grind a jar to nothing
+// between a check that it holds enough and the grind that relies on it, and
+// two such grinds once left storage at -17.10 g.
+//
+// The entries are written in a single write, chained one onto the next.
+func (j *Journal) AppendWith(build func(events []Event) ([]Event, error)) ([]Event, error) {
+	return j.append(true, build)
+}
+
+// append takes both locks, brings the tip up to date — reading every entry for
+// build when fresh is set — and writes what build returns.
+func (j *Journal) append(fresh bool, build func([]Event) ([]Event, error)) ([]Event, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
 	release, err := j.lock()
 	if err != nil {
-		return Event{}, err
+		return nil, err
 	}
 	defer release()
 
-	e = withDefaults(e)
-	if err := e.Validate(); err != nil {
-		return Event{}, err
-	}
-
-	if err := j.prime(); err != nil {
-		return Event{}, err
-	}
-	e.Seq = j.seq + 1
-	e.Prev = j.tip
-	if e.Hash, err = e.sum(j.tip); err != nil {
-		return Event{}, err
-	}
-
-	line, err := json.Marshal(e)
+	events, err := j.prime(fresh)
 	if err != nil {
-		return Event{}, err
+		return nil, err
 	}
-	if err := j.write(line); err != nil {
+	batch, err := build(events)
+	if err != nil || len(batch) == 0 {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	seq, tip := j.seq, j.tip
+	stored := make([]Event, 0, len(batch))
+	for _, e := range batch {
+		e = withDefaults(e)
+		if err := e.Validate(); err != nil {
+			return nil, err
+		}
+		e.Seq, e.Prev = seq+1, tip
+		if e.Hash, err = e.sum(tip); err != nil {
+			return nil, err
+		}
+		line, err := json.Marshal(e)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(line)
+		buf.WriteByte('\n')
+		seq, tip = e.Seq, e.Hash
+		stored = append(stored, e)
+	}
+	if err := j.write(buf.Bytes()); err != nil {
 		// The cache no longer describes the file for certain; the next append
 		// re-reads rather than chaining onto a tip that may not exist.
 		j.primed = false
-		return Event{}, err
+		return nil, err
 	}
-	j.seq, j.tip = e.Seq, e.Hash
-	j.size += int64(len(line)) + 1
-	return e, nil
+	j.seq, j.tip = seq, tip
+	j.size += int64(buf.Len())
+	return stored, nil
 }
 
-// prime brings the cached tip in line with the file. Callers must hold both
+// prime brings the cached tip in line with the file, and returns every entry
+// when fresh is set or the file had to be read anyway. Callers must hold both
 // locks. The size check is what keeps the cache honest across processes: our
 // own appends grow the file by exactly what was written, so a size that does
 // not match means somebody else appended and the tip has moved.
@@ -122,23 +160,23 @@ func (j *Journal) Append(e Event) (Event, error) {
 // line starts on a line of its own rather than gluing itself onto the
 // fragment. Those bytes were never an event: every complete one ends in a
 // newline, and the append that wrote them reported its failure.
-func (j *Journal) prime() error {
+func (j *Journal) prime(fresh bool) ([]Event, error) {
 	var size int64
 	if st, err := os.Stat(j.path); err == nil {
 		size = st.Size()
 	} else if !os.IsNotExist(err) {
-		return err
+		return nil, err
 	}
-	if j.primed && size == j.size {
-		return nil
+	if j.primed && size == j.size && !fresh {
+		return nil, nil
 	}
 	events, valid, err := j.read()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if size > valid {
 		if err := os.Truncate(j.path, valid); err != nil {
-			return err
+			return nil, err
 		}
 		size = valid
 	}
@@ -149,7 +187,7 @@ func (j *Journal) prime() error {
 	}
 	j.size = size
 	j.primed = true
-	return nil
+	return events, nil
 }
 
 // withDefaults fills in the fields a caller may leave to the journal: the
@@ -173,16 +211,16 @@ func withDefaults(e Event) Event {
 	return e
 }
 
-// write appends one line to the journal and flushes it to disk. The file is
-// only ever opened for appending, so a failed write can add a bad line but can
-// never destroy an existing one.
-func (j *Journal) write(line []byte) error {
+// write appends whole lines to the journal and flushes them to disk. The file
+// is only ever opened for appending, so a failed write can add a bad line but
+// can never destroy an existing one.
+func (j *Journal) write(lines []byte) error {
 	f, err := os.OpenFile(j.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	if _, err := f.Write(append(line, '\n')); err != nil {
+	if _, err := f.Write(lines); err != nil {
 		return err
 	}
 	return f.Sync()

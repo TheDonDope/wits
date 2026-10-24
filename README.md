@@ -293,9 +293,11 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
 The journal is only ever appended to, and each entry is chained to the one before
 it with a SHA-256 hash, so an edit made outside Wits is detectable. Appending
 takes an advisory file lock as well as a mutex, because it is a read-then-write
-and two processes reading the same tip would fork the chain. A write cut off
-before its newline — a crash, a full disk — is left out when reading, and cut
-away before the next entry is appended.
+and two processes reading the same tip would fork the chain. The checks an entry
+must pass — enough in the jar, not already undone — run inside that lock against
+the journal as it stands, so the TUI and a command in another terminal cannot
+both take the same grams. A write cut off before its newline — a crash, a full
+disk — is left out when reading, and cut away before the next entry is appended.
 
 The directory is created `0700` and its files `0600`. Nothing is transmitted
 anywhere; the application makes no network calls at all.
