@@ -61,7 +61,7 @@ import { Wits } from '../data/wits';
       @if (done(); as d) {
         <div class="report">
           <p>
-            Pulled {{ count(d.pulled.fetched, 'entry', 'entries') }} and {{ count(d.pulled.ratings, 'rating', 'ratings') }}.
+            Pulled {{ count(d.pulled.fetched, 'entry', 'entries') }} and {{ count(d.pulled.ratings, 'rating', 'ratings') }}@if (d.pulled.prices) {, with {{ count(d.pulled.prices, 'price', 'prices') }}}.
             @if (d.pulled.rechained) {
               Chained {{ count(d.pulled.rechained, 'entry', 'entries') }} of this phone’s on top, with new hashes.
             }

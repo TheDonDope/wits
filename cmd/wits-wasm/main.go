@@ -174,7 +174,7 @@ func sync(r *repo.Repo, args []js.Value) (any, error) {
 		return nil, err
 	}
 	return map[string]any{"pulled": report(pulled), "pushed": map[string]any{
-		"events": pushed.Events, "ratings": pushed.Ratings}, "file": file}, nil
+		"events": pushed.Events, "ratings": pushed.Ratings, "prices": pushed.Prices}, "file": file}, nil
 }
 
 // attach points the repository at the stand-in folder, with the key given or
@@ -200,7 +200,7 @@ func report(p remote.Pulled) map[string]any {
 		clashes = append(clashes, map[string]any{"hash": c.Event.Hash, "text": c.String()})
 	}
 	return map[string]any{
-		"fetched": p.Fetched, "rechained": p.Rechained, "ratings": p.Ratings,
+		"fetched": p.Fetched, "rechained": p.Rechained, "ratings": p.Ratings, "prices": p.Prices,
 		"products": strings.Join(p.Products, ","), "devices": strings.Join(p.Devices, ","),
 		"clashes": clashes,
 	}

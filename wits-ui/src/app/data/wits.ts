@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/htt
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { Avb, Cycle, Day, Device, Dimension, EffectLog, Entry, Jar, Overview, Written } from './models';
+import { Avb, Costs, Cycle, Day, Device, Dimension, EffectLog, Entry, Jar, Overview, Written } from './models';
 
 /**
  * The repository, as wits-server answers for it.
@@ -24,6 +24,7 @@ export class Wits {
   readonly days = httpResource<Day[]>(() => `/api/days?v=${this.version()}`, { defaultValue: [] });
   readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
   readonly avb = httpResource<Avb>(() => `/api/avb?v=${this.version()}`);
+  readonly costs = httpResource<Costs>(() => `/api/costs?v=${this.version()}`);
   readonly journal = httpResource<{ entries: Entry[]; total: number }>(
     () => `/api/journal?limit=100000&v=${this.version()}`,
     { defaultValue: { entries: [], total: 0 } },
@@ -91,6 +92,16 @@ export class Wits {
   /** Records AVB used up, drawn from the jar as a whole. */
   useAVB(body: { grams: number; note?: string; date?: string }) {
     return this.write<{ message: string }>('avb/use', body);
+  }
+
+  /** The purchases without a price: those still in storage, or every one. */
+  unpriced(all: boolean): Promise<Entry[]> {
+    return firstValueFrom(this.http.get<Entry[]>(`/api/unpriced${all ? '?all=1' : ''}`));
+  }
+
+  /** Writes down what a purchase cost, in euros as typed. */
+  price(purchase: string, euros: string) {
+    return this.write<{ message: string }>('price', { purchase, euros });
   }
 
   /** Records the named stashes as consumed, as one batch. */

@@ -19,6 +19,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
 )
@@ -42,6 +43,11 @@ type Workspace struct {
 	// EffectsChain is why its chain does not verify, or nil.
 	Ratings      []effects.Rating
 	EffectsChain error
+
+	// Prices is the price log, superseded prices included; PricesChain is
+	// why its chain does not verify, or nil.
+	Prices      []prices.Price
+	PricesChain error
 
 	// OpenedAt is when the snapshot was taken. Anything reporting "how long has
 	// this cycle been running" should measure against it rather than call
@@ -85,6 +91,10 @@ func Read(r *repo.Repo) (*Workspace, error) {
 	if err != nil {
 		return nil, err
 	}
+	paid, err := r.Prices().All()
+	if err != nil {
+		return nil, err
+	}
 	// One moment for the snapshot, which everything it reports is measured
 	// against.
 	now := time.Now()
@@ -100,6 +110,8 @@ func Read(r *repo.Repo) (*Workspace, error) {
 
 		Ratings:      ratings,
 		EffectsChain: r.Effects().Verify(),
+		Prices:       paid,
+		PricesChain:  r.Prices().Verify(),
 	}, nil
 }
 

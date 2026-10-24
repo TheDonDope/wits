@@ -801,3 +801,32 @@ func TestCollectAndUseAVB(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0.0, rec.Available(stored[0].Product, journal.AVB))
 }
+
+func TestPrice(t *testing.T) {
+	rec := stocked(t)
+	events := rec.State().Events
+	var purchase, grind journal.Event
+	for _, e := range events {
+		switch e.Type {
+		case journal.Purchase:
+			purchase = e
+		case journal.Grind:
+			grind = e
+		}
+	}
+
+	unpriced, err := rec.Unpriced(false)
+	require.NoError(t, err)
+	require.Len(t, unpriced, 1, "The fill still in storage, without a price")
+
+	_, err = rec.Price(grind.Hash, 100, "", time.Now())
+	assert.ErrorContains(t, err, "not a purchase", "Should only price a purchase")
+	p, err := rec.Price(purchase.Hash[:7], 17000, " paid at the counter ", time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, purchase.Hash, p.Purchase, "Should name the purchase by its full hash")
+	assert.Equal(t, "paid at the counter", p.Note)
+
+	unpriced, err = rec.Unpriced(true)
+	require.NoError(t, err)
+	assert.Empty(t, unpriced, "Should leave nothing to price")
+}

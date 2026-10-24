@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`,
+`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -567,6 +567,34 @@ workbook's 1429 entries in 10.5 s, registered its service worker, kept the
 repository in IndexedDB, and drew fill 30 as `wits status` does: day 57, 36.73
 g of 60, 19 days' worth, 8.07 g in 2 older jars.
 
+### What it costs — `wits price`, `wits costs`
+
+A price goes in `.wits/prices.ndjson` (`pkg/prices`), the effect log's twin:
+append-only, locked, hash-chained and verified over the stored bytes, naming its
+purchase by hash, a re-pricing superseding (`prices.Latest`), the log keeping
+both. Amounts are euro cents, parsed as typed: "120,50 €" and "€120.50" alike.
+A price is given with `buy --price`, with `price <purchase> <euros>`, or in one
+sitting by **reconcile purchases** (`Recorder.Unpriced`): every purchase still
+in storage without one, or every purchase with `--all`, a question each, a blank
+one skipped, nothing written until the end. It is the same walk in all three
+interfaces: `wits reconcile purchases`, `$` in the terminal, and the browser's
+**Costs** page. A buy whose price fails still stands, and says how to price it.
+
+`wits costs` and `/api/costs` (`prices.Analyse`) give what was paid in all and
+per gram, by fill and by month, and per session that helped: rated 4 or more
+overall, at its product's price per gram. An undone purchase cost nothing, and
+an unpriced one is counted, not guessed at. Bundle format 4 carries the log
+after the ratings, restore writes it back byte for byte, fsck checks its chain
+and names a price for no purchase, and push and pull carry and rebase it. A
+price follows its purchase to the purchase's new hash, as a rating follows its
+session. The workbook has no prices. Priced by hand in a copy, fill 30 read
+520.00 € for 60 g, 8.67 € a gram, the one session rated 4 cost 3.40 €, and the
+bundle restored the log identical.
+
+AVB tracking needed no format change, since the bundle already carried both
+entry types, so the two did not land together as planned. They are two
+releases: AVB in v0.60.0, prices with the one format change in v0.61.0.
+
 ### The effect log — `wits rate`
 
 What a session did, rated afterwards from 1 to 5 on any of overall, pain,
@@ -592,29 +620,11 @@ elsewhere shows within a tick.
 
 ## 📌 Planned
 
-In this order: each phase stands on the ones before it. AVB tracking and prices
-both change the journal and the bundle, so they land together, in one format.
-The report waits for weeks of real ratings, which is also what the tolerance
+In this order: each phase stands on the ones before it. The report waits for weeks of real ratings, which is also what the tolerance
 curve needs. The phone comes after sync, because the server answers only this
 machine: a phone keeps its own copy of the journal and syncs it, rather than
 the server opening up. Timestamping a chain and syncing over WebDAV are the
 first things wits would send anywhere, so both are opt-in and said plainly.
-
-### 2 · The physical record, complete
-
-#### 🔹 What it costs
-
-- **Status**: Planned
-- The price paid per fill: euros per gram, per month, and — with the effect log
-  — per session that helped.
-- A price given when buying (`wits buy … --price`), or afterwards. A purchase is
-  never edited in place, so a price given later is recorded beside the journal
-  the way a rating is — append-only, chained, naming the purchase by hash — not
-  as a journal entry, which would be a transfer of no grams.
-- **Reconcile purchases**: one function, in the TUI, the browser and the command
-  line, that selects every purchase still standing in storage without a price
-  and presents them one by one in an editor, to document after the fact what
-  was paid.
 
 ### 3 · The report
 

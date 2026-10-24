@@ -9,6 +9,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -221,4 +222,38 @@ func TestPushWithoutARemote(t *testing.T) {
 	_, err = Push(r)
 
 	assert.ErrorIs(t, err, ErrNoRemote)
+}
+
+func TestPricesTravelAndFollowTheirPurchase(t *testing.T) {
+	deck, phone := pair(t)
+	record(t, deck, buy(20, 0))
+	_, err := Push(deck)
+	require.NoError(t, err)
+	_, err = Pull(phone)
+	require.NoError(t, err)
+	record(t, phone, buy(10, 5))
+	mine := record(t, deck, buy(15, 6))
+	_, err = deck.Prices().Append(prices.Price{Purchase: mine[0].Hash, At: july, Cents: 12000})
+	require.NoError(t, err)
+
+	_, err = Push(phone)
+	require.NoError(t, err)
+	pulled, err := Pull(deck)
+	require.NoError(t, err)
+	pushed, err := Push(deck)
+	require.NoError(t, err)
+	_, err = Pull(phone)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, pulled.Rechained)
+	assert.Equal(t, 1, pushed.Prices, "Should push the price")
+	paid, err := phone.Prices().All()
+	require.NoError(t, err)
+	events, err := phone.Journal().Events()
+	require.NoError(t, err)
+	require.Len(t, paid, 1)
+	assert.Equal(t, events[2].Hash, paid[0].Purchase, "Should price the purchase by its new hash")
+	x, _ := os.ReadFile(deck.PricesPath())
+	y, _ := os.ReadFile(phone.PricesPath())
+	assert.Equal(t, string(x), string(y), "Should end with the same price log")
 }

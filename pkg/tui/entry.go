@@ -14,6 +14,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/record"
 )
 
@@ -42,6 +43,8 @@ func (k entryKind) String() string {
 		return "Clean history"
 	case entryDescribe:
 		return "Edit product"
+	case entryPrices:
+		return "Price purchases"
 	default:
 		return "Grind"
 	}
@@ -76,9 +79,11 @@ type entryForm struct {
 	target *journal.Event
 
 	// slugs and readings belong to the weigh-many form: one reading per
-	// ticked jar, collected in order.
-	slugs    []string
-	readings []string
+	// ticked jar, collected in order. The price form keeps its answers in
+	// readings too, one per purchase.
+	slugs     []string
+	readings  []string
+	purchases []journal.Event
 
 	err error
 }
@@ -247,6 +252,9 @@ func (f *entryForm) Update(msg tea.Msg, a *App) (*entryForm, tea.Cmd) {
 			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
 		case entryCleanHistory:
 			summary, err := f.commitClean(a)
+			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
+		case entryPrices:
+			summary, err := f.commitPrices(a)
 			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
 		}
 		e, err := f.commit(a)
@@ -637,4 +645,58 @@ func parseFloatOrZero(s string) float64 {
 		return 0
 	}
 	return v
+}
+
+// entryPrices writes down what purchases cost, one question a purchase.
+const entryPrices entryKind = iota + 600
+
+// newPriceForm asks what each purchase was paid, in turn, the way `wits
+// reconcile purchases` does: a blank answer skips one, and nothing is written
+// until every question is answered.
+func newPriceForm(purchases []journal.Event, a *App) *entryForm {
+	f := &entryForm{kind: entryPrices, purchases: purchases, readings: make([]string, len(purchases))}
+	groups := make([]*huh.Group, 0, len(purchases))
+	for i, e := range purchases {
+		groups = append(groups, huh.NewGroup(
+			huh.NewInput().
+				Title(fmt.Sprintf("%s · %.2f g of %s", e.OccurredAt.Format("02 Jan 2006"), e.Grams, a.data.ProductName(e.Product))).
+				Description(fmt.Sprintf("%d of %d. What was paid, in euros. Nothing is edited;\nthe price goes beside the journal. Blank to skip.", i+1, len(purchases))).
+				Value(&f.readings[i]).
+				Validate(optionalEuros),
+		))
+	}
+	f.form = a.dress(huh.NewForm(groups...))
+	return f
+}
+
+// optionalEuros accepts a blank answer or an amount of euros.
+func optionalEuros(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	_, err := prices.ParseEuros(s)
+	return err
+}
+
+// commitPrices writes down the prices answered and sums up what it wrote.
+func (f *entryForm) commitPrices(a *App) (string, error) {
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	var written int
+	var cents int64
+	for i, e := range f.purchases {
+		answer := strings.TrimSpace(f.readings[i])
+		if answer == "" {
+			continue
+		}
+		c, err := prices.ParseEuros(answer)
+		if err != nil {
+			return "", err
+		}
+		if _, err := rec.Price(e.Hash, c, "", time.Now()); err != nil {
+			return "", err
+		}
+		written++
+		cents += c
+	}
+	return fmt.Sprintf("priced %s, %s in all", plural(written, "purchase"), prices.Format(cents)), nil
 }

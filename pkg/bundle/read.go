@@ -13,6 +13,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/prices"
 )
 
 // can converts a stored integer back to a genetic type.
@@ -42,7 +43,7 @@ func Read(r io.Reader) (*Contents, error) {
 	if c.Events, err = rd.events(refs); err != nil {
 		return nil, err
 	}
-	if c.Ratings, err = rd.ratings(); err != nil {
+	if c.Ratings, c.Prices, err = rd.logs(); err != nil {
 		return nil, err
 	}
 	if version < 2 {
@@ -149,23 +150,58 @@ func (rd *reader) events(t refs) ([]journal.Event, error) {
 	return events, rd.sc.Err()
 }
 
-// ratings reads the effect log after the events, if the bundle carries one.
-func (rd *reader) ratings() ([]effects.Rating, error) {
-	var out []effects.Rating
+// logs reads what follows the events, if the bundle carries anything there:
+// the effect log's ratings, and the price log's prices.
+func (rd *reader) logs() ([]effects.Rating, []prices.Price, error) {
+	var ratings []effects.Rating
+	var paid []prices.Price
 	for {
 		text, ok := rd.next()
 		if !ok {
-			return out, rd.sc.Err()
+			return ratings, paid, rd.sc.Err()
 		}
 		if text == "" || strings.HasPrefix(text, "#") {
 			continue
 		}
+		if strings.HasPrefix(text, "C ") {
+			p, err := readPrice(text, rd.line)
+			if err != nil {
+				return nil, nil, err
+			}
+			paid = append(paid, p)
+			continue
+		}
 		r, err := readRating(text, rd.line)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		out = append(out, r)
+		ratings = append(ratings, r)
 	}
+}
+
+// readPrice decodes one price line: C <purchase> <at> <cents> [n=<note>].
+func readPrice(text string, line int) (prices.Price, error) {
+	parts := strings.Fields(text)
+	if len(parts) < 4 {
+		return prices.Price{}, errorf(line, "a price needs a purchase, a time and its cents")
+	}
+	at, err := time.Parse(time.RFC3339, parts[2])
+	if err != nil {
+		return prices.Price{}, errorf(line, "unreadable price time %q", parts[2])
+	}
+	cents, err := strconv.ParseInt(parts[3], 10, 64)
+	if err != nil {
+		return prices.Price{}, errorf(line, "unreadable cents %q", parts[3])
+	}
+	p := prices.Price{Purchase: parts[1], At: at, Cents: cents}
+	for _, attr := range parts[4:] {
+		if key, value := field(attr); key == "n" {
+			p.Note = unescape(value)
+		} else {
+			return prices.Price{}, errorf(line, "unknown price attribute %q", key)
+		}
+	}
+	return p, nil
 }
 
 // readRating decodes one rating line: R <session> <at> <dim:score,…> [n=<note>].

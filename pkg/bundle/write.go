@@ -11,6 +11,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/prices"
 )
 
 // Contents is everything a bundle carries.
@@ -20,6 +21,8 @@ type Contents struct {
 	Events   []journal.Event
 	// Ratings is the effect log, superseded ratings included.
 	Ratings []effects.Rating
+	// Prices is the price log, superseded prices included.
+	Prices []prices.Price
 }
 
 // Write encodes the contents as a bundle.
@@ -63,7 +66,11 @@ func Write(w io.Writer, c Contents) error {
 			return err
 		}
 	}
+	if len(c.Ratings) > 0 || len(c.Prices) > 0 {
+		fmt.Fprintln(out, ratingsSeparator)
+	}
 	writeRatings(out, c.Ratings)
+	writePrices(out, c.Prices)
 	return out.Flush()
 }
 
@@ -312,10 +319,6 @@ func noteIndex(events []journal.Event) notesIdx {
 // rated, its scores, and its note. Format 3 added the section; a bundle without
 // ratings writes none, and reads in any build that knows the format.
 func writeRatings(out io.Writer, ratings []effects.Rating) {
-	if len(ratings) == 0 {
-		return
-	}
-	fmt.Fprintln(out, ratingsSeparator)
 	for _, r := range ratings {
 		scores := make([]string, 0, len(r.Scores))
 		for _, d := range effects.Dimensions {
@@ -326,6 +329,19 @@ func writeRatings(out io.Writer, ratings []effects.Rating) {
 		fmt.Fprintf(out, "R %s %s %s", r.Session, r.At.Format(time.RFC3339), strings.Join(scores, ","))
 		if r.Note != "" {
 			fmt.Fprintf(out, " n=%s", escape(r.Note))
+		}
+		fmt.Fprint(out, "\n")
+	}
+}
+
+// writePrices appends the price log after the ratings, in the same section: a
+// line a price, the purchase by hash, the moment it was given, its cents, and
+// its note. Format 4 added them.
+func writePrices(out io.Writer, paid []prices.Price) {
+	for _, p := range paid {
+		fmt.Fprintf(out, "C %s %s %d", p.Purchase, p.At.Format(time.RFC3339), p.Cents)
+		if p.Note != "" {
+			fmt.Fprintf(out, " n=%s", escape(p.Note))
 		}
 		fmt.Fprint(out, "\n")
 	}

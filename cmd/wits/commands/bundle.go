@@ -70,6 +70,7 @@ var Bundle = &cobra.Command{
 			Devices:  s.Devices,
 			Events:   events,
 			Ratings:  s.Ratings,
+			Prices:   s.Prices,
 		}); err != nil {
 			return err
 		}
@@ -184,6 +185,23 @@ func restore(r *repo.Repo, contents *bundle.Contents, step func(string)) error {
 			return fmt.Errorf("the restored effect log does not verify: %w", err)
 		}
 	}
+	return restorePrices(r, contents, step)
+}
+
+// restorePrices writes a bundle's price log back, and checks the chain it made.
+func restorePrices(r *repo.Repo, contents *bundle.Contents, step func(string)) error {
+	if len(contents.Prices) == 0 {
+		return nil
+	}
+	step("restoring " + plural(len(contents.Prices), "price"))
+	for _, p := range contents.Prices {
+		if _, err := r.Prices().Append(p); err != nil {
+			return fmt.Errorf("restoring the price log: %w", err)
+		}
+	}
+	if err := r.Prices().Verify(); err != nil {
+		return fmt.Errorf("the restored price log does not verify: %w", err)
+	}
 	return nil
 }
 
@@ -265,11 +283,12 @@ var Push = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if done.Events == 0 && done.Ratings == 0 {
+		if done.Events == 0 && done.Ratings == 0 && done.Prices == 0 {
 			fmt.Fprintln(cmd.OutOrStdout(), "The remote has every entry and rating already.")
 			return nil
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Pushed %s and %s.\n", entries(done.Events), plural(done.Ratings, "rating"))
+		fmt.Fprintf(cmd.OutOrStdout(), "Pushed %s and %s%s.\n", entries(done.Events), plural(done.Ratings, "rating"),
+			andPrices(done.Prices))
 		return nil
 	},
 }
@@ -303,11 +322,11 @@ var Pull = &cobra.Command{
 
 // reportPull says what a pull brought in, and every clash it made.
 func reportPull(out io.Writer, done remote.Pulled) {
-	if done.Fetched == 0 && done.Ratings == 0 && len(done.Products) == 0 && len(done.Devices) == 0 {
+	if done.Fetched == 0 && done.Ratings == 0 && done.Prices == 0 && len(done.Products) == 0 && len(done.Devices) == 0 {
 		fmt.Fprintln(out, "Already up to date.")
 		return
 	}
-	fmt.Fprintf(out, "Pulled %s and %s.\n", entries(done.Fetched), plural(done.Ratings, "rating"))
+	fmt.Fprintf(out, "Pulled %s and %s%s.\n", entries(done.Fetched), plural(done.Ratings, "rating"), andPrices(done.Prices))
 	if done.Rechained > 0 {
 		fmt.Fprintf(out, "Chained %s of this device's on top, with new hashes.\n", entries(done.Rechained))
 	}
@@ -330,4 +349,12 @@ func init() {
 	remoteAdd.Flags().StringVar(&remoteKey, "key", "", "the key file brought from the first device")
 	Bundle.Flags().StringVar(&bundleOut, "out", "", "write to this file instead of stdout")
 	Bundle.Flags().BoolVar(&bundleGzip, "gzip", false, "compress the bundle")
+}
+
+// andPrices names the prices a push or a pull carried, when it carried any.
+func andPrices(n int) string {
+	if n == 0 {
+		return ""
+	}
+	return ", with " + plural(n, "price")
 }

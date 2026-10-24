@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
@@ -794,4 +795,37 @@ func TestRefillCommand(t *testing.T) {
 
 	_, err = run(t, dir, Refill, "--lead", "-1")
 	assert.ErrorContains(t, err, "0 or more")
+}
+
+func TestPriceCommands(t *testing.T) {
+	dir := repository(t)
+	out, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01", "--price", "170,00")
+	require.NoError(t, err)
+	assert.Contains(t, out, "paid 170.00 €, 8.50 € a gram", "Should price it as it is bought")
+	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-02")
+	require.NoError(t, err)
+
+	out, err = run(t, dir, Costs)
+	require.NoError(t, err)
+	assert.Contains(t, out, "170.00 € for 20.00g with a price, 8.50 € a gram; 1 purchase without one")
+
+	// The interactive walk past the form: what was answered gets written.
+	s, err := workspace.Open(dir)
+	require.NoError(t, err)
+	unpriced, err := s.Recorder.Unpriced(false)
+	require.NoError(t, err)
+	require.Len(t, unpriced, 1)
+	var buf bytes.Buffer
+	require.NoError(t, applyPrices(&buf, &session{Workspace: s}, unpriced, []string{"90"}))
+	assert.Contains(t, buf.String(), "90.00 € for 10.00g of wcake-221, 9.00 € a gram")
+	assert.Contains(t, buf.String(), "Priced 1 purchase; 0 left without one.")
+
+	out, err = run(t, dir, Costs)
+	require.NoError(t, err)
+	assert.Contains(t, out, "260.00 € for 30.00g with a price, 8.67 € a gram\n", "Should count both now, and none without")
+
+	_, err = run(t, dir, Price, unpriced[0].Hash[:7], "abc")
+	assert.ErrorContains(t, err, "not an amount of euros")
+	out, err = run(t, dir, Fsck)
+	require.NoError(t, err, out)
 }

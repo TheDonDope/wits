@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strings"
+	"time"
 
 	"charm.land/huh/v2"
 	"github.com/charmbracelet/x/term"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/record"
 )
 
@@ -44,12 +47,16 @@ var Reconcile = &cobra.Command{
 		"the account agrees with the jar again.\n\n" +
 		"Run without arguments it is interactive: pick storage or the stash, tick\n" +
 		"the jars to weigh, and each is asked for in turn. Naming just the account\n" +
-		"skips the first question. The full form records one jar directly.",
+		"skips the first question. The full form records one jar directly.\n\n" +
+		"`reconcile purchases` walks every purchase still in storage without a\n" +
+		"price, one at a time, to write down what was paid; --all takes every\n" +
+		"purchase without one, however long ago it was emptied.",
 	Example: "  wits reconcile\n" +
 		"  wits reconcile stash\n" +
 		"  wits reconcile stash wcake-221 1.75\n" +
 		"  wits reconcile storage wcake-221 17.6 --dry-run\n" +
-		"  wits reconcile wedding-cake 17.6",
+		"  wits reconcile wedding-cake 17.6\n" +
+		"  wits reconcile purchases --all",
 	Args:              cobra.MaximumNArgs(3),
 	ValidArgsFunction: completeReconcile,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -58,6 +65,9 @@ var Reconcile = &cobra.Command{
 			return err
 		}
 
+		if len(args) > 0 && args[0] == "purchases" {
+			return reconcilePurchases(cmd, s, args[1:])
+		}
 		flagged, err := flaggedAccount()
 		if err != nil {
 			return err
@@ -364,6 +374,7 @@ func completeReconcile(_ *cobra.Command, args []string, prefix string) ([]string
 			"storage\tweigh the sealed product",
 			"stash\tweigh the ground product",
 			"avb\tweigh the already vaped bud",
+			"purchases\twrite down what was paid",
 		}
 		if products, _ := completeProduct("")(nil, nil, prefix); products != nil {
 			out = append(out, products...)
@@ -401,4 +412,80 @@ func init() {
 	Reconcile.Flags().BoolVar(&reconcileAVB, "avb", false, "weigh the already vaped bud")
 	Reconcile.Flags().StringVar(&reconcileReason, "reason", "", "why the amounts differ")
 	Reconcile.Flags().BoolVar(&reconcileDryRun, "dry-run", false, "show the difference without recording it")
+	Reconcile.Flags().BoolVar(&reconcileAll, "all", false, "with purchases: every purchase without a price, not only those in storage")
+}
+
+var reconcileAll bool
+
+// reconcilePurchases walks the purchases without a price, one question each,
+// and writes down what was paid. A blank answer skips one; nothing is written
+// until every question is answered.
+func reconcilePurchases(cmd *cobra.Command, s *session, rest []string) error {
+	if len(rest) > 0 {
+		return fmt.Errorf("reconcile purchases takes no arguments; `wits price <purchase> <euros>` prices one")
+	}
+	unpriced, err := s.Recorder.Unpriced(reconcileAll)
+	if err != nil {
+		return err
+	}
+	if len(unpriced) == 0 {
+		fmt.Fprintln(cmd.OutOrStdout(), "Every purchase has its price.")
+		return nil
+	}
+	if !term.IsTerminal(os.Stdin.Fd()) {
+		return fmt.Errorf("reconcile purchases is interactive and needs a terminal; use `wits price <purchase> <euros>`")
+	}
+	answers, err := askPrices(s, unpriced)
+	if err != nil {
+		return err
+	}
+	return applyPrices(cmd.OutOrStdout(), s, unpriced, answers)
+}
+
+// askPrices asks what each purchase cost, a question a purchase.
+func askPrices(s *session, purchases []journal.Event) ([]string, error) {
+	answers := make([]string, len(purchases))
+	groups := make([]*huh.Group, 0, len(purchases))
+	for i, e := range purchases {
+		groups = append(groups, huh.NewGroup(
+			huh.NewInput().
+				Title(fmt.Sprintf("%s · %.2f g of %s", e.OccurredAt.Format(time.DateOnly), e.Grams, s.ProductName(e.Product))).
+				Description(fmt.Sprintf("%d of %d. What was paid, in euros. Blank to skip.", i+1, len(purchases))).
+				Value(&answers[i]).
+				Validate(optionalEuros),
+		))
+	}
+	return answers, formErr(huh.NewForm(groups...).Run())
+}
+
+// optionalEuros accepts a blank answer or an amount of euros.
+func optionalEuros(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	_, err := prices.ParseEuros(s)
+	return err
+}
+
+// applyPrices writes down the prices answered, and says what it wrote.
+func applyPrices(out io.Writer, s *session, purchases []journal.Event, answers []string) error {
+	written := 0
+	for i, e := range purchases {
+		if strings.TrimSpace(answers[i]) == "" {
+			continue
+		}
+		cents, err := prices.ParseEuros(answers[i])
+		if err != nil {
+			return err
+		}
+		p, err := s.Recorder.Price(e.Hash, cents, "", time.Now())
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "[%s] %s for %.2fg of %s, %s a gram\n", shortHash(p.Hash), prices.Format(cents),
+			e.Grams, e.Product, prices.Format(int64(math.Round(float64(cents)/e.Grams))))
+		written++
+	}
+	fmt.Fprintf(out, "Priced %s; %d left without one.\n", plural(written, "purchase"), len(purchases)-written)
+	return nil
 }
