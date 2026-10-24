@@ -218,6 +218,74 @@ func TestExportCommand(t *testing.T) {
 
 		assert.ErrorContains(t, err, "unknown format", "Should not silently write the wrong thing")
 	})
+
+	// twoFills is a repository with a fill in July and another in August,
+	// each with one grind.
+	twoFills := func(t *testing.T) string {
+		t.Helper()
+		dir := repository(t)
+		for _, args := range [][]string{
+			{"Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01"},
+			{"Enua 22/1 Wedding Cake", "15g", "--date", "2026-08-15"},
+		} {
+			_, err := run(t, dir, Buy, args...)
+			require.NoError(t, err)
+		}
+		for _, date := range []string{"2026-07-02", "2026-08-16"} {
+			_, err := run(t, dir, Grind, "wedding", "0.5", "--date", date)
+			require.NoError(t, err)
+		}
+		return dir
+	}
+
+	t.Run("ARangeHoldsOnlyItsDays", func(t *testing.T) {
+		dir := twoFills(t)
+
+		out, err := run(t, dir, Export, "--from", "2026-08-01", "--to", "2026-08-31")
+
+		require.NoError(t, err)
+		assert.Contains(t, out, "# Wits journal, 2026-08-01 to 2026-08-31", "Should name the range")
+		assert.Contains(t, out, "| Days | 31 |", "Should count both ends")
+		assert.Contains(t, out, "| Dispensed | 15.00 g in 1 purchase |", "Should total the range's purchases only")
+		assert.Contains(t, out, "| Ground | 0.50 g |", "Should total the range's grinds only")
+		assert.NotContains(t, out, "2026-07-02", "Should leave out entries before the range")
+	})
+
+	t.Run("RefusesABackwardRange", func(t *testing.T) {
+		dir := repository(t)
+
+		_, err := run(t, dir, Export, "--from", "2026-08-31", "--to", "2026-08-01")
+
+		assert.ErrorContains(t, err, "is before", "Should refuse a range that ends before it starts")
+	})
+
+	t.Run("RefusesAMalformedDate", func(t *testing.T) {
+		dir := repository(t)
+
+		_, err := run(t, dir, Export, "--from", "August")
+
+		assert.ErrorContains(t, err, "not a date", "Should say what it expected")
+	})
+
+	t.Run("ASiteLinksItsPages", func(t *testing.T) {
+		dir := twoFills(t)
+		site := filepath.Join(dir, "docs")
+
+		_, err := run(t, dir, Export, "--site", site)
+
+		require.NoError(t, err)
+		index, err := os.ReadFile(filepath.Join(site, "index.md"))
+		require.NoError(t, err)
+		assert.Contains(t, string(index), "[1](fills/1.md)", "Should link the first fill")
+		assert.Contains(t, string(index), "[2](fills/2.md)", "Should link the second fill")
+		assert.Less(t, indexOf(string(index), "fills/2.md"), indexOf(string(index), "fills/1.md"), "Should list the newest fill first")
+
+		first, err := os.ReadFile(filepath.Join(site, "fills", "1.md"))
+		require.NoError(t, err)
+		assert.Contains(t, string(first), "[All fills](../index.md)", "Should link back to the index")
+		assert.Contains(t, string(first), "[Fill 2 →](2.md)", "Should link to the next fill")
+		assert.NotContains(t, string(first), "← Fill", "Should have no fill before the first")
+	})
 }
 
 func TestParseGrams(t *testing.T) {
