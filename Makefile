@@ -7,7 +7,7 @@ PKG = github.com/TheDonDope/wits/pkg/version
 LDFLAGS = -X $(PKG).Version=$(VERSION) -X $(PKG).CommitSHA=$(COMMIT_SHA) -X $(PKG).CommitDate=$(COMMIT_DATE)
 
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
-	test test-ci cover show-cover vet preflight snap release
+	test test-ci cover show-cover vet preflight snap release server ui ui-test serve
 
 .DEFAULT_GOAL := build
 
@@ -94,6 +94,22 @@ preflight:
 # The camera and the tap: screens as text, the fold as JSON.
 snap:
 	go build -o ./bin/witsnap ./cmd/witsnap
+
+# The browser interface: wits-server, the JSON API over the repository, and
+# wits-ui, the Angular client it can serve. The client needs Node and npm;
+# nothing else in the repository does.
+server:
+	go build -ldflags "$(LDFLAGS)" -o ./bin/wits-server ./cmd/wits-server
+
+ui:
+	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng build
+
+ui-test:
+	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng test --watch=false
+
+# The repository in the working directory, in a browser at http://127.0.0.1:7341
+serve: server ui
+	./bin/wits-server --ui wits-ui/dist/wits-ui/browser
 
 # The guard checks where VERSION came from, not whether it is empty: it always
 # has a value here, because it defaults to the previous tag — and releasing

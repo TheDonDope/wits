@@ -413,6 +413,28 @@ Every cannabinoid and terpene with its boiling point, so a setting on a dial rea
 as what it releases, and warns at the 205 °C where benzene starts. A device's
 range is checked when it is typed rather than later when a session is refused.
 
+### In a browser — `wits-server` and `wits-ui`
+
+`cmd/wits-server` serves `pkg/api`: a JSON API another caller of
+`pkg/workspace`, nothing more. Every request opens the repository fresh, and
+every write — buy, grind, sesh, weigh, undo — goes through the recorder under
+the journal's lock, so the browser, the terminal and the commands refuse the
+same things in the same words. The figures keep their scopes in their names:
+the fill's `dispensed` and `remaining`, the shelf's projection
+(`shelf_projection`), the jar's lifetime. It answers this machine only: a
+non-loopback listen address is refused, a request naming another host gets 403
+(DNS rebinding), and a write that is not JSON gets 415 (a cross-origin form).
+
+`wits-ui` is Angular 22 with Angular Material, zoneless and signal-driven, its
+charts drawn as SVG with d3's geometry: the fill as a ring with the older jars
+as a halo, each product as a jar of glass with a moving surface, the shelf's
+supply as a curve to its empty day, the whole history as a calendar a year a
+row, every fill as a lane on one timeline, and a virtual-scrolled journal. It
+polls for entries made elsewhere. Its fonts and icons ship with it — the
+scaffolding fetched them from a font service, which would have been the only
+network call wits made. Reduced motion is honoured throughout, the route
+cross-fade included.
+
 ---
 
 ## 📌 Planned
@@ -454,17 +476,6 @@ range is checked when it is typed rather than later when a session is refused.
 - Export takes whole cycles or everything. A range would be more use for an
   appointment.
 
-### 🔹 `wits-server` and `wits-ui`
-
-- **Status**: Planned
-- A REST API and an Angular interface. `pkg/workspace` is what a request handler
-  would open a repository with, and cross-process appends are already safe, so the
-  seam exists. The layout has room for both: `cmd/wits-server/` and `wits-ui/`.
-- One module rather than one per component, because the domain is shared and a
-  boundary between a server and the ledger it serves would mean versioning the
-  ledger against itself.
-
----
 
 ## 🩺 Findings in the imported records
 

@@ -381,9 +381,40 @@ CBDA             130°C     anti-inflammatory, anti-proliferic
 The devices screen shows the same for whichever device is selected, at its
 default setting, and `a` adds a device there.
 
+## In a browser
+
+`wits-server` serves the repository it is started in, and the interface built
+from `wits-ui/` beside it:
+
+```sh
+make serve          # builds both, then serves the repository here
+open http://127.0.0.1:7341
+```
+
+The dashboard draws the fill as a ring — sealed, ground, AVB — with the older
+jars around it as a halo; each product of the fill as a jar of glass, filled to
+what it holds; and the shelf's supply as a curve to the day it runs out. The
+history is three years of grinding as a calendar, and every fill as a lane on
+one timeline, overlapping the way fills do. The journal scrolls all of its
+entries and undoes one with a correction, the jars are a gallery, and **Record**
+grinds, records a session, a fill or a weighing — through the same recorder as
+the commands, with the same refusals in the same words. The interface follows
+the repository: an entry made with the command line shows within a few seconds.
+
+![The dashboard](./assets/wits-ui-dashboard.png)
+
+![Every day, and every fill](./assets/wits-ui-history.png)
+
+It answers this machine only. The server listens on a loopback address and
+refuses one that is not; a request naming any other host is refused, which keeps
+a web page elsewhere from reaching it; and every write must be JSON, which a page
+on another origin cannot send. Every font and icon ships with the interface, so
+it makes no network call either. `?record=grind` (or `session`, `fill`, `weigh`)
+opens the form on that tab — a link to bookmark.
+
 ## Layout
 
-One Go module, several commands, and a web interface planned beside them. Not a
+One Go module, several commands, and a web interface beside them. Not a
 module per component: the domain is shared, and a boundary between a server and
 the ledger it serves would mean versioning the ledger against itself.
 
@@ -392,7 +423,7 @@ wits/                     module github.com/TheDonDope/wits
   cmd/
     wits/                 the terminal interface and the commands
     witsnap/              the camera and the tap: screens as text, the fold as JSON
-    wits-server/          the REST API                        (planned)
+    wits-server/          the JSON API, and the web interface it serves
   pkg/
     journal/              the append-only log
     ledger/               the fold: balances, cycles, statistics
@@ -403,9 +434,10 @@ wits/                     module github.com/TheDonDope/wits
     bundle/               the portable archive format
     importer/             reading the tracking spreadsheet
     cannabis/             cannabinoids, terpenes and their boiling points
+    api/                  the repository over HTTP, for wits-server
     tui/                  the screens
     version/              the build stamp every binary reports from
-  wits-ui/                the web interface, in Angular       (planned)
+  wits-ui/                the web interface: Angular and Angular Material
 ```
 
 `pkg/journal` depends on nothing else here and everything above depends downwards
