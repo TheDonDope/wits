@@ -111,6 +111,9 @@ Grams move between four accounts (storage → stash → consumed → avb), one s
 per product, every entry a transfer — mass is conserved end to end.
 `pkg/record` applies entries with the guard rails (no overdrawing an account);
 the CLI commands and the TUI forms both go through it, so they cannot disagree.
+Every recorder entry is a builder run by `Journal.AppendWith`, under the lock,
+against a fold of the journal as it stands — a check made outside a builder is
+a check of a snapshot another process may have overtaken.
 
 Dependencies point strictly downward: `pkg/journal` depends on nothing
 internal; `workspace` opens a repository and holds state; `tui` and `cmd/*`

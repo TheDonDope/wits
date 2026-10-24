@@ -3,6 +3,7 @@ package journal
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -373,4 +374,68 @@ func TestAppendCutsAwayAnUnfinishedLine(t *testing.T) {
 	events, err := again.Events()
 	require.NoError(t, err)
 	assert.Len(t, events, 2)
+}
+
+func TestAppendWith(t *testing.T) {
+	t.Run("SeesWhatAnotherWriterAppended", func(t *testing.T) {
+		j := testJournal(t)
+		other := Open(j.Path())
+		_, err := other.Append(Event{Type: Grind, Product: "wedding-cake", Grams: 0.5})
+		require.NoError(t, err)
+
+		var seen int
+		stored, err := j.AppendWith(func(events []Event) ([]Event, error) {
+			seen = len(events)
+			return []Event{{Type: Grind, Product: "wedding-cake", Grams: 0.25}}, nil
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, seen, "build should get the journal as it stands, not as this value last saw it")
+		assert.Equal(t, 2, stored[0].Seq)
+		assert.NoError(t, j.Verify())
+	})
+
+	t.Run("ARefusalAppendsNothing", func(t *testing.T) {
+		j := testJournal(t)
+		_, err := j.AppendWith(func([]Event) ([]Event, error) { return nil, errors.New("no") })
+		assert.EqualError(t, err, "no")
+
+		stored, err := j.AppendWith(func([]Event) ([]Event, error) { return nil, nil })
+		assert.NoError(t, err, "Nothing to append is not an error")
+		assert.Empty(t, stored)
+
+		events, err := j.Events()
+		require.NoError(t, err)
+		assert.Empty(t, events)
+	})
+
+	t.Run("ChainsABatch", func(t *testing.T) {
+		j := testJournal(t)
+		stored, err := j.AppendWith(func([]Event) ([]Event, error) {
+			return []Event{
+				{Type: Purchase, Product: "wedding-cake", Grams: 20},
+				{Type: Grind, Product: "wedding-cake", Grams: 1},
+			}, nil
+		})
+
+		require.NoError(t, err)
+		require.Len(t, stored, 2)
+		assert.Equal(t, stored[0].Hash, stored[1].Prev, "Each entry chains onto the one before it in the batch")
+		assert.NoError(t, j.Verify())
+	})
+
+	t.Run("AnInvalidEntryRefusesTheWholeBatch", func(t *testing.T) {
+		j := testJournal(t)
+		_, err := j.AppendWith(func([]Event) ([]Event, error) {
+			return []Event{
+				{Type: Purchase, Product: "wedding-cake", Grams: 20},
+				{Type: Grind, Product: "wedding-cake", Grams: -1},
+			}, nil
+		})
+
+		assert.Error(t, err)
+		events, err := j.Events()
+		require.NoError(t, err)
+		assert.Empty(t, events, "Half a batch should not be written")
+	})
 }
