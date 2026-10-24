@@ -186,9 +186,9 @@ record.
 
 ### The commands
 
-`init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `reconcile`, `device add`
-and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`, and `completion`
-for bash, zsh and fish — which offers product handles with what each holds, and
+`init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
+`device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
+and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
 prescription and are absent.
@@ -198,6 +198,12 @@ adds a product, so it takes only a handle or a full name. Part of a name is
 refused with the products it is part of — "MAC1" used to land on the MAC1+ jar
 unannounced, and "Can", part of two names, made a third product. `--slug` says
 a new product is meant.
+
+`show` is one entry in full, the way `git show` is a commit: its place in the
+chain, when it happened and how long after it was written down, what it moved
+and what the jar held before and after — labelled the jar, since `status` speaks
+for the fill — the fills it fell in, what undoes it or what it undoes, and a
+session's standing rating. With no entry named, the one written last.
 
 Grinding or seshing more than an account holds is refused. The journal would
 record it happily, but grams that are not in the jar cannot come out of it, and
@@ -483,11 +489,6 @@ the server opening up. Timestamping a chain and syncing over WebDAV are the
 first things wits would send anywhere, so both are opt-in and said plainly.
 
 ### 1 · What is open, and what is quick
-
-#### 🔹 `wits show`
-
-- **Status**: Planned
-- `show` for one entry in full. (`fsck` is built — see Checking above.)
 
 #### 🔹 Markdown export for publishing
 

@@ -593,3 +593,61 @@ func TestRateCommand(t *testing.T) {
 	fsck, err := run(t, dir, Fsck)
 	require.NoError(t, err, fsck)
 }
+
+func TestShowCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Show)
+	assert.ErrorContains(t, err, "no entries yet")
+
+	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "2", "--date", "2026-07-02")
+	require.NoError(t, err)
+	_, err = run(t, dir, Sesh, "wedding", "0.3", "--date", "2026-07-02", "--note", "evening")
+	require.NoError(t, err)
+	_, err = run(t, dir, Rate, "last", "overall=4", "sleep=5")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Show)
+	require.NoError(t, err)
+	assert.Contains(t, out, "sesh ", "the newest entry by default")
+	assert.Contains(t, out, "entry 3, chained onto")
+	assert.Contains(t, out, "Enua 22/1 Wedding Cake (")
+	assert.Contains(t, out, "0.30 g, stash → consumed")
+	assert.Regexp(t, `In the jar\s+stash\s+2\.00 g →\s+1\.70 g`, out, "the jar before and after")
+	assert.Regexp(t, `consumed\s+0\.00 g →\s+0\.30 g`, out)
+	assert.Contains(t, out, "Note        evening")
+	assert.Contains(t, out, "Fill        1, opened 2026-07-01")
+	assert.Contains(t, out, "Rated       overall 4, sleep 5")
+	assert.Contains(t, out, "days later", "it was written down long after")
+
+	grind := lastOf(t, dir, journal.Grind)
+	_, err = run(t, dir, Revert, grind[:7])
+	require.Error(t, err, "the session still needs the grind's grams")
+
+	sesh := lastOf(t, dir, journal.Sesh)
+	_, err = run(t, dir, Revert, sesh[:7])
+	require.NoError(t, err)
+	out, err = run(t, dir, Show, sesh[:7])
+	require.NoError(t, err)
+	assert.Contains(t, out, "Undone      by ")
+	out, err = run(t, dir, Show, "last")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Undoes      "+sesh[:7]+", sesh 0.30 g of Enua 22/1 Wedding Cake on 2026-07-02")
+}
+
+// lastOf is the hash of the newest entry of a type in a repository.
+func lastOf(t *testing.T, dir string, typ journal.Type) string {
+	t.Helper()
+	r, err := repo.Discover(dir)
+	require.NoError(t, err)
+	events, err := r.Journal().Events()
+	require.NoError(t, err)
+	for i := len(events) - 1; i >= 0; i-- {
+		if events[i].Type == typ {
+			return events[i].Hash
+		}
+	}
+	t.Fatalf("no %s entry", typ)
+	return ""
+}
