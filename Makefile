@@ -15,7 +15,9 @@ run: build
 	@./bin/wits
 
 # Developer tooling only. Nothing here is needed to build or test — CI does
-# not run this target.
+# not run this target. ./doctor.sh checks these and the rest the loop needs
+# (ttyd, ffmpeg, shellcheck, lizard, the Chromium vhs drives), and installs
+# what is missing.
 install:
 	go install golang.org/x/tools/cmd/godoc@latest
 	go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest

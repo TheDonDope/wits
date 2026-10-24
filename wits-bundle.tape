@@ -14,7 +14,7 @@ Set TypingSpeed 35ms
 
 Hide
 Type "export PATH=$PWD/bin:$PATH" Enter
-Type "rm -rf /tmp/wits-bun && mkdir -p /tmp/wits-bun" Enter
+Type "rm -rf /tmp/wits-bun /tmp/wits-copy && mkdir -p /tmp/wits-bun" Enter
 Type "cp assets/Tracking.2022.cleaned.xlsx /tmp/wits-bun/Tracking.xlsx" Enter
 Type "cd /tmp/wits-bun && wits init . >/dev/null" Enter
 Type "wits import Tracking.xlsx --commit >/dev/null" Enter
