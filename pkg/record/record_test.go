@@ -444,6 +444,39 @@ func TestBuyWithASlug(t *testing.T) {
 	})
 }
 
+func TestBackdating(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
+	require.NoError(t, err)
+
+	t.Run("AFillCanBeDatedAnywhere", func(t *testing.T) {
+		_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 5, time.Now().AddDate(-1, 0, 0))
+		require.NoError(t, err, "A year back")
+		require.Len(t, rec.State().Cycles, 2, "It opens a cycle of its own, a year earlier")
+		assert.Equal(t, 5.0, rec.State().Cycles[0].Purchased)
+
+		_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "", 5, time.Now().AddDate(0, 1, 0))
+		require.NoError(t, err, "And ahead")
+	})
+
+	t.Run("AGrindCannotComeBeforeItsGrams", func(t *testing.T) {
+		_, err := rec.Grind("wedding", 10, time.Now().AddDate(-2, 0, 0))
+
+		assert.ErrorContains(t, err, "the grams were not there yet",
+			"Today's storage holds enough, but two years ago there was none")
+		assert.Empty(t, rec.State().Overdrawn, "Should have recorded nothing")
+	})
+
+	t.Run("UndoingAFillAheadOfTodayIsDatedWithIt", func(t *testing.T) {
+		ahead, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 3, time.Now().AddDate(0, 2, 0))
+		require.NoError(t, err)
+
+		undo, err := rec.Revert(ahead.Hash, "")
+		require.NoError(t, err, "Taking the grams back before they arrived would overdraw storage")
+		assert.Equal(t, ahead.OccurredAt, undo.OccurredAt)
+	})
+}
+
 func TestBuyRefusesPartOfAName(t *testing.T) {
 	rec := recorder(t)
 	for _, name := range []string{"Cannamedical 28/1 Lemon Cookie", "Cantourage 25/1 MAC1+"} {

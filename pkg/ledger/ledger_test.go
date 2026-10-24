@@ -320,3 +320,49 @@ func TestCycleGap(t *testing.T) {
 		assert.Len(t, s.Cycles, 2, "Should split two fills eight days apart")
 	})
 }
+
+func TestFoldsByDate(t *testing.T) {
+	t.Run("ABackdatedFillOpensItsOwnCycle", func(t *testing.T) {
+		// Recorded last, dated first: the fill typed in a month late.
+		s := Fold([]journal.Event{
+			event(journal.Purchase, "wedding-cake", 20, day(30)),
+			event(journal.Grind, "wedding-cake", 1, day(31)),
+			event(journal.Purchase, "lemon-cookie", 10, day(0)),
+		})
+
+		require.Len(t, s.Cycles, 2, "A fill dated a month earlier is a cycle of its own")
+		assert.Equal(t, day(0), s.Cycles[0].Start)
+		assert.Equal(t, 10.0, s.Cycles[0].Purchased, "The early fill should not join the later cycle")
+		assert.Equal(t, 20.0, s.Cycles[1].Purchased)
+		assert.Equal(t, 10.0, s.Cycles[1].Carried, "The later cycle arrived to the early fill still standing")
+	})
+
+	t.Run("EventsReadInTheOrderTheyHappened", func(t *testing.T) {
+		late := event(journal.Purchase, "lemon-cookie", 10, day(0))
+		late.Seq = 3
+		first := event(journal.Purchase, "wedding-cake", 20, day(5))
+		first.Seq = 1
+		same := event(journal.Grind, "wedding-cake", 1, day(5))
+		same.Seq = 2
+
+		s := Fold([]journal.Event{first, same, late})
+
+		var seqs []int
+		for _, e := range s.Events {
+			seqs = append(seqs, e.Seq)
+		}
+		assert.Equal(t, []int{3, 1, 2}, seqs, "By date, and in recorded order within the same moment")
+	})
+
+	t.Run("NotesAnAccountOverdrawnInThePast", func(t *testing.T) {
+		s := Fold([]journal.Event{
+			event(journal.Purchase, "wedding-cake", 20, day(5)),
+			event(journal.Grind, "wedding-cake", 2, day(1)),
+		})
+
+		assert.Equal(t, 18.0, s.Balances["wedding-cake"].Storage, "Today's balance is fine")
+		require.Len(t, s.Overdrawn, 1, "But on day 1 the grams had not arrived")
+		assert.Equal(t, journal.Storage, s.Overdrawn[0].Account)
+		assert.Equal(t, -2.0, s.Overdrawn[0].Grams)
+	})
+}

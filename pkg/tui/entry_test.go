@@ -27,9 +27,11 @@ func liveApp(t *testing.T) *App {
 	require.NoError(t, products.Add(product("Enua 22/1 Wedding Cake", "wcake")))
 	require.NoError(t, products.Save(r.ProductsPath()))
 
+	// Two days back, so a test can backdate a grind to yesterday: a grind
+	// dated before the fill it draws on is refused.
 	_, err = r.Journal().Append(journal.Event{
 		Type: journal.Purchase, Product: "wcake", Grams: 20,
-		From: journal.External, To: journal.Storage, OccurredAt: time.Now(),
+		From: journal.External, To: journal.Storage, OccurredAt: time.Now().AddDate(0, 0, -2),
 	})
 	require.NoError(t, err)
 

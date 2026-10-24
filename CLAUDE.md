@@ -100,6 +100,13 @@ revert`, adjustments), and the log keeps both. This is load-bearing: the replay
 transport and witsnap's JSON both exist because any state can be
 rebuilt from any prefix of events.
 
+Two orders, never mixed: the journal is in **recorded order** (the hash chain),
+the fold in **occurred order** (`ledger.Chronological`, ties kept recorded).
+`State.Events` is the fold's order; anything that needs the chain — bundles —
+reads `Journal().Events()`. Entries can be backdated anywhere, so the recorder
+checks a new one against every date in the replay (`State.Overdrawn`), not only
+against today's balance.
+
 Grams move between four accounts (storage → stash → consumed → avb), one stash
 per product, every entry a transfer — mass is conserved end to end.
 `pkg/record` applies entries with the guard rails (no overdrawing an account);

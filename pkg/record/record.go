@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -154,22 +155,10 @@ func (r *Recorder) Session(ref string, grams float64, at time.Time, device strin
 
 // Available returns how many grams of a product sit in an account.
 func (r *Recorder) Available(slug string, account journal.Account) float64 {
-	b := r.state.Balances[slug]
-	if b == nil {
-		return 0
+	if b := r.state.Balances[slug]; b != nil {
+		return b.In(account)
 	}
-	switch account {
-	case journal.Storage:
-		return b.Storage
-	case journal.Stash:
-		return b.Stash
-	case journal.Consumed:
-		return b.Consumed
-	case journal.AVB:
-		return b.AVB
-	default:
-		return 0
-	}
+	return 0
 }
 
 // check refuses to draw an account below zero. The journal would record it
@@ -198,13 +187,51 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 
 // append writes the event and folds it into the running state, so a recorder
 // used twice in a row sees its own first entry.
+//
+// The ledger folds entries by date, so a backdated one can overdraw an account
+// in the past while today's balance looks fine — a grind dated before the fill
+// it draws on. check only sees today; this sees every day.
 func (r *Recorder) append(e journal.Event) (journal.Event, error) {
+	if e.OccurredAt.IsZero() {
+		e.OccurredAt = time.Now()
+	}
+	// The journal fills the accounts in on append; the trial fold needs them
+	// now, or the entry moves nothing and cannot overdraw anything.
+	if e.From == "" && e.To == "" {
+		e.From, e.To, _ = journal.Flow(e.Type)
+	}
+	if err := r.overdraws(e); err != nil {
+		return journal.Event{}, err
+	}
 	stored, err := r.repo.Journal().Append(e)
 	if err != nil {
 		return journal.Event{}, err
 	}
-	r.state = ledger.Fold(append(r.state.Events, stored))
+	r.state = ledger.Fold(append(slices.Clip(r.state.Events), stored))
 	return stored, nil
+}
+
+// overdraws refuses an entry that would leave an account below zero at any
+// point in the replay, where none was before.
+func (r *Recorder) overdraws(e journal.Event) error {
+	before := map[string]bool{}
+	for _, o := range r.state.Overdrawn {
+		before[o.Event.Hash] = true
+	}
+	next := ledger.Fold(append(slices.Clip(r.state.Events), e))
+	for _, o := range next.Overdrawn {
+		if o.Event.Hash != "" && before[o.Event.Hash] {
+			continue
+		}
+		where := string(o.Account)
+		if name, ok := reconcilable[o.Account]; ok {
+			where = name
+		}
+		return fmt.Errorf("%s %.2fg of %s on %s would leave %.2fg in %s on %s: the grams were not there yet",
+			e.Type, e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly),
+			o.Grams, where, o.Event.OccurredAt.Format(time.DateOnly))
+	}
+	return nil
 }
 
 // State returns the folded state, including anything this recorder appended.
@@ -236,13 +263,20 @@ func (r *Recorder) Revert(hash string, reason string) (journal.Event, error) {
 	if reason == "" {
 		reason = "reverts " + short(hash)
 	}
+	// A correction cannot come before what it corrects: undoing an entry
+	// dated ahead of today is dated with it, or the fold would take the grams
+	// back before they arrived.
+	at := time.Now()
+	if original.OccurredAt.After(at) {
+		at = original.OccurredAt
+	}
 	return r.append(journal.Event{
 		Type:       journal.Adjust,
 		Product:    original.Product,
 		Grams:      original.Grams,
 		From:       original.To,
 		To:         original.From,
-		OccurredAt: time.Now(),
+		OccurredAt: at,
 		Reverts:    original.Hash,
 		Note:       reason,
 	})

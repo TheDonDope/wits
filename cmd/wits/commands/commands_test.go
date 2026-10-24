@@ -419,3 +419,29 @@ func TestReconcileCommand(t *testing.T) {
 		assert.Contains(t, out.String(), "already matches", "Should say when the scale agrees")
 	})
 }
+
+func TestBundleKeepsTheRecordedOrder(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	require.NoError(t, err)
+	// Typed in last, dated first: the fold reads it first, the chain last.
+	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "5g", "--date", "2026-05-01")
+	require.NoError(t, err)
+
+	file := filepath.Join(t.TempDir(), "history.wits")
+	_, err = run(t, dir, Bundle, "--out", file)
+	require.NoError(t, err)
+	defer run(t, dir, Bundle, "--out", "") // restore the flag default
+
+	again := repository(t)
+	_, err = run(t, again, Restore, file)
+	require.NoError(t, err, "A backdated entry should not break the chain on the way back")
+
+	want, err := os.ReadFile(filepath.Join(dir, ".wits", "journal.ndjson"))
+	require.NoError(t, err)
+	got, err := os.ReadFile(filepath.Join(again, ".wits", "journal.ndjson"))
+	require.NoError(t, err)
+	assert.Equal(t, string(want), string(got), "The restored journal should be byte for byte the original")
+}
