@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.53.0"></a>
+## [v0.53.0] - 2026-10-24
+### Docs
+- **roadmap:** the plan has an order, and purchases get their prices
+
+### Feat
+- **show:** one entry in full, the way git shows a commit
+
+
 <a name="v0.52.0"></a>
 ## [v0.52.0] - 2026-10-24
+### Docs
+- update changelog for v0.52.0
+
 ### Feat
 - **tui:** the sessions screen rates, a line a dimension
 
@@ -728,7 +740,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.52.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.53.0...HEAD
+[v0.53.0]: https://github.com/TheDonDope/wits/compare/v0.52.0...v0.53.0
 [v0.52.0]: https://github.com/TheDonDope/wits/compare/v0.51.0...v0.52.0
 [v0.51.0]: https://github.com/TheDonDope/wits/compare/v0.50.0...v0.51.0
 [v0.50.0]: https://github.com/TheDonDope/wits/compare/v0.49.0...v0.50.0
