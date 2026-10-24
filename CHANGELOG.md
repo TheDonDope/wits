@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.42.0"></a>
+## [v0.42.0] - 2026-10-24
+### Refactor
+- **ledger:** add in centigrams, and refuse what a scale cannot read
+
+
 <a name="v0.41.0"></a>
 ## [v0.41.0] - 2026-10-24
+### Docs
+- update changelog for v0.41.0
+
 ### Fix
 - **bundle:** undos and weighings come back from a restore
 
@@ -613,7 +622,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.41.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.42.0...HEAD
+[v0.42.0]: https://github.com/TheDonDope/wits/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/TheDonDope/wits/compare/v0.40.0...v0.41.0
 [v0.40.0]: https://github.com/TheDonDope/wits/compare/v0.39.0...v0.40.0
 [v0.39.0]: https://github.com/TheDonDope/wits/compare/v0.38.0...v0.39.0
