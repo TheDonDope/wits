@@ -548,7 +548,7 @@ func (v analysisView) cycles(a *App, events []journal.Event, width int) string {
 		stats := ledger.Summarise(c.Events)
 		bars = append(bars, Bar{
 			Label: c.Start.Format("Jan 2006"),
-			Value: c.Ground,
+			Value: float64(c.Ground),
 			Note:  fmt.Sprintf("%.0f g · %.2f g/day", c.Ground, stats.PerActiveDay),
 			Color: t.StorageC,
 		})

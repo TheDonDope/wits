@@ -454,7 +454,7 @@ func TestBackdating(t *testing.T) {
 		_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 5, time.Now().AddDate(-1, 0, 0))
 		require.NoError(t, err, "A year back")
 		require.Len(t, rec.State().Cycles, 2, "It opens a cycle of its own, a year earlier")
-		assert.Equal(t, 5.0, rec.State().Cycles[0].Purchased)
+		assert.Equal(t, ledger.Fill(5.0), rec.State().Cycles[0].Purchased)
 
 		_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "", 5, time.Now().AddDate(0, 1, 0))
 		require.NoError(t, err, "And ahead")

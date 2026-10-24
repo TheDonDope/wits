@@ -83,21 +83,28 @@ func staleStashes(a *App) []string {
 	return out
 }
 
-// productRow is a product with everything the screen shows about it.
+// productRow is a product with everything the screen shows about it. Every
+// figure is the jar's — one product, across all its fills — which is the
+// storage screen's scope.
 type productRow struct {
 	Product  *catalog.Product
 	Slug     string
-	Storage  float64
-	Stash    float64
-	AVB      float64
-	Ground   float64
-	Bought   float64
+	Storage  ledger.Jar
+	Stash    ledger.Jar
+	AVB      ledger.Jar
+	Ground   ledger.Jar
+	Bought   ledger.Jar
 	Fills    int
 	LastSeen time.Time
 }
 
 // Held is what is still on the shelf and in the stash.
-func (p productRow) Held() float64 { return ledger.Round(p.Storage + p.Stash) }
+func (p productRow) Held() ledger.Jar { return addJar(p.Storage, float64(p.Stash)) }
+
+// addJar adds grams to a jar's figure, in centigrams.
+func addJar(j ledger.Jar, grams float64) ledger.Jar {
+	return ledger.Jar((journal.CG(float64(j)) + journal.CG(grams)).Grams())
+}
 
 // gone reports whether the product has been weighed down to nothing.
 func (p productRow) gone() bool { return p.Held() <= 0 && p.AVB <= 0 }
@@ -207,15 +214,16 @@ func (v storageView) tables(a *App) (shelf, history []productRow) {
 		}
 		switch e.Type {
 		case journal.Purchase:
-			r.Bought = ledger.Round(r.Bought + e.Grams)
+			r.Bought = addJar(r.Bought, e.Grams)
 			r.Fills++
 		case journal.Grind:
-			r.Ground = ledger.Round(r.Ground + e.Grams)
+			r.Ground = addJar(r.Ground, e.Grams)
 		}
 	}
 	for slug, b := range balances {
 		r := get(slug)
-		r.Storage, r.Stash, r.AVB = b.Storage, b.Stash, b.AVB
+		// A product's balance is its jar's contents today.
+		r.Storage, r.Stash, r.AVB = ledger.Jar(b.Storage), ledger.Jar(b.Stash), ledger.Jar(b.AVB)
 	}
 
 	all := make([]productRow, 0, len(byProduct))
@@ -450,7 +458,7 @@ func potency(r productRow) string {
 
 // grams renders an amount in an account's colour, dimmed when it is empty so
 // that a column of zeroes does not compete with the figures that matter.
-func grams(t *Theme, g float64, colour tint, width int) string {
+func grams[T ~float64](t *Theme, g T, colour tint, width int) string {
 	style := lipgloss.NewStyle().Foreground(colour)
 	if g <= 0 {
 		style = t.Dim
@@ -481,7 +489,7 @@ func (v storageView) detail(a *App, r productRow, width int) string {
 	// screen speaks lifetime, the dashboard speaks the cycle. A finished jar
 	// has nothing to fill a bar with.
 	if r.Bought > 0 && r.Held() > 0 {
-		remaining := clamp(r.Held()/r.Bought, 0, 1)
+		remaining := clamp(float64(r.Held()/r.Bought), 0, 1)
 		// The label grew a lifetime ("ever dispensed … over N fills"), so the
 		// bar cedes it the room; clipping the words defeats naming the scope.
 		bar := Gauge(max(width-66, 10), remaining, t.Level(remaining), t.Dim)

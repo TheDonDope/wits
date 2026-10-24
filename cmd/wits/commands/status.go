@@ -194,9 +194,11 @@ func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 		// The cycle's own share of the jar, against what its fill dispensed.
 		// A jar refilled before it was empty holds an older cycle's grams
 		// too, and those stand on the older cycle's account.
+		// The stash and AVB the same way: as far as they are this fill's.
 		share := state.ShareOf(cycle, product)
+		stash, avb := state.FillGround(cycle, product)
 		fmt.Fprintf(w, "%s\t%.2fg\t%.2fg\t%.2fg\t%s\n",
-			product, share, b.Stash, b.AVB, percent(share, cycle.PurchasedOf(product)))
+			product, share, stash, avb, percent(share, cycle.PurchasedOf(product)))
 	}
 	remaining := state.FillOnShelf(cycle)
 	fmt.Fprintf(w, "\t\t\t\t\n")
@@ -212,8 +214,8 @@ func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 	if stats.PerActiveDay > 0 {
 		fmt.Fprintf(out, "%.2fg per active day, %.2fg median, %.2fg per elapsed day\n",
 			stats.PerActiveDay, stats.MedianPerDay, stats.PerElapsedDay)
-		fmt.Fprintf(out, "About %s left at that rate\n",
-			plural(int(math.Round(stats.DaysLeft(remaining))), "day"))
+		fmt.Fprintf(out, "About %s' worth at that rate\n",
+			plural(int(math.Round(stats.DaysWorth(float64(remaining)))), "day"))
 	} else {
 		fmt.Fprintln(out, "Nothing ground yet this cycle, so there is no rate to extrapolate from")
 	}
@@ -221,7 +223,11 @@ func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 
 // percent formats a share as a percentage, or a dash when there is nothing to
 // compare against.
-func percent(have, of float64) string {
+//
+// Both sides are of one scope — a fill's remaining over the same fill's
+// dispensed — and the type parameter holds them to it: a fill's grams over
+// the shelf's does not compile.
+func percent[T ~float64](have, of T) string {
 	if of <= 0 {
 		return "-"
 	}
