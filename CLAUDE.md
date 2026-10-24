@@ -74,8 +74,9 @@ The gate refuses any **new** issue. `./preflight.sh` mirrors it:
 - **TypeScript** (wits-ui) is excluded from Codacy's ESLint in `.codacy.yml`:
   it runs without `node_modules`, so every Angular type is unresolved and its
   type-aware rules flag every use. The client is linted with types instead —
-  `npx ng lint` (strict type-checked rules), run by preflight and by the
-  wits-ui workflow. Keep it clean there; it is the real gate.
+  `npx ng lint` (strict type-checked rules) and `npm run lint:styles`
+  (stylelint-config-standard-scss, the standard Codacy's Stylelint applies),
+  run by preflight and by the wits-ui workflow. Keep both clean.
 
 `./preflight.sh watch <pr>` polls a PR and prints the issues Codacy will
 refuse. It can return while `build` is still pending; confirm with

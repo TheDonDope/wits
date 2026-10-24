@@ -38,6 +38,9 @@ jobs:
       - name: Lint, with types
         run: npx ng lint
 
+      - name: Lint the stylesheets
+        run: npm run lint:styles
+
       - name: Test
         run: npx ng test --watch=false
 
