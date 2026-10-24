@@ -473,7 +473,7 @@ func TestBackdating(t *testing.T) {
 
 		undo, err := rec.Revert(ahead.Hash, "")
 		require.NoError(t, err, "Taking the grams back before they arrived would overdraw storage")
-		assert.Equal(t, ahead.OccurredAt, undo.OccurredAt)
+		assert.True(t, ahead.OccurredAt.Equal(undo.OccurredAt), "dated %s, not %s", undo.OccurredAt, ahead.OccurredAt)
 	})
 }
 
