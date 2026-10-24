@@ -626,3 +626,30 @@ func TestEscDoesNotQuit(t *testing.T) {
 	_, quit := cmd().(tea.QuitMsg)
 	assert.True(t, quit, "q still quits")
 }
+
+func TestTheJournalKeepsTheSelectionInView(t *testing.T) {
+	app := liveApp(t)
+	// Ninety entries over ninety days: a heading and a blank line for each, so
+	// the listing runs well past the window.
+	for i := 0; i < 90; i++ {
+		_, err := app.data.Repo.Journal().Append(journal.Event{
+			Type: journal.Grind, Product: "wcake", Grams: 0.1, OccurredAt: time.Now().AddDate(0, 0, -100+i),
+		})
+		require.NoError(t, err)
+	}
+	var err error
+	app.data, err = Load(app.data.Repo)
+	require.NoError(t, err)
+	var m tea.Model = app
+	m, _ = send(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	app.screen = journalScreen
+
+	for i := 0; i < 60; i++ {
+		m, _ = send(m, tea.KeyPressMsg{Code: 'j', Text: "j"})
+	}
+
+	frame := stripANSI(app.View().Content)
+	list := frame[strings.Index(frame, "all entries"):]
+	assert.Regexp(t, `(?m)^ +│`, list,
+		"The selected row should be in the window; it used to fall below it, a line further for every day")
+}

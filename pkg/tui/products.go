@@ -20,16 +20,88 @@ import (
 // storageView is two tables: what still holds something, and the history of
 // everything weighed down to zero, newest first. Jars can be ticked in either
 // table and weighed together in one sitting.
-type storageView struct {
+// markList is what the storage and stash screens share: a list of jars
+// moved through with a cursor, ticked for weighing, and played back. Their
+// Update was the same 41 lines twice, differing only in the list.
+type markList struct {
 	view   viewport.Model
 	cursor int
 	marked map[string]bool // slugs ticked for weighing
 	player
 }
 
-func newStorageView() storageView {
-	return storageView{view: viewport.New(), marked: map[string]bool{}, player: newPlayer()}
+func newMarkList() markList {
+	return markList{view: viewport.New(), marked: map[string]bool{}, player: newPlayer()}
 }
+
+// update handles playback, moving and ticking over the given slugs, in the
+// order the screen lists them.
+func (m markList) update(msg tea.Msg, a *App, slugs []string) (markList, tea.Cmd) {
+	events := a.data.State.Events
+	if _, ok := msg.(playTickMsg); ok {
+		var cmd tea.Cmd
+		m.player, cmd = m.player.advance(events)
+		return m, cmd
+	}
+	press, ok := msg.(tea.KeyPressMsg)
+	if !ok {
+		return m, nil
+	}
+	switch {
+	case key.Matches(press, playKey):
+		var cmd tea.Cmd
+		m.player, cmd = m.player.toggle(events)
+		return m, cmd
+	case key.Matches(press, slideKey):
+		m.player = m.player.step(press, events)
+	case key.Matches(press, speedKeys):
+		m.player = m.player.retune(press)
+	case key.Matches(press, markKey):
+		m.toggle(slugs)
+	default:
+		m.cursor = move(press, a.keys, m.cursor, len(slugs))
+	}
+	return m, nil
+}
+
+// toggle ticks or unticks the jar under the cursor.
+func (m markList) toggle(slugs []string) {
+	if m.cursor >= len(slugs) {
+		return
+	}
+	if slug := slugs[m.cursor]; m.marked[slug] {
+		delete(m.marked, slug)
+	} else {
+		m.marked[slug] = true
+	}
+}
+
+// move returns where a navigation key puts a cursor over n items; any other
+// key leaves it where it is.
+func move(press tea.KeyPressMsg, k keyMap, cursor, n int) int {
+	last := max(n-1, 0)
+	switch {
+	case key.Matches(press, k.Up):
+		return max(cursor-1, 0)
+	case key.Matches(press, k.Down):
+		return min(cursor+1, last)
+	case key.Matches(press, k.PageUp):
+		return max(cursor-10, 0)
+	case key.Matches(press, k.PgDown):
+		return min(cursor+10, last)
+	case key.Matches(press, k.Top):
+		return 0
+	case key.Matches(press, k.Bottom):
+		return last
+	}
+	return cursor
+}
+
+type storageView struct {
+	markList
+}
+
+func newStorageView() storageView { return storageView{newMarkList()} }
 
 type storageKeys struct {
 	keyMap
@@ -111,44 +183,13 @@ func (p productRow) gone() bool { return p.Held() <= 0 && p.AVB <= 0 }
 
 func (v storageView) Update(msg tea.Msg, a *App) (storageView, tea.Cmd) {
 	rows := v.rows(a)
+	slugs := make([]string, len(rows))
+	for i, r := range rows {
+		slugs[i] = r.Slug
+	}
 	var cmd tea.Cmd
-	if _, ok := msg.(playTickMsg); ok {
-		v.player, cmd = v.player.advance(a.data.State.Events)
-		return v, cmd
-	}
-	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		switch {
-		case key.Matches(msg, playKey):
-			v.player, cmd = v.player.toggle(a.data.State.Events)
-			return v, cmd
-		case key.Matches(msg, slideKey):
-			v.player = v.player.step(msg, a.data.State.Events)
-		case key.Matches(msg, speedKeys):
-			v.player = v.player.retune(msg)
-		case key.Matches(msg, a.keys.Up):
-			v.cursor = max(v.cursor-1, 0)
-		case key.Matches(msg, a.keys.Down):
-			v.cursor = min(v.cursor+1, max(len(rows)-1, 0))
-		case key.Matches(msg, a.keys.PageUp):
-			v.cursor = max(v.cursor-10, 0)
-		case key.Matches(msg, a.keys.PgDown):
-			v.cursor = min(v.cursor+10, max(len(rows)-1, 0))
-		case key.Matches(msg, a.keys.Top):
-			v.cursor = 0
-		case key.Matches(msg, a.keys.Bottom):
-			v.cursor = max(len(rows)-1, 0)
-		case key.Matches(msg, markKey):
-			if v.cursor < len(rows) {
-				slug := rows[v.cursor].Slug
-				if v.marked[slug] {
-					delete(v.marked, slug)
-				} else {
-					v.marked[slug] = true
-				}
-			}
-		}
-	}
-	return v, nil
+	v.markList, cmd = v.markList.update(msg, a, slugs)
+	return v, cmd
 }
 
 // Selected returns the product under the cursor, in either table.
@@ -584,15 +625,10 @@ func stashHistoryOf(events []journal.Event) map[string]*stashStats {
 // stashView is two tables: the stashes holding something, and the finished
 // ones grouped under the day they were consumed.
 type stashView struct {
-	view   viewport.Model
-	cursor int
-	marked map[string]bool
-	player
+	markList
 }
 
-func newStashView() stashView {
-	return stashView{view: viewport.New(), marked: map[string]bool{}, player: newPlayer()}
-}
+func newStashView() stashView { return stashView{newMarkList()} }
 
 type stashKeys struct {
 	keyMap
@@ -681,45 +717,9 @@ func (v stashView) slugsInOrder(a *App) []string {
 }
 
 func (v stashView) Update(msg tea.Msg, a *App) (stashView, tea.Cmd) {
-	slugs := v.slugsInOrder(a)
 	var cmd tea.Cmd
-	if _, ok := msg.(playTickMsg); ok {
-		v.player, cmd = v.player.advance(a.data.State.Events)
-		return v, cmd
-	}
-	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		switch {
-		case key.Matches(msg, playKey):
-			v.player, cmd = v.player.toggle(a.data.State.Events)
-			return v, cmd
-		case key.Matches(msg, slideKey):
-			v.player = v.player.step(msg, a.data.State.Events)
-		case key.Matches(msg, speedKeys):
-			v.player = v.player.retune(msg)
-		case key.Matches(msg, a.keys.Up):
-			v.cursor = max(v.cursor-1, 0)
-		case key.Matches(msg, a.keys.Down):
-			v.cursor = min(v.cursor+1, max(len(slugs)-1, 0))
-		case key.Matches(msg, a.keys.PageUp):
-			v.cursor = max(v.cursor-10, 0)
-		case key.Matches(msg, a.keys.PgDown):
-			v.cursor = min(v.cursor+10, max(len(slugs)-1, 0))
-		case key.Matches(msg, a.keys.Top):
-			v.cursor = 0
-		case key.Matches(msg, a.keys.Bottom):
-			v.cursor = max(len(slugs)-1, 0)
-		case key.Matches(msg, markKey):
-			if v.cursor < len(slugs) {
-				slug := slugs[v.cursor]
-				if v.marked[slug] {
-					delete(v.marked, slug)
-				} else {
-					v.marked[slug] = true
-				}
-			}
-		}
-	}
-	return v, nil
+	v.markList, cmd = v.markList.update(msg, a, v.slugsInOrder(a))
+	return v, cmd
 }
 
 // Selected returns the slug under the cursor.
