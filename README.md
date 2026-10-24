@@ -653,6 +653,14 @@ workbook grinds every two or three days, and at three days its last 90 held
 eleven "breaks" that were only the habit. At a week it holds one, 12 to 18
 September, and ten over the whole record, the longest 99 days.
 
+**Film** on the Jars page records the replay as a video: three years of the
+shelf in thirty seconds, from the same replay the page plays, each jar sealed
+blue under ground green, paced evenly through time rather than entry by entry.
+It is WebM, MP4 on Safari, recorded by the browser itself, and a phone hands it
+over to share.
+
+![The shelf, three years in thirty seconds](./assets/wits-film.gif)
+
 On the jars, tick the cards — or **Select all** — and **Clear stash** records
 their stashes as consumed, one adjustment each in a single write: the
 terminal's history clean-up, for the stashes you choose.

@@ -11,10 +11,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { balances, dayOf } from '../data/derive';
+import { capacities, filmFrames } from '../data/film';
 import { Binding, Keys } from '../data/keys';
 import { Jar } from '../data/models';
 import { Replay } from '../data/replay';
 import { Wits } from '../data/wits';
+import { FILM, record } from '../viz/film';
 import { GlassJar } from '../viz/glass-jar';
 import { Transport, replayKeys } from '../viz/transport';
 import { CarryDialog } from './carry';
@@ -47,6 +49,11 @@ import { Confirm, ConfirmDialog } from './confirm';
         <h1 class="num">{{ list().length }} <span class="dim">{{ which() === 'shelf' ? 'on the shelf' : 'finished' }}</span></h1>
       </div>
       <div class="actions">
+        <button mat-stroked-button (click)="film()" [disabled]="filming() !== null || !history().length"
+          matTooltip="Three years of the shelf in thirty seconds, as a video">
+          <mat-icon>movie</mat-icon>
+          {{ filming() === null ? 'Film' : 'Filming ' + filming() + '%' }}
+        </button>
         <button mat-stroked-button (click)="carry()" matTooltip="A signed statement of what is held, as a QR code">
           <mat-icon>qr_code_2</mat-icon>
           What I carry
@@ -144,7 +151,7 @@ export class Jars {
   protected readonly cursor = signal(-1);
 
   /** Every entry that has happened, oldest first: what the replay plays. */
-  private readonly history = computed(() =>
+  protected readonly history = computed(() =>
     [...this.wits.everything.value().entries].reverse(),
   );
   protected readonly replay = new Replay(this.history);
@@ -167,6 +174,38 @@ export class Jars {
   protected readonly selectedWithStash = computed(() =>
     this.list().filter((j) => this.selected().has(j.slug) && j.stash > 0),
   );
+
+  /** How far a film being recorded has got, in percent, or null. */
+  protected readonly filming = signal<number | null>(null);
+
+  /**
+   * Records the replay as a thirty-second film of the shelf, and hands it over
+   * to save — or, on a phone, to share.
+   */
+  protected async film(): Promise<void> {
+    const frames = filmFrames(this.history(), FILM.fps * 30);
+    const names = new Map(this.wits.jars.value().map((j) => [j.slug, j.name]));
+    this.filming.set(0);
+    try {
+      const video = await record(frames, names, capacities(frames), (done) => {
+        this.filming.set(Math.round(done * 100));
+      });
+      const file = new File([video], `wits-shelf.${video.type.includes('mp4') ? 'mp4' : 'webm'}`, { type: video.type });
+      if ('canShare' in navigator && navigator.maxTouchPoints > 0 && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] }).catch(() => undefined);
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(file);
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch (e) {
+      this.snack.open(e instanceof Error ? e.message : 'the film could not be made', undefined, { duration: 4000 });
+    } finally {
+      this.filming.set(null);
+    }
+  }
 
   /** Opens the signed statement of what is held. */
   protected carry(): void {

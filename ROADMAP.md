@@ -597,6 +597,28 @@ that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
 verified in place, outside the repository and after a restore, and the sealed
 report's footer read.
 
+### The replay as a film — Film, on the Jars page
+
+Three years of the shelf in thirty seconds, as a video the browser records
+itself. A capture of the page frame by frame was not to be had, since a
+browser cannot draw its own HTML into a video. So the frames are drawn on a
+canvas from the same replay the Jars page plays (`data/film.ts`, `viz/film.ts`):
+900 moments spaced evenly from the first entry to the last, so a quiet month
+lasts as long as a busy one. Each shows the jars that hold sealed grams, sealed
+blue under ground green, filled against the most each ever held, and keeps them
+in the order they arrived. A stash the record never drew down stays off it: the
+imported history has no sessions, so its stashes only grow.
+
+`MediaRecorder` turns the canvas into WebM in VP8, or MP4 on Safari. Two
+choices were tried and dropped here. MP4 first: Chromium without its
+proprietary codecs said it could record one and failed part way. Then VP9:
+recording in real time, its software encoder fell behind on this machine and
+gave up twenty seconds in. A recorded WebM has no duration, so players showed
+0:00 and could not seek; the film writes it into the header's Info element.
+On the workbook: 2.5 MB, 1280×720, 30.00 s by ffmpeg, which decodes it
+cleanly, and its frames read, November 2023 to the shelf of September 2026.
+The README's GIF is made from it.
+
 ### A map of the strains — `wits like`, the Effects page
 
 Every product dispensed, placed by its profile (`report.Strains`). Across is
@@ -793,13 +815,6 @@ plainly.
 - Photograph the label and fill the buy form from it: name, ratio, grams. The
   OCR runs on the device (Tesseract compiled to WebAssembly) — a photograph of
   a prescription leaves the machine for nothing.
-
-#### 🔹 The replay as a film
-
-- **Status**: Planned
-- Render the replay to MP4 or GIF: three years of the shelf filling and
-  draining in thirty seconds, from the same frames the browser draws.
-
 
 ## 🩺 Findings in the imported records
 
