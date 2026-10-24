@@ -164,7 +164,13 @@ decline to its empty day — then the journal, an analysis view scoping from the
 current cycle out to the whole history, the storage, the stash, the sessions,
 and the devices. `tab` moves between them. Entries can be recorded
 there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh — and
-`?` lists every key the current screen honours.
+`?` lists every key the current screen honours. `q` quits; `esc` only ever
+closes the form in front.
+
+The interface keeps up with the repository: an entry made with a command in
+another terminal shows within a second, and at midnight "today" moves on. A
+fill dated ahead — entered before the pickup — waits off the dashboard until
+its day.
 
 `t` picks a theme: wits' own, which follows the terminal's light or dark
 background, or one of twenty editor themes — Dark+ and Light+, One Dark Pro,

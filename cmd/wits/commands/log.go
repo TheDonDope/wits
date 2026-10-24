@@ -32,7 +32,7 @@ var Log = &cobra.Command{
 
 		events := s.State.Events
 		if logCurrent {
-			if cycle := s.State.CurrentCycle(); cycle != nil {
+			if cycle := s.Cycle(); cycle != nil {
 				events = cycle.Events
 			} else {
 				events = nil

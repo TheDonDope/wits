@@ -28,7 +28,7 @@ var Status = &cobra.Command{
 			return err
 		}
 		warnChain(cmd.ErrOrStderr(), s.Workspace)
-		writeStatus(cmd.OutOrStdout(), s.State)
+		writeStatus(cmd.OutOrStdout(), s.State, s.Cycle())
 		return nil
 	},
 }
@@ -157,8 +157,7 @@ func massLine(state *ledger.State) string {
 }
 
 // writeStatus renders the state as a table.
-func writeStatus(out io.Writer, state *ledger.State) {
-	cycle := state.CurrentCycle()
+func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 	if cycle == nil {
 		fmt.Fprintln(out, "No cycle in progress. Storage is empty.")
 		if len(state.Cycles) > 0 {
@@ -172,7 +171,7 @@ func writeStatus(out io.Writer, state *ledger.State) {
 
 	stats := ledger.Summarise(cycle.Events)
 	fmt.Fprintf(out, "On cycle %d, opened %s (day %d)\n\n",
-		len(state.Cycles), cycle.Start.Format(time.DateOnly), daysSince(cycle.Start))
+		cycle.Seq+1, cycle.Start.Format(time.DateOnly), daysSince(cycle.Start))
 
 	// Only the products of this fill. Four years of history holds every product
 	// ever dispensed, and listing all of them buries the three that are on the

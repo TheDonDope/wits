@@ -224,6 +224,14 @@ stash, sessions, devices — reading from the ledger and nothing else, so
 the figures on screen and the figures in `wits status` are the same figures by
 construction.
 
+The snapshot follows the repository. Each second's clock tick stats the journal
+and the catalogs, and reloads when another process has written to them or the
+day has turned; until then the screen showed the repository as it was when it
+opened, with "today" frozen at launch. The cycle in progress is the one at the
+frame's moment (`ledger.State.CycleAt`): a fill dated ahead is not in progress
+until it arrives, where it used to put "day -1529" on the dashboard. `esc` no
+longer quits — it closes forms, and one press too many closed the interface.
+
 Because everything is derived from an append-only log, any screen can start
 from empty and grow the way the record grew: the analysis, storage and stash
 views share one replay transport (`p` plays, `←/→` steps, `+/-` retunes;

@@ -48,7 +48,7 @@ var Export = &cobra.Command{
 
 		cycles := s.State.Cycles
 		if !exportAll {
-			if current := s.State.CurrentCycle(); current != nil {
+			if current := s.Cycle(); current != nil {
 				cycles = []ledger.Cycle{*current}
 			} else if n := len(cycles); n > 0 {
 				cycles = cycles[n-1:]

@@ -292,20 +292,28 @@ func (s *State) Held(product string) float64 {
 	return 0
 }
 
-// CurrentCycle returns the latest fill while anything on the shelf keeps a
-// cycle open, or nil once every cycle has ground down to nothing. The latest
-// fill is the prescription in progress even when an older cycle's jar
-// outlives it.
-func (s *State) CurrentCycle() *Cycle {
-	if len(s.Cycles) == 0 {
+// CycleAt returns the fill in progress at t: the latest one dispensed by
+// then, while anything on the shelf keeps a cycle open, or nil once every
+// cycle has ground down to nothing. The latest fill is the prescription in
+// progress even when an older cycle's jar outlives it.
+//
+// A fill can be dated ahead of t — entered before the pickup — and is not the
+// one in progress until it arrives: taking the last cycle regardless put
+// "cycle 4, opened 2031-01-01 (day -1529)" at the top of wits status.
+func (s *State) CycleAt(t time.Time) *Cycle {
+	latest := -1
+	open := false
+	for i := range s.Cycles {
+		if s.Cycles[i].Start.After(t) {
+			break
+		}
+		latest = i
+		open = open || s.Cycles[i].Open()
+	}
+	if latest < 0 || !open {
 		return nil
 	}
-	for i := range s.Cycles {
-		if s.Cycles[i].Open() {
-			return &s.Cycles[len(s.Cycles)-1]
-		}
-	}
-	return nil
+	return &s.Cycles[latest]
 }
 
 // ShareOf returns the grams of one product still standing on the cycle's own

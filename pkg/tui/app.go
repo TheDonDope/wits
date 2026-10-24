@@ -3,6 +3,7 @@ package tui
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
@@ -22,21 +24,53 @@ import (
 type Data struct {
 	*workspace.Workspace
 	Now time.Time
+
+	// stamp is what the repository's files looked like when they were read,
+	// so the interface can tell when something else has written to them.
+	stamp string
 }
 
-// Load reads a repository into a Data.
+// Load reads a repository into a Data. The files are stamped before they are
+// read, so a write landing during the read shows as a change on the next look
+// rather than being missed.
 func Load(r *repo.Repo) (Data, error) {
+	before := stamp(r)
 	ws, err := workspace.Read(r)
 	if err != nil {
 		return Data{}, err
 	}
-	return From(ws), nil
+	d := From(ws)
+	d.stamp = before
+	return d, nil
 }
+
+// stamp sums up the size and modification time of the files a snapshot is
+// read from. Comparing two is a stat of three files, cheap enough for every
+// tick of the clock.
+func stamp(r *repo.Repo) string {
+	var b strings.Builder
+	for _, path := range []string{r.JournalPath(), r.ProductsPath(), r.DevicesPath()} {
+		if info, err := os.Stat(path); err == nil {
+			fmt.Fprintf(&b, "%d:%d;", info.Size(), info.ModTime().UnixNano())
+		} else {
+			b.WriteString("-;")
+		}
+	}
+	return b.String()
+}
+
+// Cycle returns the fill in progress at the frame's moment — the one every
+// figure on screen is computed against.
+func (d Data) Cycle() *ledger.Cycle { return d.State.CycleAt(d.Now) }
 
 // From wraps an already-open workspace, so a caller that has one does not read
 // the repository a second time.
 func From(ws *workspace.Workspace) Data {
-	return Data{Workspace: ws, Now: ws.OpenedAt}
+	d := Data{Workspace: ws, Now: ws.OpenedAt}
+	if ws != nil && ws.Repo != nil {
+		d.stamp = stamp(ws.Repo)
+	}
+	return d
 }
 
 // screen is one of the views the tab bar switches between.
@@ -93,7 +127,9 @@ func defaultKeys() keyMap {
 		Add:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
 		Theme:  key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "theme")),
 		Help:   key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
-		Quit:   key.NewBinding(key.WithKeys("q", "ctrl+c", "esc"), key.WithHelp("q", "quit")),
+		// esc is not a way out: it closes a form or a picker, and one press
+		// too many after closing one used to quit the whole interface.
+		Quit: key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
 	}
 }
 
@@ -140,6 +176,10 @@ type App struct {
 	// frame every derived figure is computed against; the wall is only ever
 	// read for display, so the two disagreeing cannot put a number on screen.
 	wall time.Time
+
+	// reloading is set while a reload is on its way, so a slow one is not
+	// asked for again on every tick.
+	reloading bool
 
 	// entry is the form in front, if any. While it is open it takes every key,
 	// so navigation cannot fire underneath a half-filled entry.
@@ -192,6 +232,24 @@ func (a *App) Init() tea.Cmd {
 // wallTickMsg carries the clock, once a second.
 type wallTickMsg time.Time
 
+// refresh moves the wall clock on, and reloads when the snapshot has gone
+// stale: another process has written to the repository — a grind from the
+// command line while the interface is open — or the day has turned, so that
+// "today" and "day N" are no longer true. Before this the screen showed the
+// repository as it was when it opened until something was entered in it.
+func (a *App) refresh(now time.Time) tea.Cmd {
+	a.wall = now
+	if a.reloading || a.data.Workspace == nil || a.data.Repo == nil {
+		return nil
+	}
+	sameDay := now.Format(time.DateOnly) == a.data.Now.Format(time.DateOnly)
+	if sameDay && stamp(a.data.Repo) == a.data.stamp {
+		return nil
+	}
+	a.reloading = true
+	return a.reload()
+}
+
 // tickWall schedules the next reading of the wall clock.
 func tickWall() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return wallTickMsg(t) })
@@ -221,8 +279,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case wallTickMsg:
-		a.wall = time.Time(msg)
-		return a, tickWall()
+		return a, tea.Batch(a.refresh(time.Time(msg)), tickWall())
 
 	case entryDoneMsg:
 		return a.entryDone(msg)
@@ -232,10 +289,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case reloadedMsg:
 		if msg.err != nil {
-			a.notice, a.failed = msg.err.Error(), true
+			a.notice, a.failed, a.reloading = msg.err.Error(), true, false
 			return a, nil
 		}
-		a.data = msg.data
+		a.data, a.reloading = msg.data, false
 		return a, nil
 
 	case tea.KeyPressMsg:
@@ -386,7 +443,7 @@ func (a *App) header() string {
 	right := ""
 	if c := a.data.Cycle(); c != nil {
 		candidate := t.Dim.Render(fmt.Sprintf("cycle %d · day %d",
-			len(a.data.State.Cycles), daysBetween(c.Start, a.data.Now)+1))
+			c.Seq+1, daysBetween(c.Start, a.data.Now)+1))
 		if lipgloss.Width(left)+lipgloss.Width(candidate)+3 <= a.width {
 			right = candidate
 		}

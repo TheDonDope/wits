@@ -96,8 +96,9 @@ func (w *Workspace) Journal() *journal.Journal { return w.Repo.Journal() }
 // Events returns the entries the snapshot was folded from.
 func (w *Workspace) Events() []journal.Event { return w.State.Events }
 
-// Cycle returns the prescription cycle in progress, or nil.
-func (w *Workspace) Cycle() *ledger.Cycle { return w.State.CurrentCycle() }
+// Cycle returns the prescription cycle in progress when the snapshot was
+// taken, or nil.
+func (w *Workspace) Cycle() *ledger.Cycle { return w.State.CycleAt(w.OpenedAt) }
 
 // ProductName resolves a slug to its display name, falling back to the slug so
 // that an entry for a product missing from the catalog still reads sensibly.

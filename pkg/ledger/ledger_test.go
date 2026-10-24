@@ -113,7 +113,7 @@ func TestCycles(t *testing.T) {
 		require.Len(t, s.Cycles, 1)
 		assert.False(t, s.Cycles[0].Open(), "Should close itself when the last of its grams is ground")
 		assert.Equal(t, day(2), s.Cycles[0].End, "Should date the close to the grind that emptied it")
-		assert.Nil(t, s.CurrentCycle(), "Nothing on the shelf, no cycle in progress")
+		assert.Nil(t, s.CycleAt(day(1000)), "Nothing on the shelf, no cycle in progress")
 	})
 
 	t.Run("TheNextFillOpensTheNextCycle", func(t *testing.T) {
@@ -365,4 +365,24 @@ func TestFoldsByDate(t *testing.T) {
 		assert.Equal(t, journal.Storage, s.Overdrawn[0].Account)
 		assert.Equal(t, -2.0, s.Overdrawn[0].Grams)
 	})
+}
+
+func TestCycleAt(t *testing.T) {
+	s := Fold([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 20, day(0)),
+		event(journal.Grind, "wedding-cake", 1, day(1)),
+		event(journal.Purchase, "lemon-cookie", 10, day(60)),
+	})
+
+	require.Len(t, s.Cycles, 2)
+	assert.Nil(t, s.CycleAt(day(-1)), "Nothing had been dispensed yet")
+	assert.Equal(t, 0, s.CycleAt(day(5)).Seq, "A fill dated ahead is not in progress before it arrives")
+	assert.Equal(t, 1, s.CycleAt(day(60)).Seq, "and is from the day it does")
+
+	emptied := Fold([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 2, day(0)),
+		event(journal.Grind, "wedding-cake", 2, day(1)),
+		event(journal.Purchase, "lemon-cookie", 10, day(60)),
+	})
+	assert.Nil(t, emptied.CycleAt(day(5)), "With the shelf empty and the next fill not here yet, nothing is in progress")
 }

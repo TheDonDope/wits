@@ -152,7 +152,7 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 
 	headline := t.Big.Render(fmt.Sprintf("%.2f g", remaining)) +
 		t.Dim.Render(fmt.Sprintf("  of %.0f g · cycle %d (started: %s), day %d",
-			held, len(a.data.State.Cycles), c.Start.Format("2006-01-02"),
+			held, c.Seq+1, c.Start.Format("2006-01-02"),
 			daysBetween(c.Start, a.data.Now)+1))
 	bar := GradientGauge(w, fraction, t.Good, t.Level(fraction), t.Dim)
 
