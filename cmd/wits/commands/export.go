@@ -388,7 +388,7 @@ func writeSite(dir string, cycles []ledger.Cycle, s *session) error {
 	width := len(strconv.Itoa(len(s.State.Cycles)))
 	page := func(c ledger.Cycle) string { return fmt.Sprintf("%0*d.md", width, c.Seq+1) }
 	var index strings.Builder
-	writeIndex(&index, cycles, s, page)
+	writeIndex(&index, cycles, page)
 	if err := os.WriteFile(filepath.Join(dir, "index.md"), []byte(index.String()), 0600); err != nil {
 		return err
 	}
@@ -413,7 +413,7 @@ func writeSite(dir string, cycles []ledger.Cycle, s *session) error {
 
 // writeIndex is the site's front page: every fill in a table, newest first,
 // each linking to its page, and the totals across them.
-func writeIndex(out io.Writer, cycles []ledger.Cycle, s *session, page func(ledger.Cycle) string) {
+func writeIndex(out io.Writer, cycles []ledger.Cycle, page func(ledger.Cycle) string) {
 	fmt.Fprintf(out, "# Wits journal\n\nExported %s. %s.\n", time.Now().Format(time.DateOnly), plural(len(cycles), "fill"))
 	if len(cycles) == 0 {
 		return
