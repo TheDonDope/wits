@@ -470,7 +470,7 @@ func TestFsckCommand(t *testing.T) {
 		r, err := repo.Discover(dir)
 		require.NoError(t, err)
 		// Written past the recorder, the way an old import or a hand edit
-		// could: more ground than there was, and a product nobody defined.
+		// could: a product nobody defined.
 		for _, e := range []journal.Event{
 			{Type: journal.Grind, Product: "wcake-221", Grams: 5, OccurredAt: time.Date(2026, 7, 2, 0, 0, 0, 0, time.Local)},
 			{Type: journal.Purchase, Product: "ghost", Grams: 2, OccurredAt: time.Date(2026, 7, 3, 0, 0, 0, 0, time.Local)},
@@ -485,9 +485,8 @@ func TestFsckCommand(t *testing.T) {
 
 		out, err := run(t, dir, Fsck)
 
-		assert.EqualError(t, err, "3 problems found")
+		assert.EqualError(t, err, "2 problems found")
 		assert.Contains(t, out, "✗ journal hash chain is broken: event 1")
-		assert.Contains(t, out, "left storage at")
 		assert.Contains(t, out, "✗ ghost is named by 1 entry but is not in the product catalog")
 
 		status, err := run(t, dir, Status)

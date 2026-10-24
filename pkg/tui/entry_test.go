@@ -151,7 +151,7 @@ func TestGrindForm(t *testing.T) {
 	assert.Equal(t, journal.Grind, events[1].Type, "Should be appended to the journal")
 }
 
-func TestFormRefusesAnOverdraw(t *testing.T) {
+func TestFormRefusesTakingWhatIsNotThere(t *testing.T) {
 	app := liveApp(t)
 	var m tea.Model = app
 
@@ -163,7 +163,7 @@ func TestFormRefusesAnOverdraw(t *testing.T) {
 	done, ok := findDone(msgs)
 	require.True(t, ok, "Should report the outcome, got %v", msgs)
 
-	assert.Error(t, done.err, "Should refuse to draw storage below zero, the same as the command does")
+	assert.Error(t, done.err, "Should refuse to take more than storage holds, the same as the command does")
 	events, err := app.data.Repo.Journal().Events()
 	require.NoError(t, err)
 	assert.Len(t, events, 1, "Should not have written anything")

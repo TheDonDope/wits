@@ -104,14 +104,16 @@ Two orders, never mixed: the journal is in **recorded order** (the hash chain),
 the fold in **occurred order** (`ledger.Chronological`, ties kept recorded).
 `State.Events` is the fold's order; anything that needs the chain — bundles —
 reads `Journal().Events()`. Entries can be backdated anywhere, so the recorder
-checks a new one against every date in the replay (`State.Overdrawn`), not only
-against today's balance.
+checks a new one against every date in the replay (`ledger.Shortfalls`), not
+only against today's balance. Grams are physical: nothing models a negative
+balance or an overdraft — an entry either had its grams in the jar or is
+refused.
 
 Grams move between four accounts (storage → stash → consumed → avb), one stash
 per product, every entry a transfer — mass is conserved end to end. Add amounts
 in `journal.Centigrams` (`journal.CG`), not floats with `ledger.Round` after;
 read typed amounts with `ledger.ParseGrams`.
-`pkg/record` applies entries with the guard rails (no overdrawing an account);
+`pkg/record` applies entries with the guard rails (nothing takes more than a jar holds);
 the CLI commands and the TUI forms both go through it, so they cannot disagree.
 Every recorder entry is a builder run by `Journal.AppendWith`, under the lock,
 against a fold of the journal as it stands — a check made outside a builder is

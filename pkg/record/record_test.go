@@ -62,7 +62,7 @@ func TestGrind(t *testing.T) {
 		assert.Equal(t, 0.75, rec.Available("wcake-221", journal.Stash), "Should fill the stash")
 	})
 
-	t.Run("RefusesToOverdraw", func(t *testing.T) {
+	t.Run("RefusesToTakeWhatIsNotThere", func(t *testing.T) {
 		_, err := rec.Grind("wedding", 500, time.Now())
 
 		assert.ErrorContains(t, err, "cannot take", "Should refuse rather than go negative")
@@ -221,7 +221,7 @@ func TestAmendAPurchaseUpward(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = rec.Amend(buy.Hash, 25, "the label said 25")
-	require.NoError(t, err, "A purchase draws on the pharmacy, which cannot be overdrawn")
+	require.NoError(t, err, "A purchase draws on the pharmacy, which is not a jar")
 	assert.Equal(t, 25.0, rec.Available("wcake-221", journal.Storage))
 }
 
@@ -463,9 +463,9 @@ func TestBackdating(t *testing.T) {
 	t.Run("AGrindCannotComeBeforeItsGrams", func(t *testing.T) {
 		_, err := rec.Grind("wedding", 10, time.Now().AddDate(-2, 0, 0))
 
-		assert.ErrorContains(t, err, "the grams were not there yet",
+		assert.ErrorContains(t, err, "there were only 0.00g in storage then",
 			"Today's storage holds enough, but two years ago there was none")
-		assert.Empty(t, rec.State().Overdrawn, "Should have recorded nothing")
+		assert.Empty(t, ledger.Shortfalls(rec.State().Events), "Should have recorded nothing")
 	})
 
 	t.Run("UndoingAFillAheadOfTodayIsDatedWithIt", func(t *testing.T) {
@@ -473,7 +473,7 @@ func TestBackdating(t *testing.T) {
 		require.NoError(t, err)
 
 		undo, err := rec.Revert(ahead.Hash, "")
-		require.NoError(t, err, "Taking the grams back before they arrived would overdraw storage")
+		require.NoError(t, err, "Taking the grams back before they arrived would take grams that were not there")
 		assert.True(t, ahead.OccurredAt.Equal(undo.OccurredAt), "dated %s, not %s", undo.OccurredAt, ahead.OccurredAt)
 	})
 }
@@ -578,7 +578,7 @@ func TestChecksTheJournalNotTheSnapshot(t *testing.T) {
 		_, err = tui.Grind("wedding", 10, time.Now())
 
 		assert.ErrorContains(t, err, "only 0.00g", "The TUI's snapshot still says 10 g; the journal says none")
-		assert.Equal(t, 0.0, snapshot(t, cli).Available("wcake-221", journal.Storage), "Storage should not go below zero")
+		assert.Equal(t, 0.0, snapshot(t, cli).Available("wcake-221", journal.Storage), "Storage should hold nothing, not less than nothing")
 	})
 
 	t.Run("TwoUndoesOfOneEntry", func(t *testing.T) {
@@ -646,4 +646,22 @@ func TestCatalogChangesKeepEachOther(t *testing.T) {
 	_, _, added, err = tui.Buy("Cannamedical 28/1 Lemon Cookie", "", 5, time.Now())
 	require.NoError(t, err)
 	assert.False(t, added, "A product added elsewhere should be used, not added twice")
+}
+
+func TestABackdatedGrindCannotTakeALaterOnesGrams(t *testing.T) {
+	rec := recorder(t)
+	start := time.Now().AddDate(0, 0, -30)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 10, start)
+	require.NoError(t, err)
+	_, err = rec.Grind("wedding", 8, start.AddDate(0, 0, 10))
+	require.NoError(t, err)
+	_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "", 10, start.AddDate(0, 0, 20))
+	require.NoError(t, err)
+
+	// Today the jar holds 12 g, and on day 5 it held 10 — but the 8 g ground
+	// on day 10 needs what this would take.
+	_, err = rec.Grind("wedding", 5, start.AddDate(0, 0, 5))
+
+	assert.ErrorContains(t, err, "would leave only 5.00g in storage for the grind of 8.00g")
+	assert.Empty(t, ledger.Shortfalls(rec.State().Events))
 }
