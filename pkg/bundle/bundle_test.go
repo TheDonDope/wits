@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -219,4 +221,95 @@ func TestRead(t *testing.T) {
 		require.Len(t, got.Events, 1)
 		assert.Equal(t, 1.0, got.Events[0].Grams, "Should read the event")
 	})
+}
+
+// corrected is a history with both kinds of adjustment: an undo, and a
+// weighing with the note wits writes for one.
+func corrected(t *testing.T) (*journal.Journal, []journal.Event) {
+	t.Helper()
+	at := time.Date(2026, time.July, 9, 10, 30, 0, 0, berlin)
+	j, stored := fill(t, []journal.Event{
+		{Type: journal.Purchase, Product: "enua-wedding-cake-221", Grams: 20, OccurredAt: at},
+		{Type: journal.Grind, Product: "enua-wedding-cake-221", Grams: 2, OccurredAt: at.AddDate(0, 0, 1)},
+	})
+	more := []journal.Event{
+		{Type: journal.Adjust, Product: "enua-wedding-cake-221", Grams: 2, From: journal.Stash, To: journal.Storage,
+			OccurredAt: at.AddDate(0, 0, 2), Reverts: stored[1].Hash, Note: "reverts " + stored[1].Hash[:7]},
+		{Type: journal.Adjust, Product: "enua-wedding-cake-221", Grams: 1.5, From: journal.Storage, To: journal.External,
+			OccurredAt: at.AddDate(0, 0, 3), Note: "reconciled storage: 18.50 g weighed, 20.00 g expected"},
+		{Type: journal.Adjust, Product: "enua-wedding-cake-221", Grams: 0.5, From: journal.External, To: journal.AVB,
+			OccurredAt: at.AddDate(0, 0, 4), Note: "reconciled the AVB jar: 0.50 g weighed, 0.00 g expected"},
+	}
+	for _, e := range more {
+		s, err := j.Append(e)
+		require.NoError(t, err)
+		stored = append(stored, s)
+	}
+	return j, stored
+}
+
+// restored appends a bundle's events to a fresh journal and returns its bytes.
+func restored(t *testing.T, events []journal.Event) []byte {
+	t.Helper()
+	j, _ := fill(t, events)
+	data, err := os.ReadFile(j.Path())
+	require.NoError(t, err)
+	return data
+}
+
+func TestAdjustmentsKeepTheirAccounts(t *testing.T) {
+	j, stored := corrected(t)
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Events: stored}))
+	assert.Contains(t, buf.String(), " f=stash>storage", "An undo's accounts should be written")
+	assert.Contains(t, buf.String(), " f=storage>external", "and a weighing's")
+
+	got, err := Read(&buf)
+	require.NoError(t, err)
+
+	original, err := os.ReadFile(j.Path())
+	require.NoError(t, err)
+	assert.Equal(t, string(original), string(restored(t, got.Events)),
+		"Restoring should reproduce the journal exactly; the accounts once came back external to external")
+}
+
+func TestReadsFormat1Bundles(t *testing.T) {
+	format1 := func(t *testing.T, stored []journal.Event) string {
+		var buf bytes.Buffer
+		require.NoError(t, Write(&buf, Contents{Events: stored}))
+		text := strings.Replace(buf.String(), "wits-bundle 2", "wits-bundle 1", 1)
+		return regexp.MustCompile(` f=[a-z]+>[a-z]+`).ReplaceAllString(text, "")
+	}
+
+	t.Run("RecoversTheAccounts", func(t *testing.T) {
+		j, stored := corrected(t)
+
+		got, err := Read(bytes.NewBufferString(format1(t, stored)))
+
+		require.NoError(t, err)
+		assert.Equal(t, journal.Stash, got.Events[2].From, "An undo reverses the entry it names")
+		assert.Equal(t, journal.External, got.Events[3].To, "A weighing that found less sends grams out")
+		assert.Equal(t, journal.AVB, got.Events[4].To, "and one that found more brings them in")
+		original, err := os.ReadFile(j.Path())
+		require.NoError(t, err)
+		assert.Equal(t, string(original), string(restored(t, got.Events)), "and the journal comes back exactly")
+	})
+
+	t.Run("RefusesWhatItCannotRecover", func(t *testing.T) {
+		_, stored := fill(t, []journal.Event{
+			{Type: journal.Purchase, Product: "wcake", Grams: 20, OccurredAt: time.Date(2026, 7, 9, 0, 0, 0, 0, time.UTC)},
+			{Type: journal.Adjust, Product: "wcake", Grams: 1, From: journal.Storage, To: journal.External,
+				OccurredAt: time.Date(2026, 7, 10, 0, 0, 0, 0, time.UTC), Note: "spilled it"},
+		})
+
+		_, err := Read(bytes.NewBufferString(format1(t, stored)))
+
+		assert.ErrorContains(t, err, "its note does not say them", "Should refuse rather than restore it moving nothing")
+		assert.ErrorContains(t, err, "event 2")
+	})
+}
+
+func TestReadRejectsUnknownAccounts(t *testing.T) {
+	_, err := Read(bytes.NewBufferString("wits-bundle 2\nP0 wcake\n--\na0 0 100 f=storage>nowhere\n"))
+	assert.ErrorContains(t, err, "unreadable accounts")
 }

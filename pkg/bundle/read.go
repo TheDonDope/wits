@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,103 +23,139 @@ func can(g int) cannabis.GeneticType { return cannabis.GeneticType(g) }
 // to a journal, and are assigned when the events are appended to one. Restoring
 // into an empty journal in this order reproduces the chain exactly.
 func Read(r io.Reader) (*Contents, error) {
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	rd := &reader{sc: bufio.NewScanner(r)}
+	rd.sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
-	line := 0
-	next := func() (string, bool) {
-		if !sc.Scan() {
-			return "", false
-		}
-		line++
-		return sc.Text(), true
-	}
-
-	head, ok := next()
+	head, ok := rd.next()
 	if !ok {
 		return nil, fmt.Errorf("bundle is empty")
 	}
-	if err := checkHeader(head, line); err != nil {
+	version, err := checkHeader(head, rd.line)
+	if err != nil {
 		return nil, err
 	}
-
-	c := &Contents{Products: &catalog.Catalog{}, Devices: &catalog.Devices{}}
-	var products, devices, notes []string
-
-	for {
-		text, ok := next()
-		if !ok {
-			return nil, fmt.Errorf("bundle ended before its events began")
-		}
-		if text == separator {
-			break
-		}
-		if text == "" || strings.HasPrefix(text, "#") {
-			continue
-		}
-		switch text[0] {
-		case 'P':
-			slug, product, err := readProduct(text, line)
-			if err != nil {
-				return nil, err
-			}
-			products = append(products, slug)
-			c.Products.Products = append(c.Products.Products, product)
-		case 'D':
-			slug, device, err := readDevice(text, line)
-			if err != nil {
-				return nil, err
-			}
-			devices = append(devices, slug)
-			c.Devices.Devices = append(c.Devices.Devices, device)
-		case 'N':
-			parts := strings.SplitN(text, " ", 2)
-			if len(parts) != 2 {
-				return nil, errorf(line, "note entry needs a value")
-			}
-			notes = append(notes, unescape(parts[1]))
-		default:
-			return nil, errorf(line, "unknown header entry %q", text)
-		}
+	c, refs, err := rd.catalogs()
+	if err != nil {
+		return nil, err
 	}
-
-	var occurred, recorded int64
-	offset, recordedOffset := 0, 0
-	for {
-		text, ok := next()
-		if !ok {
-			break
-		}
-		if text == "" || strings.HasPrefix(text, "#") {
-			continue
-		}
-		e, st, err := readEvent(text, line, products, devices, notes, state{occurred, recorded, offset, recordedOffset})
-		if err != nil {
+	if c.Events, err = rd.events(refs); err != nil {
+		return nil, err
+	}
+	if version < 2 {
+		if err := recoverFlows(c.Events); err != nil {
 			return nil, err
 		}
-		occurred, recorded, offset, recordedOffset = st.occurred, st.recorded, st.offset, st.recordedOffset
-		c.Events = append(c.Events, e)
-	}
-	if err := sc.Err(); err != nil {
-		return nil, err
 	}
 	return c, nil
 }
 
-// checkHeader validates the magic line.
-func checkHeader(text string, line int) error {
+// reader walks a bundle line by line, counting lines for its errors.
+type reader struct {
+	sc   *bufio.Scanner
+	line int
+}
+
+// next returns the next line, or false at the end.
+func (rd *reader) next() (string, bool) {
+	if !rd.sc.Scan() {
+		return "", false
+	}
+	rd.line++
+	return rd.sc.Text(), true
+}
+
+// refs are the header's tables, which event lines refer to by position.
+type refs struct {
+	products, devices, notes []string
+}
+
+// catalogs reads the header up to the separator: the products, the devices
+// and the notes.
+func (rd *reader) catalogs() (*Contents, refs, error) {
+	c := &Contents{Products: &catalog.Catalog{}, Devices: &catalog.Devices{}}
+	var t refs
+	for {
+		text, ok := rd.next()
+		if !ok {
+			return nil, t, fmt.Errorf("bundle ended before its events began")
+		}
+		if text == separator {
+			return c, t, nil
+		}
+		if text == "" || strings.HasPrefix(text, "#") {
+			continue
+		}
+		if err := t.entry(c, text, rd.line); err != nil {
+			return nil, t, err
+		}
+	}
+}
+
+// entry reads one header line into the contents and the tables.
+func (t *refs) entry(c *Contents, text string, line int) error {
+	switch text[0] {
+	case 'P':
+		slug, product, err := readProduct(text, line)
+		if err != nil {
+			return err
+		}
+		t.products = append(t.products, slug)
+		c.Products.Products = append(c.Products.Products, product)
+	case 'D':
+		slug, device, err := readDevice(text, line)
+		if err != nil {
+			return err
+		}
+		t.devices = append(t.devices, slug)
+		c.Devices.Devices = append(c.Devices.Devices, device)
+	case 'N':
+		parts := strings.SplitN(text, " ", 2)
+		if len(parts) != 2 {
+			return errorf(line, "note entry needs a value")
+		}
+		t.notes = append(t.notes, unescape(parts[1]))
+	default:
+		return errorf(line, "unknown header entry %q", text)
+	}
+	return nil
+}
+
+// events reads the event lines after the separator.
+func (rd *reader) events(t refs) ([]journal.Event, error) {
+	var events []journal.Event
+	var st state
+	for {
+		text, ok := rd.next()
+		if !ok {
+			break
+		}
+		if text == "" || strings.HasPrefix(text, "#") {
+			continue
+		}
+		e, next, err := readEvent(text, rd.line, t, st)
+		if err != nil {
+			return nil, err
+		}
+		st = next
+		events = append(events, e)
+	}
+	return events, rd.sc.Err()
+}
+
+// checkHeader validates the magic line and returns the format version.
+func checkHeader(text string, line int) (int, error) {
 	parts := strings.Fields(text)
 	if len(parts) != 2 || parts[0] != Magic {
-		return errorf(line, "not a wits bundle")
+		return 0, errorf(line, "not a wits bundle")
 	}
 	version, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return errorf(line, "unreadable format version %q", parts[1])
+		return 0, errorf(line, "unreadable format version %q", parts[1])
 	}
 	if version > Version {
-		return errorf(line, "bundle is format version %d, this build understands %d", version, Version)
+		return 0, errorf(line, "bundle is format version %d, this build understands %d", version, Version)
 	}
-	return nil
+	return version, nil
 }
 
 // state is what one event line resolves its deltas against, and what the next
@@ -131,7 +168,7 @@ type state struct {
 }
 
 // readEvent decodes one event line against the running decode state.
-func readEvent(text string, line int, products, devices, notes []string, in state) (journal.Event, state, error) {
+func readEvent(text string, line int, t refs, in state) (journal.Event, state, error) {
 	var e journal.Event
 	out := in
 
@@ -144,19 +181,16 @@ func readEvent(text string, line int, products, devices, notes []string, in stat
 		return e, out, errorf(line, "unknown event type %q", string(parts[0][0]))
 	}
 	e.Type = typ
-
 	pi, err := parseNum(parts[0][1:])
-	if err != nil || pi < 0 || int(pi) >= len(products) {
+	if err != nil || pi < 0 || int(pi) >= len(t.products) {
 		return e, out, errorf(line, "event refers to product %q, which the header does not define", parts[0][1:])
 	}
-	e.Product = products[pi]
-
+	e.Product = t.products[pi]
 	delta, err := parseNum(parts[1])
 	if err != nil {
 		return e, out, errorf(line, "unreadable time delta %q", parts[1])
 	}
 	out.occurred = in.occurred + delta
-
 	cg, err := parseNum(parts[2])
 	if err != nil {
 		return e, out, errorf(line, "unreadable amount %q", parts[2])
@@ -168,54 +202,162 @@ func readEvent(text string, line int, products, devices, notes []string, in stat
 	out.recorded = in.recorded
 	for _, attr := range parts[3:] {
 		key, value := field(attr)
-		switch key {
-		case "r":
-			d, err := parseNum(value)
-			if err != nil {
-				return e, out, errorf(line, "unreadable recorded delta %q", value)
-			}
-			out.recorded = in.recorded + d
-		case "z":
-			off, err := parseNum(value)
-			if err != nil {
-				return e, out, errorf(line, "unreadable zone offset %q", value)
-			}
-			out.offset = int(off)
-		case "zr":
-			off, err := parseNum(value)
-			if err != nil {
-				return e, out, errorf(line, "unreadable recorded zone offset %q", value)
-			}
-			out.recordedOffset = int(off)
-		case "d":
-			di, err := parseNum(value)
-			if err != nil || di < 0 || int(di) >= len(devices) {
-				return e, out, errorf(line, "event refers to device %q, which the header does not define", value)
-			}
-			e.Device = devices[di]
-		case "t":
-			temp, err := parseNum(value)
-			if err != nil {
-				return e, out, errorf(line, "unreadable temperature %q", value)
-			}
-			e.Temperature = int(temp)
-		case "n":
-			ni, err := parseNum(value)
-			if err != nil || ni < 0 || int(ni) >= len(notes) {
-				return e, out, errorf(line, "event refers to note %q, which the header does not define", value)
-			}
-			e.Note = notes[ni]
-		case "v":
-			e.Reverts = value
-		default:
+		decode, ok := eventAttrs[key]
+		if !ok {
 			return e, out, errorf(line, "unknown attribute %q", key)
+		}
+		if err := decode(&e, &out, in, value, t); err != nil {
+			return e, out, errorf(line, "%v", err)
 		}
 	}
 
 	e.OccurredAt = time.Unix(out.occurred, 0).In(zone(out.offset))
 	e.RecordedAt = time.Unix(out.recorded, 0).In(zone(out.recordedOffset))
-	e.From, e.To, _ = journal.Flow(e.Type)
+	if e.From == "" && e.To == "" {
+		e.From, e.To, _ = journal.Flow(e.Type)
+	}
 	return e, out, nil
+}
+
+// eventAttrs decode an event line's optional key=value attributes, each into
+// the event or the running state. A table rather than a switch: each one is
+// a line to read, not a branch to follow.
+var eventAttrs = map[string]func(e *journal.Event, out *state, in state, value string, t refs) error{
+	"r": func(_ *journal.Event, out *state, in state, v string, _ refs) error {
+		d, err := parseNum(v)
+		if err != nil {
+			return fmt.Errorf("unreadable recorded delta %q", v)
+		}
+		out.recorded = in.recorded + d
+		return nil
+	},
+	"z": func(_ *journal.Event, out *state, _ state, v string, _ refs) error {
+		off, err := parseNum(v)
+		if err != nil {
+			return fmt.Errorf("unreadable zone offset %q", v)
+		}
+		out.offset = int(off)
+		return nil
+	},
+	"zr": func(_ *journal.Event, out *state, _ state, v string, _ refs) error {
+		off, err := parseNum(v)
+		if err != nil {
+			return fmt.Errorf("unreadable recorded zone offset %q", v)
+		}
+		out.recordedOffset = int(off)
+		return nil
+	},
+	"d": func(e *journal.Event, _ *state, _ state, v string, t refs) error {
+		i, err := parseNum(v)
+		if err != nil || i < 0 || int(i) >= len(t.devices) {
+			return fmt.Errorf("event refers to device %q, which the header does not define", v)
+		}
+		e.Device = t.devices[i]
+		return nil
+	},
+	"t": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
+		temp, err := parseNum(v)
+		if err != nil {
+			return fmt.Errorf("unreadable temperature %q", v)
+		}
+		e.Temperature = int(temp)
+		return nil
+	},
+	"n": func(e *journal.Event, _ *state, _ state, v string, t refs) error {
+		i, err := parseNum(v)
+		if err != nil || i < 0 || int(i) >= len(t.notes) {
+			return fmt.Errorf("event refers to note %q, which the header does not define", v)
+		}
+		e.Note = t.notes[i]
+		return nil
+	},
+	"v": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
+		e.Reverts = v
+		return nil
+	},
+	"f": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
+		from, to, ok := strings.Cut(v, ">")
+		if !ok || !accounts[journal.Account(from)] || !accounts[journal.Account(to)] {
+			return fmt.Errorf("unreadable accounts %q", v)
+		}
+		e.From, e.To = journal.Account(from), journal.Account(to)
+		return nil
+	},
+}
+
+// accounts are the account names an f attribute may use.
+var accounts = map[journal.Account]bool{
+	journal.External: true, journal.Storage: true, journal.Stash: true,
+	journal.Consumed: true, journal.AVB: true,
+}
+
+// recoverFlows gives back the accounts of the adjustments in a format 1
+// bundle, which did not write them: it took every entry's accounts to follow
+// from its type, and an adjustment's do not — an undo moves grams back the
+// way they came, a weighing in or out of the account weighed. Restored as
+// external to external, they moved nothing, and the repository came back with
+// the wrong balances and a journal that was not the original.
+//
+// An undo names the entry it undoes by hash, so the chain is rebuilt as the
+// events are read to find it, and its accounts are that entry's, reversed. A
+// weighing or a clean-up with the note wits wrote for it says its account and
+// direction. Any other adjustment cannot be restored faithfully, and the
+// restore is refused rather than made wrong.
+func recoverFlows(events []journal.Event) error {
+	byHash := map[string]journal.Event{}
+	prev := ""
+	for i := range events {
+		e := &events[i]
+		if e.Type == journal.Adjust {
+			from, to, err := recoveredFlow(*e, byHash)
+			if err != nil {
+				return fmt.Errorf("event %d, an adjustment of %.2f g of %s on %s: %w",
+					i+1, e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly), err)
+			}
+			e.From, e.To = from, to
+		}
+		sealed := *e
+		sealed.Seq, sealed.Prev = i+1, prev
+		hash, err := journal.Hash(sealed, prev)
+		if err != nil {
+			return err
+		}
+		byHash[hash] = sealed
+		prev = hash
+	}
+	return nil
+}
+
+// reconciledNote is the note a weighing writes when none is given.
+var reconciledNote = regexp.MustCompile(`^reconciled (storage|the stash|the AVB jar): ([0-9.]+) g weighed, ([0-9.]+) g expected$`)
+
+// cleanedNote is the note the storage screen's history clean-up writes; it
+// always empties a stash.
+const cleanedNote = "clean history: consumed at some point"
+
+// recoveredFlow works out one format 1 adjustment's accounts; see recoverFlows.
+func recoveredFlow(e journal.Event, byHash map[string]journal.Event) (journal.Account, journal.Account, error) {
+	if e.Reverts != "" {
+		original, ok := byHash[e.Reverts]
+		if !ok {
+			return "", "", fmt.Errorf("it undoes %.7s, which comes nowhere before it", e.Reverts)
+		}
+		return original.To, original.From, nil
+	}
+	if e.Note == cleanedNote {
+		return journal.Stash, journal.External, nil
+	}
+	m := reconciledNote.FindStringSubmatch(e.Note)
+	if m == nil {
+		return "", "", fmt.Errorf("format 1 bundles did not write an adjustment's accounts, and its note does not say them")
+	}
+	account := map[string]journal.Account{"storage": journal.Storage, "the stash": journal.Stash, "the AVB jar": journal.AVB}[m[1]]
+	weighed, _ := strconv.ParseFloat(m[2], 64)
+	expected, _ := strconv.ParseFloat(m[3], 64)
+	if weighed < expected {
+		return account, journal.External, nil
+	}
+	return journal.External, account, nil
 }
 
 // readProduct decodes a product header entry.

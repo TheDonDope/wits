@@ -129,6 +129,12 @@ func (e Event) sum(prev string) (string, error) {
 	return hex.EncodeToString(h[:]), nil
 }
 
+// Hash returns the hash the event would have chained onto prev — what Append
+// gives it at that position, the Seq set to match. A bundle written before
+// adjustments kept their accounts rebuilds the chain with it while reading,
+// to find the entries its undos name.
+func Hash(e Event, prev string) (string, error) { return e.sum(prev) }
+
 // String returns a one-line representation of the event, in the spirit of
 // `git log --oneline`.
 func (e Event) String() string {
