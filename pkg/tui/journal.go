@@ -192,29 +192,54 @@ func (v journalView) View(a *App, height int) string {
 		v.cursor = v.firstEntry(min(v.cursor, len(v.rows)-1), +1)
 	}
 
-	var lines []string
-	for i, r := range v.rows {
-		switch {
-		case r.heading:
-			if i > 0 {
-				lines = append(lines, "")
-			}
-			lines = append(lines, t.Day(r.day, a.data.Now))
-		default:
-			lines = append(lines, t.entryLine(*r.event, a.data.ProductName(r.event.Product),
-				width, i == v.cursor, r.corrected, r.isFix))
-		}
-	}
-
+	// Only the rows in the window are drawn. Styling all of them — 1429
+	// entries on the workbook — took 34 ms a frame, every second and every
+	// key, for the thirty that fit.
+	line, total := v.layout()
 	cover := v.cover(a, width)
 	body := max(height-3-lipgloss.Height(cover), 1)
+	// The window follows the selected row's line, not its index: a blank
+	// line before each day put the selection further below the window the
+	// further down the journal it went.
+	top := scrollTo(line[v.cursor], 0, body, total)
+	lines := make([]string, 0, body)
+	for i, r := range v.rows {
+		at := line[i]
+		if r.heading && i > 0 && at-1 >= top && at-1 < top+body {
+			lines = append(lines, "")
+		}
+		if at < top || at >= top+body {
+			continue
+		}
+		if r.heading {
+			lines = append(lines, t.Day(r.day, a.data.Now))
+			continue
+		}
+		lines = append(lines, t.entryLine(*r.event, a.data.ProductName(r.event.Product),
+			width, i == v.cursor, r.corrected, r.isFix))
+	}
+
 	v.view.SetWidth(width)
 	v.view.SetHeight(body)
 	v.view.SetContent(strings.Join(lines, "\n"))
-	v.view.SetYOffset(scrollTo(v.cursor, v.view.YOffset(), body, len(lines)))
+	v.view.SetYOffset(0)
 
 	return lipgloss.NewStyle().Padding(0, 1).Render(
 		lipgloss.JoinVertical(lipgloss.Left, cover, "", v.status(a, width), v.view.View()))
+}
+
+// layout returns the line each row is drawn on, and how many lines the whole
+// listing takes: a day heading after the first has a blank line above it.
+func (v journalView) layout() (line []int, total int) {
+	line = make([]int, len(v.rows))
+	for i, r := range v.rows {
+		if r.heading && i > 0 {
+			total++
+		}
+		line[i] = total
+		total++
+	}
+	return line, total
 }
 
 // scrollTo returns the offset that keeps line in view, moving as little as it

@@ -280,6 +280,14 @@ stash, sessions, devices — reading from the ledger and nothing else, so
 the figures on screen and the figures in `wits status` are the same figures by
 construction.
 
+The journal draws only the rows in its window: styling all 1429 of the
+workbook's entries took 34 ms a frame — every second, and every key held down —
+and now takes 2.3 ms. The window follows the selected row's line rather than its
+index; a blank line before each day had put the selection further below the
+window the further down it went, off screen after twenty rows. The storage and
+stash screens share one list (`markList`) for moving, ticking and playback,
+where their Update was the same 41 lines twice.
+
 The snapshot follows the repository. Each second's clock tick stats the journal
 and the catalogs, and reloads when another process has written to them or the
 day has turned; until then the screen showed the repository as it was when it
