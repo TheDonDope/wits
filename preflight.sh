@@ -70,9 +70,13 @@ check() {
 	# Codacy's Lizard thresholds: a function past 50 lines of code or a
 	# cyclomatic complexity past 15 becomes a new issue the gate refuses.
 	if [ -n "$changed" ]; then
-		if python3 -c 'import lizard' 2>/dev/null; then
+		# ./doctor.sh install puts lizard in a venv of its own, since the
+		# system python may have no pip to install it with.
+		py="${WITS_TOOLS:-$HOME/.cache/wits-dev}/venv/bin/python"
+		[ -x "$py" ] || py=python3
+		if "$py" -c 'import lizard' 2>/dev/null; then
 			# shellcheck disable=SC2086 # the file list is meant to split
-			warnings="$(python3 -m lizard -T nloc=50 -T cyclomatic_complexity=15 \
+			warnings="$("$py" -m lizard -T nloc=50 -T cyclomatic_complexity=15 \
 				--warnings_only $changed 2>/dev/null | grep 'warning:' || true)"
 			if [ -n "$warnings" ]; then
 				say "✗ Codacy will flag these functions (nloc > 50 or ccn > 15):"
@@ -82,7 +86,7 @@ check() {
 				say "✓ lizard (changed files inside Codacy's limits)"
 			fi
 		else
-			say "· lizard not installed (pip install lizard); skipping the complexity check"
+			say "· lizard not installed (./doctor.sh install); skipping the complexity check"
 		fi
 	else
 		say "· no Go changes to lint"
@@ -115,7 +119,7 @@ check() {
 				fail=1
 			fi
 		else
-			say "· shellcheck not installed; skipping the script check"
+			say "· shellcheck not installed (./doctor.sh install); skipping the script check"
 		fi
 	fi
 
