@@ -70,7 +70,7 @@ func TestJSONIsTheFold(t *testing.T) {
 	assert.Nil(t, got.Cycles[0].Events, "the cycle summary leaves its events to the journal")
 
 	require.NotNil(t, got.Current, "a cycle is in progress")
-	assert.InDelta(t, 20.0, got.Current.Held, 0.001, "held is the fill's own grams")
+	assert.InDelta(t, 20.0, got.Current.Dispensed, 0.001, "dispensed is the fill's own grams")
 	assert.InDelta(t, 18.0, got.Current.Remaining, 0.001)
 	assert.InDelta(t, 0.9, got.Current.RemainingPct, 0.001)
 

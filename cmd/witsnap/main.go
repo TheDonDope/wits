@@ -105,12 +105,12 @@ type state struct {
 	Devices     []deviceUse                `json:"device_usage"`
 }
 
-// currentCycle is scoped to the fill: held and remaining count the cycle's
+// currentCycle is scoped to the fill: dispensed and remaining count the cycle's
 // own share of the jars, and what older still-open cycles hold reports
 // separately.
 type currentCycle struct {
 	Start         time.Time `json:"start"`
-	Held          float64   `json:"held"`
+	Dispensed     float64   `json:"dispensed"`
 	Remaining     float64   `json:"remaining"`
 	RemainingPct  float64   `json:"remaining_pct"`
 	CarriedGrams  float64   `json:"carried_grams,omitempty"`
@@ -185,7 +185,7 @@ func current(ws *workspace.Workspace) *currentCycle {
 	carried, jars, open := ws.State.CarriedOnShelf(c)
 	return &currentCycle{
 		Start:         c.Start,
-		Held:          float64(held),
+		Dispensed:     float64(held),
 		Remaining:     float64(remaining),
 		RemainingPct:  pct,
 		CarriedGrams:  float64(carried),

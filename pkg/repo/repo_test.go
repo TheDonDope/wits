@@ -95,21 +95,20 @@ func TestDiscover(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, Version, r.Config.Version, "Should read the format version")
-		assert.Equal(t, "wits.log", r.Config.LogFile, "Should read the log file")
 	})
 
 	t.Run("IgnoresSettingsItNoLongerKnows", func(t *testing.T) {
-		// Repositories initialised by older builds carry log_level, which
-		// nothing ever read. Opening one must not fail over it.
+		// Repositories initialised by older builds carry log_level and
+		// log_file, which nothing uses any more. Opening one must not fail.
 		dir := t.TempDir()
 		_, err := Init(dir)
 		require.NoError(t, err)
 		require.NoError(t, os.WriteFile(filepath.Join(dir, Dir, configFile),
-			[]byte("version: 1\nlog_level: INFO\nlog_file: wits.log\n"), filePerm))
+			[]byte("version: 1\nlog_level: INFO\nlog_file: wits.log\ntheme: nord\n"), filePerm))
 
 		r, err := Discover(dir)
 		require.NoError(t, err)
-		assert.Equal(t, "wits.log", r.Config.LogFile, "Should still read the settings it knows")
+		assert.Equal(t, "nord", r.Config.Theme, "Should still read the settings it knows")
 	})
 
 	t.Run("RefusesAFutureFormatVersion", func(t *testing.T) {
@@ -183,13 +182,12 @@ func TestSetThemeKeepsTheConfigAsItStands(t *testing.T) {
 	require.NoError(t, err)
 	other, err := Discover(r.WorkTree())
 	require.NoError(t, err)
-	other.Config.LogFile = "elsewhere.log"
-	require.NoError(t, other.writeConfig())
+	require.NoError(t, other.SetTheme("dracula"))
 
 	require.NoError(t, r.SetTheme("nord"))
 
 	reopened, err := Discover(r.WorkTree())
 	require.NoError(t, err)
 	assert.Equal(t, "nord", reopened.Config.Theme)
-	assert.Equal(t, "elsewhere.log", reopened.Config.LogFile, "Should not write back the log file this value read at open")
+	assert.Equal(t, "nord", r.Config.Theme, "and the value that set it holds what it wrote")
 }

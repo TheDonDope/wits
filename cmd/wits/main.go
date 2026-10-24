@@ -7,13 +7,10 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 
-	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/TheDonDope/wits/cmd/wits/commands"
-	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/version"
 )
 
@@ -62,24 +59,10 @@ func main() {
 	}
 }
 
-// openLog sends log output to a file inside the repository when there is one,
-// so that log lines never scribble over the TUI. Without a repository, logging
-// is discarded rather than dumped on the terminal.
+// openLog discards log output, so a library's stray log line can never draw
+// over the interface. It used to send it to wits.log in the repository, which
+// every launch opened and nothing ever wrote to.
 func openLog() func() {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.SetOutput(io.Discard)
-		return func() {}
-	}
-	r, err := repo.Discover(wd)
-	if err != nil {
-		log.SetOutput(io.Discard)
-		return func() {}
-	}
-	f, err := tea.LogToFile(filepath.Join(r.Root(), r.Config.LogFile), "debug")
-	if err != nil {
-		log.SetOutput(io.Discard)
-		return func() {}
-	}
-	return func() { f.Close() }
+	log.SetOutput(io.Discard)
+	return func() {}
 }

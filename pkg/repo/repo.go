@@ -43,22 +43,20 @@ var (
 // the application used to require in a .env file.
 //
 // A log_level once sat beside log_file and was read by nothing — the same
-// dead setting the old .env had, moved to a new home. It is gone; a yaml
-// field nothing reads is a promise the program does not keep.
+// dead setting the old .env had, moved to a new home. log_file went the same
+// way: it named wits.log, which every launch opened and nothing ever wrote to.
+// A yaml field nothing uses is a promise the program does not keep; one an
+// older build wrote is ignored on reading.
 //
 // Theme names the interface's colour theme; empty means follow the terminal.
 type Config struct {
 	Version int    `yaml:"version"`
-	LogFile string `yaml:"log_file"`
 	Theme   string `yaml:"theme,omitempty"`
 }
 
 // DefaultConfig returns the configuration a freshly initialised repository gets.
 func DefaultConfig() Config {
-	return Config{
-		Version: Version,
-		LogFile: "wits.log",
-	}
+	return Config{Version: Version}
 }
 
 // Repo is an initialised .wits repository.
