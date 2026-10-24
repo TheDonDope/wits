@@ -481,7 +481,7 @@ func TestFsckCommand(t *testing.T) {
 		r, err := repo.Discover(dir)
 		require.NoError(t, err)
 		// Written past the recorder, the way an old import or a hand edit
-		// could: a product nobody defined.
+		// could: more ground than there was, and a product nobody defined.
 		for _, e := range []journal.Event{
 			{Type: journal.Grind, Product: "wcake-221", Grams: 5, OccurredAt: time.Date(2026, 7, 2, 0, 0, 0, 0, time.Local)},
 			{Type: journal.Purchase, Product: "ghost", Grams: 2, OccurredAt: time.Date(2026, 7, 3, 0, 0, 0, 0, time.Local)},
@@ -496,7 +496,9 @@ func TestFsckCommand(t *testing.T) {
 
 		out, err := run(t, dir, Fsck)
 
-		assert.EqualError(t, err, "2 problems found")
+		assert.EqualError(t, err, "3 problems found")
+		assert.Contains(t, out, "grind 5.00 g of wcake-221 took more than storage held — 1.00 g",
+			"An entry written past the recorder that took what was not there")
 		assert.Contains(t, out, "✗ journal hash chain is broken: event 1")
 		assert.Contains(t, out, "✗ ghost is named by 1 entry but is not in the product catalog")
 
@@ -545,4 +547,26 @@ func TestStatusNamesWhatIsComing(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "wcake-221  20.00g", "The shelf is what is there now")
 	assert.Contains(t, out, "2.00g of wcake-221 arriving 2099-01-01, not counted until then")
+}
+
+func TestRestoreWarnsOfWhatWasNotThere(t *testing.T) {
+	dir := repository(t)
+	r, err := repo.Discover(dir)
+	require.NoError(t, err)
+	at := time.Date(2026, 7, 1, 0, 0, 0, 0, time.Local)
+	for _, e := range []journal.Event{
+		{Type: journal.Purchase, Product: "wcake", Grams: 1, OccurredAt: at},
+		{Type: journal.Grind, Product: "wcake", Grams: 5, OccurredAt: at.AddDate(0, 0, 1)},
+	} {
+		_, err := r.Journal().Append(e)
+		require.NoError(t, err)
+	}
+	file := filepath.Join(t.TempDir(), "history.wits")
+	_, err = run(t, dir, Bundle, "--out", file)
+	require.NoError(t, err)
+
+	out, err := run(t, repository(t), Restore, file)
+
+	require.NoError(t, err, "A backup gives back what it holds")
+	assert.Contains(t, out, "⚠ 1 entry takes grams that were not in the jar at the time; wits fsck lists them")
 }

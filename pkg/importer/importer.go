@@ -9,6 +9,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
 )
 
@@ -34,6 +35,11 @@ func (r *Result) Anomalies() []string {
 		for _, a := range s.Anomalies {
 			all = append(all, fmt.Sprintf("%s: %s", s.Name, a))
 		}
+	}
+	// The sheets read one at a time cannot see this: an entry that takes
+	// grams no row before it put in the jar, across the whole history.
+	for _, short := range ledger.Shortfalls(r.Events) {
+		all = append(all, short.String())
 	}
 	return all
 }

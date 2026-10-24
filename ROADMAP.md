@@ -236,7 +236,10 @@ decoded event: a field added to `Event` would otherwise have invalidated every
 entry ever made. A test pins one entry's encoding and hash, so a change to how
 entries encode cannot pass unnoticed.
 
-`wits fsck` reports the chain, entries naming a product or device the catalogs lack (one line per name),
+`wits fsck` reports the chain, entries that took grams that were not in the
+jar at the time (`Shortfalls`, said as what the jar held — "grind 5.00 g of
+wcake-221 took more than storage held — 1.00 g"; the recorder refuses these,
+but an import, a restore or a hand edit does not go through it), entries naming a product or device the catalogs lack (one line per name),
 corrections of entries that do not exist, and the mass balance added up
 straight from the entries — what came in, what went out, what is held. It
 changes nothing, and fails when it finds anything.
@@ -257,6 +260,10 @@ a wait is never silent. The entries are one batch through `AppendWith` — one
 write, one flush, checked for emptiness again under the lock. An entry at a
 time flushed 1429 times and took 13.2 s on disk in silence; the batch takes
 0.25 s, and one bad entry refuses the batch instead of stopping it halfway.
+
+The dry run's report includes any entry that takes grams no row before it put
+in the jar, across the whole workbook — what one sheet at a time cannot see. A
+restore gives back what the bundle holds, and warns if it holds such an entry.
 
 Two spellings of one product at one strength still merge, and that is reported
 rather than done quietly. Two strengths of one product never do.

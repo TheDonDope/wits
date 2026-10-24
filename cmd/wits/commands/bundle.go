@@ -11,6 +11,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/bundle"
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/spf13/cobra"
 )
@@ -122,6 +123,15 @@ var Restore = &cobra.Command{
 			return err
 		}
 		step("done")
+		// Restored faithfully all the same: a backup gives back what it holds.
+		if short := ledger.Shortfalls(contents.Events); len(short) > 0 {
+			verb := "take"
+			if len(short) == 1 {
+				verb = "takes"
+			}
+			fmt.Fprintf(cmd.ErrOrStderr(), "⚠ %s %s grams that were not in the jar at the time; wits fsck lists them\n",
+				entries(len(short)), verb)
+		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Restored %s, %s and %s.\n", plural(len(products(contents)), "product"),
 			plural(len(devices(contents)), "device"), plural(len(contents.Events), "event"))
 		return nil
