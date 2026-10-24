@@ -204,14 +204,14 @@ func newDeviceForm(d *catalog.Device, a *App) *deviceForm {
 		f.name, f.kind = d.Name, d.Kind
 		f.min, f.max, f.def = itoaBlank(d.MinTemp), itoaBlank(d.MaxTemp), itoaBlank(d.DefaultTemp)
 	}
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewInput().Title("Name").Value(&f.name).Validate(required("a name")),
 		huh.NewInput().Title("Kind").Description("desktop, portable, …").Value(&f.kind),
 		huh.NewInput().Title("Lowest temperature").Description("°C").Value(&f.min).Validate(optionalInt),
 		huh.NewInput().Title("Highest temperature").Description("°C").Value(&f.max).Validate(optionalInt),
 		huh.NewInput().Title("Default temperature").Description("°C, used when a session gives none").
 			Value(&f.def).Validate(optionalInt),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 
@@ -225,11 +225,11 @@ func newDeviceRemoveForm(d *catalog.Device, a *App) *deviceForm {
 		// catalog says, so removing it loses the description, not the history.
 		note = fmt.Sprintf("%s used it. Those entries keep the name;\nonly the device's details are forgotten.", plural(used, "session"))
 	}
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(d.Name).Description(note),
 		huh.NewConfirm().Title("Remove this device?").Affirmative("Remove").Negative("Keep").
 			Value(&f.confirm),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 

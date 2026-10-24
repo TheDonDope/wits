@@ -189,6 +189,16 @@ contribution greens. The dashboard's cycle bar shades from green into the
 colour the remaining fraction has earned, and its thirty-day columns tint
 heavier days hotter.
 
+Themes are a palette each — twenty editor themes beside wits' own, picked with
+`t` and saved as `theme:` in `config.yml`. Every style derives from the
+palette, and the accounts borrow each theme's own syntax colours (storage its
+blue, AVB its orange, sessions its purple or pink) so a colour keeps its meaning
+in every theme. An editor theme sets the terminal's background through the view,
+which Bubble Tea restores on exit; the heat ramp climbs from that background to
+the theme's green. The forms are dressed in the theme too, through a huh theme
+that reads the current one at every frame, since huh themes a field only once
+and the picker previews on a form that is already open.
+
 ### Correcting entries
 
 `wits revert`, and `e` / `d` in the journal view. An entry is undone by moving the

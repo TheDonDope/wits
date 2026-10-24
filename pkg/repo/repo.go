@@ -44,9 +44,12 @@ var (
 // A log_level once sat beside log_file and was read by nothing — the same
 // dead setting the old .env had, moved to a new home. It is gone; a yaml
 // field nothing reads is a promise the program does not keep.
+//
+// Theme names the interface's colour theme; empty means follow the terminal.
 type Config struct {
 	Version int    `yaml:"version"`
 	LogFile string `yaml:"log_file"`
+	Theme   string `yaml:"theme,omitempty"`
 }
 
 // DefaultConfig returns the configuration a freshly initialised repository gets.
@@ -163,6 +166,12 @@ func (r *Repo) Journal() *journal.Journal {
 		r.journal = journal.Open(r.JournalPath())
 	}
 	return r.journal
+}
+
+// SetTheme records the interface theme and persists it.
+func (r *Repo) SetTheme(name string) error {
+	r.Config.Theme = name
+	return r.writeConfig()
 }
 
 // writeConfig persists the configuration.

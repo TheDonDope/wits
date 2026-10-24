@@ -68,6 +68,7 @@ type keyMap struct {
 	Weigh          key.Binding
 	Edit, Delete   key.Binding
 	Add            key.Binding
+	Theme          key.Binding
 }
 
 func defaultKeys() keyMap {
@@ -90,6 +91,7 @@ func defaultKeys() keyMap {
 		Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 		Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
 		Add:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
+		Theme:  key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "theme")),
 		Help:   key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		Quit:   key.NewBinding(key.WithKeys("q", "ctrl+c", "esc"), key.WithHelp("q", "quit")),
 	}
@@ -113,7 +115,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Up, k.Down, k.PageUp, k.PgDown},
 		{k.Top, k.Bottom},
 		{k.Buy, k.New, k.Sesh, k.Weigh},
-		{k.Help, k.Quit},
+		{k.Theme, k.Help, k.Quit},
 	}
 }
 
@@ -128,6 +130,11 @@ type App struct {
 
 	width, height int
 	showHelp      bool
+
+	// dark is what the terminal reported its background to be. Only the auto
+	// theme reads it; the editor themes bring a background of their own.
+	dark   bool
+	picker *themePicker
 
 	// wall is the ticking wall clock the dashboard shows. Data.Now stays the
 	// frame every derived figure is computed against; the wall is only ever
@@ -157,6 +164,10 @@ func New(data Data) *App {
 		theme: NewTheme(true),
 		keys:  defaultKeys(),
 		help:  help.New(),
+		dark:  true,
+	}
+	if data.Workspace != nil && data.Repo != nil {
+		a.useTheme(data.Repo.Config.Theme)
 	}
 	a.dashboard = newDashboard()
 	a.journal = newJournalView()
@@ -201,7 +212,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.help.SetWidth(msg.Width)
 
 	case tea.BackgroundColorMsg:
-		a.theme = NewTheme(msg.IsDark())
+		a.dark = msg.IsDark()
+		if a.theme.ID == autoTheme {
+			a.theme = NewTheme(a.dark)
+		}
 
 	case wallTickMsg:
 		a.wall = time.Time(msg)
@@ -236,6 +250,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if a.picker != nil {
+		return a, a.pickTheme(msg)
+	}
 	if a.device != nil {
 		var cmd tea.Cmd
 		a.device, cmd = a.device.Update(msg, a)
@@ -270,6 +287,19 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return a, cmd
 }
 
+// dialog renders whichever form is in front, if one is.
+func (a *App) dialog() (string, bool) {
+	switch {
+	case a.picker != nil:
+		return a.picker.form.View(), true
+	case a.entry != nil:
+		return a.entry.View(a, a.width), true
+	case a.device != nil:
+		return a.device.View(a, a.width), true
+	}
+	return "", false
+}
+
 // View implements tea.Model.
 func (a *App) View() tea.View {
 	// In v2 the terminal state is declared by the view rather than set once at
@@ -277,6 +307,11 @@ func (a *App) View() tea.View {
 	view := tea.NewView("")
 	view.AltScreen = true
 	view.WindowTitle = "wits"
+	// An editor theme repaints the terminal itself, the way the editor would;
+	// Bubble Tea puts the terminal's own colours back on the way out.
+	if a.theme.Bg != nil {
+		view.BackgroundColor, view.ForegroundColor = a.theme.Bg, a.theme.Fg
+	}
 	if a.width == 0 {
 		return view
 	}
@@ -288,13 +323,7 @@ func (a *App) View() tea.View {
 		bodyHeight = 1
 	}
 
-	if a.entry != nil || a.device != nil {
-		panel := ""
-		if a.entry != nil {
-			panel = a.entry.View(a, a.width)
-		} else {
-			panel = a.device.View(a, a.width)
-		}
+	if panel, open := a.dialog(); open {
 		body = lipgloss.NewStyle().Padding(1, 1).Render(panel)
 		view.SetContent(lipgloss.NewStyle().MaxWidth(a.width).MaxHeight(a.height).
 			Render(lipgloss.JoinVertical(lipgloss.Left, header, body, footer)))
@@ -373,6 +402,9 @@ func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 	case key.Matches(msg, a.keys.Help):
 		a.showHelp = !a.showHelp
 		return true, nil
+	case key.Matches(msg, a.keys.Theme):
+		a.picker, a.notice = newThemePicker(a), ""
+		return true, a.picker.form.Init()
 	case key.Matches(msg, a.keys.Next):
 		if a.slides() && msg.String() != "tab" {
 			return false, nil
@@ -445,6 +477,9 @@ func (a *App) deviceDone(msg deviceDoneMsg) (tea.Model, tea.Cmd) {
 // formKey routes a key to whatever form is in front, which owns the keyboard
 // while it is open, so navigation cannot fire underneath a half-filled entry.
 func (a *App) formKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
+	if a.picker != nil {
+		return a.themeKey(msg)
+	}
 	if a.device != nil {
 		if msg.String() == "esc" {
 			a.device, a.notice = nil, ""
