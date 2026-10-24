@@ -439,3 +439,24 @@ func TestAppendWith(t *testing.T) {
 		assert.Empty(t, events, "Half a batch should not be written")
 	})
 }
+
+func TestWriteFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "products.yml")
+	require.NoError(t, os.WriteFile(path, []byte("old\n"), 0600))
+
+	require.NoError(t, WriteFile(path, []byte("new\n")))
+
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Equal(t, "new\n", string(data))
+	info, err := os.Stat(path)
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0600), info.Mode().Perm(), "A medical record stays private")
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	assert.Len(t, entries, 1, "No temporary file should be left beside it")
+
+	err = WriteFile(filepath.Join(dir, "missing", "products.yml"), []byte("x"))
+	assert.Error(t, err, "Should report a directory it cannot write into")
+}

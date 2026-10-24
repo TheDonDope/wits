@@ -198,16 +198,14 @@ func Commit(r *repo.Repo, result *Result, step func(string)) error {
 	}
 
 	step(fmt.Sprintf("adding %d products to the catalog", len(result.Products)))
-	products, err := catalog.Load(r.ProductsPath())
-	if err != nil {
-		return err
-	}
-	for _, p := range result.Products {
-		if err := products.Add(p); err != nil {
-			return err
+	if _, err := r.UpdateProducts(func(products *catalog.Catalog) error {
+		for _, p := range result.Products {
+			if err := products.Add(p); err != nil {
+				return err
+			}
 		}
-	}
-	if err := products.Save(r.ProductsPath()); err != nil {
+		return nil
+	}); err != nil {
 		return err
 	}
 

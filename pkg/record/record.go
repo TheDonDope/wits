@@ -43,28 +43,10 @@ func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.
 	product := r.products.Exact(name)
 	added := false
 	if product == nil {
-		if err := r.partial(name, slug); err != nil {
+		var err error
+		if product, added, err = r.addProduct(name, slug); err != nil {
 			return journal.Event{}, nil, false, err
 		}
-		product = catalog.Parse(name)
-		if slug != "" {
-			if err := catalog.CheckSlug(slug); err != nil {
-				return journal.Event{}, nil, false, err
-			}
-			if r.products.Taken(slug) {
-				return journal.Event{}, nil, false, fmt.Errorf("the slug %q is already in use", slug)
-			}
-			product.Slug = slug
-		} else {
-			product.Slug = catalog.NewHandle(product, r.products.Handles())
-		}
-		if err := r.products.Add(product); err != nil {
-			return journal.Event{}, nil, false, err
-		}
-		if err := r.products.Save(r.repo.ProductsPath()); err != nil {
-			return journal.Event{}, nil, false, err
-		}
-		added = true
 	}
 	e, err := r.one(func() (journal.Event, error) {
 		return journal.Event{
@@ -80,13 +62,72 @@ func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.
 // ErrPartialName is returned when a purchase names only part of a product.
 var ErrPartialName = errors.New("not a product's full name or slug")
 
+// addProduct adds the product a purchase names, under the catalog's lock and
+// against the catalog as it stands, which may have gained it since this
+// recorder's copy was read — then it is used, not added twice.
+func (r *Recorder) addProduct(name, slug string) (*catalog.Product, bool, error) {
+	var product *catalog.Product
+	added := false
+	err := r.changeProducts(func(c *catalog.Catalog) error {
+		if product = c.Exact(name); product != nil {
+			return nil
+		}
+		if err := partial(c, name, slug); err != nil {
+			return err
+		}
+		product = catalog.Parse(name)
+		if slug != "" {
+			if err := catalog.CheckSlug(slug); err != nil {
+				return err
+			}
+			if c.Taken(slug) {
+				return fmt.Errorf("the slug %q is already in use", slug)
+			}
+			product.Slug = slug
+		} else {
+			product.Slug = catalog.NewHandle(product, c.Handles())
+		}
+		added = true
+		return c.Add(product)
+	})
+	return product, added, err
+}
+
+// changeProducts applies change to the product catalog as it stands on disk,
+// under its lock, and adopts what was written, so everything sharing this
+// recorder's catalog — the screens included — sees it.
+func (r *Recorder) changeProducts(change func(*catalog.Catalog) error) error {
+	fresh, err := r.repo.UpdateProducts(change)
+	if err != nil {
+		return err
+	}
+	*r.products = *fresh
+	return nil
+}
+
+// changeProduct applies change to one product, found in the catalog as it
+// stands on disk.
+func (r *Recorder) changeProduct(ref string, change func(*catalog.Product)) (*catalog.Product, error) {
+	var product *catalog.Product
+	err := r.changeProducts(func(c *catalog.Catalog) error {
+		p, err := c.Find(ref)
+		if err != nil {
+			return err
+		}
+		change(p)
+		product = p
+		return nil
+	})
+	return product, err
+}
+
 // partial refuses a purchase whose name is only part of a known product's.
 // Every other entry may abbreviate, but a purchase that matches nothing in
 // full adds a product, so a guess either way is wrong: "MAC1" used to land
 // on the MAC1+ jar unannounced, and "Can", matching two, made a third. A
 // slug given with the name says a new product is meant.
-func (r *Recorder) partial(name, slug string) error {
-	matches := r.products.Partial(name)
+func partial(c *catalog.Catalog, name, slug string) error {
+	matches := c.Partial(name)
 	if slug != "" || len(matches) == 0 {
 		return nil
 	}
@@ -509,36 +550,23 @@ func round(g float64) float64 { return ledger.Round(g) }
 // product that no longer exists. What a jar is called can be corrected; what it
 // is remains what it was.
 func (r *Recorder) Rename(ref, name string) (*catalog.Product, error) {
-	product, err := r.products.Find(ref)
-	if err != nil {
-		return nil, err
-	}
-	if strings.TrimSpace(name) == "" {
+	name = strings.TrimSpace(name)
+	if name == "" {
 		return nil, fmt.Errorf("a product needs a name")
 	}
-	product.Name = strings.TrimSpace(name)
-	if err := r.products.Save(r.repo.ProductsPath()); err != nil {
-		return nil, err
-	}
-	return product, nil
+	return r.changeProduct(ref, func(p *catalog.Product) { p.Name = name })
 }
 
 // Describe replaces a product's parsed details, leaving its slug and its
 // entries alone.
 func (r *Recorder) Describe(ref string, p catalog.Product) (*catalog.Product, error) {
-	product, err := r.products.Find(ref)
-	if err != nil {
-		return nil, err
-	}
 	if strings.TrimSpace(p.Name) == "" {
 		return nil, fmt.Errorf("a product needs a name")
 	}
-	product.Name = strings.TrimSpace(p.Name)
-	product.Manufacturer = strings.TrimSpace(p.Manufacturer)
-	product.Cultivar = strings.TrimSpace(p.Cultivar)
-	product.THC, product.CBD = p.THC, p.CBD
-	if err := r.products.Save(r.repo.ProductsPath()); err != nil {
-		return nil, err
-	}
-	return product, nil
+	return r.changeProduct(ref, func(product *catalog.Product) {
+		product.Name = strings.TrimSpace(p.Name)
+		product.Manufacturer = strings.TrimSpace(p.Manufacturer)
+		product.Cultivar = strings.TrimSpace(p.Cultivar)
+		product.THC, product.CBD = p.THC, p.CBD
+	})
 }

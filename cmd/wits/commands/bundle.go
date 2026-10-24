@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/TheDonDope/wits/pkg/bundle"
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/spf13/cobra"
 )
 
@@ -114,12 +115,18 @@ var Restore = &cobra.Command{
 		}
 
 		if contents.Products != nil && len(contents.Products.Products) > 0 {
-			if err := contents.Products.Save(s.Repo.ProductsPath()); err != nil {
+			if _, err := s.Repo.UpdateProducts(func(c *catalog.Catalog) error {
+				c.Products = contents.Products.Products
+				return nil
+			}); err != nil {
 				return err
 			}
 		}
 		if contents.Devices != nil && len(contents.Devices.Devices) > 0 {
-			if err := contents.Devices.Save(s.Repo.DevicesPath()); err != nil {
+			if _, err := s.Repo.UpdateDevices(func(d *catalog.Devices) error {
+				d.Devices = contents.Devices.Devices
+				return nil
+			}); err != nil {
 				return err
 			}
 		}

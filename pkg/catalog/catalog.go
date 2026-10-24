@@ -11,6 +11,7 @@ import (
 	"time"
 
 	can "github.com/TheDonDope/wits/pkg/cannabis"
+	"github.com/TheDonDope/wits/pkg/journal"
 	"gopkg.in/yaml.v3"
 )
 
@@ -70,7 +71,8 @@ func (c *Catalog) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0600)
+	// Written whole, so a crash must leave the old catalog or the new one.
+	return journal.WriteFile(path, data)
 }
 
 // Add puts a product in the catalog, refusing to shadow an existing slug.
