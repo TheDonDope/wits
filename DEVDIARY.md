@@ -6,6 +6,8 @@
 
 The committed workbook caught up with the jars: it now runs to 2026-10-23, one more fill and four more months, with every closed jar cleaned to exactly zero. Every last thing the importer had flagged was then fixed in the spreadsheet itself instead of being explained away: 2025-03 moved to the year it is named for, the 0.01 g Ghost Train Haze in 2025-06 became the 10 g fill it was, and the 2.40 g logged against no product in 2025-10 is gone. `wits import` now reports nothing, and the test checks that nothing is reported. Every figure the tests check was re-read from the raw cells, separately from the importer: 53 products, 1429 entries, 1254.00 g dispensed, 1209.20 g ground, no balance negative and no cycle over 100%. A later re-save of the workbook was checked by importing both versions; they replay to the same ledger. The bundle figures were re-measured, and the bundle gif was re-recorded so the picture says what the README says. Shipped as v0.26.0 and v0.27.0.
 
+The afternoon turned to everything around the records. All fifteen Dependabot alerts were in excelize — malformed workbooks that panic, hang or exhaust memory — and no tagged release carried the fixes, so excelize now comes from master as of 2026-10-20; the real workbook still imports to the same 53 products and 1429 entries, and GitHub closed all fifteen within minutes of v0.28.0. Then the living docs were checked claim by claim against the code: real `status`, `temps` and `reconcile` output back in the README, the commands and keys it never mentioned, a "13 of 47 cycles" from before the cycle rebuild replaced by the records' own overlapping cycles 25 to 27, and a gzipped bundle figure no single command reproduced replaced by what `--gzip` writes, 7,009 bytes. The loop got a doctor, `./doctor.sh`, which checks and installs everything development needs beyond Go, and project skills for the work that keeps coming back: shipping, the workbook, the tapes, and this diary. The workbook skill reads the cells without the importer, and matched every pinned figure on its first run. Shipped as v0.28.0 and v0.29.0.
+
 - `89dfad6` chore(deps): bump codecov/codecov-action in the actions group
 - `c34de80` chore(deps): bump the gomod-minor group across 1 directory with 4 updates
 - `d379433` test(importer): reconcile against the workbook through october 2026
@@ -14,10 +16,18 @@ The committed workbook caught up with the jars: it now runs to 2026-10-23, one m
 - `a3adfc8` docs: update changelog for v0.26.0
 - `32140e9` chore(vhs): re-record the bundle gif against the october workbook
 - `33c3827` docs: update changelog for v0.27.0
+- `d6ddb95` docs(diary): the records add up
+- `512baee` fix(deps): take excelize from master, where its fifteen advisories are fixed
+- `3284274` docs: update changelog for v0.28.0
+- `b2a5d7c` build: a doctor for the loop, and skills for the work that recurs
+- `fc2baf7` docs: rewrite the guides against what the code says today
+- `4969826` docs: the workbook reader's docstring, the way pydocstyle reads it
+- `3009cc1` docs: keep the workbook reader's docstring to one line
+- `88b2490` docs: update changelog for v0.29.0
 
 ### Notes for 2026-10-24
 
-Recording on SteamOS needs help: the Chromium that vhs downloads lacks `libnss3`, `libnspr4` and `libasound`, which SteamOS does not ship. Unpacking Arch's `nss`, `nspr` and `alsa-lib` packages into a private directory and running vhs with `LD_LIBRARY_PATH` pointed at it was enough, with nothing installed system-wide. GitHub reports 15 Dependabot alerts on main (9 high, 6 moderate), still to be looked at.
+Recording on SteamOS needs help: the Chromium that vhs downloads lacks `libnss3`, `libnspr4` and `libasound`, which SteamOS does not ship. `./doctor.sh install` now unpacks Arch's `nss`, `nspr` and `alsa-lib` into `~/.cache/wits-dev/chromelibs`, and `render-vhs-tapes.sh` points vhs at them, with nothing installed system-wide. Preflight had been skipping lizard and shellcheck all along on this machine; it runs both now. Codacy runs pydocstyle with D212 and D213 both on, which contradict each other for any multi-line docstring, so Python here keeps its docstrings to one line. excelize is pinned to an untagged master commit and should move to v2.11.1 once that is tagged.
 
 ## 2026-08-02
 
