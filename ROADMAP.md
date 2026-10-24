@@ -567,6 +567,23 @@ workbook's 1429 entries in 10.5 s, registered its service worker, kept the
 repository in IndexedDB, and drew fill 30 as `wits status` does: day 57, 36.73
 g of 60, 19 days' worth, 8.07 g in 2 older jars.
 
+### Tolerance — the analysis tab
+
+Grams a day against the effect log's ratings, rolling (`data/derive.ts`:
+`tolerance`, `breaks`; `viz/tolerance-curve.ts`). The browser derives it from
+the entries, so the replay draws it frame by frame. Each day carries the grams
+ground per calendar day over the trailing 14 days and the mean overall rating
+of the sessions in the same window, by each session's latest rating. An undone
+entry counts in neither. Breaks are runs of a week or more with nothing ground
+and no session, shaded behind the curve, a break still going included. Three
+days was tried first and marked the habit: the workbook grinds every two or
+three days, and its last 90 days held eleven. At seven it holds one, 12 to 18
+September, and ten over the whole record, the longest 99 days, the same as a
+count from the raw journal. The curve's last point, 0.75 g a day, is the
+journal's last 14 days, 10.48 g. The workbook has no ratings, so the rating line
+waits for them and the legend says so. The terminal interface does not draw it
+yet.
+
 ### The report — `wits report`
 
 One page for the prescriber (`pkg/report`): the days asked for, the last 90 by
@@ -647,20 +664,13 @@ elsewhere shows within a tick.
 
 ## 📌 Planned
 
-In this order: each phase stands on the ones before it. The report waits for weeks of real ratings, which is also what the tolerance
-curve needs. The phone comes after sync, because the server answers only this
-machine: a phone keeps its own copy of the journal and syncs it, rather than
-the server opening up. Timestamping a chain and syncing over WebDAV are the
-first things wits would send anywhere, so both are opt-in and said plainly.
-
-### 3 · The report
-
-#### 🔹 A tolerance curve
-
-- **Status**: Planned
-- Grams a day against the effect log's ratings, rolling: tolerance creep is the
-  dose climbing while the effect stays flat. Breaks marked where the grinding
-  stopped, and the replay showing the curve bend through them.
+In this order: each phase stands on the ones before it. The first three —
+what was open and quick, the physical record complete, and the report — are
+built, above; the report and the tolerance curve read the effect log, and say
+so plainly while it holds no ratings. The phone came after sync, because the
+server answers only this machine. Timestamping a chain and syncing over WebDAV
+are the first things wits would send anywhere, so both are opt-in and said
+plainly.
 
 ### 4 · Trust
 

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, injec
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { ActivatedRoute } from '@angular/router';
 
-import { byProduct, dayOf, perDay, summarise } from '../data/derive';
+import { breaks, byProduct, dayOf, perDay, summarise, tolerance } from '../data/derive';
 import { Keys } from '../data/keys';
 import { Cycle, Entry } from '../data/models';
 import { Replay } from '../data/replay';
@@ -13,6 +13,7 @@ import { CountUp } from '../viz/count-up';
 import { DailyChart } from '../viz/daily-chart';
 import { FillRiver } from '../viz/fill-river';
 import { Heatmap } from '../viz/heatmap';
+import { ToleranceCurve } from '../viz/tolerance-curve';
 import { Transport, replayKeys } from '../viz/transport';
 
 /** The terminal's scopes, and how far back each reaches. */
@@ -31,7 +32,7 @@ const SCOPES = [
  */
 @Component({
   selector: 'w-analysis',
-  imports: [BarRace, CountUp, DailyChart, DecimalPipe, FillRiver, Heatmap, MatButtonToggleModule, Transport],
+  imports: [BarRace, CountUp, DailyChart, DecimalPipe, FillRiver, Heatmap, MatButtonToggleModule, ToleranceCurve, Transport],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="glass head">
@@ -76,6 +77,20 @@ const SCOPES = [
 
     <section class="glass pad">
       <header>
+        <div>
+          <span class="eyebrow">tolerance</span>
+          <p class="dim">Grams a day against how the sessions went. Tolerance creeps when the grams climb and the
+            rating stays flat; a break shows whether the curve comes back down.</p>
+        </div>
+        @if (gaps().length) {
+          <span class="dim">{{ gaps().length }} {{ gaps().length === 1 ? 'break' : 'breaks' }}, the longest {{ longest() }} days</span>
+        }
+      </header>
+      <w-tolerance [points]="curve()" [breaks]="gaps()" [until]="until()" />
+    </section>
+
+    <section class="glass pad">
+      <header>
         <span class="eyebrow">by product</span>
         @if (scope().key === 'fill') {
           <span class="key"><i style="background: var(--w-stash)"></i>this fill
@@ -111,7 +126,9 @@ const SCOPES = [
     .tile { padding: 18px 22px; display: grid; gap: 4px; }
     .v { font-size: 30px; font-weight: 600; }
     .pad { padding: 20px 24px; display: grid; gap: 12px; }
-    header { display: flex; justify-content: space-between; align-items: center; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    header p { margin: 6px 0 0; font-size: 13px; max-width: 70ch; }
+    .dim { color: var(--w-dim); }
     .key { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--w-dim); }
     .key i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 8px; }
   `,
@@ -153,6 +170,27 @@ export class Analysis {
 
   protected readonly stats = computed(() => summarise(this.played()));
   protected readonly days = computed(() => perDay(this.played()));
+
+  /** Each session's latest overall rating, by its hash. */
+  private readonly overall = computed(() => {
+    const out = new Map<string, number>();
+    for (const r of this.wits.effects.value()?.rated ?? []) {
+      if (r.scores.overall !== undefined) {
+        out.set(r.session.hash, r.scores.overall);
+      }
+    }
+    return out;
+  });
+
+  /** The last day the replay has reached, or null when live. */
+  protected readonly until = computed(() => {
+    const e = this.replay.current();
+    return e ? dayOf(e) : null;
+  });
+
+  protected readonly curve = computed(() => tolerance(this.played(), this.overall(), this.range().from, this.range().to));
+  protected readonly gaps = computed(() => breaks(this.played(), this.range().from, this.until() ?? this.range().to));
+  protected readonly longest = computed(() => Math.max(0, ...this.gaps().map((b) => b.days)));
 
   protected readonly weeks = computed(() => ({ fill: 9, '30': 5, '90': 14, '365': 53, all: null })[this.scope().key]);
 
