@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.58.0"></a>
+## [v0.58.0] - 2026-10-24
+### Chore
+- **journal:** the browser's lock names its package
+
+### Feat
+- **phone:** wits in the page, its own journal, synced by hand
+
+
 <a name="v0.57.0"></a>
 ## [v0.57.0] - 2026-10-24
+### Docs
+- update changelog for v0.57.0
+
 ### Feat
 - **remote:** push and pull through a folder, and a pull is a rebase
 
@@ -774,7 +786,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.57.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.58.0...HEAD
+[v0.58.0]: https://github.com/TheDonDope/wits/compare/v0.57.0...v0.58.0
 [v0.57.0]: https://github.com/TheDonDope/wits/compare/v0.56.0...v0.57.0
 [v0.56.0]: https://github.com/TheDonDope/wits/compare/v0.55.0...v0.56.0
 [v0.55.0]: https://github.com/TheDonDope/wits/compare/v0.54.0...v0.55.0
