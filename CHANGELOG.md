@@ -2,9 +2,21 @@
 ## [Unreleased]
 
 
+<a name="v0.29.0"></a>
+## [v0.29.0] - 2026-10-24
+### Build
+- a doctor for the loop, and skills for the work that recurs
+
+### Docs
+- keep the workbook reader's docstring to one line
+- the workbook reader's docstring, the way pydocstyle reads it
+- rewrite the guides against what the code says today
+
+
 <a name="v0.28.0"></a>
 ## [v0.28.0] - 2026-10-24
 ### Docs
+- update changelog for v0.28.0
 - **diary:** the records add up
 
 ### Fix
@@ -481,7 +493,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.29.0...HEAD
+[v0.29.0]: https://github.com/TheDonDope/wits/compare/v0.28.0...v0.29.0
 [v0.28.0]: https://github.com/TheDonDope/wits/compare/v0.27.0...v0.28.0
 [v0.27.0]: https://github.com/TheDonDope/wits/compare/v0.26.0...v0.27.0
 [v0.26.0]: https://github.com/TheDonDope/wits/compare/v0.25.0...v0.26.0
