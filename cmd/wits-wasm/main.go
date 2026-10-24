@@ -12,7 +12,7 @@
 //
 // It sets globalThis.witsEngine, with
 //
-//	request(method, url, body) → Promise<{status, body}>   the JSON API
+//	request(method, url, body) → Promise<{status, type, body, bytes?}>  the API
 //	sync(file, key)            → Promise<{pulled, pushed, file}>
 //	key()                      → Promise<string>           the remote's key
 //
@@ -109,7 +109,16 @@ func request(h http.Handler, args []js.Value) (any, error) {
 	}
 	rec := &recorder{header: http.Header{}, code: http.StatusOK}
 	h.ServeHTTP(rec, req)
-	return map[string]any{"status": rec.code, "body": rec.body.String()}, nil
+	out := map[string]any{"status": rec.code, "type": rec.header.Get("Content-Type")}
+	// A string crossing into JavaScript is read as UTF-8, which a PDF is not:
+	// anything but JSON goes across as bytes.
+	if t := rec.header.Get("Content-Type"); t != "" && !strings.HasPrefix(t, "application/json") {
+		out["bytes"] = jsBytes([]byte(rec.body.String()))
+		out["body"] = ""
+	} else {
+		out["body"] = rec.body.String()
+	}
+	return out, nil
 }
 
 // recorder keeps a response in memory. It is httptest's ResponseRecorder, all

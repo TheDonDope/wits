@@ -31,7 +31,7 @@ export interface Synced {
 }
 
 interface GoEngine {
-  request(method: string, url: string, body: string): Promise<{ status: number; body: string }>;
+  request(method: string, url: string, body: string): Promise<{ status: number; type: string; body: string; bytes?: Uint8Array }>;
   sync(file: Uint8Array | null, key: string): Promise<Synced>;
   key(): Promise<string>;
 }
@@ -190,6 +190,10 @@ async function answer(req: HttpRequest<unknown>): Promise<HttpResponse<unknown> 
   const e = await engine();
   const body = req.body === null ? '' : JSON.stringify(req.body);
   const res = await e.request(req.method, req.urlWithParams, body);
+  if (res.bytes) {
+    // The report: bytes, not JSON, handed over as the blob that was asked for.
+    return new HttpResponse({ status: res.status, body: new Blob([res.bytes.slice()], { type: res.type }), url: req.url });
+  }
   const parsed: unknown = res.body ? JSON.parse(res.body) : null;
   if (res.status >= 400) {
     return new HttpErrorResponse({ status: res.status, error: parsed, url: req.url });

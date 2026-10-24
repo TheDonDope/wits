@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`,
+`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -567,6 +567,33 @@ workbook's 1429 entries in 10.5 s, registered its service worker, kept the
 repository in IndexedDB, and drew fill 30 as `wits status` does: day 57, 36.73
 g of 60, 19 days' worth, 8.07 g in 2 older jars.
 
+### The report — `wits report`
+
+One page for the prescriber (`pkg/report`): the days asked for, the last 90 by
+default, with grams a day with grinding and per calendar day, the weeks as
+bars, the strains with their THC/CBD and what each was dispensed and ground,
+what the sessions did by the effect log with each mean's count, and today:
+the fill's sealed grams, the shelf, and the refill planner's dates. Every
+figure in the range is the range's own (`ledger.Standing`, so an undone entry
+counts in nothing), and "today" is labelled so. The footer names the
+journal's head hash, for the chain others can check (phase 4).
+
+The PDF is written in-tree, the way the charts are drawn: a single page of
+text, lines and boxes in standard Helvetica with WinAnsi encoding, which has
+the euro sign and the umlauts, and Adobe's widths for right-aligned numbers.
+Text sets its own colour, since PDF fills text in whatever colour the last
+bar left. Tests check that every cross-reference offset lands on its object.
+
+`/api/report.pdf?from=&to=` serves the same bytes; the server's and the
+command's PDFs for the same days are identical. The browser's History page
+downloads it, and on a phone it is offered to share. In wits-wasm, anything
+but JSON crosses into JavaScript as bytes, since a Go string read as UTF-8
+would no longer be a PDF; `make wasm-check` checks the phone's report opens
+with `%PDF-` and ends with `%%EOF`. On the workbook, 1 August to 24 October
+reads 67.56 g on 33 of 85 days, 2.05 g a day with grinding, 0.79 g per
+calendar day and 60.00 g in 3 purchases, the same figures as `export --from
+--to`, rendered with pdf.js and looked at.
+
 ### What it costs — `wits price`, `wits costs`
 
 A price goes in `.wits/prices.ndjson` (`pkg/prices`), the effect log's twin:
@@ -627,13 +654,6 @@ the server opening up. Timestamping a chain and syncing over WebDAV are the
 first things wits would send anywhere, so both are opt-in and said plainly.
 
 ### 3 · The report
-
-#### 🔹 A report for the doctor
-
-- **Status**: Planned
-- One page for the prescriber: the months asked for, grams a day, which
-  strains, what they did by the effect log, and what is left of the fill in
-  progress. A PDF, built from `export --from --to`.
 
 #### 🔹 A tolerance curve
 

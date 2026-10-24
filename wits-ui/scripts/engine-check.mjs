@@ -53,6 +53,10 @@ const jars = (await call('GET', '/api/jars')).body;
 const jar = jars.find((j) => j.storage > 1);
 out.ground = (await call('POST', '/api/grind', JSON.stringify({ product: jar.slug, grams: 1 }))).status;
 out.refused = (await call('POST', '/api/grind', JSON.stringify({ product: jar.slug, grams: 100000 }))).body;
+// The report crosses as bytes: read as text it would no longer be a PDF.
+const pdf = await engine.request('GET', '/api/report.pdf', '');
+out.report = { status: pdf.status, type: pdf.type, head: pdf.bytes ? Buffer.from(pdf.bytes.slice(0, 5)).toString() : '',
+  tail: pdf.bytes ? Buffer.from(pdf.bytes.slice(-6)).toString().trim() : '' };
 const second = await engine.sync(null, '');
 out.pushed = second.pushed;
 out.overview = (await call('GET', '/api/journal?limit=1')).body.total;

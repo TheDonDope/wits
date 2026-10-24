@@ -104,6 +104,11 @@ export class Wits {
     return this.write<{ message: string }>('price', { purchase, euros });
   }
 
+  /** The page for the prescriber, as a PDF, for the days from and to. */
+  report(from: string, to: string): Promise<Blob> {
+    return firstValueFrom(this.http.get(`/api/report.pdf?from=${from}&to=${to}`, { responseType: 'blob' }));
+  }
+
   /** Records the named stashes as consumed, as one batch. */
   async flush(products: string[]): Promise<{ message: string }> {
     return this.write<{ message: string }>('flush', { products });
