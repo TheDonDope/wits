@@ -2,12 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.31.0"></a>
+## [v0.31.0] - 2026-10-24
+### Docs
+- **skills:** ship from a clean main, and stop when you cannot reach one
+
+### Feat
+- **tui:** twenty editor themes, and t to try them on
+
+
 <a name="v0.30.0"></a>
 ## [v0.30.0] - 2026-10-24
 ### Build
 - **preflight:** fail on new complexity, as the gate does, not on old
 
 ### Docs
+- update changelog for v0.30.0
 - **diary:** the records add up, and so does what surrounds them
 
 ### Test
@@ -506,7 +516,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.31.0...HEAD
+[v0.31.0]: https://github.com/TheDonDope/wits/compare/v0.30.0...v0.31.0
 [v0.30.0]: https://github.com/TheDonDope/wits/compare/v0.29.0...v0.30.0
 [v0.29.0]: https://github.com/TheDonDope/wits/compare/v0.28.0...v0.29.0
 [v0.28.0]: https://github.com/TheDonDope/wits/compare/v0.27.0...v0.28.0
