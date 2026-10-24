@@ -120,9 +120,9 @@ func TestWeighMarkedJarsTogether(t *testing.T) {
 	require.Len(t, app.storage.Marked(app), 2)
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
-	require.NotNil(t, app.entry, "r should open the weighing form for the marked jars")
-	assert.Equal(t, entryWeighMany, app.entry.kind)
-	assert.Contains(t, stripANSI(app.entry.View(app, 92)), "Weighing 2 jars", "Should say how many")
+	require.NotNil(t, app.entryInFront(), "r should open the weighing form for the marked jars")
+	assert.Equal(t, entryWeighMany, app.entryInFront().kind)
+	assert.Contains(t, stripANSI(app.entryInFront().View(app, 92)), "Weighing 2 jars", "Should say how many")
 }
 
 func TestCommitManyRecordsTheReadings(t *testing.T) {
@@ -209,14 +209,14 @@ func TestCleanHistoryOffersAndRecords(t *testing.T) {
 		"Should offer the clean-up where the history is")
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'c', Text: "c"})
-	require.NotNil(t, app.entry, "c should open the confirmation")
-	assert.Equal(t, entryCleanHistory, app.entry.kind)
-	assert.Contains(t, stripANSI(app.entry.View(app, 92)), "3.00 g",
+	require.NotNil(t, app.entryInFront(), "c should open the confirmation")
+	assert.Equal(t, entryCleanHistory, app.entryInFront().kind)
+	assert.Contains(t, stripANSI(app.entryInFront().View(app, 92)), "3.00 g",
 		"Should say how much the clean-up records as consumed")
 
 	// The commit itself, confirmed.
-	app.entry.confirm = true
-	summary, err := app.entry.commitClean(app)
+	app.entryInFront().confirm = true
+	summary, err := app.entryInFront().commitClean(app)
 	require.NoError(t, err)
 	assert.Contains(t, summary, "cleaned 1 stash", "Should count what it cleaned")
 	assert.Contains(t, summary, "3.00 g", "and the grams it recorded as consumed")
@@ -255,9 +255,9 @@ func TestCleanHistoryManyJars(t *testing.T) {
 	var m tea.Model = app
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'c', Text: "c"})
-	require.NotNil(t, app.entry, "c should open the confirmation")
+	require.NotNil(t, app.entryInFront(), "c should open the confirmation")
 
-	view := stripANSI(app.entry.View(app, 118))
+	view := stripANSI(app.entryInFront().View(app, 118))
 	lines := strings.Count(view, "\n") + 1
 	assert.LessOrEqual(t, lines, app.height-2, "The dialog must fit under the tab bar")
 	assert.Contains(t, view, "Record them as consumed?", "with the question on screen")
@@ -298,7 +298,7 @@ func TestCleanHistoryWithNothingStale(t *testing.T) {
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'c', Text: "c"})
 
-	assert.Nil(t, app.entry, "Should not open a form over nothing")
+	assert.Nil(t, app.entryInFront(), "Should not open a form over nothing")
 	assert.Contains(t, app.notice, "no stale stashes", "Should say why")
 }
 
@@ -334,7 +334,7 @@ func TestReconcileFromTheInterface(t *testing.T) {
 	require.InDelta(t, 18.0, before, 0.001)
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
-	require.NotNil(t, app.entry, "r should open the weighing form")
+	require.NotNil(t, app.entryInFront(), "r should open the weighing form")
 
 	// Storage is preselected; type what the scale says and submit.
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
@@ -383,9 +383,9 @@ func TestEditProductFromTheScreen(t *testing.T) {
 	var m tea.Model = app
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'e', Text: "e"})
-	require.NotNil(t, app.entry, "e should open the edit form")
-	assert.Contains(t, stripANSI(app.entry.View(app, 92)), "Edit product", "Should say what it is")
-	assert.Contains(t, stripANSI(app.entry.View(app, 92)), "slug stays as it is",
+	require.NotNil(t, app.entryInFront(), "e should open the edit form")
+	assert.Contains(t, stripANSI(app.entryInFront().View(app, 92)), "Edit product", "Should say what it is")
+	assert.Contains(t, stripANSI(app.entryInFront().View(app, 92)), "slug stays as it is",
 		"and why the slug is not on offer")
 
 	// The name is prefilled; appending to it is enough to change it.
@@ -519,9 +519,9 @@ func TestStashMarkAndWeigh(t *testing.T) {
 	require.Len(t, app.stash.Marked(app), 1, "Space should tick the stash under the cursor")
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
-	require.NotNil(t, app.entry, "r should open the weighing form")
-	assert.Equal(t, entryWeighMany, app.entry.kind)
-	assert.Equal(t, string(journal.Stash), app.entry.account, "The stash screen weighs stashes first")
+	require.NotNil(t, app.entryInFront(), "r should open the weighing form")
+	assert.Equal(t, entryWeighMany, app.entryInFront().kind)
+	assert.Equal(t, string(journal.Stash), app.entryInFront().account, "The stash screen weighs stashes first")
 }
 
 func TestSessionsScreenEmpty(t *testing.T) {

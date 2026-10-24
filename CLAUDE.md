@@ -150,6 +150,10 @@ drawn in-tree (`pkg/tui/chart.go`).
 
 - huh v2 forms are embedded as models driven by `Update` — never call
   `form.Run()` (it blocks the event loop; the previous interface died of this).
+- A form goes in front through the one `App.front` slot: implement `modal`
+  (`init`, `update`, `dismiss`, `view`) and open it with `a.show(...)`. Keys,
+  esc and the notice are handled there once. A screen's edit/delete/add keys
+  are a row in `corrections`, not another case in a switch.
 - Keybindings are declared once (`defaultKeys`, per-screen key vars) so the help
   line can never advertise a key the dispatch doesn't honour. `g` grinds (`n` is
   a silent alias); jump-to-top is `home` only.

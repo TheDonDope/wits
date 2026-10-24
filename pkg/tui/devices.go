@@ -233,6 +233,26 @@ func newDeviceRemoveForm(d *catalog.Device, a *App) *deviceForm {
 	return f
 }
 
+// init starts the form.
+func (f *deviceForm) init() tea.Cmd { return f.form.Init() }
+
+// view draws the form at the terminal's width.
+func (f *deviceForm) view(a *App) string { return f.View(a, a.width) }
+
+// dismiss is esc; nothing is written until the form completes, so there is
+// nothing to put back.
+func (f *deviceForm) dismiss(*App) {}
+
+// update is Update as a modal: a closed form is a nil modal, not a modal
+// holding a nil form.
+func (f *deviceForm) update(msg tea.Msg, a *App) (modal, tea.Cmd) {
+	next, cmd := f.Update(msg, a)
+	if next == nil {
+		return nil, cmd
+	}
+	return next, cmd
+}
+
 // Update advances the device form and applies it once complete.
 func (f *deviceForm) Update(msg tea.Msg, a *App) (*deviceForm, tea.Cmd) {
 	model, cmd := f.form.Update(msg)

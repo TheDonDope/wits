@@ -128,8 +128,8 @@ func TestGrindForm(t *testing.T) {
 	var m tea.Model = app
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'n', Text: "n"})
-	require.NotNil(t, app.entry, "n should open the grind form")
-	assert.Equal(t, entryGrind, app.entry.kind, "Should be a grind")
+	require.NotNil(t, app.entryInFront(), "n should open the grind form")
+	assert.Equal(t, entryGrind, app.entryInFront().kind, "Should be a grind")
 
 	// The product select is first; enter accepts it, then the amount is typed.
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
@@ -142,7 +142,7 @@ func TestGrindForm(t *testing.T) {
 
 	assert.Equal(t, journal.Grind, done.event.Type, "Should have recorded a grind")
 	assert.Equal(t, 0.75, done.event.Grams, "Should have recorded the amount typed")
-	assert.Nil(t, app.entry, "The form should close once it is done")
+	assert.Nil(t, app.entryInFront(), "The form should close once it is done")
 
 	// And it is really in the journal, not only in the message.
 	events, err := app.data.Repo.Journal().Events()
@@ -174,11 +174,11 @@ func TestFormCancels(t *testing.T) {
 	var m tea.Model = app
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'n', Text: "n"})
-	require.NotNil(t, app.entry)
+	require.NotNil(t, app.entryInFront())
 
 	send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
 
-	assert.Nil(t, app.entry, "esc should close the form")
+	assert.Nil(t, app.entryInFront(), "esc should close the form")
 	events, err := app.data.Repo.Journal().Events()
 	require.NoError(t, err)
 	assert.Len(t, events, 1, "Should not have written anything")
@@ -194,7 +194,7 @@ func TestFormTakesTheKeyboard(t *testing.T) {
 	send(m, tea.KeyPressMsg{Code: 'l', Text: "l"})
 
 	assert.Equal(t, before, app.screen, "Navigation should not fire under an open form")
-	assert.NotNil(t, app.entry, "and the form should still be open")
+	assert.NotNil(t, app.entryInFront(), "and the form should still be open")
 }
 
 func TestProductOptionsOnlyOfferWhatIsThere(t *testing.T) {
@@ -240,7 +240,7 @@ func TestUndoDefaultsToKeeping(t *testing.T) {
 	app.journal.rows = app.journal.build(app)
 	app.journal.cursor = app.journal.firstEntry(0, +1)
 	m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
-	require.NotNil(t, app.entry)
+	require.NotNil(t, app.entryInFront())
 
 	// Pressing through without choosing must not undo anything.
 	_, msgs := confirmThrough(m, 6)
@@ -270,7 +270,7 @@ func TestUndoFromTheJournal(t *testing.T) {
 	require.NotNil(t, app.journal.Selected(), "the cursor should be on an entry")
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
-	require.NotNil(t, app.entry, "d should open the undo form")
+	require.NotNil(t, app.entryInFront(), "d should open the undo form")
 
 	// The form opens on the confirm, since a note takes no focus. It defaults to
 	// keeping the entry, which is the right default for something destructive,
@@ -331,7 +331,7 @@ func TestDeviceForm(t *testing.T) {
 	app.screen = devicesScreen
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'a', Text: "a"})
-	require.NotNil(t, app.device, "a should open the device form")
+	require.NotNil(t, app.deviceInFront(), "a should open the device form")
 
 	m = typeText(m, "Volcano Hybrid")
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // name -> kind
@@ -454,8 +454,8 @@ func TestDeviceEditAndRemove(t *testing.T) {
 
 	t.Run("Edit", func(t *testing.T) {
 		m, _ = send(m, tea.KeyPressMsg{Code: 'e', Text: "e"})
-		require.NotNil(t, app.device, "e should open the edit form")
-		assert.Contains(t, stripANSI(app.device.View(app, 92)), "Edit device", "Should say it is editing")
+		require.NotNil(t, app.deviceInFront(), "e should open the edit form")
+		assert.Contains(t, stripANSI(app.deviceInFront().View(app, 92)), "Edit device", "Should say it is editing")
 
 		// The name is prefilled, so appending is enough to change it.
 		m = typeText(m, " II")
@@ -486,7 +486,7 @@ func TestDeviceEditAndRemove(t *testing.T) {
 		require.Positive(t, before)
 
 		m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
-		require.NotNil(t, app.device, "d should open the remove form")
+		require.NotNil(t, app.deviceInFront(), "d should open the remove form")
 
 		// Accepting is also submitting here: the confirm is the last field, so
 		// the outcome arrives on this keypress rather than a later enter.
@@ -517,7 +517,7 @@ func TestDeviceRemoveDefaultsToKeeping(t *testing.T) {
 	before := len(app.deviceList())
 
 	m, _ = send(m, tea.KeyPressMsg{Code: 'd', Text: "d"})
-	require.NotNil(t, app.device)
+	require.NotNil(t, app.deviceInFront())
 	_, msgs := confirmThrough(m, 6)
 
 	for _, msg := range msgs {
