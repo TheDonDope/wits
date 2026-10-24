@@ -99,6 +99,38 @@ The evening built what the roadmap had planned: `wits-server`, a JSON API that a
 
 Codacy's ESLint runs without a project's dependencies, so in the Angular client every `@angular/*` and d3 type is unresolved and its type-aware rules flag every use — a hundred findings on the first pull request, ninety-nine about nothing. `.codacy.yml` excludes `wits-ui` from Codacy's ESLint only; the client is linted with its types by the `wits-ui` workflow and by `./preflight.sh` (`ng lint` with typescript-eslint's strict type-checked rules, and Stylelint). `ng add @angular/material` linked Roboto and the icons from a font service, which would have been the only network call wits made; they ship as npm packages instead. The client is verified by photographing it with the headless Chromium the tapes use, `--force-prefers-reduced-motion` so the count-ups have landed; `?record=`, `?at=` and `?scope=` open a form, a day and a scope for the camera. Node here is v26; Angular 22 built and tested on it without complaint. The `?` help sheet and a real stash-clearing click are covered by tests, not yet by a photograph. Left open from the reviews: AVB tracking, which stays on the roadmap.
 
+### One ledger, two pockets
+
+The night took wits off the desk, with the plan drawn up first. The roadmap gained thirteen ideas and then an order, in five phases, each standing on the ones before. The effect log came first, since several of the ideas stand on it. A session is rated afterwards, 1 to 5, overall and on pain, sleep, calm, mood, focus or appetite, from the command line, the browser, or `e` on the terminal's sessions screen. The ratings live beside the journal rather than in it, because a rating moves no grams, and they keep the journal's chain and lock. `wits show` prints one entry in full, the way `git show` prints a commit. And entries dated in the future went: an entry is recorded once it has happened, which removed a second fold and an "arriving" line from every view. Then two smaller things shipped. `wits export` learned `--from` and `--to` for an appointment and `--site` for GitHub Pages, and on the way the per-fill "Ground during" was renamed for the scope it is, since fill 27 had read 74.77 g ground of 30 g bought. Then the six vite advisories were closed with an override, because Angular's build pins vite exactly.
+
+Then phase 5 of the roadmap. `wits push` and `wits pull` keep one repository on several devices through a folder. The folder holds one age-encrypted bundle, and the key never goes in it. A pull is a rebase: shared entries kept, the remote's taken as they are, this device's own chained again on top, with undos and ratings following them to their new hashes. Two devices grinding a jar's last grams is a clash. Both entries are kept and named, and the jar takes nothing but an undo until one is reverted. Testing that found an old bug: an undo put back grams a short grind had never taken, so the fill read 1.5 g its jar did not hold. Last, the phone. The server's own API, compiled to WebAssembly, runs in the page on a twenty-call in-memory file system kept in IndexedDB, and it's served from GitHub Pages. On the live site, at phone size, it pulled the workbook's 1429 entries in 11 s and read what `wits status` reads: fill 30, day 57, 36.73 g of 60, 8.07 g in 2 older jars. Shipped as v0.51.0 through v0.58.0.
+
+- `2205765` docs(diary): two reviews, and a window
+- `2034d3e` docs(roadmap): what wits could become — thirteen ideas, planned
+- `ce4d751` feat(effects): what the grams did, rated, and what that adds up to
+- `ed0c5d3` docs: update changelog for v0.51.0
+- `ef3006b` feat(tui): the sessions screen rates, a line a dimension
+- `4b46bf3` docs: update changelog for v0.52.0
+- `2115883` docs(roadmap): the plan has an order, and purchases get their prices
+- `0514728` feat(show): one entry in full, the way git shows a commit
+- `5168d8b` docs: update changelog for v0.53.0
+- `104476d` fix(ledger)!: nothing is dated ahead, so there is one fold
+- `5b9baf3` docs: update changelog for v0.54.0
+- `142e3a2` feat(export): a range for the appointment, and a site for the pages
+- `5ac8913` refactor(export): the index needs no session
+- `2de1515` docs: update changelog for v0.55.0
+- `fdc2112` fix(deps): take vite 8.3.5 under the angular build, where its six advisories are fixed
+- `bc0727d` docs: update changelog for v0.56.0
+- `5ecd8d1` feat(remote): push and pull through a folder, and a pull is a rebase
+- `6818dae` docs: update changelog for v0.57.0
+- `8de7a42` feat(phone): wits in the page, its own journal, synced by hand
+- `199cec5` chore(journal): the browser's lock names its package
+- `9ed06a5` docs: update changelog for v0.58.0
+
+### Notes for the end of 2026-10-24
+
+The six Dependabot alerts for vite were still open hours after v0.56.0, though main's lockfile holds only 8.3.5; GitHub had not re-scanned. The override in `wits-ui/package.json` comes out when Angular pins a fixed vite. Go's js port panics on any error code it has no errno for and reads anything but `null` as an error, so `data/memfs.ts` answers only with codes from `syscall/tables_js.go`. A first wasm build of 5.2 MB was a stub the linker had mostly dropped; the real engine is 8.9 MB, 2.4 MB gzipped, and swapping `net/http/httptest` out barely changed it. Node 26 runs the TypeScript MemFS directly for `wasm-check.sh`, so long as it uses no parameter properties. A plain folder still lets two simultaneous pushes overwrite each other; the losing device keeps its entries and rebases them on its next pull, and WebDAV with `If-Match` is planned to close that. The phone build has only been driven in headless Chromium, not yet installed on a real phone, and on Android "Save wits.age" shares or downloads rather than writing into the Syncthing folder.
+
 ## 2026-08-02
 
 ### From v0.7.0 to v0.20.0 in one day
