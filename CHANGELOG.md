@@ -2,10 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.39.0"></a>
+## [v0.39.0] - 2026-10-24
+### Feat
+- **tui:** the screen keeps up, a fill waits for its day, and esc stays in
+
+
 <a name="v0.38.0"></a>
 ## [v0.38.0] - 2026-10-24
 ### Chore
 - **vhs:** re-record wits-bundle.gif because restore now names its stages
+
+### Docs
+- update changelog for v0.38.0
 
 ### Feat
 - wits fsck, a chain checked on every open, and restore in one write
@@ -586,7 +595,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.38.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.39.0...HEAD
+[v0.39.0]: https://github.com/TheDonDope/wits/compare/v0.38.0...v0.39.0
 [v0.38.0]: https://github.com/TheDonDope/wits/compare/v0.37.0...v0.38.0
 [v0.37.0]: https://github.com/TheDonDope/wits/compare/v0.36.0...v0.37.0
 [v0.36.0]: https://github.com/TheDonDope/wits/compare/v0.35.0...v0.36.0
