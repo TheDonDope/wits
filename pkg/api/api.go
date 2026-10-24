@@ -57,6 +57,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/jars", s.read(jarsOf))
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
+	mux.HandleFunc("GET /api/days", s.read(daysOf))
 	mux.HandleFunc("POST /api/buy", s.write(buy))
 	mux.HandleFunc("POST /api/grind", s.write(grind))
 	mux.HandleFunc("POST /api/sesh", s.write(sesh))
@@ -184,6 +185,23 @@ type fill struct {
 	DaysWorth    float64       `json:"days_worth"`
 	Carried      carried       `json:"carried"`
 	Products     []fillProduct `json:"products"`
+	// ShelfProjection is the shelf's, not the fill's: everything standing
+	// when the fill arrived, less every grind since, and on at the rate.
+	ShelfProjection projection `json:"shelf_projection"`
+}
+
+// projection is the shelf's grams day by day since the fill arrived, and on
+// to the day they run out at the observed rate.
+type projection struct {
+	History   []point    `json:"history"`
+	Projected []point    `json:"projected"`
+	EmptyOn   *time.Time `json:"empty_on,omitempty"`
+}
+
+// point is grams on a day.
+type point struct {
+	Date  string  `json:"date"`
+	Grams float64 `json:"grams"`
 }
 
 // carried is what older fills still hold on the shelf: the seam between the
@@ -254,6 +272,7 @@ func fillOf(ws *workspace.Workspace) *fill {
 	if c.Purchased > 0 {
 		f.RemainingPct = float64(remaining / c.Purchased)
 	}
+	f.ShelfProjection = projectionOf(c, ws.OpenedAt, stats.PerActiveDay)
 	grams, jars, cycles := ws.State.CarriedOnShelf(c)
 	f.Carried = carried{Grams: float64(grams), Jars: jars, Cycles: cycles}
 	for _, slug := range c.Products {
@@ -265,6 +284,70 @@ func fillOf(ws *workspace.Workspace) *fill {
 		})
 	}
 	return f
+}
+
+// projectionOf is the terminal's supply projection, as data: the shelf's grams
+// on each day of the fill so far, then on at the rate until they run out —
+// ninety days at most.
+func projectionOf(c *ledger.Cycle, now time.Time, rate float64) projection {
+	perDay := map[string]journal.Centigrams{}
+	for _, e := range c.Events {
+		if e.Type == journal.Grind {
+			perDay[e.OccurredAt.Format(time.DateOnly)] += journal.CG(e.Grams)
+		}
+	}
+	out := projection{History: []point{}, Projected: []point{}}
+	held := journal.CG(float64(c.Held()))
+	day := c.Start
+	for ; !day.After(now); day = day.AddDate(0, 0, 1) {
+		held -= perDay[day.Format(time.DateOnly)]
+		out.History = append(out.History, point{day.Format(time.DateOnly), max(held.Grams(), 0)})
+	}
+	if rate <= 0 || held <= 0 {
+		return out
+	}
+	level := held.Grams()
+	last := now
+	for i := 0; i < 90 && level > 0; i++ {
+		level = max(level-rate, 0)
+		last = now.AddDate(0, 0, i+1)
+		out.Projected = append(out.Projected, point{last.Format(time.DateOnly), ledger.Round(level)})
+	}
+	out.EmptyOn = &last
+	return out
+}
+
+// day is what was ground and put through a device on one calendar day.
+type day struct {
+	Date   string  `json:"date"`
+	Ground float64 `json:"ground"`
+	Seshed float64 `json:"seshed"`
+}
+
+// daysOf totals every day with an entry, oldest first, for the calendars.
+func daysOf(ws *workspace.Workspace) any {
+	ground, seshed := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
+	seen := map[string]bool{}
+	var dates []string
+	for _, e := range ws.State.Applied() {
+		d := e.OccurredAt.Format(time.DateOnly)
+		if !seen[d] {
+			seen[d] = true
+			dates = append(dates, d)
+		}
+		switch e.Type {
+		case journal.Grind:
+			ground[d] += journal.CG(e.Grams)
+		case journal.Sesh:
+			seshed[d] += journal.CG(e.Grams)
+		}
+	}
+	sort.Strings(dates)
+	out := make([]day, 0, len(dates))
+	for _, d := range dates {
+		out = append(out, day{Date: d, Ground: ground[d].Grams(), Seshed: seshed[d].Grams()})
+	}
+	return out
 }
 
 // entry is one journal entry as a client shows it.
@@ -389,8 +472,10 @@ type cycle struct {
 	Dispensed float64   `json:"dispensed"`
 	// GroundDuring is every grind during the fill's tenure, from whichever jar:
 	// the shelf's grinding over the period, not the fill's.
-	GroundDuring float64  `json:"ground_during"`
-	Products     []string `json:"products"`
+	GroundDuring float64 `json:"ground_during"`
+	// Remaining is the fill's own grams still sealed.
+	Remaining float64  `json:"remaining"`
+	Products  []string `json:"products"`
 }
 
 func cyclesOf(ws *workspace.Workspace) any {
@@ -398,7 +483,8 @@ func cyclesOf(ws *workspace.Workspace) any {
 	for i := len(ws.State.Cycles) - 1; i >= 0; i-- {
 		c := ws.State.Cycles[i]
 		out = append(out, cycle{Number: c.Seq + 1, Start: c.Start, End: c.End, Open: c.Open(),
-			Dispensed: float64(c.Purchased), GroundDuring: float64(c.Ground), Products: c.Products})
+			Dispensed: float64(c.Purchased), GroundDuring: float64(c.Ground),
+			Remaining: float64(ws.State.FillOnShelf(&c)), Products: c.Products})
 	}
 	return out
 }
