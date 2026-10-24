@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.48.0"></a>
+## [v0.48.0] - 2026-10-24
+### Chore
+- no wits.log, and figures named for what they count
+
+
 <a name="v0.47.0"></a>
 ## [v0.47.0] - 2026-10-24
+### Docs
+- update changelog for v0.47.0
+
 ### Perf
 - **tui:** the journal draws what fits, and keeps the selection in it
 
@@ -672,7 +681,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.47.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.48.0...HEAD
+[v0.48.0]: https://github.com/TheDonDope/wits/compare/v0.47.0...v0.48.0
 [v0.47.0]: https://github.com/TheDonDope/wits/compare/v0.46.0...v0.47.0
 [v0.46.0]: https://github.com/TheDonDope/wits/compare/v0.45.0...v0.46.0
 [v0.45.0]: https://github.com/TheDonDope/wits/compare/v0.44.0...v0.45.0
