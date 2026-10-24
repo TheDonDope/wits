@@ -1,5 +1,24 @@
 # Development Diary
 
+## 2026-10-24
+
+### The records add up
+
+The committed workbook caught up with the jars: it now runs to 2026-10-23, one more fill and four more months, with every closed jar cleaned to exactly zero. Every last thing the importer had flagged was then fixed in the spreadsheet itself instead of being explained away: 2025-03 moved to the year it is named for, the 0.01 g Ghost Train Haze in 2025-06 became the 10 g fill it was, and the 2.40 g logged against no product in 2025-10 is gone. `wits import` now reports nothing, and the test checks that nothing is reported. Every figure the tests check was re-read from the raw cells, separately from the importer: 53 products, 1429 entries, 1254.00 g dispensed, 1209.20 g ground, no balance negative and no cycle over 100%. A later re-save of the workbook was checked by importing both versions; they replay to the same ledger. The bundle figures were re-measured, and the bundle gif was re-recorded so the picture says what the README says. Shipped as v0.26.0 and v0.27.0.
+
+- `89dfad6` chore(deps): bump codecov/codecov-action in the actions group
+- `c34de80` chore(deps): bump the gomod-minor group across 1 directory with 4 updates
+- `d379433` test(importer): reconcile against the workbook through october 2026
+- `157efcf` test(importer): the records add up, so say so
+- `dbde7cc` chore: update seed data
+- `a3adfc8` docs: update changelog for v0.26.0
+- `32140e9` chore(vhs): re-record the bundle gif against the october workbook
+- `33c3827` docs: update changelog for v0.27.0
+
+### Notes for 2026-10-24
+
+Recording on SteamOS needs help: the Chromium that vhs downloads lacks `libnss3`, `libnspr4` and `libasound`, which SteamOS does not ship. Unpacking Arch's `nss`, `nspr` and `alsa-lib` packages into a private directory and running vhs with `LD_LIBRARY_PATH` pointed at it was enough, with nothing installed system-wide. GitHub reports 15 Dependabot alerts on main (9 high, 6 moderate), still to be looked at.
+
 ## 2026-08-02
 
 ### From v0.7.0 to v0.20.0 in one day
