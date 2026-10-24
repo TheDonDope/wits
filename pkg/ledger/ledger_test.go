@@ -386,3 +386,32 @@ func TestCycleAt(t *testing.T) {
 	})
 	assert.Nil(t, emptied.CycleAt(day(5)), "With the shelf empty and the next fill not here yet, nothing is in progress")
 }
+
+func TestParseGrams(t *testing.T) {
+	for in, want := range map[string]float64{"0.75": 0.75, "0.75g": 0.75, "0,75 g": 0.75, " 20G ": 20, "0": 0} {
+		got, err := ParseGrams(in)
+		require.NoError(t, err, in)
+		assert.Equal(t, want, got, in)
+	}
+	_, err := ParseGrams("0.333")
+	assert.ErrorContains(t, err, "finer than a scale reads")
+	for _, in := range []string{"lots", "", "NaN", "Inf"} {
+		_, err := ParseGrams(in)
+		assert.ErrorContains(t, err, "is not an amount in grams", in)
+	}
+}
+
+func TestFoldAddsInCentigrams(t *testing.T) {
+	// Thirty fills of 0.1 g add up to 3.0000000000000013 in floating point.
+	var events []journal.Event
+	for i := 0; i < 30; i++ {
+		events = append(events, event(journal.Purchase, "wedding-cake", 0.1, day(0)))
+	}
+	events = append(events, event(journal.Grind, "wedding-cake", 3, day(1)))
+
+	s := Fold(events)
+
+	assert.Equal(t, 0.0, s.Balances["wedding-cake"].Storage, "Exactly nothing should be left")
+	assert.Equal(t, 3.0, s.Cycles[0].Purchased)
+	assert.False(t, s.Cycles[0].Open(), "and the fill should close, not hang open on a rounding remainder")
+}

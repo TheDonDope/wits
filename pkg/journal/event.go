@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 )
 
@@ -57,6 +58,26 @@ var flows = map[Type][2]Account{
 	Adjust:     {External, External},
 }
 
+// Centigrams is an amount in hundredths of a gram: the precision a jeweller's
+// scale reads, the precision the spreadsheet kept, and what a bundle stores.
+// Entries keep grams as a decimal in the journal — the encoding every hash is
+// taken over — but anything that adds amounts up adds them in this, so a
+// total is exact whatever is added in whatever order.
+type Centigrams int64
+
+// CG converts grams to centigrams, to the nearest.
+func CG(grams float64) Centigrams { return Centigrams(math.Round(grams * 100)) }
+
+// Grams converts centigrams back to grams.
+func (c Centigrams) Grams() float64 { return float64(c) / 100 }
+
+// Whole reports whether an amount is a whole number of centigrams. One finer
+// was stored as typed — 0.333 g — shown everywhere as 0.33 g, and came back
+// from a bundle as 0.33 g, so the restored journal was not the original.
+func Whole(grams float64) bool {
+	return math.Abs(grams*100-math.Round(grams*100)) < 1e-6
+}
+
 // Flow returns the accounts an event type moves grams from and to.
 func Flow(t Type) (from, to Account, ok bool) {
 	f, ok := flows[t]
@@ -105,6 +126,9 @@ func (e Event) Validate() error {
 	}
 	if e.Grams <= 0 {
 		return fmt.Errorf("grams must be positive, got %v", e.Grams)
+	}
+	if !Whole(e.Grams) {
+		return fmt.Errorf("%v g is finer than a centigram, which is all a scale reads and all a bundle keeps", e.Grams)
 	}
 	if e.Type != AVBUse && e.Product == "" {
 		return fmt.Errorf("event type %q requires a product", e.Type)

@@ -88,6 +88,8 @@ wits status
 ```
 
 References resolve by prefix, so `cslap` is enough while it is unambiguous.
+Amounts are grams to two decimal places — what a jeweller's scale reads — with a
+comma or a point and an optional `g`; anything finer is refused.
 `buy` is the exception: it takes a handle or a full name, and refuses part of
 one rather than guess, because a purchase that matches nothing adds a product.
 

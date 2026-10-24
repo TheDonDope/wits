@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	"charm.land/huh/v2"
@@ -13,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
 )
 
@@ -332,10 +332,9 @@ func optionalGrams(v string) error {
 // Unlike an amount, zero is allowed: an empty jar is a real reading, and
 // recording it is the point of weighing.
 func parseWeight(v string) (float64, error) {
-	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(v)), "g"))
-	weighed, err := strconv.ParseFloat(strings.Replace(trimmed, ",", ".", 1), 64)
+	weighed, err := ledger.ParseGrams(v)
 	if err != nil {
-		return 0, fmt.Errorf("%q is not a weight in grams", v)
+		return 0, err
 	}
 	if weighed < 0 {
 		return 0, fmt.Errorf("a weight cannot be negative, got %v", weighed)
