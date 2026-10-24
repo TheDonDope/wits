@@ -2,10 +2,30 @@
 ## [Unreleased]
 
 
+<a name="v0.49.0"></a>
+## [v0.49.0] - 2026-10-24
+### Ci
+- **ui:** lint the client with its types, where the types are
+
+### Docs
+- wits in a browser — make serve, the screenshots, and how to work on it
+
+### Feat
+- **server:** what the client draws — the shelf's projection, every day, every fill
+- **server:** wits-server, a JSON API over the workspace
+- **ui:** wits in a browser — Angular, Angular Material, and charts the terminal could not draw
+
+### Style
+- **ui:** the stylesheets to the standard Codacy's Stylelint applies
+
+
 <a name="v0.48.0"></a>
 ## [v0.48.0] - 2026-10-24
 ### Chore
 - no wits.log, and figures named for what they count
+
+### Docs
+- update changelog for v0.48.0
 
 
 <a name="v0.47.0"></a>
@@ -681,7 +701,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.48.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.49.0...HEAD
+[v0.49.0]: https://github.com/TheDonDope/wits/compare/v0.48.0...v0.49.0
 [v0.48.0]: https://github.com/TheDonDope/wits/compare/v0.47.0...v0.48.0
 [v0.47.0]: https://github.com/TheDonDope/wits/compare/v0.46.0...v0.47.0
 [v0.46.0]: https://github.com/TheDonDope/wits/compare/v0.45.0...v0.46.0
