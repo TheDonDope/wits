@@ -130,7 +130,7 @@ back a catalog without the product `wits buy` had added in another terminal.
 
 ### The journal
 
-Newline-delimited JSON, opened `O_APPEND`, never rewritten — so a failed write
+Newline-delimited JSON, opened `O_APPEND`, never rewritten but by a pull (below) — so a failed write
 can add a bad line but cannot destroy an existing one. That line, a write cut
 off before its newline, is left out when reading and truncated, under the lock,
 before the next append; one used to make every command refuse the repository.
@@ -189,6 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
+`remote`, `push`, `pull`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -244,6 +245,36 @@ refuses the restore, naming it, rather than restoring it wrong.
 A restore is one batch through `AppendWith` — one write, all or nothing, the
 emptiness check under the lock — and verifies what it wrote. An entry at a time
 took 13.04 s on disk for the workbook's bundle; the batch takes 0.07 s.
+
+### Sync — `wits remote` / `wits push` / `wits pull`
+
+One repository on several devices through a folder: Syncthing, a USB stick,
+anything that carries files. The folder holds one file, `wits.age`, a gzipped
+bundle encrypted with age (X25519) to the key in `.wits/remote.key`, which
+never goes in the folder. The workbook's 1429 entries are 6,911 bytes there.
+age authenticates what it decrypts, so a file that was changed or cut short
+fails to open rather than restoring as something else. A bundle carries no
+hashes, so a fetched one is chained the way appending it would chain it
+(`journal.Chain`, `effects.Chain`) and then checked like any other copy.
+
+A pull is a rebase (`Journal.Rebase`): shared entries kept, the remote's
+taken as they are, this device's own chained again on top with new hashes,
+undos pointed at them, and the effect log following the sessions that moved
+while the journal's lock is still held. It is the one rewrite the journal
+has, of entries no other device has seen yet; the journal as it was is kept as
+`journal.ndjson.orig`. A push is refused unless this device holds everything on
+the remote — entries, ratings, products and devices — so two devices cannot
+keep rewriting each other's entries. On a pull the remote's catalog entries win.
+
+Two devices can each grind a jar's last 2 g. Merged, the later of the two took
+grams that were not there. Both are kept, and `pull`, `status` and `fsck` name
+it. The recorder refuses anything more on that jar but an undo (`ErrClash`),
+and other jars carry on. Undoing either clears it: `Shortfalls` passes over an
+undone entry and its undo, which together moved nothing, and the fold puts back
+only what an entry took from its fill's lots. Before that, the undo of a grind
+that found its lots empty credited the fill 1.5 g its jar did not hold. Two
+devices recording an identical entry in the same second write one entry, since
+the hash is the same.
 
 ### Checking — `wits fsck`
 
@@ -578,13 +609,15 @@ first things wits would send anywhere, so both are opt-in and said plainly.
   yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
   must stay disposable.
 
-#### 🔹 Sync without a server
+#### 🔹 WebDAV for the remote
 
 - **Status**: Planned
-- The journal is append-only and hash-chained, the way git is: two devices'
-  journals merge as branches do, entries interleaved by when they happened.
-  `wits push` and `wits pull` over any dumb storage — Syncthing, WebDAV, a USB
-  stick — end-to-end encrypted with age.
+- `wits push` and `wits pull` reach a folder; a WebDAV server is the first
+  remote wits itself would send anything to, so it is opt-in and said plainly.
+  A conditional write (`If-Match`) closes the gap a folder leaves: two pushes
+  at the same moment, the second writing over the first. The device that loses
+  still holds its entries and rebases them on its next pull, but the remote
+  does not say it lost.
 
 #### 🔹 wits on the phone
 

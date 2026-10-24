@@ -6,12 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/TheDonDope/wits/pkg/bundle"
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/remote"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/spf13/cobra"
 )
@@ -19,6 +21,7 @@ import (
 var (
 	bundleOut  string
 	bundleGzip bool
+	remoteKey  string
 )
 
 // Bundle is the `wits bundle` command.
@@ -200,7 +203,131 @@ func devices(c *bundle.Contents) []*catalog.Device {
 	return c.Devices.Devices
 }
 
+// Remote is the `wits remote` command: where push and pull go.
+var Remote = &cobra.Command{
+	Use:   "remote",
+	Short: "Show the folder push and pull share with other devices",
+	Long: "A remote is a folder more than one device can reach — a Syncthing share,\n" +
+		"a USB stick — holding the repository as one file, encrypted with age to a\n" +
+		"key kept in .wits/remote.key and never in the folder. Bring that key to\n" +
+		"another device by hand, and give it to `wits remote add --key` there.",
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		if s.Repo.Config.Remote == "" {
+			return remote.ErrNoRemote
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "%s\nkey: %s\n", s.Repo.Config.Remote, s.Repo.RemoteKeyPath())
+		return nil
+	},
+}
+
+var remoteAdd = &cobra.Command{
+	Use:   "add <folder>",
+	Short: "Share the repository through a folder",
+	Long: "Set the folder push and pull go to. On the first device a key is made;\n" +
+		"on every other, pass the first device's key with --key, or the folder's\n" +
+		"contents cannot be read.",
+	Example: "  wits remote add ~/Sync/wits\n" +
+		"  wits remote add /run/media/stick/wits --key remote.key",
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		if err := remote.Add(s.Repo, args[0], remoteKey); err != nil {
+			return err
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Remote set to %s. Its key is %s: bring it to every other device, and nowhere else.\n",
+			s.Repo.Config.Remote, s.Repo.RemoteKeyPath())
+		return nil
+	},
+}
+
+// Push is the `wits push` command.
+var Push = &cobra.Command{
+	Use:   "push",
+	Short: "Write the repository to its remote",
+	Long: "Write the repository to the remote folder, for the other devices to pull.\n" +
+		"Refused when the remote holds anything this device does not — pull first,\n" +
+		"so nothing another device wrote is lost.",
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		done, err := remote.Push(s.Repo)
+		if err != nil {
+			return err
+		}
+		if done.Events == 0 && done.Ratings == 0 {
+			fmt.Fprintln(cmd.OutOrStdout(), "The remote has every entry and rating already.")
+			return nil
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Pushed %s and %s.\n", entries(done.Events), plural(done.Ratings, "rating"))
+		return nil
+	},
+}
+
+// Pull is the `wits pull` command.
+var Pull = &cobra.Command{
+	Use:   "pull",
+	Short: "Bring in what other devices pushed",
+	Long: "Bring in the remote's entries, ratings, products and devices. Entries\n" +
+		"this device made since its last push are chained again on top of the\n" +
+		"remote's, the way git rebases, and get new hashes; the old journal is kept\n" +
+		"as .wits/journal.ndjson.orig. Where the remote holds a product or a device\n" +
+		"differently, the remote's stands.\n\n" +
+		"Two devices can each record the same last grams of a jar. Both entries are\n" +
+		"kept, as written, and named; the jar takes nothing more until one of them\n" +
+		"is undone with wits revert.",
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		done, err := remote.Pull(s.Repo)
+		if err != nil {
+			return err
+		}
+		reportPull(cmd.OutOrStdout(), done)
+		return nil
+	},
+}
+
+// reportPull says what a pull brought in, and every clash it made.
+func reportPull(out io.Writer, done remote.Pulled) {
+	if done.Fetched == 0 && done.Ratings == 0 && len(done.Products) == 0 && len(done.Devices) == 0 {
+		fmt.Fprintln(out, "Already up to date.")
+		return
+	}
+	fmt.Fprintf(out, "Pulled %s and %s.\n", entries(done.Fetched), plural(done.Ratings, "rating"))
+	if done.Rechained > 0 {
+		fmt.Fprintf(out, "Chained %s of this device's on top, with new hashes.\n", entries(done.Rechained))
+	}
+	if took := append(slices.Clone(done.Products), done.Devices...); len(took) > 0 && len(took) <= 5 {
+		fmt.Fprintf(out, "Took the remote's %s.\n", strings.Join(took, ", "))
+	} else if len(took) > 5 {
+		fmt.Fprintf(out, "Took the remote's %s and %s.\n",
+			plural(len(done.Products), "product"), plural(len(done.Devices), "device"))
+	}
+	for _, c := range done.Clashes {
+		fmt.Fprintf(out, "🚨 %s %s\n", shortHash(c.Event.Hash), c)
+	}
+	if len(done.Clashes) > 0 {
+		fmt.Fprintln(out, "   Two devices recorded the same grams: wits revert one of the entries. The jar takes nothing else until then.")
+	}
+}
+
 func init() {
+	Remote.AddCommand(remoteAdd)
+	remoteAdd.Flags().StringVar(&remoteKey, "key", "", "the key file brought from the first device")
 	Bundle.Flags().StringVar(&bundleOut, "out", "", "write to this file instead of stdout")
 	Bundle.Flags().BoolVar(&bundleGzip, "gzip", false, "compress the bundle")
 }

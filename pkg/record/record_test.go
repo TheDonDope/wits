@@ -741,3 +741,29 @@ func TestRate(t *testing.T) {
 	_, err = rec.Rate(sesh.Hash, map[effects.Dimension]int{effects.Overall: 4}, "", time.Now())
 	assert.ErrorContains(t, err, "was undone")
 }
+
+func TestAClashedJarTakesOnlyAnUndo(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 2, time.Now().Add(-time.Hour))
+	require.NoError(t, err)
+	_, _, _, err = rec.Buy("Sumo 25/1 Papaya Bomb", "", 2, time.Now().Add(-time.Hour))
+	require.NoError(t, err)
+	deck, err := rec.Grind("wedding", 2, time.Now().Add(-time.Minute))
+	require.NoError(t, err)
+	// What a pull brings in: the phone ground the same jar, past the recorder.
+	_, err = rec.repo.Journal().Append(journal.Event{Type: journal.Grind, Product: deck.Product, Grams: 1.5,
+		OccurredAt: time.Now().Add(-time.Minute)})
+	require.NoError(t, err)
+	events, err := rec.repo.Journal().Events()
+	require.NoError(t, err)
+	rec = New(rec.repo, rec.products, rec.devices, ledger.Fold(events))
+
+	_, err = rec.Session("wedding", 0.5, time.Now(), "", 0, "")
+	assert.ErrorIs(t, err, ErrClash, "Should refuse anything more on the clashed jar")
+	_, err = rec.Grind("papaya", 1, time.Now())
+	assert.NoError(t, err, "Should still record on every other jar")
+	_, err = rec.Revert(events[len(events)-1].Hash, "")
+	require.NoError(t, err, "Should take the undo that resolves it")
+	_, err = rec.Session("wedding", 0.5, time.Now(), "", 0, "")
+	assert.NoError(t, err, "Should record on the jar again once it adds up")
+}

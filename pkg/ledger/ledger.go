@@ -137,6 +137,11 @@ type folder struct {
 	share []journal.Centigrams
 	last  map[string]int
 	cur   int
+	// drew is what each entry that drew on storage took from its lots, by
+	// hash. An entry can take less than its grams — two devices ground the
+	// same last grams — and undoing it must put back only what it took, or
+	// the fill reads grams its jar does not hold.
+	drew map[string]journal.Centigrams
 }
 
 // settle closes a cycle the moment its share is ground away, and reopens it
@@ -150,8 +155,11 @@ func (f *folder) settle(cycle int, at time.Time) {
 	}
 }
 
-// consume draws grams out of a product's jar, oldest lot first.
-func (f *folder) consume(product string, cg journal.Centigrams, at time.Time) {
+// consume draws grams out of a product's jar, oldest lot first, and notes
+// what the entry took.
+func (f *folder) consume(e journal.Event, cg journal.Centigrams) {
+	product, at, want := e.Product, e.OccurredAt, cg
+	defer func() { f.drew[e.Hash] = want - cg }()
 	q := f.s.lots[product]
 	for cg > 0 && len(q) > 0 {
 		take := min(cg, q[0].cg)
@@ -252,11 +260,23 @@ var jarName = map[journal.Account]string{
 // Grams are flower in a jar, not money in an account: a jar cannot hold less
 // than nothing, so each account is followed down to empty and no further. An
 // entry that takes more than there is takes what there is, and is listed.
+//
+// An undone entry and the correction that undid it are left out: together
+// they moved nothing. Two devices that each ground a jar's last 2 g merge
+// into an entry that took grams that were not there, and undoing one of them
+// is how that is resolved — dated now, the undo cannot reach back to the
+// moment of the grind, so the pair has to be passed over to clear it.
 func Shortfalls(events []journal.Event) []Shortfall {
 	held := map[string]map[journal.Account]journal.Centigrams{}
+	undone := map[string]bool{}
+	for _, e := range events {
+		if e.Reverts != "" {
+			undone[e.Reverts] = true
+		}
+	}
 	var out []Shortfall
 	for _, e := range Chronological(events) {
-		if e.Product == "" {
+		if e.Product == "" || e.Reverts != "" || undone[e.Hash] {
 			continue
 		}
 		jar := held[e.Product]
@@ -299,7 +319,7 @@ func Chronological(events []journal.Event) []journal.Event {
 // dated ahead: the recorder refuses an entry that has not happened yet.
 func Fold(events []journal.Event) *State {
 	s := &State{Balances: map[string]*Balance{}, Events: Chronological(events), lots: map[string][]lot{}}
-	f := &folder{s: s, last: map[string]int{}, cur: -1}
+	f := &folder{s: s, last: map[string]int{}, cur: -1, drew: map[string]journal.Centigrams{}}
 	for _, e := range s.Events {
 		f.apply(e)
 	}
@@ -321,15 +341,18 @@ func (f *folder) apply(e journal.Event) {
 		if f.cur != -1 {
 			s.Cycles[f.cur].Ground = Shelf(plus(float64(s.Cycles[f.cur].Ground), e.Grams))
 		}
-		f.consume(e.Product, cg, e.OccurredAt)
+		f.consume(e, cg)
 	default:
 		// Anything else that moves grams through storage — adjustments
 		// down and up, corrections either way — settles the lots too, so
 		// a jar reconciled to zero closes its cycles' claims.
 		if e.From == journal.Storage {
-			f.consume(e.Product, cg, e.OccurredAt)
+			f.consume(e, cg)
 		}
 		if e.To == journal.Storage && e.Product != "" {
+			if took, ok := f.drew[e.Reverts]; ok {
+				cg = min(cg, took)
+			}
 			f.credit(e.Product, cg, e.OccurredAt)
 		}
 	}

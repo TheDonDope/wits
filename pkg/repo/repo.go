@@ -22,6 +22,8 @@ const (
 	journalFile  = "journal.ndjson"
 	effectsFile  = "effects.ndjson"
 	indexDir     = "index"
+	// remoteKeyFile is the age identity push and pull encrypt to.
+	remoteKeyFile = "remote.key"
 )
 
 // Permissions are deliberately tight. This is a multi-year medical record, and
@@ -51,9 +53,11 @@ var (
 // older build wrote is ignored on reading.
 //
 // Theme names the interface's colour theme; empty means follow the terminal.
+// Remote is the folder wits push and wits pull share with other devices.
 type Config struct {
 	Version int    `yaml:"version"`
 	Theme   string `yaml:"theme,omitempty"`
+	Remote  string `yaml:"remote,omitempty"`
 }
 
 // DefaultConfig returns the configuration a freshly initialised repository gets.
@@ -186,6 +190,22 @@ func (r *Repo) Effects() *effects.Log {
 // lock and onto the config as it stands on disk, so a setting changed by
 // another process in the meantime is kept rather than written over.
 func (r *Repo) SetTheme(name string) error {
+	return r.setConfig(func(c *Config) { c.Theme = name })
+}
+
+// SetRemote records the folder push and pull go to, the way SetTheme records
+// the theme.
+func (r *Repo) SetRemote(dir string) error {
+	return r.setConfig(func(c *Config) { c.Remote = dir })
+}
+
+// RemoteKeyPath is the age identity the remote is encrypted to. It lives in
+// the repository and never in the remote: whoever holds the remote's folder
+// holds nothing without it.
+func (r *Repo) RemoteKeyPath() string { return filepath.Join(r.root, remoteKeyFile) }
+
+// setConfig changes the config under its lock, onto the config as it stands.
+func (r *Repo) setConfig(change func(*Config)) error {
 	path := filepath.Join(r.root, configFile)
 	release, err := journal.Lock(path)
 	if err != nil {
@@ -197,7 +217,7 @@ func (r *Repo) SetTheme(name string) error {
 		return err
 	}
 	r.Config = fresh.Config
-	r.Config.Theme = name
+	change(&r.Config)
 	return r.writeConfig()
 }
 

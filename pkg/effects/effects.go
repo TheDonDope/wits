@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -149,22 +150,11 @@ func (l *Log) Append(r Rating) (Rating, error) {
 	}
 	defer release()
 
-	if r.At.IsZero() {
-		r.At = time.Now()
-	}
-	r.At = r.At.Truncate(time.Second)
-	if err := r.Validate(); err != nil {
-		return Rating{}, err
-	}
 	ratings, _, err := l.read()
 	if err != nil {
 		return Rating{}, err
 	}
-	r.Seq, r.Prev = len(ratings)+1, ""
-	if n := len(ratings); n > 0 {
-		r.Prev = ratings[n-1].Hash
-	}
-	if r.Hash, err = r.sum(r.Prev); err != nil {
+	if r, err = seal(r, ratings); err != nil {
 		return Rating{}, err
 	}
 	line, err := json.Marshal(r)
@@ -180,6 +170,39 @@ func (l *Log) Append(r Rating) (Rating, error) {
 		return Rating{}, err
 	}
 	return r, f.Sync()
+}
+
+// seal makes a rating what the log stores after the ratings before it: dated,
+// checked, numbered and chained.
+func seal(r Rating, before []Rating) (Rating, error) {
+	if r.At.IsZero() {
+		r.At = time.Now()
+	}
+	r.At = r.At.Truncate(time.Second)
+	if err := r.Validate(); err != nil {
+		return r, err
+	}
+	r.Seq, r.Prev = len(before)+1, ""
+	if n := len(before); n > 0 {
+		r.Prev = before[n-1].Hash
+	}
+	var err error
+	r.Hash, err = r.sum(r.Prev)
+	return r, err
+}
+
+// Chain seals ratings one onto the next from the start of a log, as appending
+// them to an empty one would.
+func Chain(ratings []Rating) ([]Rating, error) {
+	out := make([]Rating, 0, len(ratings))
+	for _, r := range ratings {
+		sealed, err := seal(r, out)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, sealed)
+	}
+	return out, nil
 }
 
 // All returns every rating, oldest first, superseded ones included.
@@ -365,4 +388,76 @@ func timeOfDay(t time.Time) string {
 	default:
 		return "4 evening"
 	}
+}
+
+// Rebase brings in another device's copy of the log the way the journal's
+// Rebase does: shared ratings kept, the other's taken as they are, and this
+// log's own chained again on top, each pointed at the new hash of a session
+// that moved (moved, from the journal's rebase). It returns how many of the
+// other's it lacked and how many of its own it chained again.
+func (l *Log) Rebase(onto []Rating, moved map[string]string) (fetched, rechained int, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	release, err := journal.Lock(l.path)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer release()
+	if err := whole(onto); err != nil {
+		return 0, 0, err
+	}
+	local, _, err := l.read()
+	if err != nil {
+		return 0, 0, err
+	}
+	k := 0
+	for k < len(local) && k < len(onto) && local[k].Hash == onto[k].Hash {
+		k++
+	}
+	tail := local[k:]
+	if len(onto) == k && !follows(tail, moved) {
+		return 0, 0, nil // nothing new, and nothing of ours points anywhere new
+	}
+	merged := slices.Clone(onto)
+	for _, r := range tail {
+		if to, ok := moved[r.Session]; ok {
+			r.Session = to
+		}
+		if r, err = seal(r, merged); err != nil {
+			return 0, 0, err
+		}
+		merged = append(merged, r)
+	}
+	var buf bytes.Buffer
+	for _, r := range merged {
+		line, _ := json.Marshal(r) // a Rating always encodes
+		buf.Write(append(line, '\n'))
+	}
+	return len(onto) - k, len(tail), journal.WriteFile(l.path, buf.Bytes())
+}
+
+// follows reports whether any of the ratings rates a session in moved.
+func follows(ratings []Rating, moved map[string]string) bool {
+	for _, r := range ratings {
+		if _, ok := moved[r.Session]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// whole reports whether ratings form a whole chain from the start.
+func whole(ratings []Rating) error {
+	prev := ""
+	for i, r := range ratings {
+		sum, err := r.sum(prev)
+		if err != nil {
+			return err
+		}
+		if r.Seq != i+1 || r.Prev != prev || r.Hash != sum {
+			return fmt.Errorf("%w at rating %d of the other copy", ErrBrokenChain, i+1)
+		}
+		prev = r.Hash
+	}
+	return nil
 }

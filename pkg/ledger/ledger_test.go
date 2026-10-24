@@ -442,3 +442,27 @@ func TestShortfallSaysWhatTheJarHeld(t *testing.T) {
 	require.Len(t, short, 1)
 	assert.Equal(t, "on 2026-07-02, grind 5.00 g of wedding-cake took more than storage held — 1.00 g", short[0].String())
 }
+
+// clash is a 2 g fill ground to nothing twice, as two devices pulled into one
+// journal record it: the second grind took grams that were not there.
+func clash() []journal.Event {
+	fill := event(journal.Purchase, "wedding-cake", 2, day(0))
+	deck := event(journal.Grind, "wedding-cake", 2, day(1))
+	phone := event(journal.Grind, "wedding-cake", 1.5, day(1))
+	fill.Hash, deck.Hash, phone.Hash = "fill", "deck", "phone"
+	return []journal.Event{fill, deck, phone}
+}
+
+func TestAClashIsUndone(t *testing.T) {
+	events := clash()
+	require.Len(t, Shortfalls(events), 1, "The second grind takes grams that were not there")
+	undo := journal.Event{Type: journal.Adjust, Product: "wedding-cake", Grams: 1.5,
+		From: journal.Stash, To: journal.Storage, OccurredAt: day(2), Reverts: "phone"}
+	events = append(events, undo)
+
+	assert.Empty(t, Shortfalls(events), "An undone entry and its undo moved nothing between them")
+	s := Fold(events)
+	assert.Equal(t, 0.0, s.Balances["wedding-cake"].Storage, "The jar is empty, as both grinds left it")
+	assert.Equal(t, Fill(0), s.FillOnShelf(&s.Cycles[0]),
+		"The undo puts back only what the grind took from the fill — it took nothing, and the fill read 1.5 g")
+}
