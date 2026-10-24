@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
@@ -606,4 +607,78 @@ func TestStashReplay(t *testing.T) {
 	}
 	out = stripANSI(m.View().Content)
 	assert.Contains(t, out, "finished · 1", "The emptied stash should move into the history as it empties")
+}
+
+func TestRateFromTheSessionsScreen(t *testing.T) {
+	app := seshed(t)
+	app.screen = sessionsScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "Recent sessions")
+	assert.Contains(t, out, "not rated", "Should say what is waiting to be rated")
+	assert.NotContains(t, out, "What works", "and draw no findings from no ratings")
+
+	selected := app.sessions.Selected(app)
+	require.NotNil(t, selected)
+	down := tea.KeyPressMsg{Code: tea.KeyDown}
+	m = typeText(m, "e4")                   // overall 4
+	m, _ = send(m, down)                    // pain
+	m, _ = send(m, down)                    // sleep
+	m = typeText(m, "lllllll")              // past 5 stays 5
+	for range len(effects.Dimensions) - 2 { // down to the note
+		m, _ = send(m, down)
+	}
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "Rate session", "Should fit the whole form on a 30-row terminal")
+	assert.Contains(t, out, "note", "down to its last line")
+	m = typeText(m, "kept me down")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	ratings, err := app.data.Repo.Effects().All()
+	require.NoError(t, err)
+	require.Len(t, ratings, 1)
+	assert.Equal(t, selected.Hash, ratings[0].Session)
+	assert.Equal(t, map[effects.Dimension]int{effects.Overall: 4, effects.Sleep: 5}, ratings[0].Scores)
+	assert.Equal(t, "kept me down", ratings[0].Note, "j and k typed into the note are text")
+
+	m, _ = send(m, tea.WindowSizeMsg{Width: 100, Height: 40})
+	out = stripANSI(m.View().Content)
+	assert.Contains(t, out, "overall 4, sleep 5", "Should show the rating on the list")
+	assert.Contains(t, out, "What works", "and what it adds up to")
+	assert.Contains(t, out, "4.0 of 5 · 1 rating")
+}
+
+func TestRatingAgainStartsFromTheStandingRating(t *testing.T) {
+	app := seshed(t)
+	app.screen = sessionsScreen
+	selected := app.sessions.Selected(app)
+	require.NotNil(t, selected)
+	_, err := record.New(app.data.Repo, app.data.Products, app.data.Devices, app.data.State).
+		Rate(selected.Hash, map[effects.Dimension]int{effects.Overall: 4, effects.Sleep: 5}, "kept me down", time.Now())
+	require.NoError(t, err)
+	var m tea.Model = app
+	m, _ = send(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+	m, _ = send(m, app.reload()())
+	down := tea.KeyPressMsg{Code: tea.KeyDown}
+
+	// Clearing a score leaves it out.
+	m = typeText(m, "e0")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	ratings, err := app.data.Repo.Effects().All()
+	require.NoError(t, err)
+	require.Len(t, ratings, 2, "the log keeps both")
+	assert.Equal(t, map[effects.Dimension]int{effects.Sleep: 5}, ratings[1].Scores)
+	assert.Equal(t, "kept me down", ratings[1].Note)
+
+	// Nothing scored is refused, and nothing is written.
+	m = typeText(m, "e")
+	m, _ = send(m, down)
+	m, _ = send(m, down)
+	m = typeText(m, "0")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	assert.Contains(t, stripANSI(m.View().Content), "nothing rated")
+	ratings, err = app.data.Repo.Effects().All()
+	require.NoError(t, err)
+	assert.Len(t, ratings, 2)
 }

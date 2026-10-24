@@ -49,7 +49,7 @@ func Load(r *repo.Repo) (Data, error) {
 // tick of the clock.
 func stamp(r *repo.Repo) string {
 	var b strings.Builder
-	for _, path := range []string{r.JournalPath(), r.ProductsPath(), r.DevicesPath()} {
+	for _, path := range []string{r.JournalPath(), r.ProductsPath(), r.DevicesPath(), r.EffectsPath()} {
 		if info, err := os.Stat(path); err == nil {
 			fmt.Fprintf(&b, "%d:%d;", info.Size(), info.ModTime().UnixNano())
 		} else {
@@ -317,6 +317,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case deviceDoneMsg:
 		return a.deviceDone(msg)
 
+	case ratedMsg:
+		return a.rated(msg)
+
 	case reloadedMsg:
 		if msg.err != nil {
 			a.notice, a.failed, a.reloading = msg.err.Error(), true, false
@@ -563,6 +566,16 @@ func (a *App) deviceDone(msg deviceDoneMsg) (tea.Model, tea.Cmd) {
 	return a, a.reload()
 }
 
+// rated reports a rating, or why it was refused.
+func (a *App) rated(msg ratedMsg) (tea.Model, tea.Cmd) {
+	if msg.err != nil {
+		a.notice, a.failed = msg.err.Error(), true
+		return a, nil
+	}
+	a.notice, a.failed = msg.what, false
+	return a, a.reload()
+}
+
 // formKey routes a key to the form in front, which owns the keyboard while it
 // is open, so navigation cannot fire underneath a half-filled entry.
 func (a *App) formKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
@@ -682,6 +695,12 @@ var corrections = map[screen]map[string]func(a *App) modal{
 			return nil
 		},
 	},
+	sessionsScreen: {"edit": func(a *App) modal {
+		if e := a.sessions.Selected(a); e != nil {
+			return newRateForm(e, a)
+		}
+		return nil
+	}},
 	devicesScreen: {
 		"add": func(a *App) modal { return newDeviceForm(nil, a) },
 		"edit": func(a *App) modal {

@@ -11,8 +11,10 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/record"
 )
 
 // analysisView is the long view: how this cycle is going, how it compares to
@@ -562,19 +564,48 @@ func (v analysisView) cycles(a *App, events []journal.Event, width int) string {
 // grows as sessions are actually logged.
 type sessionsView struct {
 	scroll int
+	cursor int // which of the recent sessions is selected, newest first
 }
 
 func newSessionsView() sessionsView { return sessionsView{} }
 
-func (v sessionsView) keys(base keyMap) help.KeyMap { return base }
+// recentShown is how many of the newest sessions are listed to be rated.
+const recentShown = 8
+
+type sessionKeys struct {
+	keyMap
+	Rate key.Binding
+}
+
+func (k sessionKeys) ShortHelp() []key.Binding {
+	return []key.Binding{k.Up, k.Down, k.Rate, k.Help, k.Quit}
+}
+
+func (k sessionKeys) FullHelp() [][]key.Binding {
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Rate})
+}
+
+func (v sessionsView) keys(base keyMap) help.KeyMap {
+	return sessionKeys{keyMap: base, Rate: withHelp(base.Edit, "rate")}
+}
+
+// Selected is the recent session under the cursor, or nil.
+func (v sessionsView) Selected(a *App) *journal.Event {
+	recent := recentSessions(a)
+	if len(recent) == 0 {
+		return nil
+	}
+	e := recent[min(v.cursor, len(recent)-1)]
+	return &e
+}
 
 func (v sessionsView) Update(msg tea.Msg, a *App) (sessionsView, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, a.keys.Up):
-			v.scroll = max(v.scroll-1, 0)
+			v.cursor = max(min(v.cursor, len(recentSessions(a))-1)-1, 0)
 		case key.Matches(msg, a.keys.Down):
-			v.scroll++
+			v.cursor = min(v.cursor+1, max(len(recentSessions(a))-1, 0))
 		case key.Matches(msg, a.keys.PageUp):
 			v.scroll = max(v.scroll-10, 0)
 		case key.Matches(msg, a.keys.PgDown):
@@ -584,6 +615,20 @@ func (v sessionsView) Update(msg tea.Msg, a *App) (sessionsView, tea.Cmd) {
 		}
 	}
 	return v, nil
+}
+
+// recentSessions are the newest sessions that stand — an undone one has
+// nothing to rate — newest first, as many as are listed.
+func recentSessions(a *App) []journal.Event {
+	undone := record.Reverted(a.data.State.Events)
+	var out []journal.Event
+	events := a.data.State.Applied()
+	for i := len(events) - 1; i >= 0 && len(out) < recentShown; i-- {
+		if e := events[i]; e.Type == journal.Sesh && !undone[e.Hash] {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // seshes returns the session events, oldest first.
@@ -611,6 +656,14 @@ func (v sessionsView) View(a *App, height int) string {
 	sections := []string{
 		v.summary(a, events, width),
 		"",
+		t.Rule("Recent sessions", width),
+		v.recent(a, width),
+	}
+	if works := v.whatWorks(a, width); works != "" {
+		sections = append(sections, "", t.Rule("What works · overall, by product", width), works)
+	}
+	sections = append(sections,
+		"",
 		t.Rule("Seshed per day", width),
 		v.perDay(a, events, width),
 		"",
@@ -619,7 +672,7 @@ func (v sessionsView) View(a *App, height int) string {
 		"",
 		t.Rule("Rhythm", width),
 		v.rhythm(a, events, width),
-	}
+	)
 
 	lines := strings.Split(lipgloss.JoinVertical(lipgloss.Left, sections...), "\n")
 	visible := max(height-2, 1)
@@ -775,4 +828,62 @@ func (v sessionsView) rhythm(a *App, events []journal.Event, width int) string {
 		}
 	}
 	return Calendar(perDay, first, last, width, t)
+}
+
+// recent lists the newest sessions with what each was rated, the selected one
+// marked: e rates it, or rates it again.
+func (v sessionsView) recent(a *App, width int) string {
+	t := a.theme
+	latest := effects.Latest(a.data.Ratings)
+	recent := recentSessions(a)
+	cursor := min(v.cursor, len(recent)-1)
+	rows := make([]string, 0, len(recent))
+	for i, e := range recent {
+		marker, name := "  ", t.Value.Render(truncate(a.data.ProductName(e.Product), 30))
+		if i == cursor {
+			marker = lipgloss.NewStyle().Foreground(t.Accent).Render("│ ")
+			name = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(truncate(a.data.ProductName(e.Product), 30))
+		}
+		temp := ""
+		if e.Temperature > 0 {
+			temp = fmt.Sprintf("%d°C", e.Temperature)
+		}
+		rating := t.Dim.Render("not rated")
+		if r, ok := latest[e.Hash]; ok {
+			rating = lipgloss.NewStyle().Foreground(t.SeshC).Render(effects.Summary(r.Scores))
+		}
+		rows = append(rows, truncate(lipgloss.JoinHorizontal(lipgloss.Left,
+			marker,
+			t.Dim.Width(18).Render(e.OccurredAt.Format("Mon 02 Jan 15:04")),
+			t.Value.Width(9).Render(fmt.Sprintf("%.2f g", e.Grams)),
+			lipgloss.NewStyle().Width(32).Render(name),
+			t.Label.Width(7).Render(temp),
+			rating,
+		), width))
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, rows...)
+}
+
+// whatWorks is each product's mean overall rating, with how many ratings it
+// stands on — one rating is a rating, not a finding, so the count is shown.
+func (v sessionsView) whatWorks(a *App, width int) string {
+	insights := effects.Analyse(a.data.Ratings, a.data.State.Applied(), a.data.ProductName)
+	var bars []Bar
+	for _, g := range insights.ByProduct {
+		mean, ok := g.Means[effects.Overall]
+		if !ok {
+			continue
+		}
+		bars = append(bars, Bar{
+			Label: g.Label,
+			Value: mean,
+			Note:  fmt.Sprintf("%.1f of 5 · %s", mean, plural(g.Counts[effects.Overall], "rating")),
+			Color: a.theme.SeshC,
+		})
+	}
+	if len(bars) == 0 {
+		return ""
+	}
+	sort.SliceStable(bars, func(i, j int) bool { return bars[i].Value > bars[j].Value })
+	return BarChart(bars, width, a.theme)
 }

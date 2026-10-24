@@ -121,7 +121,7 @@ var Rate = &cobra.Command{
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "[%s] rated session %s: %s\n",
-			shortHash(r.Hash), shortHash(r.Session), describeScores(r.Scores))
+			shortHash(r.Hash), shortHash(r.Session), effects.Summary(r.Scores))
 		return nil
 	},
 }
@@ -158,15 +158,4 @@ func parseScores(args []string) (map[effects.Dimension]int, error) {
 		scores[effects.Dimension(strings.ToLower(d))] = n
 	}
 	return scores, nil
-}
-
-// describeScores writes scores in the order the dimensions are asked.
-func describeScores(scores map[effects.Dimension]int) string {
-	var out []string
-	for _, d := range effects.Dimensions {
-		if v, ok := scores[d]; ok {
-			out = append(out, fmt.Sprintf("%s %d", d, v))
-		}
-	}
-	return strings.Join(out, ", ")
 }

@@ -367,7 +367,11 @@ refilled stash returns to the active table; the old ending no longer ends the
 story. The sessions screen reads the other direction: sessions, grams drawn,
 per-session and average-temperature figures, the braille per-day chart, grams
 by device with session counts and temperatures, and the rhythm calendar. The
-imported years recorded no sessions, so it grows from here.
+imported years recorded no sessions, so it grows from here. The newest eight
+sessions that stand are listed with their ratings, and `e` rates the selected
+one in a form drawn a line a dimension — huh's three lines a field would push
+the note and the enter off a 30-row terminal. A re-rating opens on the standing
+one. Each product's mean overall rating is drawn under the list, with its count.
 
 Every product gets a short handle when it is first bought — three to five
 characters from the cultivar, then the THC/CBD ratio: `wcake-221`. Handles are
@@ -462,7 +466,9 @@ behind `==`, and a restore gives it back byte for byte.
 ten-degree temperature band and by part of the day, leaving undone sessions
 out; every mean carries its count. In the browser, `/effects` rates the waiting
 sessions with a tap a dimension and draws the three groupings: a matrix, bars,
-and a wheel of the day.
+and a wheel of the day. The terminal interface rates from its sessions screen.
+The interface's change stamp includes `effects.ndjson`, so a rating made
+elsewhere shows within a tick.
 
 ---
 

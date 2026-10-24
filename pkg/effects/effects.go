@@ -44,6 +44,18 @@ const (
 // Dimensions are every dimension, in the order they are asked.
 var Dimensions = []Dimension{Overall, Pain, Sleep, Calm, Mood, Focus, Appetite}
 
+// Summary writes scores in the order the dimensions are asked: "overall 4,
+// sleep 5".
+func Summary(scores map[Dimension]int) string {
+	var out []string
+	for _, d := range Dimensions {
+		if v, ok := scores[d]; ok {
+			out = append(out, fmt.Sprintf("%s %d", d, v))
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
 // Lowest and Highest bound a score.
 const (
 	Lowest  = 1
