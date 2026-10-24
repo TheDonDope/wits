@@ -98,7 +98,6 @@ func TestImportCommand(t *testing.T) {
 
 	t.Run("CommitWrites", func(t *testing.T) {
 		dir := repository(t)
-		defer func() { importCommit = false }()
 
 		out, err := run(t, dir, Import, workbook(t, false), "--commit")
 
@@ -118,7 +117,6 @@ func TestImportCommand(t *testing.T) {
 
 	t.Run("RefusesToImportTwice", func(t *testing.T) {
 		dir := repository(t)
-		defer func() { importCommit = false }()
 		path := workbook(t, false)
 		_, err := run(t, dir, Import, path, "--commit")
 		require.NoError(t, err)

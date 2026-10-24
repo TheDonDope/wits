@@ -12,6 +12,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,22 @@ func run(t *testing.T, dir string, cmd *cobra.Command, args ...string) (string, 
 	defer cmd.SetArgs(nil)
 
 	err := cmd.Execute()
+	resetFlags(cmd)
 	return out.String(), err
+}
+
+// resetFlags puts every flag of a command and its subcommands back to its
+// default. The commands bind their flags to package variables, which outlive
+// a run: a --date given to one buy used to date every buy after it in the
+// same test binary, and a test could pass on a date it never asked for.
+func resetFlags(cmd *cobra.Command) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		_ = f.Value.Set(f.DefValue)
+		f.Changed = false
+	})
+	for _, sub := range cmd.Commands() {
+		resetFlags(sub)
+	}
 }
 
 // repository initialises a repository in a temp directory and returns its path.
@@ -197,7 +213,6 @@ func TestExportCommand(t *testing.T) {
 
 	t.Run("RejectsAnUnknownFormat", func(t *testing.T) {
 		dir := repository(t)
-		defer run(t, dir, Export, "--format", "markdown") // restore the flag default
 
 		_, err := run(t, dir, Export, "--format", "pdf")
 
@@ -301,7 +316,6 @@ func TestReconcileCommand(t *testing.T) {
 
 	t.Run("DryRunWritesNothing", func(t *testing.T) {
 		dir := stocked(t)
-		defer func() { reconcileDryRun = false }()
 
 		out, err := run(t, dir, Reconcile, "wedding", "17.6", "--dry-run")
 
@@ -316,7 +330,6 @@ func TestReconcileCommand(t *testing.T) {
 
 	t.Run("TheStash", func(t *testing.T) {
 		dir := stocked(t)
-		defer func() { reconcileStash = false }()
 
 		out, err := run(t, dir, Reconcile, "wedding", "1.75", "--stash")
 
@@ -372,7 +385,6 @@ func TestReconcileCommand(t *testing.T) {
 
 	t.Run("AccountAndFlagTogetherAreRefused", func(t *testing.T) {
 		dir := stocked(t)
-		defer func() { reconcileStash = false }()
 
 		_, err := run(t, dir, Reconcile, "stash", "wedding", "1.75", "--stash")
 
@@ -434,7 +446,6 @@ func TestBundleKeepsTheRecordedOrder(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "history.wits")
 	_, err = run(t, dir, Bundle, "--out", file)
 	require.NoError(t, err)
-	defer run(t, dir, Bundle, "--out", "") // restore the flag default
 
 	again := repository(t)
 	_, err = run(t, again, Restore, file)
@@ -520,4 +531,18 @@ func TestFsckCommand(t *testing.T) {
 		assert.EqualError(t, err, "1 problem found")
 		assert.Contains(t, out, "is 0.333 g, finer than a centigram; a bundle keeps 0.33 g")
 	})
+}
+
+func TestStatusNamesWhatIsComing(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "2g", "--date", "2099-01-01")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Status)
+
+	require.NoError(t, err)
+	assert.Contains(t, out, "wcake-221  20.00g", "The shelf is what is there now")
+	assert.Contains(t, out, "2.00g of wcake-221 arriving 2099-01-01, not counted until then")
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 )
@@ -29,6 +30,7 @@ var Status = &cobra.Command{
 		}
 		warnChain(cmd.ErrOrStderr(), s.Workspace)
 		writeStatus(cmd.OutOrStdout(), s.State, s.Cycle())
+		writeUpcoming(cmd.OutOrStdout(), s.State)
 		return nil
 	},
 }
@@ -140,7 +142,7 @@ func entries(n int) string {
 // first less the second must be the third, or a gram has gone missing.
 func massLine(state *ledger.State) string {
 	var in, out, held float64
-	for _, e := range state.Events {
+	for _, e := range state.Applied() {
 		if e.From == journal.External && e.To != journal.External {
 			in += e.Grams
 		}
@@ -213,6 +215,19 @@ func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 			plural(int(math.Round(stats.DaysWorth(float64(remaining)))), "day"))
 	} else {
 		fmt.Fprintln(out, "Nothing ground yet this cycle, so there is no rate to extrapolate from")
+	}
+}
+
+// writeUpcoming lists the fills dated ahead, which the figures above leave
+// out until they arrive — less any undone, the way the journal leaves out a
+// corrected entry and its correction.
+func writeUpcoming(out io.Writer, state *ledger.State) {
+	undone := record.Reverted(state.Events)
+	for _, e := range state.Upcoming() {
+		if e.Type == journal.Purchase && !undone[e.Hash] {
+			fmt.Fprintf(out, "%.2fg of %s arriving %s, not counted until then\n",
+				e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly))
+		}
 	}
 }
 

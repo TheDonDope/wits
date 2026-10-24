@@ -151,7 +151,7 @@ func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event
 		return journal.Event{}, err
 	}
 	return r.one(func() (journal.Event, error) {
-		if err := r.check(product.Slug, grams, journal.Storage); err != nil {
+		if err := r.checkAt(product.Slug, grams, journal.Storage, at); err != nil {
 			return journal.Event{}, err
 		}
 		return journal.Event{
@@ -185,7 +185,7 @@ func (r *Recorder) Session(ref string, grams float64, at time.Time, device strin
 		}
 	}
 	return r.one(func() (journal.Event, error) {
-		if err := r.check(product.Slug, grams, journal.Stash); err != nil {
+		if err := r.checkAt(product.Slug, grams, journal.Stash, at); err != nil {
 			return journal.Event{}, err
 		}
 		return journal.Event{
@@ -232,6 +232,17 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 	return fmt.Errorf("only %.2fg of %s %s, cannot take %.2fg", have, slug, where, grams)
 }
 
+// checkAt is check for an entry at a moment. Today's balance only judges an
+// entry dated by today: one dated ahead draws on grams that may arrive before
+// it, which today's balance knows nothing of, and impossible judges it on its
+// own date — as it judges every entry.
+func (r *Recorder) checkAt(slug string, grams float64, account journal.Account, at time.Time) error {
+	if at.After(time.Now()) {
+		return nil
+	}
+	return r.check(slug, grams, account)
+}
+
 // write appends the entries build makes, and folds them into the running
 // state, so a recorder used twice in a row sees its own first entry.
 //
@@ -247,7 +258,7 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 // the fill it draws on. check only sees today; impossible sees every day.
 func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event, error) {
 	stored, err := r.repo.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
-		r.state = ledger.Fold(events)
+		r.state = ledger.FoldAt(events, time.Now())
 		batch, err := build()
 		if err != nil {
 			return nil, err
@@ -267,7 +278,7 @@ func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event
 	if err != nil {
 		return nil, err
 	}
-	r.state = ledger.Fold(append(slices.Clip(r.state.Events), stored...))
+	r.state = ledger.FoldAt(append(slices.Clip(r.state.Events), stored...), time.Now())
 	return stored, nil
 }
 
@@ -338,12 +349,6 @@ func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 	if r.RevertOf(original.Hash) != nil {
 		return journal.Event{}, fmt.Errorf("%s has already been corrected", short(hash))
 	}
-	// Putting the grams back must not take more than the account they went
-	// into holds: if they have since been ground on or used, the later entries
-	// have to go first.
-	if err := r.check(original.Product, original.Grams, original.To); err != nil {
-		return journal.Event{}, fmt.Errorf("cannot undo %s: %w", short(hash), err)
-	}
 	if reason == "" {
 		reason = "reverts " + short(hash)
 	}
@@ -353,6 +358,12 @@ func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 	at := time.Now()
 	if original.OccurredAt.After(at) {
 		at = original.OccurredAt
+	}
+	// Putting the grams back must not take more than the account they went
+	// into holds: if they have since been ground on or used, the later entries
+	// have to go first.
+	if err := r.checkAt(original.Product, original.Grams, original.To, at); err != nil {
+		return journal.Event{}, fmt.Errorf("cannot undo %s: %w", short(hash), err)
 	}
 	return journal.Event{
 		Type:       journal.Adjust,
@@ -384,7 +395,7 @@ func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event
 		// The revert frees the original amount back into the source account,
 		// so only the difference beyond it has to be there already.
 		if extra := round(grams - original.Grams); extra > 0 {
-			if err := r.check(original.Product, extra, original.From); err != nil {
+			if err := r.checkAt(original.Product, extra, original.From, original.OccurredAt); err != nil {
 				return nil, fmt.Errorf("cannot amend %s to %.2fg: %w", short(hash), grams, err)
 			}
 		}

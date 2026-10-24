@@ -665,3 +665,21 @@ func TestABackdatedGrindCannotTakeALaterOnesGrams(t *testing.T) {
 	assert.ErrorContains(t, err, "would leave only 5.00g in storage for the grind of 8.00g")
 	assert.Empty(t, ledger.Shortfalls(rec.State().Events))
 }
+
+func TestAFillDatedAheadIsNotWeighed(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now().AddDate(0, 0, -1))
+	require.NoError(t, err)
+	ahead, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 2, time.Now().AddDate(1, 0, 0))
+	require.NoError(t, err)
+
+	assert.Equal(t, 20.0, rec.Available("wcake-221", journal.Storage), "Next year's 2 g are not in the jar today")
+	_, err = rec.Reconcile("wcake-221", journal.Storage, 20, "")
+	assert.ErrorIs(t, err, ErrNothingToReconcile, "Weighing the 20 g that are there should record no loss")
+
+	_, err = rec.Grind("wedding", 21, time.Now())
+	assert.ErrorContains(t, err, "only 20.00g", "and they cannot be ground today")
+
+	_, err = rec.Revert(ahead.Hash, "")
+	assert.NoError(t, err, "A fill dated ahead can still be undone")
+}
