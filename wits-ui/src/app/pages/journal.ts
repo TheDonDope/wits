@@ -1,6 +1,6 @@
-import { ScrollingModule } from '@angular/cdk/scrolling';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,6 +13,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { Entry } from '../data/models';
+import { Binding, Keys } from '../data/keys';
 import { Wits } from '../data/wits';
 import { Confirm, ConfirmDialog } from './confirm';
 
@@ -51,9 +52,9 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
       </div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
         <mat-icon matPrefix>search</mat-icon>
-        <input matInput placeholder="Product" [ngModel]="query()" (ngModelChange)="query.set($event)" />
+        <input #search matInput placeholder="Product  /" [ngModel]="query()" (ngModelChange)="query.set($event); cursor.set(-1)" />
       </mat-form-field>
-      <mat-chip-listbox [value]="kind()" (change)="kind.set($event.value ?? '')" aria-label="Kind of entry">
+      <mat-chip-listbox [value]="kind()" (change)="kind.set($event.value ?? ''); cursor.set(-1)" aria-label="Kind of entry">
         <mat-chip-option value="">all</mat-chip-option>
         @for (k of kinds; track k) {
           <mat-chip-option [value]="k">{{ KINDS[k].verb }}</mat-chip-option>
@@ -62,7 +63,7 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
     </section>
 
     <cdk-virtual-scroll-viewport itemSize="56" class="glass list">
-      <div *cdkVirtualFor="let r of rows(); trackBy: track" class="row">
+      <div *cdkVirtualFor="let r of rows(); trackBy: track; let i = index" class="row" [class.cur]="i === cursor()">
         @if (r.day) {
           <div class="day">
             <span>{{ r.day | date: 'EEEE, d MMMM y' }}</span>
@@ -108,6 +109,7 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
     .entry { height: 100%; display: grid; grid-template-columns: 36px 120px 84px 90px 1fr auto 40px; gap: 14px; align-items: center;
       border-radius: 14px; padding: 0 8px; transition: background .2s; }
     .entry:hover { background: rgba(255,255,255,0.04); }
+    .row.cur .entry { background: rgb(139 123 255 / 14%); box-shadow: inset 3px 0 0 var(--w-violet); }
     .entry.corrected .g, .entry.corrected .what { text-decoration: line-through; opacity: .5; }
     .entry.fix { opacity: .7; }
     .rail { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
@@ -131,6 +133,58 @@ export class Journal {
   protected readonly kinds = Object.keys(KINDS) as Entry['type'][];
   protected readonly kind = signal('');
   protected readonly query = signal('');
+  /** The row the keys act on; -1 is none. */
+  protected readonly cursor = signal(-1);
+  private readonly viewport = viewChild.required(CdkVirtualScrollViewport);
+  private readonly search = viewChild.required<ElementRef<HTMLInputElement>>('search');
+
+  constructor() {
+    inject(Keys).register('Journal', () => this.keys(), inject(DestroyRef));
+  }
+
+  private keys(): Binding[] {
+    return [
+      { keys: ['j', 'ArrowDown'], label: 'j/k', help: 'move', run: () => {
+        this.move(1);
+      } },
+      { keys: ['k', 'ArrowUp'], label: 'k', help: 'up', quiet: true, run: () => {
+        this.move(-1);
+      } },
+      { keys: ['d'], help: 'undo', run: () => {
+        const r = this.rows().at(this.cursor());
+        if (r?.entry && !r.entry.reverts && r.entry.type !== 'adjust' && !r.entry.corrected) {
+          void this.undo(r.entry);
+        }
+      } },
+      { keys: ['f'], help: this.kind() ? `filter: ${KINDS[this.kind() as Entry['type']].verb}` : 'filter', run: () => {
+        const order = ['', ...this.kinds];
+        this.kind.set(order[(order.indexOf(this.kind()) + 1) % order.length]);
+        this.cursor.set(-1);
+      } },
+      { keys: ['/'], help: 'search', run: () => {
+        this.search().nativeElement.focus();
+      } },
+    ];
+  }
+
+  /** Moves the cursor to the next entry that way, passing over day headings. */
+  private move(delta: 1 | -1): void {
+    const rows = this.rows();
+    let i = this.cursor();
+    do {
+      i += delta;
+    } while (i >= 0 && i < rows.length && !rows[i].entry);
+    if (i < 0 || i >= rows.length) {
+      return;
+    }
+    this.cursor.set(i);
+    const v = this.viewport();
+    const first = Math.floor(v.measureScrollOffset() / 56);
+    const fit = Math.floor(v.getViewportSize() / 56);
+    if (i < first + 1 || i >= first + fit - 1) {
+      v.scrollToIndex(Math.max(i - Math.floor(fit / 2), 0));
+    }
+  }
 
   private readonly filtered = computed(() => {
     const k = this.kind();

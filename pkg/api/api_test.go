@@ -192,3 +192,21 @@ func TestServesTheInterface(t *testing.T) {
 	assert.Equal(t, "<app-root>", call(t, s, "GET", "/journal", "").Body.String(), "A client route reloads into the app")
 	assert.Equal(t, http.StatusOK, call(t, s, "GET", "/api/overview", "").Code, "and the API is still the API")
 }
+
+func TestFlush(t *testing.T) {
+	s, _ := server(t, "")
+
+	w := call(t, s, "POST", "/api/flush", `{"products":[]}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	out := decodeInto[flushed](t, w)
+	assert.Equal(t, "flushed 1 stash: 1.50 g recorded as consumed", out.Message)
+	require.Len(t, out.Entries, 1)
+	assert.Equal(t, "stash", out.Entries[0].From)
+
+	o := decodeInto[overview](t, call(t, s, "GET", "/api/overview", ""))
+	assert.Equal(t, 0.0, o.Shelf.Stash, "every stash is empty")
+
+	w = call(t, s, "POST", "/api/flush", `{"products":["wcake"]}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "nothing in those stashes")
+}

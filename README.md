@@ -405,6 +405,24 @@ the repository: an entry made with the command line shows within a few seconds.
 
 ![Every day, and every fill](./assets/wits-ui-history.png)
 
+**Analysis** is the terminal's long view — this fill, the last 30 or 90 days,
+12 months, all time — and the record played back through it. Press play and
+everything replays from empty, an entry a moment: the daily chart fills in, the
+products race each other up the ranking, the fills grow on their timeline; drag
+the scrubber to any point, step with `←`/`→`. The jars replay the same way,
+filling as fills arrive and draining as they are ground. `?at=2025-02-14`
+opens either as the record stood that day.
+
+![The record played back to February 2025](./assets/wits-ui-analysis.png)
+
+On the jars, tick the cards — or **Select all** — and **Clear stash** records
+their stashes as consumed, one adjustment each in a single write: the
+terminal's history clean-up, for the stashes you choose.
+
+Every key the terminal has is here too, and the footer shows the ones the page
+answers: `g` `s` `b` `r` to record, `1`–`5` or `h`/`l` between pages, `p` to
+replay, `j`/`k` to move, `space` to tick, and `?` for all of them.
+
 It answers this machine only. The server listens on a loopback address and
 refuses one that is not; a request naming any other host is refused, which keeps
 a web page elsewhere from reaching it; and every write must be JSON, which a page

@@ -90,18 +90,22 @@ interface Bar {
 })
 export class FillRiver {
   readonly cycles = input.required<Cycle[]>();
+  /** Where the timeline ends: today, or the moment a replay stands at. */
+  readonly until = input<Date | null>(null);
 
   protected readonly width = hostWidth();
   protected readonly lane = LANE;
   protected readonly m = M;
   protected readonly hovered = signal<Bar | null>(null);
 
+  private readonly end = computed(() => this.until() ?? new Date());
+
   private readonly oldestFirst = computed(() => [...this.cycles()].sort((a, b) => a.number - b.number));
 
   private readonly x = computed(() => {
     const cs = this.oldestFirst();
     const first = cs.length ? new Date(cs[0].start) : new Date();
-    return scaleTime().domain([first, new Date()]).range([M.left, this.width() - M.right]);
+    return scaleTime().domain([first, this.end()]).range([M.left, this.width() - M.right]);
   });
 
   protected readonly height = computed(() => M.top + this.oldestFirst().length * (LANE + GAP) + M.bottom);
@@ -112,7 +116,7 @@ export class FillRiver {
     const tone = scaleLinear().domain([0, most]).range([0.35, 0.95]);
     return this.oldestFirst().map((c, i) => {
       const start = new Date(c.start);
-      const end = c.open || !c.end ? new Date() : new Date(c.end);
+      const end = c.open || !c.end ? this.end() : new Date(c.end);
       const x0 = x(start);
       const w = Math.max(x(end) - x0, 6);
       return {

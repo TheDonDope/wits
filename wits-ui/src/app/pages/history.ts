@@ -1,8 +1,9 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 
+import { Keys } from '../data/keys';
 import { Wits } from '../data/wits';
 import { CountUp } from '../viz/count-up';
 import { FillRiver } from '../viz/fill-river';
@@ -88,6 +89,18 @@ import { Heatmap } from '../viz/heatmap';
 export class History {
   protected readonly wits = inject(Wits);
   protected readonly metric = signal<'ground' | 'seshed'>('ground');
+
+  constructor() {
+    inject(Keys).register(
+      'History',
+      () => [
+        { keys: ['m'], help: this.metric() === 'ground' ? 'show sessions' : 'show grinding', run: () => {
+          this.metric.update((m) => (m === 'ground' ? 'seshed' : 'ground'));
+        } },
+      ],
+      inject(DestroyRef),
+    );
+  }
 
   protected readonly totals = computed(() => {
     const cycles = this.wits.cycles.value();

@@ -26,6 +26,11 @@ export class Wits {
     () => `/api/journal?limit=100000&v=${this.version()}`,
     { defaultValue: { entries: [], total: 0 } },
   );
+  /** Every entry, corrections included — what a replay folds. Newest first. */
+  readonly everything = httpResource<{ entries: Entry[]; total: number }>(
+    () => `/api/journal?limit=100000&all=1&v=${this.version()}`,
+    { defaultValue: { entries: [], total: 0 } },
+  );
 
   private seen = -1;
 
@@ -71,10 +76,15 @@ export class Wits {
     return this.write('undo', { hash });
   }
 
+  /** Records the named stashes as consumed, as one batch. */
+  async flush(products: string[]): Promise<{ message: string }> {
+    return this.write<{ message: string }>('flush', { products });
+  }
+
   /** Writes an entry and refreshes everything; rejects with the server's words. */
-  private async write(what: string, body: object): Promise<Written> {
+  private async write<T = Written>(what: string, body: object): Promise<T> {
     try {
-      const out = await firstValueFrom(this.http.post<Written>(`/api/${what}`, body));
+      const out = await firstValueFrom(this.http.post<T>(`/api/${what}`, body));
       this.version.update((v) => v + 1);
       return out;
     } catch (err) {

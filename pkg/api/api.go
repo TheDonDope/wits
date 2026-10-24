@@ -63,6 +63,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sesh", s.write(sesh))
 	mux.HandleFunc("POST /api/weigh", s.write(weigh))
 	mux.HandleFunc("POST /api/undo", s.write(undo))
+	mux.HandleFunc("POST /api/flush", s.flush)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		fail(w, http.StatusNotFound, errors.New("no such endpoint"))
 	})
@@ -123,18 +124,28 @@ func (s *Server) read(view func(*workspace.Workspace) any) http.HandlerFunc {
 	}
 }
 
+// writable opens a fresh workspace for a write, refusing anything but a
+// JSON body of a sensible size; it answers the refusal itself.
+func (s *Server) writable(w http.ResponseWriter, r *http.Request) (*workspace.Workspace, bool) {
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		fail(w, http.StatusUnsupportedMediaType, errors.New("send JSON"))
+		return nil, false
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+	ws, err := workspace.Read(s.repo)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return nil, false
+	}
+	return ws, true
+}
+
 // write decodes a JSON body and records it through a fresh workspace's
 // recorder, answering with the entry it wrote.
 func (s *Server) write(do func(*workspace.Workspace, *http.Request) (journal.Event, string, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			fail(w, http.StatusUnsupportedMediaType, errors.New("send JSON"))
-			return
-		}
-		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
-		ws, err := workspace.Read(s.repo)
-		if err != nil {
-			fail(w, http.StatusInternalServerError, err)
+		ws, ok := s.writable(w, r)
+		if !ok {
 			return
 		}
 		e, message, err := do(ws, r)
@@ -144,6 +155,46 @@ func (s *Server) write(do func(*workspace.Workspace, *http.Request) (journal.Eve
 		}
 		reply(w, http.StatusCreated, written{Entry: entryOf(e, ws, nil), Message: message})
 	}
+}
+
+// flush records stashes as consumed — the named ones, or every one holding
+// something when none is named — as one batch.
+func (s *Server) flush(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.writable(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		Products []string `json:"products"`
+	}
+	if err := decode(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	events, err := ws.Recorder.Flush(req.Products)
+	if errors.Is(err, record.ErrNothingToReconcile) {
+		fail(w, http.StatusBadRequest, errors.New("there is nothing in those stashes to flush"))
+		return
+	}
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	out := flushed{Entries: make([]entry, 0, len(events))}
+	var grams journal.Centigrams
+	for _, e := range events {
+		out.Entries = append(out.Entries, entryOf(e, ws, nil))
+		grams += journal.CG(e.Grams)
+	}
+	out.Message = fmt.Sprintf("flushed %d %s: %.2f g recorded as consumed", len(events),
+		map[bool]string{true: "stash", false: "stashes"}[len(events) == 1], grams.Grams())
+	reply(w, http.StatusCreated, out)
+}
+
+// flushed is the answer to a flush: every adjustment it wrote.
+type flushed struct {
+	Entries []entry `json:"entries"`
+	Message string  `json:"message"`
 }
 
 // written is the answer to a write.
