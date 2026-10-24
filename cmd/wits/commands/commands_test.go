@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -846,4 +847,44 @@ func TestReportCommand(t *testing.T) {
 
 	_, err = run(t, dir, Report, "--from", "2026-10-31", "--to", "2026-10-01", "--out", pdf)
 	assert.ErrorContains(t, err, "is before")
+}
+
+func TestSealCommands(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Seal)
+	require.NoError(t, err)
+	assert.Contains(t, out, "Made a sealing key", "Should make a key the first time")
+	assert.Contains(t, out, "Sealed the journal's 1 entry")
+	out, err = run(t, dir, Seal)
+	require.NoError(t, err)
+	assert.Contains(t, out, "is sealed already", "Should not seal one head twice")
+
+	seals, err := filepath.Glob(filepath.Join(dir, ".wits", "seals", "*.seal"))
+	require.NoError(t, err)
+	require.Len(t, seals, 1)
+	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	require.NoError(t, err)
+	out, err = run(t, dir, Verify, seals[0])
+	require.NoError(t, err)
+	assert.Contains(t, out, "holds what was sealed: 1 entry, up to", "A journal grown since still holds what was sealed")
+	out, err = run(t, dir, Fsck)
+	require.NoError(t, err, out)
+
+	other := repository(t)
+	_, err = run(t, other, Buy, "Enua 22/1 Wedding Cake", "21g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, other, Verify, seals[0])
+	assert.ErrorContains(t, err, "does not hold the sealed head", "Should notice another journal")
+
+	text, err := os.ReadFile(seals[0])
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(seals[0], []byte(strings.Replace(string(text), "entries 1", "entries 2", 1)), 0600))
+	_, err = run(t, dir, Verify, seals[0])
+	assert.ErrorContains(t, err, "signature does not match", "Should refuse a seal changed after signing")
+	out, err = run(t, dir, Fsck)
+	assert.Error(t, err)
+	assert.Contains(t, out, "signature does not match", "fsck should name it too")
 }

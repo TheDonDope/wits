@@ -16,6 +16,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/prices"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -347,7 +348,7 @@ func TestPricesTravelInTheBundle(t *testing.T) {
 	var buf bytes.Buffer
 	require.NoError(t, Write(&buf, Contents{Prices: paid}))
 	assert.Contains(t, buf.String(), "\n==\nC ", "Should open the section for prices alone, with no ratings")
-	assert.True(t, strings.HasPrefix(buf.String(), "wits-bundle 4\n"), "Should be format 4")
+	assert.True(t, strings.HasPrefix(buf.String(), fmt.Sprintf("wits-bundle %d\n", Version)), "Should be the current format")
 
 	got, err := Read(&buf)
 	require.NoError(t, err)
@@ -359,4 +360,20 @@ func TestPricesTravelInTheBundle(t *testing.T) {
 
 	_, err = Read(bytes.NewBufferString("wits-bundle 4\nP0 w\n--\n==\nC abc 2026-08-29T12:00:00Z lots\n"))
 	assert.ErrorContains(t, err, "unreadable cents")
+}
+
+func TestSealsTravelInTheBundle(t *testing.T) {
+	seals := []seal.File{
+		{Name: "2026-10-24-f81bbd2cc893", Text: "wits-seal 1\nhead f81b\n", OTS: []byte{0x00, 'O', 0xff, 0x01}},
+		{Name: "2026-10-25-aaaaaaaaaaaa", Text: "wits-seal 1\nhead aaaa\n"},
+	}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Seals: seals}))
+
+	got, err := Read(&buf)
+
+	require.NoError(t, err)
+	assert.Equal(t, seals, got.Seals, "Should bring back each seal and its proof, byte for byte")
+	_, err = Read(bytes.NewBufferString("wits-bundle 5\nP0 w\n--\n==\nK name !!!\n"))
+	assert.ErrorContains(t, err, "unreadable seal")
 }

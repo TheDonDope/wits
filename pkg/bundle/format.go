@@ -13,11 +13,11 @@ import (
 //
 // Version 2 writes an event's accounts when its type does not imply them; a
 // version 1 bundle is still read, its adjustments' accounts recovered. Version
-// 3 carries the effect log after the events, and version 4 the price log
-// beside it.
+// 3 carries the effect log after the events, version 4 the price log beside
+// it, and version 5 the seals of the journal's head with their timestamps.
 const (
 	Magic   = "wits-bundle"
-	Version = 4
+	Version = 5
 )
 
 // separator ends the header and begins the events; ratingsSeparator ends the

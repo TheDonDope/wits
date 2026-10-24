@@ -132,7 +132,9 @@ transfer. It has its own hash chain and lock, names sessions by hash, and a
 re-rating supersedes (`effects.Latest`). The **price log** (`pkg/prices`,
 `.wits/prices.ndjson`) is its twin for what purchases cost, named by hash,
 re-pricing superseding (`prices.Latest`), cents in euros. Anything that copies
-the repository — bundles, restore, fsck, push and pull — must carry both.
+the repository — bundles, restore, fsck, push and pull — must carry both, and
+the **seals** (`pkg/seal`, `.wits/seals/`) beside them: a timestamp proof cannot
+be made again later. `.wits/seal.key` and `.wits/remote.key` never travel.
 
 Grams move between four accounts (storage → stash → consumed → avb), one stash
 per product, every entry a transfer — mass is conserved end to end. Add amounts

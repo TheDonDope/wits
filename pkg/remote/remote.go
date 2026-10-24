@@ -29,6 +29,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/seal"
 )
 
 // File is the one file a remote folder holds.
@@ -175,6 +176,9 @@ func local(r *repo.Repo) (bundle.Contents, error) {
 	if c.Prices, err = r.Prices().All(); err != nil {
 		return c, err
 	}
+	if c.Seals, err = (seal.Store{Dir: r.SealsDir()}).All(); err != nil {
+		return c, err
+	}
 	if c.Products, err = catalog.Load(r.ProductsPath()); err != nil {
 		return c, err
 	}
@@ -191,9 +195,9 @@ func open(r *repo.Repo) (string, *age.X25519Identity, error) {
 	return r.Config.Remote, id, err
 }
 
-// Pushed is what a push wrote: the entries, ratings and prices the remote
-// lacked.
-type Pushed struct{ Events, Ratings, Prices int }
+// Pushed is what a push wrote: the entries, ratings, prices and seals the
+// remote lacked.
+type Pushed struct{ Events, Ratings, Prices, Seals int }
 
 // Push writes the repository to its remote. It is refused when the remote
 // holds an entry, a rating or a product this device does not: those would be
@@ -219,8 +223,9 @@ func Push(r *repo.Repo) (Pushed, error) {
 		return Pushed{}, ErrBehind
 	}
 	done := Pushed{Events: len(ours.Events) - len(theirs.Events), Ratings: len(ours.Ratings) - len(theirs.Ratings),
-		Prices: len(ours.Prices) - len(theirs.Prices)}
-	if done.Events == 0 && done.Ratings == 0 && done.Prices == 0 && sameCatalogs(ours, *theirs) {
+		Prices: len(ours.Prices) - len(theirs.Prices), Seals: len(ours.Seals) - len(theirs.Seals)}
+	if done.Events == 0 && done.Ratings == 0 && done.Prices == 0 && done.Seals == 0 &&
+		sameCatalogs(ours, *theirs) && sameProofs(ours, *theirs) {
 		return done, nil
 	}
 	return done, store(dir, id, ours)
@@ -247,6 +252,9 @@ func holds(ours, theirs bundle.Contents) bool {
 			return false
 		}
 	}
+	if !holdsSeals(ours.Seals, theirs.Seals) {
+		return false
+	}
 	for _, d := range devices(theirs) {
 		if findDevice(ours.Devices, d.Slug) == nil {
 			return false
@@ -260,9 +268,9 @@ type Pulled struct {
 	// Fetched is the remote's entries this device lacked; Rechained, this
 	// device's own, chained again on top of them with new hashes.
 	Fetched, Rechained int
-	// Ratings and Prices are the remote's ratings and prices this device
-	// lacked.
-	Ratings, Prices int
+	// Ratings, Prices and Seals are the remote's ratings, prices and seals
+	// this device lacked, a seal counted too when its proof had got further.
+	Ratings, Prices, Seals int
 	// Products and Devices are the slugs taken from the remote: new here, or
 	// held here differently, in which case the remote's stands.
 	Products, Devices []string
@@ -305,6 +313,9 @@ func Pull(r *repo.Repo) (Pulled, error) {
 		return done, err
 	}
 	done.Fetched, done.Rechained = rebased.Fetched, len(rebased.Moved)
+	if done.Seals, err = mergeSeals(r, theirs.Seals); err != nil {
+		return done, err
+	}
 	after, err := r.Journal().Events()
 	if err != nil {
 		return done, err
@@ -456,4 +467,62 @@ func devices(c bundle.Contents) []*catalog.Device {
 		return nil
 	}
 	return c.Devices.Devices
+}
+
+// mergeSeals keeps the remote's seals this device lacks, and the remote's
+// proof of a seal both hold when it has got further: a proof is only ever
+// completed, never undone.
+func mergeSeals(r *repo.Repo, theirs []seal.File) (int, error) {
+	st := seal.Store{Dir: r.SealsDir()}
+	ours, err := st.All()
+	if err != nil {
+		return 0, err
+	}
+	took := 0
+	for _, f := range theirs {
+		i := slices.IndexFunc(ours, func(o seal.File) bool { return o.Name == f.Name })
+		if i >= 0 && further(ours[i].OTS) >= further(f.OTS) {
+			continue
+		}
+		if err := st.Save(f); err != nil {
+			return took, err
+		}
+		took++
+	}
+	return took, nil
+}
+
+// holdsSeals reports whether ours holds every seal of theirs, each proof at
+// least as far along: a push must not take back a proof the remote finished.
+func holdsSeals(ours, theirs []seal.File) bool {
+	for _, f := range theirs {
+		i := slices.IndexFunc(ours, func(o seal.File) bool { return o.Name == f.Name })
+		if i < 0 || further(ours[i].OTS) < further(f.OTS) {
+			return false
+		}
+	}
+	return true
+}
+
+// further is how far a proof has got: none, pending, or in blocks.
+func further(ots []byte) int {
+	p, err := seal.Describe(ots)
+	switch {
+	case err != nil:
+		return 0
+	case len(p.Blocks) > 0:
+		return 2
+	}
+	return 1
+}
+
+// sameProofs reports whether every seal both hold has got as far on both.
+func sameProofs(a, b bundle.Contents) bool {
+	for _, f := range a.Seals {
+		i := slices.IndexFunc(b.Seals, func(o seal.File) bool { return o.Name == f.Name })
+		if i >= 0 && further(f.OTS) != further(b.Seals[i].OTS) {
+			return false
+		}
+	}
+	return true
 }

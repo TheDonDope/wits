@@ -53,6 +53,8 @@ func init() {
 		commands.Export,
 		commands.Report,
 		commands.Fsck,
+		commands.Seal,
+		commands.Verify,
 		commands.Remote,
 		commands.Push,
 		commands.Pull,

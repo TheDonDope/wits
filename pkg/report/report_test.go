@@ -13,6 +13,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -98,4 +99,22 @@ func TestWinAnsi(t *testing.T) {
 	p := &page{}
 	assert.InDelta(t, 6.67, p.width("A", 10, false), 0.001, "Helvetica's A is 667 units")
 	assert.InDelta(t, 7.22, p.width("A", 10, true), 0.001, "and 722 in bold")
+}
+
+func TestTheReportNamesItsSeal(t *testing.T) {
+	ws, start := fixture(t)
+	assert.Nil(t, Build(ws, start, time.Now(), "test").Seal, "Nothing sealed yet")
+	key, _, err := seal.Key(ws.Repo.SealKeyPath())
+	require.NoError(t, err)
+	events, err := ws.Journal().Events()
+	require.NoError(t, err)
+	s := seal.Make(key, events[len(events)-1].Hash, len(events), time.Now())
+	require.NoError(t, (seal.Store{Dir: ws.Repo.SealsDir()}).Save(seal.File{Name: s.Name(), Text: s.String()}))
+
+	r := Build(ws, start, time.Now(), "test")
+
+	require.NotNil(t, r.Seal, "Should find the seal of its head")
+	var buf bytes.Buffer
+	require.NoError(t, PDF(&buf, r))
+	assert.Contains(t, buf.String(), seal.Fingerprint(s.Key), "Should print the key's fingerprint")
 }
