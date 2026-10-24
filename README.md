@@ -161,6 +161,15 @@ and the devices. `tab` moves between them. Entries can be recorded
 there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh — and
 `?` lists every key the current screen honours.
 
+`t` picks a theme: wits' own, which follows the terminal's light or dark
+background, or one of twenty editor themes — Dark+ and Light+, One Dark Pro,
+Dracula, Monokai, Darcula, Solarized Dark and Light, Nord, Gruvbox Dark, Tokyo
+Night, Catppuccin Mocha and Latte, GitHub Dark and Light, Night Owl, Material
+Palenight, Ayu Dark, Cobalt2 and Rosé Pine. The screen follows the cursor as it
+moves; `enter` keeps the theme and saves it to `config.yml`, `esc` puts the old
+one back. An editor theme repaints the terminal's background the way the
+editor would, and the terminal gets its own colours back when wits exits.
+
 The analysis view draws the daily amounts as a braille area chart with a
 seven-day average riding over it, and the longer scopes as a calendar heatmap —
 one cell per day, colour carrying the amount — so a year of habit reads the way
@@ -269,7 +278,7 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
 
 ```text
 .wits/
-  config.yml      # settings
+  config.yml      # settings — the log file and the interface theme
   products.yml    # the catalog
   devices.yml     # vaporizers and their temperature ranges
   journal.ndjson  # append-only, one entry per line, never rewritten

@@ -125,7 +125,7 @@ func (t *Theme) entryLine(e journal.Event, name string, width int, selected, cor
 		}
 	}
 	if selected {
-		return lipgloss.NewStyle().Background(t.selectionBg()).Render(pad(line, width))
+		return lipgloss.NewStyle().Background(t.Selection).Render(pad(line, width))
 	}
 	return line
 }
@@ -147,14 +147,6 @@ func (t *Theme) eventDetail(e journal.Event) string {
 		return ""
 	}
 	return t.Dim.Render("· " + strings.Join(bits, " · "))
-}
-
-// selectionBg is the background for the highlighted row.
-func (t *Theme) selectionBg() tint {
-	if t.Dark {
-		return lipgloss.Color("#22262E")
-	}
-	return lipgloss.Color("#EEF1F6")
 }
 
 // Metric renders a label above a large value, for the figures that should be

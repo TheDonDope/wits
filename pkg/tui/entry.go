@@ -126,7 +126,7 @@ func newEntryForm(kind entryKind, a *App) *entryForm {
 		f.form = huh.NewForm(huh.NewGroup(fields...))
 	}
 
-	f.form = f.form.WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	f.form = a.dress(f.form)
 	return f
 }
 
@@ -331,26 +331,26 @@ const (
 // newAmendForm asks for the amount an entry should have had.
 func newAmendForm(e *journal.Event, a *App) *entryForm {
 	f := &entryForm{kind: entryAmend, target: e, amount: fmt.Sprintf("%.2f", e.Grams)}
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(describe(e, a)).
 			Description("The original stays in the journal. Amending records a\ncorrection alongside it."),
 		huh.NewInput().Title("Corrected amount").Description("Grams").
 			Value(&f.amount).Validate(validGrams),
 		huh.NewInput().Title("Why").Description("Optional").Value(&f.note),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 
 // newUndoForm confirms undoing an entry.
 func newUndoForm(e *journal.Event, a *App) *entryForm {
 	f := &entryForm{kind: entryUndo, target: e}
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(describe(e, a)).
 			Description("Nothing is deleted. Undoing moves the grams back the way\nthey came and records that alongside the original."),
 		huh.NewConfirm().Title("Undo this entry?").Affirmative("Undo").Negative("Keep").
 			Value(&f.confirm),
 		huh.NewInput().Title("Why").Description("Optional").Value(&f.note),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 
@@ -385,14 +385,14 @@ func newReconcileForm(slug string, a *App, account journal.Account) *entryForm {
 	}
 	f.account = string(account)
 
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(a.data.ProductName(slug)).
 			Description("Nothing in the past is edited. The difference is recorded\nas an adjustment, and the account agrees with the jar again."),
 		huh.NewSelect[string]().Title("Weigh which").Options(accounts...).Value(&f.account),
 		huh.NewInput().Title("On the scale").Description("Grams").
 			Value(&f.amount).Validate(nonNegativeGrams),
 		huh.NewInput().Title("Why").Description("Optional — spilled, unlogged, misread").Value(&f.note),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 
@@ -444,7 +444,7 @@ func newWeighManyForm(slugs []string, a *App, account journal.Account) *entryFor
 				Validate(optionalWeight),
 		))
 	}
-	f.form = huh.NewForm(groups...).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	f.form = a.dress(huh.NewForm(groups...))
 	return f
 }
 
@@ -530,13 +530,13 @@ func newCleanHistoryForm(slugs []string, a *App) *entryForm {
 	if folded > 0 {
 		listed = append(listed, fmt.Sprintf("… and %d more, %.2f g together", folded, foldedGrams))
 	}
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(fmt.Sprintf("Clean history — %s, %.2f g", plural(len(slugs), "jar"), total)).
 			Description(strings.Join(listed, "\n")+
 				"\n\nEach stash is reconciled to zero: the grams were consumed at\nsome point, the sessions were never logged. Nothing is deleted."),
 		huh.NewConfirm().Title("Record them as consumed?").Affirmative("Clean").Negative("Keep").
 			Value(&f.confirm),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 
@@ -581,7 +581,7 @@ func newDescribeForm(slug string, a *App) *entryForm {
 	f.thc = trimZero(p.THC)
 	f.cbd = trimZero(p.CBD)
 
-	f.form = huh.NewForm(huh.NewGroup(
+	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(slug).
 			Description("The slug stays as it is: every entry in the journal refers\nto it, and renaming it would orphan them."),
 		huh.NewInput().Title("Name").Description("As it should read").
@@ -590,7 +590,7 @@ func newDescribeForm(slug string, a *App) *entryForm {
 		huh.NewInput().Title("Cultivar").Value(&f.cultivar),
 		huh.NewInput().Title("THC %").Value(&f.thc).Validate(optionalFloat),
 		huh.NewInput().Title("CBD %").Value(&f.cbd).Validate(optionalFloat),
-	)).WithShowHelp(true).WithWidth(min(a.inner(), 72))
+	)))
 	return f
 }
 
