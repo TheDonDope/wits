@@ -2,6 +2,8 @@ package journal
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -271,21 +273,37 @@ func (j *Journal) Events() ([]Event, error) {
 
 // Verify walks the hash chain and reports the first entry that does not match.
 // An empty or missing journal verifies successfully.
+//
+// Each hash is checked against the line as stored, not against the event
+// decoded and encoded again. Re-encoding ties every old hash to how this
+// build's Event encodes: a field added without omitempty, or a float written
+// differently, would have broken every entry ever made, though not a byte of
+// the file had changed. The stored line differs from what was hashed only in
+// the hash itself, which is the last field, so blanking it gives back exactly
+// the bytes that were hashed.
 func (j *Journal) Verify() error {
-	events, err := j.Events()
+	j.mu.Lock()
+	lines, _, err := j.lines()
+	j.mu.Unlock()
 	if err != nil {
 		return err
 	}
 	var prev string
-	for _, e := range events {
-		want, err := e.sum(prev)
-		if err != nil {
-			return err
+	for n, line := range lines {
+		var e Event
+		if err := json.Unmarshal(line, &e); err != nil {
+			return fmt.Errorf("journal line %d is not valid JSON: %w", n+1, err)
 		}
 		if e.Prev != prev {
 			return fmt.Errorf("%w: event %d expects prev %q but the chain is at %q", ErrBrokenChain, e.Seq, e.Prev, prev)
 		}
-		if e.Hash != want {
+		stored := []byte(`,"hash":"` + e.Hash + `"}`)
+		if !bytes.HasSuffix(line, stored) {
+			return fmt.Errorf("%w: event %d does not end in its hash", ErrBrokenChain, e.Seq)
+		}
+		payload := append(bytes.Clone(line[:len(line)-len(stored)]), `,"hash":""}`...)
+		sum := sha256.Sum256(append([]byte(prev), payload...))
+		if want := hex.EncodeToString(sum[:]); e.Hash != want {
 			return fmt.Errorf("%w: event %d has hash %q but hashes to %q", ErrBrokenChain, e.Seq, e.Hash, want)
 		}
 		prev = e.Hash
@@ -306,6 +324,24 @@ func (j *Journal) Verify() error {
 // line that did end in a newline is still an error — that is damage, not an
 // interrupted write.
 func (j *Journal) read() ([]Event, int64, error) {
+	lines, valid, err := j.lines()
+	if err != nil {
+		return nil, 0, err
+	}
+	events := make([]Event, 0, len(lines))
+	for n, line := range lines {
+		var e Event
+		if err := json.Unmarshal(line, &e); err != nil {
+			return nil, 0, fmt.Errorf("journal line %d is not valid JSON: %w", n+1, err)
+		}
+		events = append(events, e)
+	}
+	return events, valid, nil
+}
+
+// lines returns the journal's complete lines as stored, and how many bytes of
+// the file they fill; see read. Callers must hold the mutex.
+func (j *Journal) lines() ([][]byte, int64, error) {
 	data, err := os.ReadFile(j.path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -314,17 +350,11 @@ func (j *Journal) read() ([]Event, int64, error) {
 		return nil, 0, err
 	}
 	data = data[:bytes.LastIndexByte(data, '\n')+1]
-
-	var events []Event
-	for n, line := range bytes.Split(data, []byte{'\n'}) {
-		if len(line) == 0 {
-			continue
+	var lines [][]byte
+	for _, line := range bytes.Split(data, []byte{'\n'}) {
+		if len(line) > 0 {
+			lines = append(lines, line)
 		}
-		var e Event
-		if err := json.Unmarshal(line, &e); err != nil {
-			return nil, 0, fmt.Errorf("journal line %d is not valid JSON: %w", n+1, err)
-		}
-		events = append(events, e)
 	}
-	return events, int64(len(data)), nil
+	return lines, int64(len(data)), nil
 }

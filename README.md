@@ -203,6 +203,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits export` | The current cycle as Markdown; `--all` for every cycle |
 | `wits bundle` | The whole repository as one compact file; `--gzip` to compress it |
 | `wits restore <file>` | Rebuild a repository from a bundle |
+| `wits fsck` | Check the journal and the catalogs for damage |
 | `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
 
 Every command takes `--help`, and `buy`, `grind` and `sesh` take `--date`.
@@ -309,6 +310,19 @@ the journal as it stands, so the TUI and a command in another terminal cannot
 both take the same grams. A write cut off before its newline — a crash, a full
 disk — is left out when reading, and cut away before the next entry is appended.
 
+The chain is checked every time a repository opens. If the journal was changed
+outside Wits, `wits status` and the interface say so, and `wits fsck` says
+where — along with any account that was ever drawn below zero, any entry naming
+a product or device the catalogs lack, and whether every gram that came in is
+held or went out:
+
+```console
+$ wits fsck
+1429 entries, 53 products, 1 device
+1254.00 g came in, 0.00 g went out, 1254.00 g held — every gram accounted for
+✓ the chain verifies, and nothing is out of place
+```
+
 The directory is created `0700` and its files `0600`. Nothing is transmitted
 anywhere; the application makes no network calls at all.
 
@@ -316,7 +330,9 @@ anywhere; the application makes no network calls at all.
 
 `wits bundle` writes the catalogs and every entry to a single file that
 `wits restore` reads back, reproducing the journal **exactly, hash chain
-included**. That is what makes it worth trusting as a backup.
+included**. That is what makes it worth trusting as a backup. A restore writes
+every entry in one go and checks the chain it made; a bundle that does not
+restore whole restores nothing.
 
 It is plain text, so the record stays legible with nothing but a text editor and
 diffs cleanly in git. Small, too, because most of what the journal stores is

@@ -169,6 +169,9 @@ func New(data Data) *App {
 	if data.Workspace != nil && data.Repo != nil {
 		a.useTheme(data.Repo.Config.Theme)
 	}
+	if data.Workspace != nil && data.Chain != nil {
+		a.notice, a.failed = "the journal was changed outside wits; wits fsck says where", true
+	}
 	a.dashboard = newDashboard()
 	a.journal = newJournalView()
 	a.analysis = newAnalysisView()

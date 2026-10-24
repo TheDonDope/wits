@@ -30,6 +30,13 @@ type Workspace struct {
 	State    *ledger.State
 	Recorder *record.Recorder
 
+	// Chain is why the journal's hash chain does not verify, or nil when it
+	// does. It is checked on every open, because a check that only runs when
+	// asked for is a check that does not run; it does not stop the repository
+	// opening, since nothing could then be done about it — wits fsck says
+	// where the chain breaks.
+	Chain error
+
 	// OpenedAt is when the snapshot was taken. Anything reporting "how long has
 	// this cycle been running" should measure against it rather than call
 	// time.Now itself, so a single view cannot disagree with itself.
@@ -75,6 +82,7 @@ func Read(r *repo.Repo) (*Workspace, error) {
 		Devices:  devices,
 		State:    state,
 		Recorder: record.New(r, products, devices, state),
+		Chain:    r.Journal().Verify(),
 		OpenedAt: time.Now(),
 	}, nil
 }

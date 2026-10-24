@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/TheDonDope/wits/pkg/bundle"
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -109,39 +112,70 @@ var Restore = &cobra.Command{
 			in = z
 		}
 
+		step := progress(cmd.ErrOrStderr())
+		step("reading " + filepath.Base(args[0]))
 		contents, err := bundle.Read(in)
 		if err != nil {
 			return err
 		}
-
-		if contents.Products != nil && len(contents.Products.Products) > 0 {
-			if _, err := s.Repo.UpdateProducts(func(c *catalog.Catalog) error {
-				c.Products = contents.Products.Products
-				return nil
-			}); err != nil {
-				return err
-			}
+		if err := restore(s.Repo, contents, step); err != nil {
+			return err
 		}
-		if contents.Devices != nil && len(contents.Devices.Devices) > 0 {
-			if _, err := s.Repo.UpdateDevices(func(d *catalog.Devices) error {
-				d.Devices = contents.Devices.Devices
-				return nil
-			}); err != nil {
-				return err
-			}
-		}
-		for i, e := range contents.Events {
-			if _, err := s.Journal().Append(e); err != nil {
-				return fmt.Errorf("restoring event %d: %w", i+1, err)
-			}
-		}
-		if err := s.Journal().Verify(); err != nil {
-			return fmt.Errorf("the restored journal does not verify: %w", err)
-		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Restored %d products, %d devices and %d events.\n",
-			len(contents.Products.Products), len(contents.Devices.Devices), len(contents.Events))
+		step("done")
+		fmt.Fprintf(cmd.OutOrStdout(), "Restored %s, %s and %s.\n", plural(len(products(contents)), "product"),
+			plural(len(devices(contents)), "device"), plural(len(contents.Events), "event"))
 		return nil
 	},
+}
+
+// restore writes a bundle's contents into an empty repository: the catalogs,
+// then every event as one batch — one write, one flush, refused whole if any
+// event does not validate — and checks the chain it made. An event at a time
+// flushed once per entry, which on a real disk is seconds of silence, and a
+// failure halfway left a journal too full to restore into again.
+func restore(r *repo.Repo, contents *bundle.Contents, step func(string)) error {
+	if p := products(contents); len(p) > 0 {
+		step("restoring " + plural(len(p), "product"))
+		if _, err := r.UpdateProducts(func(c *catalog.Catalog) error { c.Products = p; return nil }); err != nil {
+			return err
+		}
+	}
+	if d := devices(contents); len(d) > 0 {
+		step("restoring " + plural(len(d), "device"))
+		if _, err := r.UpdateDevices(func(c *catalog.Devices) error { c.Devices = d; return nil }); err != nil {
+			return err
+		}
+	}
+	step("writing " + plural(len(contents.Events), "event") + " to the journal")
+	if _, err := r.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
+		if len(events) > 0 {
+			return nil, fmt.Errorf("journal already holds %d events; restore into an empty repository", len(events))
+		}
+		return contents.Events, nil
+	}); err != nil {
+		return err
+	}
+	step("verifying the chain")
+	if err := r.Journal().Verify(); err != nil {
+		return fmt.Errorf("the restored journal does not verify: %w", err)
+	}
+	return nil
+}
+
+// products returns a bundle's products, or none when it carried no catalog.
+func products(c *bundle.Contents) []*catalog.Product {
+	if c.Products == nil {
+		return nil
+	}
+	return c.Products.Products
+}
+
+// devices returns a bundle's devices, or none when it carried no catalog.
+func devices(c *bundle.Contents) []*catalog.Device {
+	if c.Devices == nil {
+		return nil
+	}
+	return c.Devices.Devices
 }
 
 func init() {
