@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.65.0"></a>
+## [v0.65.0] - 2026-10-25
+### Feat
+- **carry:** what is held, against what was dispensed, as a signed QR code
+
+
 <a name="v0.64.0"></a>
 ## [v0.64.0] - 2026-10-25
+### Docs
+- update changelog for v0.64.0
+
 ### Feat
 - **seal:** a chain others can check, signed and timestamped
 
@@ -844,7 +853,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.64.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.65.0...HEAD
+[v0.65.0]: https://github.com/TheDonDope/wits/compare/v0.64.0...v0.65.0
 [v0.64.0]: https://github.com/TheDonDope/wits/compare/v0.63.0...v0.64.0
 [v0.63.0]: https://github.com/TheDonDope/wits/compare/v0.62.0...v0.63.0
 [v0.62.0]: https://github.com/TheDonDope/wits/compare/v0.61.0...v0.62.0
