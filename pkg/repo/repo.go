@@ -54,10 +54,24 @@ var (
 //
 // Theme names the interface's colour theme; empty means follow the terminal.
 // Remote is the folder wits push and wits pull share with other devices.
+// LeadDays is how long the pharmacy takes to fill a prescription; unset, it
+// is DefaultLead.
 type Config struct {
-	Version int    `yaml:"version"`
-	Theme   string `yaml:"theme,omitempty"`
-	Remote  string `yaml:"remote,omitempty"`
+	Version  int    `yaml:"version"`
+	Theme    string `yaml:"theme,omitempty"`
+	Remote   string `yaml:"remote,omitempty"`
+	LeadDays int    `yaml:"lead_days,omitempty"`
+}
+
+// DefaultLead is the pharmacy's lead time, in days, until one is given.
+const DefaultLead = 3
+
+// Lead is the pharmacy's lead time in days.
+func (c Config) Lead() int {
+	if c.LeadDays > 0 {
+		return c.LeadDays
+	}
+	return DefaultLead
 }
 
 // DefaultConfig returns the configuration a freshly initialised repository gets.
@@ -197,6 +211,11 @@ func (r *Repo) SetTheme(name string) error {
 // the theme.
 func (r *Repo) SetRemote(dir string) error {
 	return r.setConfig(func(c *Config) { c.Remote = dir })
+}
+
+// SetLead records the pharmacy's lead time, in days.
+func (r *Repo) SetLead(days int) error {
+	return r.setConfig(func(c *Config) { c.LeadDays = days })
 }
 
 // RemoteKeyPath is the age identity the remote is encrypted to. It lives in

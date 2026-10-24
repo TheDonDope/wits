@@ -41,6 +41,7 @@ func init() {
 		commands.Device,
 		commands.Temps,
 		commands.Status,
+		commands.Refill,
 		commands.Log,
 		commands.Show,
 		commands.Reconcile,

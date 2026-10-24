@@ -13,6 +13,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/repo"
 )
 
 // dashboard is the screen you land on: a grid of cards, one per corner of the
@@ -346,12 +347,23 @@ func (d dashboard) projectionCard(a *App, c *ledger.Cycle, w int) string {
 		caption = t.Dim.Render("empty around ") +
 			lipgloss.NewStyle().Foreground(t.Warn).Render(emptyAt.Format("02 Jan")) +
 			t.Dim.Render(" at the observed rate")
+		if plan, ok := ledger.PlanRefill(c, a.data.Now, lead(a)); ok {
+			caption += t.Dim.Render(" · order by ") + t.Value.Render(plan.OrderBy.Format("02 Jan"))
+		}
 	}
 	return lipgloss.JoinVertical(lipgloss.Left,
 		chart,
 		axisLabels(t, c.Start.Format("02 Jan"), emptyDate(emptyAt, a.data.Now), w),
 		caption,
 	)
+}
+
+// lead is the pharmacy's lead time, from the repository's config.
+func lead(a *App) int {
+	if a.data.Workspace != nil && a.data.Repo != nil {
+		return a.data.Repo.Config.Lead()
+	}
+	return repo.DefaultLead
 }
 
 // emptyDate labels the right end of the projection: the projected empty day,

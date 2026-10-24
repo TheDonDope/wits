@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`,
+`remote`, `push`, `pull`, `refill`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -216,6 +216,16 @@ entry and its correction count in no total. `--site` writes a folder GitHub
 Pages serves as it is: an index of the fills, newest first, and a page for each,
 linked to the index and to its neighbours. A fill's grinding is labelled "from
 any jar", since jars drain oldest first and a fill's tenure grinds the shelf.
+
+`refill` is when to order the next prescription (`ledger.PlanRefill`): the
+supply projection's empty day, the shelf held when the fill arrived less every
+grind since, run down at the fill's grams per day with grinding, less the
+pharmacy's lead time (`lead_days` in the config, 3 until `--lead` sets it).
+The projection's own arithmetic, so the dashboards' empty day and the date to
+order by cannot disagree: on the workbook 44.80 g at 1.93 g a day is empty on
+17 November, order by the 14th. `--ics` writes an all-day iCalendar event with
+an alarm at nine, its UID naming the day; `wits status`, both dashboards and the
+API's `fill.refill` say the same, and say "order now" once the day has passed.
 
 Grinding or seshing more than an account holds is refused. The journal would
 record it happily, but grams that are not in the jar cannot come out of it, and
@@ -566,14 +576,6 @@ curve needs. The phone comes after sync, because the server answers only this
 machine: a phone keeps its own copy of the journal and syncs it, rather than
 the server opening up. Timestamping a chain and syncing over WebDAV are the
 first things wits would send anywhere, so both are opt-in and said plainly.
-
-### 1 · What is open, and what is quick
-
-#### 🔹 A refill planner
-
-- **Status**: Planned
-- The shelf's projection, less the pharmacy's lead time: "order the next
-  prescription by 9 November", with an `.ics` reminder to put in a calendar.
 
 ### 2 · The physical record, complete
 

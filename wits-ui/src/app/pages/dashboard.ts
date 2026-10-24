@@ -115,6 +115,17 @@ import { ProjectionChart } from '../viz/projection-chart';
                   No rate to project from yet
                 }
               </h2>
+              @if (f.refill; as r) {
+                <p class="refill" [class.warn]="r.overdue">
+                  <mat-icon>event</mat-icon>
+                  @if (r.overdue) {
+                    Order the next prescription now — {{ r.order_by | date: 'd MMMM' }} has passed
+                  } @else {
+                    Order the next prescription by <b>{{ r.order_by | date: 'EEE d MMMM' }}</b>
+                  }
+                  <span class="dim">· {{ r.lead_days }} {{ r.lead_days === 1 ? 'day' : 'days' }} for the pharmacy</span>
+                </p>
+              }
             </div>
             <span class="scope" matTooltip="Everything standing when this fill arrived, less every grind since">the shelf</span>
           </header>
@@ -177,6 +188,9 @@ import { ProjectionChart } from '../viz/projection-chart';
     .bar div { height: 100%; background: var(--tone); border-radius: 99px; box-shadow: 0 0 12px var(--tone);
       transition: width 1s cubic-bezier(.2,.8,.2,1); }
     .jars, .projection { padding: 22px 26px; }
+    .refill { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; color: var(--mat-sys-on-surface); }
+    .refill mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--w-mint); }
+    .refill .dim { color: var(--w-dim); }
     header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
     .row { display: flex; gap: 28px; flex-wrap: wrap; justify-content: space-around; }
     figure { margin: 0; display: grid; justify-items: center; gap: 10px; width: 150px; }
