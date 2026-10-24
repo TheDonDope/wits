@@ -39,9 +39,12 @@ func New(r *repo.Repo, products *catalog.Catalog, devices *catalog.Devices, stat
 // that is not already taken. It is the name every later entry refers to, so it
 // is settled once, when the product first appears, and never afterwards.
 func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.Event, *catalog.Product, bool, error) {
-	product, err := r.products.Find(name)
+	product := r.products.Exact(name)
 	added := false
-	if err != nil {
+	if product == nil {
+		if err := r.partial(name, slug); err != nil {
+			return journal.Event{}, nil, false, err
+		}
 		product = catalog.Parse(name)
 		if slug != "" {
 			if err := catalog.CheckSlug(slug); err != nil {
@@ -69,6 +72,32 @@ func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.
 		OccurredAt: at,
 	})
 	return e, product, added, err
+}
+
+// ErrPartialName is returned when a purchase names only part of a product.
+var ErrPartialName = errors.New("not a product's full name or slug")
+
+// partial refuses a purchase whose name is only part of a known product's.
+// Every other entry may abbreviate, but a purchase that matches nothing in
+// full adds a product, so a guess either way is wrong: "MAC1" used to land
+// on the MAC1+ jar unannounced, and "Can", matching two, made a third. A
+// slug given with the name says a new product is meant.
+func (r *Recorder) partial(name, slug string) error {
+	matches := r.products.Partial(name)
+	if slug != "" || len(matches) == 0 {
+		return nil
+	}
+	if len(matches) == 1 {
+		p := matches[0]
+		return fmt.Errorf("%q is %w, but it is part of %s (%s): buy it as %s, or give a new product a name of its own",
+			name, ErrPartialName, p.Slug, p.Name, p.Slug)
+	}
+	slugs := make([]string, 0, len(matches))
+	for _, p := range matches {
+		slugs = append(slugs, p.Slug)
+	}
+	return fmt.Errorf("%q is %w, but it is part of %s: buy one of them by its slug, or give a new product a name of its own",
+		name, ErrPartialName, strings.Join(slugs, ", "))
 }
 
 // Grind moves grams from a product's storage into its stash.
@@ -134,6 +163,8 @@ func (r *Recorder) Available(slug string, account journal.Account) float64 {
 		return b.Storage
 	case journal.Stash:
 		return b.Stash
+	case journal.Consumed:
+		return b.Consumed
 	case journal.AVB:
 		return b.AVB
 	default:
@@ -144,7 +175,13 @@ func (r *Recorder) Available(slug string, account journal.Account) float64 {
 // check refuses to draw an account below zero. The journal would record it
 // happily, but a negative balance means the log has stopped describing what is
 // actually there.
+//
+// External is outside the system and cannot be overdrawn: undoing a use of
+// AVB, or amending a purchase upward, draws on it freely.
 func (r *Recorder) check(slug string, grams float64, account journal.Account) error {
+	if account == journal.External {
+		return nil
+	}
 	have := r.Available(slug, account)
 	if have >= grams {
 		return nil

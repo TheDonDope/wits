@@ -1,11 +1,10 @@
 package journal
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"sync"
 	"time"
@@ -19,7 +18,9 @@ var ErrBrokenChain = errors.New("journal hash chain is broken")
 //
 // The file is only ever opened for appending. Wits never rewrites it, so a
 // failed or partial write can add a bad line but can never destroy an existing
-// one.
+// one. The single exception is that bad line itself: a write cut off before
+// its newline — a crash, a full disk — is ignored on reading, and cut away
+// before the next append (see prime).
 //
 // Appending is guarded twice over. The mutex serialises writers inside this
 // process; an advisory lock on a file beside the journal serialises them across
@@ -116,6 +117,11 @@ func (j *Journal) Append(e Event) (Event, error) {
 // locks. The size check is what keeps the cache honest across processes: our
 // own appends grow the file by exactly what was written, so a size that does
 // not match means somebody else appended and the tip has moved.
+//
+// An unfinished last line is truncated here, under the lock, so the next
+// line starts on a line of its own rather than gluing itself onto the
+// fragment. Those bytes were never an event: every complete one ends in a
+// newline, and the append that wrote them reported its failure.
 func (j *Journal) prime() error {
 	var size int64
 	if st, err := os.Stat(j.path); err == nil {
@@ -126,9 +132,15 @@ func (j *Journal) prime() error {
 	if j.primed && size == j.size {
 		return nil
 	}
-	events, err := j.read()
+	events, valid, err := j.read()
 	if err != nil {
 		return err
+	}
+	if size > valid {
+		if err := os.Truncate(j.path, valid); err != nil {
+			return err
+		}
+		size = valid
 	}
 	j.seq = len(events)
 	j.tip = ""
@@ -180,7 +192,8 @@ func (j *Journal) write(line []byte) error {
 func (j *Journal) Events() ([]Event, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.read()
+	events, _, err := j.read()
+	return events, err
 }
 
 // Verify walks the hash chain and reports the first entry that does not match.
@@ -207,37 +220,38 @@ func (j *Journal) Verify() error {
 	return nil
 }
 
-// read loads and decodes the whole journal. Callers must hold the mutex.
+// read loads and decodes the whole journal, returning the events and how
+// many bytes of the file they fill. Callers must hold the mutex.
 //
 // A missing file is an empty journal, but any other read error is returned:
 // silently treating an unreadable journal as empty is how an append would go on
 // to record a first event on top of years of history.
-func (j *Journal) read() ([]Event, error) {
-	f, err := os.Open(j.path)
+//
+// Every stored line ends in a newline, so bytes after the last one are a write
+// that never finished. They are left out rather than refused: one cut-off line
+// used to make the whole repository unreadable, every command included. A bad
+// line that did end in a newline is still an error — that is damage, not an
+// interrupted write.
+func (j *Journal) read() ([]Event, int64, error) {
+	data, err := os.ReadFile(j.path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return nil, 0, nil
 		}
-		return nil, err
+		return nil, 0, err
 	}
-	defer f.Close()
+	data = data[:bytes.LastIndexByte(data, '\n')+1]
 
 	var events []Event
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	for sc.Scan() {
-		line := sc.Bytes()
+	for n, line := range bytes.Split(data, []byte{'\n'}) {
 		if len(line) == 0 {
 			continue
 		}
 		var e Event
 		if err := json.Unmarshal(line, &e); err != nil {
-			return nil, fmt.Errorf("journal line %d is not valid JSON: %w", len(events)+1, err)
+			return nil, 0, fmt.Errorf("journal line %d is not valid JSON: %w", n+1, err)
 		}
 		events = append(events, e)
 	}
-	if err := sc.Err(); err != nil && !errors.Is(err, io.EOF) {
-		return nil, err
-	}
-	return events, nil
+	return events, int64(len(data)), nil
 }

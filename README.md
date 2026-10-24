@@ -88,6 +88,8 @@ wits status
 ```
 
 References resolve by prefix, so `cslap` is enough while it is unambiguous.
+`buy` is the exception: it takes a handle or a full name, and refuses part of
+one rather than guess, because a purchase that matches nothing adds a product.
 
 ![Recording a fill and a session](./assets/wits-cli.gif)
 
@@ -288,7 +290,9 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
 The journal is only ever appended to, and each entry is chained to the one before
 it with a SHA-256 hash, so an edit made outside Wits is detectable. Appending
 takes an advisory file lock as well as a mutex, because it is a read-then-write
-and two processes reading the same tip would fork the chain.
+and two processes reading the same tip would fork the chain. A write cut off
+before its newline — a crash, a full disk — is left out when reading, and cut
+away before the next entry is appended.
 
 The directory is created `0700` and its files `0600`. Nothing is transmitted
 anywhere; the application makes no network calls at all.

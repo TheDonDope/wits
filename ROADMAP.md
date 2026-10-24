@@ -86,7 +86,10 @@ files `0600`, because it is health data.
 ### The journal
 
 Newline-delimited JSON, opened `O_APPEND`, never rewritten — so a failed write
-can add a bad line but cannot destroy an existing one. Each entry is chained to
+can add a bad line but cannot destroy an existing one. That line, a write cut
+off before its newline, is left out when reading and truncated, under the lock,
+before the next append; one used to make every command refuse the repository.
+A bad line that does end in a newline is still an error. Each entry is chained to
 the previous by SHA-256, so an edit made outside Wits is detectable.
 
 Appending takes an **advisory file lock** as well as a mutex. It is a
@@ -125,6 +128,12 @@ for bash, zsh and fish — which offers product handles with what each holds, an
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
 prescription and are absent.
+
+References resolve by prefix, except for `buy`: a purchase that matches nothing
+adds a product, so it takes only a handle or a full name. Part of a name is
+refused with the products it is part of — "MAC1" used to land on the MAC1+ jar
+unannounced, and "Can", part of two names, made a third product. `--slug` says
+a new product is meant.
 
 Grinding or seshing more than an account holds is refused. The journal would
 record it happily, but a negative balance means the log has stopped describing
@@ -204,7 +213,9 @@ and the picker previews on a form that is already open.
 `wits revert`, and `e` / `d` in the journal view. An entry is undone by moving the
 same grams back the way they came and recording that alongside the original.
 Undoing is refused if the grams have since moved on, and the confirmation defaults
-to keeping the entry.
+to keeping the entry. Sessions can be undone and amended — their grams wait in
+`consumed`, which the check once could not see — and a purchase can be amended
+upward, since the pharmacy it draws on cannot be overdrawn.
 
 The log shows what currently stands; `v` reveals the corrections behind it. They
 are hidden rather than removed — that is the difference between a record that can

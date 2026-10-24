@@ -101,20 +101,10 @@ func (c *Catalog) Find(ref string) (*Product, error) {
 	if ref == "" {
 		return nil, ErrNotFound
 	}
-	needle := strings.ToLower(ref)
-
-	for _, p := range c.Products {
-		if p.Slug == ref || strings.EqualFold(p.Name, ref) {
-			return p, nil
-		}
+	if p := c.Exact(ref); p != nil {
+		return p, nil
 	}
-
-	var matches []*Product
-	for _, p := range c.Products {
-		if strings.Contains(strings.ToLower(p.Slug), needle) || strings.Contains(strings.ToLower(p.Name), needle) {
-			matches = append(matches, p)
-		}
-	}
+	matches := c.Partial(ref)
 	switch len(matches) {
 	case 0:
 		return nil, fmt.Errorf("%w: %q", ErrNotFound, ref)
@@ -127,6 +117,30 @@ func (c *Catalog) Find(ref string) (*Product, error) {
 		}
 		return nil, fmt.Errorf("%w: %q matches %s", ErrAmbiguous, ref, strings.Join(names, ", "))
 	}
+}
+
+// Exact returns the product whose slug or name is ref, ignoring case in the
+// name, or nil. Find also accepts part of a name; a purchase must not, since
+// a reference that matches no product in full adds one.
+func (c *Catalog) Exact(ref string) *Product {
+	for _, p := range c.Products {
+		if ref != "" && (p.Slug == ref || strings.EqualFold(p.Name, ref)) {
+			return p
+		}
+	}
+	return nil
+}
+
+// Partial returns the products whose slug or name contains ref, ignoring case.
+func (c *Catalog) Partial(ref string) []*Product {
+	needle := strings.ToLower(ref)
+	var matches []*Product
+	for _, p := range c.Products {
+		if strings.Contains(strings.ToLower(p.Slug), needle) || strings.Contains(strings.ToLower(p.Name), needle) {
+			matches = append(matches, p)
+		}
+	}
+	return matches
 }
 
 var (

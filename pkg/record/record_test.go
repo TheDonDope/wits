@@ -192,6 +192,38 @@ func TestAmend(t *testing.T) {
 	assert.Len(t, rec.State().Events, 4, "Should keep the original, the undo and the replacement")
 }
 
+func TestUndoASession(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
+	require.NoError(t, err)
+	_, err = rec.Grind("wedding", 2, time.Now())
+	require.NoError(t, err)
+	sesh, err := rec.Session("wedding", 0.4, time.Now(), "", 0, "")
+	require.NoError(t, err)
+
+	_, err = rec.Revert(sesh.Hash, "")
+	require.NoError(t, err, "The grams a session put through a device are in consumed, and can come back")
+	assert.Equal(t, 2.0, rec.Available("wcake-221", journal.Stash), "The stash should have its grams back")
+	assert.Equal(t, 0.0, rec.Available("wcake-221", journal.Consumed))
+
+	sesh, err = rec.Session("wedding", 0.4, time.Now(), "", 0, "")
+	require.NoError(t, err)
+	_, err = rec.Amend(sesh.Hash, 0.3, "")
+	require.NoError(t, err, "A session should be amendable, which is a revert and a re-record")
+	assert.Equal(t, 1.7, rec.Available("wcake-221", journal.Stash))
+	assert.Equal(t, 0.3, rec.Available("wcake-221", journal.Consumed))
+}
+
+func TestAmendAPurchaseUpward(t *testing.T) {
+	rec := recorder(t)
+	buy, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
+	require.NoError(t, err)
+
+	_, err = rec.Amend(buy.Hash, 25, "the label said 25")
+	require.NoError(t, err, "A purchase draws on the pharmacy, which cannot be overdrawn")
+	assert.Equal(t, 25.0, rec.Available("wcake-221", journal.Storage))
+}
+
 func TestAmendRefusesBeforeReverting(t *testing.T) {
 	rec := recorder(t)
 	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
@@ -410,6 +442,34 @@ func TestBuyWithASlug(t *testing.T) {
 		assert.False(t, added, "Should recognise the product")
 		assert.Equal(t, first.Slug, again.Slug, "and refer to it the same way as before")
 	})
+}
+
+func TestBuyRefusesPartOfAName(t *testing.T) {
+	rec := recorder(t)
+	for _, name := range []string{"Cannamedical 28/1 Lemon Cookie", "Cantourage 25/1 MAC1+"} {
+		_, _, _, err := rec.Buy(name, "", 10, time.Now())
+		require.NoError(t, err)
+	}
+
+	_, _, _, err := rec.Buy("MAC1", "", 3, time.Now())
+	assert.ErrorIs(t, err, ErrPartialName, "Should not book onto a jar it only guessed at")
+	assert.ErrorContains(t, err, "mac1-251", "Should say which product it is part of")
+	assert.Equal(t, 10.0, rec.Available("mac1-251", journal.Storage), "Should have recorded nothing")
+
+	_, _, _, err = rec.Buy("Can", "", 2, time.Now())
+	assert.ErrorIs(t, err, ErrPartialName, "Should not make a third product out of two partial matches")
+	assert.Len(t, rec.products.Products, 2, "Should not have added a product")
+
+	_, _, _, err = rec.Buy("mac1-251", "", 3, time.Now())
+	require.NoError(t, err, "The slug is exact")
+	_, _, _, err = rec.Buy("cantourage 25/1 mac1+", "", 2, time.Now())
+	require.NoError(t, err, "So is the full name, in any case")
+	assert.Equal(t, 15.0, rec.Available("mac1-251", journal.Storage))
+
+	_, p, added, err := rec.Buy("MAC1", "mac1", 5, time.Now())
+	require.NoError(t, err, "A slug says a new product is meant")
+	assert.True(t, added)
+	assert.Equal(t, "mac1", p.Slug)
 }
 
 func TestRenameAndDescribe(t *testing.T) {
