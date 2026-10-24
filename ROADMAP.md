@@ -206,6 +206,16 @@ and what the jar held before and after — labelled the jar, since `status` spea
 for the fill — the fills it fell in, what undoes it or what it undoes, and a
 session's standing rating. With no entry named, the one written last.
 
+`export` writes Markdown that reads without Wits: the fill in progress, or
+every fill with `--all`. `--from` and `--to` make one document for a range of
+days, for an appointment — the range's own totals, labelled so, what each
+product was dispensed, ground and vaporized, the sessions' ratings with the
+count each mean stands on, and every entry, an undone one marked. An undone
+entry and its correction count in no total. `--site` writes a folder GitHub
+Pages serves as it is: an index of the fills, newest first, and a page for each,
+linked to the index and to its neighbours. A fill's grinding is labelled "from
+any jar", since jars drain oldest first and a fill's tenure grinds the shelf.
+
 Grinding or seshing more than an account holds is refused. The journal would
 record it happily, but grams that are not in the jar cannot come out of it, and
 a log that says they did has stopped describing the stash on the table.
@@ -491,18 +501,6 @@ first things wits would send anywhere, so both are opt-in and said plainly.
 
 ### 1 · What is open, and what is quick
 
-#### 🔹 Markdown export for publishing
-
-- **Status**: In Progress
-- `wits export` writes one Markdown file. For GitHub Pages it needs site
-  structure: a page per cycle, an index, and something to link them.
-
-#### 🔹 A date range for export
-
-- **Status**: Planned
-- Export takes whole cycles or everything. A range would be more use for an
-  appointment.
-
 #### 🔹 A refill planner
 
 - **Status**: Planned
@@ -544,7 +542,7 @@ first things wits would send anywhere, so both are opt-in and said plainly.
 - **Status**: Planned
 - One page for the prescriber: the months asked for, grams a day, which
   strains, what they did by the effect log, and what is left of the fill in
-  progress. A PDF, built from `export` with the date range above.
+  progress. A PDF, built from `export --from --to`.
 
 #### 🔹 A tolerance curve
 

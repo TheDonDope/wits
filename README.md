@@ -209,7 +209,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits device add <name>` / `list` | Register a vaporizer and its temperature range; list them |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
-| `wits export` | The current cycle as Markdown; `--all` for every cycle |
+| `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
 | `wits bundle` | The whole repository as one compact file; `--gzip` to compress it |
 | `wits restore <file>` | Rebuild a repository from a bundle |
 | `wits fsck` | Check the journal and the catalogs for damage |
