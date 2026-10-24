@@ -17,6 +17,7 @@ export interface Pulled {
   fetched: number;
   rechained: number;
   ratings: number;
+  prices: number;
   products: string;
   devices: string;
   clashes: { hash: string; text: string }[];
@@ -25,7 +26,7 @@ export interface Pulled {
 /** A sync: what was pulled, what was pushed, and the file to save back — none when there is nothing yet. */
 export interface Synced {
   pulled: Pulled;
-  pushed: { events: number; ratings: number };
+  pushed: { events: number; ratings: number; prices: number };
   file: Uint8Array | null;
 }
 

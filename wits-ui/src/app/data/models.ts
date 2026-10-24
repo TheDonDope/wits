@@ -166,3 +166,16 @@ export interface Avb {
   waiting: { device: string; grams: number; sessions: number }[];
   yields: { at: string; device: string; collected: number; from: number; sessions: number; ratio: number }[];
 }
+
+/** What the prescriptions cost, in cents: by fill, by month, and per session that helped. */
+export interface Costs {
+  cents: number;
+  priced: number;
+  per_gram: number;
+  unpriced: number;
+  helped: number;
+  per_helped: number;
+  helped_unpriced: number;
+  fills: { number: number; start: string; dispensed: number; priced: number; cents: number; per_gram: number; unpriced: number }[];
+  months: { month: string; cents: number; grams: number }[];
+}

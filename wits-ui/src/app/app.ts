@@ -47,6 +47,7 @@ export class App {
     { path: '/effects', label: 'Effects', icon: 'psychology' },
     { path: '/jars', label: 'Jars', icon: 'inventory_2' },
     { path: '/history', label: 'History', icon: 'insights' },
+    { path: '/costs', label: 'Costs', icon: 'euro' },
     ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
   ];
 

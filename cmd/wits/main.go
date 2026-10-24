@@ -34,6 +34,8 @@ func init() {
 		commands.Init,
 		commands.Bundle,
 		commands.Buy,
+		commands.Price,
+		commands.Costs,
 		commands.Grind,
 		commands.Import,
 		commands.Sesh,

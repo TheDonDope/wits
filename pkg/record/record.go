@@ -20,6 +20,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/repo"
 )
 
@@ -794,4 +795,50 @@ func plural(n int, noun string) string {
 		return "1 " + noun
 	}
 	return fmt.Sprintf("%d %ss", n, noun)
+}
+
+// Price records what was paid for a purchase, in cents. A purchase is never
+// edited, so the price goes beside the journal; pricing it again supersedes
+// the price before, which the log keeps.
+func (r *Recorder) Price(purchase string, cents int64, note string, at time.Time) (prices.Price, error) {
+	e, err := r.Find(purchase)
+	if err != nil {
+		return prices.Price{}, err
+	}
+	if e.Type != journal.Purchase {
+		return prices.Price{}, fmt.Errorf("%s is a %s, not a purchase; only a purchase has a price", short(e.Hash), e.Type)
+	}
+	if r.RevertOf(e.Hash) != nil {
+		return prices.Price{}, fmt.Errorf("the purchase %s was undone", short(e.Hash))
+	}
+	return r.repo.Prices().Append(prices.Price{Purchase: e.Hash, At: at, Cents: cents, Note: strings.TrimSpace(note)})
+}
+
+// Unpriced is every purchase that stands without a price, oldest first:
+// only those whose fill still holds the product in storage, or every one with
+// all set — what reconcile purchases walks through.
+func (r *Recorder) Unpriced(all bool) ([]journal.Event, error) {
+	paid, err := r.repo.Prices().All()
+	if err != nil {
+		return nil, err
+	}
+	latest := prices.Latest(paid)
+	standing := map[string]bool{}
+	for _, e := range ledger.Standing(r.state.Events) {
+		standing[e.Hash] = true
+	}
+	var out []journal.Event
+	for i := range r.state.Cycles {
+		c := &r.state.Cycles[i]
+		for _, e := range c.Events {
+			if e.Type != journal.Purchase || !standing[e.Hash] {
+				continue
+			}
+			if _, ok := latest[e.Hash]; ok || (!all && r.state.ShareOf(c, e.Product) <= 0) {
+				continue
+			}
+			out = append(out, e)
+		}
+	}
+	return out, nil
 }

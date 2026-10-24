@@ -129,8 +129,10 @@ of the two is reverted.
 The **effect log** (`pkg/effects`, `.wits/effects.ndjson`) sits beside the
 journal, not in it: a rating moves no grams, and the journal's every entry is a
 transfer. It has its own hash chain and lock, names sessions by hash, and a
-re-rating supersedes (`effects.Latest`). Anything that copies the repository —
-bundles, restore, fsck, push and pull — must carry it too.
+re-rating supersedes (`effects.Latest`). The **price log** (`pkg/prices`,
+`.wits/prices.ndjson`) is its twin for what purchases cost, named by hash,
+re-pricing superseding (`prices.Latest`), cents in euros. Anything that copies
+the repository — bundles, restore, fsck, push and pull — must carry both.
 
 Grams move between four accounts (storage → stash → consumed → avb), one stash
 per product, every entry a transfer — mass is conserved end to end. Add amounts

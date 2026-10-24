@@ -14,6 +14,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
@@ -99,7 +100,7 @@ type keyMap struct {
 	Top, Bottom    key.Binding
 	Help, Quit     key.Binding
 	New, Sesh, Buy key.Binding
-	Weigh          key.Binding
+	Weigh, Price   key.Binding
 	Edit, Delete   key.Binding
 	Add            key.Binding
 	Theme          key.Binding
@@ -122,6 +123,7 @@ func defaultKeys() keyMap {
 		Sesh:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sesh")),
 		Buy:    key.NewBinding(key.WithKeys("b"), key.WithHelp("b", "buy")),
 		Weigh:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "weigh")),
+		Price:  key.NewBinding(key.WithKeys("$"), key.WithHelp("$", "price purchases")),
 		Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 		Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
 		Add:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
@@ -150,7 +152,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Next, k.Prev},
 		{k.Up, k.Down, k.PageUp, k.PgDown},
 		{k.Top, k.Bottom},
-		{k.Buy, k.New, k.Sesh, k.Weigh},
+		{k.Buy, k.New, k.Sesh, k.Weigh, k.Price},
 		{k.Theme, k.Help, k.Quit},
 	}
 }
@@ -613,8 +615,29 @@ func (a *App) entryKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 		return true, nil
 	case key.Matches(msg, a.keys.Weigh) && a.screen != journalScreen:
 		return a.weighKey()
+	case key.Matches(msg, a.keys.Price):
+		return a.priceKey()
 	}
 	return false, nil
+}
+
+// priceKey walks the purchases still in storage without a price, the way
+// `wits reconcile purchases` does.
+func (a *App) priceKey() (bool, tea.Cmd) {
+	if a.data.Repo == nil {
+		return false, nil
+	}
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	unpriced, err := rec.Unpriced(false)
+	if err != nil {
+		a.notice, a.failed = err.Error(), true
+		return true, nil
+	}
+	if len(unpriced) == 0 {
+		a.notice, a.failed = "every purchase in storage has its price", false
+		return true, nil
+	}
+	return a.open(newPriceForm(unpriced, a))
 }
 
 // weighKey opens the right weighing form for where the cursor is: the ticked

@@ -15,6 +15,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -336,4 +337,26 @@ func TestRatingsTravelInTheBundle(t *testing.T) {
 
 	_, err = Read(bytes.NewBufferString("wits-bundle 3\nP0 w\n--\n==\nR abc soon overall:4\n"))
 	assert.ErrorContains(t, err, "unreadable rating time")
+}
+
+func TestPricesTravelInTheBundle(t *testing.T) {
+	paid := []prices.Price{
+		{Purchase: strings.Repeat("b", 64), At: time.Date(2026, 8, 29, 12, 0, 0, 0, berlin), Cents: 17000},
+		{Purchase: strings.Repeat("b", 64), At: time.Date(2026, 8, 30, 9, 0, 0, 0, berlin), Cents: 18000, Note: "the label said 180"},
+	}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Prices: paid}))
+	assert.Contains(t, buf.String(), "\n==\nC ", "Should open the section for prices alone, with no ratings")
+	assert.True(t, strings.HasPrefix(buf.String(), "wits-bundle 4\n"), "Should be format 4")
+
+	got, err := Read(&buf)
+	require.NoError(t, err)
+	require.Len(t, got.Prices, 2)
+	assert.Equal(t, int64(18000), got.Prices[1].Cents)
+	assert.Equal(t, "the label said 180", got.Prices[1].Note)
+	assert.True(t, paid[0].At.Equal(got.Prices[0].At))
+	assert.Empty(t, got.Ratings)
+
+	_, err = Read(bytes.NewBufferString("wits-bundle 4\nP0 w\n--\n==\nC abc 2026-08-29T12:00:00Z lots\n"))
+	assert.ErrorContains(t, err, "unreadable cents")
 }

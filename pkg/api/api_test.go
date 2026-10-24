@@ -260,3 +260,21 @@ func TestAVB(t *testing.T) {
 	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
 	assert.Equal(t, 0.05, decodeInto[avb](t, call(t, s, "GET", "/api/avb", "")).Held)
 }
+
+func TestPrices(t *testing.T) {
+	s, _ := server(t, "")
+	unpriced := decodeInto[[]entry](t, call(t, s, "GET", "/api/unpriced", ""))
+	require.Len(t, unpriced, 1)
+
+	w := call(t, s, "POST", "/api/price", `{"purchase":"`+unpriced[0].Hash+`","euros":"170,00"}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "170.00 € for 20.00 g of Enua 22/1 Wedding Cake")
+	w = call(t, s, "POST", "/api/price", `{"purchase":"`+unpriced[0].Hash+`","euros":"lots"}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	c := decodeInto[costs](t, call(t, s, "GET", "/api/costs", ""))
+	assert.Equal(t, int64(17000), c.Cents)
+	assert.InDelta(t, 850, c.PerGram, 1e-9)
+	assert.Equal(t, 0, c.Unpriced)
+	assert.Empty(t, decodeInto[[]entry](t, call(t, s, "GET", "/api/unpriced?all=1", "")))
+}

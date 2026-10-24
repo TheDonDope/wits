@@ -27,6 +27,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/repo"
 )
 
@@ -132,7 +133,10 @@ func Fetch(dir string, id *age.X25519Identity) (*bundle.Contents, error) {
 	if c.Events, err = journal.Chain(c.Events); err != nil {
 		return nil, err
 	}
-	c.Ratings, err = effects.Chain(c.Ratings)
+	if c.Ratings, err = effects.Chain(c.Ratings); err != nil {
+		return nil, err
+	}
+	c.Prices, err = prices.Chain(c.Prices)
 	return c, err
 }
 
@@ -168,6 +172,9 @@ func local(r *repo.Repo) (bundle.Contents, error) {
 	if c.Ratings, err = r.Effects().All(); err != nil {
 		return c, err
 	}
+	if c.Prices, err = r.Prices().All(); err != nil {
+		return c, err
+	}
 	if c.Products, err = catalog.Load(r.ProductsPath()); err != nil {
 		return c, err
 	}
@@ -184,8 +191,9 @@ func open(r *repo.Repo) (string, *age.X25519Identity, error) {
 	return r.Config.Remote, id, err
 }
 
-// Pushed is what a push wrote: the entries and ratings the remote lacked.
-type Pushed struct{ Events, Ratings int }
+// Pushed is what a push wrote: the entries, ratings and prices the remote
+// lacked.
+type Pushed struct{ Events, Ratings, Prices int }
 
 // Push writes the repository to its remote. It is refused when the remote
 // holds an entry, a rating or a product this device does not: those would be
@@ -210,8 +218,9 @@ func Push(r *repo.Repo) (Pushed, error) {
 	if !holds(ours, *theirs) {
 		return Pushed{}, ErrBehind
 	}
-	done := Pushed{Events: len(ours.Events) - len(theirs.Events), Ratings: len(ours.Ratings) - len(theirs.Ratings)}
-	if done.Events == 0 && done.Ratings == 0 && sameCatalogs(ours, *theirs) {
+	done := Pushed{Events: len(ours.Events) - len(theirs.Events), Ratings: len(ours.Ratings) - len(theirs.Ratings),
+		Prices: len(ours.Prices) - len(theirs.Prices)}
+	if done.Events == 0 && done.Ratings == 0 && done.Prices == 0 && sameCatalogs(ours, *theirs) {
 		return done, nil
 	}
 	return done, store(dir, id, ours)
@@ -228,6 +237,9 @@ func holds(ours, theirs bundle.Contents) bool {
 		return false
 	}
 	if n := len(theirs.Ratings); n > 0 && ours.Ratings[n-1].Hash != theirs.Ratings[n-1].Hash {
+		return false
+	}
+	if n := len(theirs.Prices); n > len(ours.Prices) || (n > 0 && ours.Prices[n-1].Hash != theirs.Prices[n-1].Hash) {
 		return false
 	}
 	for _, p := range products(theirs) {
@@ -248,8 +260,9 @@ type Pulled struct {
 	// Fetched is the remote's entries this device lacked; Rechained, this
 	// device's own, chained again on top of them with new hashes.
 	Fetched, Rechained int
-	// Ratings is the remote's ratings this device lacked.
-	Ratings int
+	// Ratings and Prices are the remote's ratings and prices this device
+	// lacked.
+	Ratings, Prices int
 	// Products and Devices are the slugs taken from the remote: new here, or
 	// held here differently, in which case the remote's stands.
 	Products, Devices []string
@@ -282,7 +295,10 @@ func Pull(r *repo.Repo) (Pulled, error) {
 	}
 	rebased, err := r.Journal().Rebase(theirs.Events, func(rb journal.Rebased) error {
 		var rerr error
-		done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings, rb.Moved)
+		if done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings, rb.Moved); rerr != nil {
+			return rerr
+		}
+		done.Prices, rerr = r.Prices().Rebase(theirs.Prices, rb.Moved)
 		return rerr
 	})
 	if err != nil {

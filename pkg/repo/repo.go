@@ -9,6 +9,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,6 +22,7 @@ const (
 	devicesFile  = "devices.yml"
 	journalFile  = "journal.ndjson"
 	effectsFile  = "effects.ndjson"
+	pricesFile   = "prices.ndjson"
 	indexDir     = "index"
 	// remoteKeyFile is the age identity push and pull encrypt to.
 	remoteKeyFile = "remote.key"
@@ -85,6 +87,7 @@ type Repo struct {
 	Config  Config
 	journal *journal.Journal
 	effects *effects.Log
+	prices  *prices.Log
 }
 
 // Init creates a repository under dir and returns it. It refuses to touch an
@@ -198,6 +201,18 @@ func (r *Repo) Effects() *effects.Log {
 		r.effects = effects.Open(r.EffectsPath())
 	}
 	return r.effects
+}
+
+// PricesPath returns the path of the price log.
+func (r *Repo) PricesPath() string { return filepath.Join(r.root, pricesFile) }
+
+// Prices returns the repository's price log, the same instance every time,
+// as Journal does.
+func (r *Repo) Prices() *prices.Log {
+	if r.prices == nil {
+		r.prices = prices.Open(r.PricesPath())
+	}
+	return r.prices
 }
 
 // SetTheme records the interface theme and persists it, under the config's

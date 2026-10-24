@@ -181,8 +181,8 @@ sessions, devices, two rhythm calendars and a projection of the supply's
 decline to its empty day — then the journal, an analysis view scoping from the
 current cycle out to the whole history, the storage, the stash, the sessions,
 and the devices. `tab` moves between them. Entries can be recorded
-there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh — and
-`?` lists every key the current screen honours. `q` quits; `esc` only ever
+there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh, `$`
+to price the purchases still without one — and `?` lists every key the current screen honours. `q` quits; `esc` only ever
 closes the form in front.
 
 The interface keeps up with the repository: an entry made with a command in
@@ -212,7 +212,9 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | | |
 | --- | --- |
 | `wits init [dir]` | Create a repository |
-| `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it |
+| `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it, `--price` for what it cost |
+| `wits price <purchase> <euros>` | Write down what a purchase cost; `wits reconcile purchases` walks every one without |
+| `wits costs` | What the prescriptions cost: per gram, by fill, by month, and per session that helped |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
 | `wits avb collect <grams>` / `use <grams>` | AVB weighed out of a device, or used up; `wits avb` for the jar and every yield |
@@ -324,6 +326,7 @@ cursor, or otherwise the fullest one, since that is the one worth checking.
   journal.ndjson  # append-only, one entry per line; only a pull rewrites it
   journal.ndjson.orig  # the journal as it was before a pull chained entries again
   effects.ndjson  # the effect log: ratings of sessions, append-only too
+  prices.ndjson   # the price log: what each purchase cost, append-only too
   remote.key      # the age key the remote is encrypted to; never in the remote
   index/          # reserved for a cached fold; nothing writes it yet
   *.lock          # empty; what two writers of one file take turns on
@@ -371,7 +374,9 @@ every entry in one go and checks the chain it made; a bundle that does not
 restore whole restores nothing. Bundles written before v0.41.0 left out the
 accounts of undos and weighings; they are recovered when such a bundle is
 restored, and one that cannot be recovered is refused rather than restored
-wrong. The effect log travels in the bundle too, after the entries.
+wrong. The effect log and the price log travel in the bundle too, after the
+entries (format 4; a build before v0.61.0 refuses one, rather than dropping
+the prices).
 
 It is plain text, so the record stays legible with nothing but a text editor and
 diffs cleanly in git. Small, too, because most of what the journal stores is
@@ -429,6 +434,34 @@ kept as written, and `wits pull`, `wits status` and `wits fsck` name the one
 that took grams that weren't there. The jar takes nothing more except an undo
 until one of the two is reverted with `wits revert`. Every other jar records
 as usual.
+
+## What it costs
+
+A price goes beside the journal, in `.wits/prices.ndjson`, because a purchase
+is never edited and a price moves no grams. Give it when buying, afterwards, or
+in one sitting for every purchase still in storage without one:
+
+```console
+$ wits price 52b8 "180,00 €" --note "the label said 180"
+[ea22d7e] 180.00 € for 20.00g of sumo-papaya-bomb-251 on 2026-08-29, 9.00 € a gram
+$ wits reconcile purchases          # one question a purchase; --all for every one
+$ wits costs
+520.00 € for 60.00g with a price, 8.67 € a gram; 85 purchases without one
+
+FILL  DISPENSED   GRAMS   PAID      A GRAM
+30    2026-08-29  60.00g  520.00 €  8.67 €
+29    2026-07-09  60.00g  -         -       3 purchases without a price
+…
+1 session that helped (4 or more overall), 3.40 € each on average.
+```
+
+These figures are the ones from pricing the workbook's fill 30 by hand at 170 €
+and then 180 € a jar; the workbook itself has no prices. A purchase priced
+again costs what it was priced at last, and the log keeps both. Only purchases
+with a price count. How many have none is said, not guessed at. A session that
+helped is one rated 4 or more overall, at its product's price per gram. The
+same walk is `$` in the terminal interface and the **Costs** page in the
+browser.
 
 ## AVB
 
@@ -527,7 +560,7 @@ sessions screen.
 ![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
 
 Every key the terminal has is here too, and the footer shows the ones the page
-answers: `g` `s` `b` `r` `v` to record, `1`–`6` or `h`/`l` between pages, `p` to
+answers: `g` `s` `b` `r` `v` to record, `1`–`7` or `h`/`l` between pages, `p` to
 replay, `j`/`k` to move, `space` to tick, and `?` for all of them.
 
 It answers this machine only. The server listens on a loopback address and

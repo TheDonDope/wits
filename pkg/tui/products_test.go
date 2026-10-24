@@ -682,3 +682,25 @@ func TestRatingAgainStartsFromTheStandingRating(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, ratings, 2)
 }
+
+func TestPricePurchasesWalksThemAndWritesWhatWasAnswered(t *testing.T) {
+	app := shelved(t)
+	var m tea.Model = app
+
+	m, _ = send(m, tea.KeyPressMsg{Code: '$', Text: "$"})
+	f := app.entryInFront()
+	require.NotNil(t, f, "$ should open the price form")
+	require.Equal(t, entryPrices, f.kind)
+	require.NotEmpty(t, f.purchases, "the purchases still in storage, without a price")
+	assert.Contains(t, stripANSI(f.View(app, 92)), "What was paid, in euros")
+	_ = m
+
+	f.readings[0] = "170,00"
+	summary, err := f.commitPrices(app)
+	require.NoError(t, err)
+	assert.Equal(t, "priced 1 purchase, 170.00 € in all", summary)
+	paid, err := app.data.Repo.Prices().All()
+	require.NoError(t, err)
+	require.Len(t, paid, 1)
+	assert.Equal(t, f.purchases[0].Hash, paid[0].Purchase)
+}

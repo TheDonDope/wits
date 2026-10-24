@@ -30,6 +30,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/workspace"
@@ -68,6 +69,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/undo", s.write(undo))
 	mux.HandleFunc("POST /api/flush", s.flush)
 	mux.HandleFunc("GET /api/avb", s.read(avbOf))
+	mux.HandleFunc("GET /api/costs", s.read(costsOf))
+	mux.HandleFunc("GET /api/unpriced", s.unpriced)
+	mux.HandleFunc("POST /api/price", s.price)
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
@@ -270,6 +274,99 @@ func avbOf(ws *workspace.Workspace) any {
 			From: y.From, Sessions: y.Sessions, Ratio: y.Ratio()})
 	}
 	return out
+}
+
+// costs is prices.Costs as a client reads it, cents as cents.
+type costs struct {
+	Cents       int64      `json:"cents"`
+	Priced      float64    `json:"priced"`
+	PerGram     float64    `json:"per_gram"`
+	Unpriced    int        `json:"unpriced"`
+	Helped      int        `json:"helped"`
+	PerHelped   float64    `json:"per_helped"`
+	Fills       []costFill `json:"fills"`
+	Months      []month    `json:"months"`
+	HelpedNoPay int        `json:"helped_unpriced"`
+}
+
+type costFill struct {
+	Number    int       `json:"number"`
+	Start     time.Time `json:"start"`
+	Dispensed float64   `json:"dispensed"`
+	Priced    float64   `json:"priced"`
+	Cents     int64     `json:"cents"`
+	PerGram   float64   `json:"per_gram"`
+	Unpriced  int       `json:"unpriced"`
+}
+
+type month struct {
+	Month string  `json:"month"`
+	Cents int64   `json:"cents"`
+	Grams float64 `json:"grams"`
+}
+
+func costsOf(ws *workspace.Workspace) any {
+	c := prices.Analyse(ws.State, prices.Latest(ws.Prices), ws.Ratings)
+	out := costs{Cents: c.Cents, Priced: c.Priced, PerGram: c.PerGram(), Unpriced: c.Unpriced, Helped: c.Helped,
+		PerHelped: c.PerHelped(), HelpedNoPay: c.HelpedNoCost, Fills: []costFill{}, Months: []month{}}
+	for _, f := range c.Fills {
+		out.Fills = append(out.Fills, costFill{Number: f.Seq + 1, Start: f.Start, Dispensed: f.Dispensed,
+			Priced: f.Priced, Cents: f.Cents, PerGram: f.PerGram(), Unpriced: f.Unpriced})
+	}
+	for _, m := range c.Months {
+		out.Months = append(out.Months, month(m))
+	}
+	return out
+}
+
+// unpriced is the purchases without a price, for reconcile purchases: those
+// still in storage, or every one with ?all=1.
+func (s *Server) unpriced(w http.ResponseWriter, r *http.Request) {
+	ws, err := workspace.Read(s.repo)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	events, err := ws.Recorder.Unpriced(r.URL.Query().Get("all") == "1")
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	out := make([]entry, 0, len(events))
+	for _, e := range events {
+		out = append(out, entryOf(e, ws, nil))
+	}
+	reply(w, http.StatusOK, out)
+}
+
+// price writes down what a purchase cost.
+func (s *Server) price(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.writable(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		Purchase string `json:"purchase"`
+		Euros    string `json:"euros"`
+		Note     string `json:"note"`
+	}
+	if err := decode(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	cents, err := prices.ParseEuros(req.Euros)
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	p, err := ws.Recorder.Price(req.Purchase, cents, req.Note, time.Now())
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	e, _ := ws.Recorder.Find(p.Purchase)
+	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g of %s",
+		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
 }
 
 // flush records stashes as consumed — the named ones, or every one holding

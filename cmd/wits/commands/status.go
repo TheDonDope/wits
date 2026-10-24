@@ -230,6 +230,28 @@ func effectProblems(ws *workspace.Workspace) []string {
 				shortHash(r.Hash), shortHash(r.Session)))
 		}
 	}
+	return append(problems, priceProblems(ws)...)
+}
+
+// priceProblems is the price log's chain, and any price that names no
+// purchase in the journal.
+func priceProblems(ws *workspace.Workspace) []string {
+	var problems []string
+	if ws.PricesChain != nil {
+		problems = append(problems, ws.PricesChain.Error())
+	}
+	purchases := map[string]bool{}
+	for _, e := range ws.State.Events {
+		if e.Type == journal.Purchase {
+			purchases[e.Hash] = true
+		}
+	}
+	for _, p := range ws.Prices {
+		if !purchases[p.Purchase] {
+			problems = append(problems, fmt.Sprintf("price %s is for %s, which is not a purchase in the journal",
+				shortHash(p.Hash), shortHash(p.Purchase)))
+		}
+	}
 	return problems
 }
 
