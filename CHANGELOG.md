@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.67.0"></a>
+## [v0.67.0] - 2026-10-25
+### Feat
+- **film:** the replay as a film, three years of the shelf in thirty seconds
+
+
 <a name="v0.66.0"></a>
 ## [v0.66.0] - 2026-10-25
+### Docs
+- update changelog for v0.66.0
+
 ### Feat
 - **strains:** a map of the strains, and what each is like
 
@@ -862,7 +871,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.66.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.67.0...HEAD
+[v0.67.0]: https://github.com/TheDonDope/wits/compare/v0.66.0...v0.67.0
 [v0.66.0]: https://github.com/TheDonDope/wits/compare/v0.65.0...v0.66.0
 [v0.65.0]: https://github.com/TheDonDope/wits/compare/v0.64.0...v0.65.0
 [v0.64.0]: https://github.com/TheDonDope/wits/compare/v0.63.0...v0.64.0
