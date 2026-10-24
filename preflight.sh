@@ -135,6 +135,23 @@ check() {
 		say "  prefer growing an existing file, or expect the flag"
 	fi
 
+	# The browser client is linted with its types, which Codacy cannot see —
+	# the wits-ui workflow and this are where its lint happens. It needs the
+	# client's dependencies; without them there is nothing to lint against.
+	if [ -n "$( (git diff --name-only "$b"...HEAD -- wits-ui 2>/dev/null; git status --porcelain -- wits-ui) | head -1)" ]; then
+		if [ -d wits-ui/node_modules ]; then
+			if out="$(cd wits-ui && npx ng lint 2>&1)"; then
+				say "✓ ng lint (wits-ui, with types)"
+			else
+				say "✗ ng lint:"
+				say "$out" | grep -E 'error|warning' | head -20
+				fail=1
+			fi
+		else
+			say "· wits-ui changed but its packages are not installed (cd wits-ui && npm ci); skipping its lint"
+		fi
+	fi
+
 	# Codacy runs shellcheck too — this very script was its first catch.
 	scripts="$( (git diff --name-only "$b"...HEAD -- '*.sh' 2>/dev/null; \
 	             git diff --name-only -- '*.sh'; \

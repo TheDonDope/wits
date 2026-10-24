@@ -1,0 +1,17 @@
+# Codacy's ESLint runs without installing a project's dependencies, so in the
+# Angular client every import from @angular/*, d3 and Material resolves to an
+# unknown type, and typescript-eslint's type-aware rules flag every use of one
+# — a hundred findings on the first pull request, none of them about the code.
+# The client is linted with its types instead: by the wits-ui workflow and by
+# ./preflight.sh, with typescript-eslint's strict type-checked rules. The rest
+# of Codacy's tools still read it.
+engines:
+  eslint:
+    exclude_paths:
+      - 'wits-ui/**'
+  eslint-8:
+    exclude_paths:
+      - 'wits-ui/**'
+  eslint-9:
+    exclude_paths:
+      - 'wits-ui/**'

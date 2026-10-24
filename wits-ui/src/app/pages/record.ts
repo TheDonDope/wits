@@ -183,7 +183,8 @@ export class RecordDialog {
   protected readonly stashed = computed(() => this.wits.jars.value().filter((j) => j.stash > 0));
   protected readonly range = computed(() => {
     const d = this.wits.devices.value().find((x) => x.slug === this.device());
-    return d ? { min: d.min_temp || 120, max: d.max_temp || 230 } : null;
+    // The API leaves a range out when the device has none.
+    return d ? { min: d.min_temp ?? 120, max: d.max_temp ?? 230 } : null;
   });
 
   protected pickDevice(slug: string): void {
@@ -209,8 +210,9 @@ export class RecordDialog {
   }
 
   private send(): Promise<Written> {
-    const grams = Number(this.grams() ?? 0);
-    const date = this.date() ? isoDay(this.date()!) : undefined;
+    const grams = this.grams() ?? 0;
+    const day = this.date();
+    const date = day ? isoDay(day) : undefined;
     switch (this.tab()) {
       case 0:
         return this.wits.grind({ product: this.product(), grams, date });

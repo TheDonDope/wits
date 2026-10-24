@@ -71,6 +71,12 @@ The gate refuses any **new** issue. `./preflight.sh` mirrors it:
   Keep docstrings to one line and explain in comments. Preflight doesn't check
   Python.
 
+- **TypeScript** (wits-ui) is excluded from Codacy's ESLint in `.codacy.yml`:
+  it runs without `node_modules`, so every Angular type is unresolved and its
+  type-aware rules flag every use. The client is linted with types instead —
+  `npx ng lint` (strict type-checked rules), run by preflight and by the
+  wits-ui workflow. Keep it clean there; it is the real gate.
+
 `./preflight.sh watch <pr>` polls a PR and prints the issues Codacy will
 refuse. It can return while `build` is still pending; confirm with
 `gh pr checks <pr> --watch`.

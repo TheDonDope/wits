@@ -14,7 +14,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { Entry } from '../data/models';
 import { Wits } from '../data/wits';
-import { ConfirmDialog } from './confirm';
+import { Confirm, ConfirmDialog } from './confirm';
 
 /** How each kind of entry looks: its icon, its colour, its verb. */
 export const KINDS: Record<Entry['type'], { icon: string; tone: string; verb: string }> = {
@@ -153,7 +153,7 @@ export class Journal {
   });
 
   protected share(e: Entry): number {
-    return (e.grams / (this.most().get(e.type) || 1)) * 100;
+    return (e.grams / Math.max(this.most().get(e.type) ?? 0, 0.01)) * 100;
   }
 
   protected readonly rows = computed<Row[]>(() => {
@@ -179,7 +179,7 @@ export class Journal {
   protected async undo(e: Entry): Promise<void> {
     const ok = await firstValueFrom(
       this.dialog
-        .open(ConfirmDialog, {
+        .open<ConfirmDialog, Confirm, boolean>(ConfirmDialog, {
           data: {
             title: `Undo this ${KINDS[e.type].verb}?`,
             body: `${e.grams.toFixed(2)} g of ${e.product_name ?? 'AVB'} on ${new Date(e.occurred_at).toLocaleDateString()}. Nothing is deleted: a correction moves the grams back, and the journal keeps both.`,

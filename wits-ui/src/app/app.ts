@@ -43,8 +43,12 @@ export class App {
   ];
 
   constructor() {
-    const tick = setInterval(() => this.now.set(new Date()), 1000);
-    inject(DestroyRef).onDestroy(() => clearInterval(tick));
+    const tick = setInterval(() => {
+      this.now.set(new Date());
+    }, 1000);
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(tick);
+    });
     // ?record=grind (or session, fill, weigh) opens the form on that tab: a
     // link to bookmark for the thing done most often.
     afterNextRender(() => {
