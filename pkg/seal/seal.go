@@ -19,7 +19,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/sha1" //nolint:gosec // an OpenTimestamps operation, not a security choice of ours
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -368,9 +367,11 @@ type step struct {
 	next *stamp
 }
 
-// The operation tags; the binary two take an argument.
+// The operation tags; the binary two take an argument. SHA-1 and RIPEMD-160
+// are in the format too, and refused here: the calendars and Bitcoin's own
+// commitments use SHA-256, and a proof that leans on a broken hash is not one
+// to vouch for.
 const (
-	opSHA1    = 0x02
 	opSHA256  = 0x08
 	opAppend  = 0xf0
 	opPrepend = 0xf1
@@ -383,9 +384,6 @@ func apply(op byte, arg, msg []byte) ([]byte, error) {
 	switch op {
 	case opSHA256:
 		h := sha256.Sum256(msg)
-		return h[:], nil
-	case opSHA1:
-		h := sha1.Sum(msg) //nolint:gosec // as the proof says
 		return h[:], nil
 	case opAppend:
 		return append(slices.Clone(msg), arg...), nil
