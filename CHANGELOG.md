@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.35.0"></a>
+## [v0.35.0] - 2026-10-24
+### Fix
+- **record:** the guard rails hold under the lock, against the journal as it stands
+
+### Test
+- **record:** compare the undo's moment, not its time zone
+
+
 <a name="v0.34.0"></a>
 ## [v0.34.0] - 2026-10-24
+### Docs
+- update changelog for v0.34.0
+
 ### Feat
 - **ledger:** a fill lands where its date puts it
 
@@ -541,7 +553,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.35.0...HEAD
+[v0.35.0]: https://github.com/TheDonDope/wits/compare/v0.34.0...v0.35.0
 [v0.34.0]: https://github.com/TheDonDope/wits/compare/v0.33.0...v0.34.0
 [v0.33.0]: https://github.com/TheDonDope/wits/compare/v0.32.0...v0.33.0
 [v0.32.0]: https://github.com/TheDonDope/wits/compare/v0.31.0...v0.32.0
