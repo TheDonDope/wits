@@ -122,7 +122,7 @@ func TestStateFollowsAlong(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, rec.State().Events, 1, "Should fold each entry as it is recorded")
-	assert.NotNil(t, rec.State().CurrentCycle(), "Should open a cycle on the first fill")
+	assert.NotNil(t, rec.State().CycleAt(time.Now()), "Should open a cycle on the first fill")
 }
 
 func TestRevert(t *testing.T) {

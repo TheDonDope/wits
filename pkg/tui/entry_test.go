@@ -591,3 +591,38 @@ func TestABrokenChainIsSaidOnOpening(t *testing.T) {
 	assert.Contains(t, opened.notice, "changed outside wits")
 	assert.True(t, opened.failed)
 }
+
+func TestTheScreenFollowsTheRepository(t *testing.T) {
+	app := liveApp(t)
+	before := len(app.data.State.Events)
+	assert.Nil(t, app.refresh(time.Now()), "Nothing changed, nothing to reload")
+
+	// wits grind in another terminal, while the interface is open.
+	other, err := repo.Discover(app.data.Repo.WorkTree())
+	require.NoError(t, err)
+	_, err = other.Journal().Append(journal.Event{Type: journal.Grind, Product: "wcake", Grams: 1})
+	require.NoError(t, err)
+
+	cmd := app.refresh(time.Now())
+	require.NotNil(t, cmd, "A write elsewhere should be noticed on the next tick")
+	assert.Nil(t, app.refresh(time.Now()), "and asked for once, not on every tick until it lands")
+	app.Update(cmd())
+	assert.Len(t, app.data.State.Events, before+1, "The screen should show the grind")
+	assert.Nil(t, app.refresh(time.Now()))
+
+	app.data.Now = app.data.Now.AddDate(0, 0, -1)
+	assert.NotNil(t, app.refresh(time.Now()), "A new day should reload, so today is today")
+}
+
+func TestEscDoesNotQuit(t *testing.T) {
+	app := liveApp(t)
+	_, cmd := app.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
+	if cmd != nil {
+		_, quit := cmd().(tea.QuitMsg)
+		assert.False(t, quit, "esc closes forms; one press too many should not close the interface")
+	}
+	_, cmd = app.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
+	require.NotNil(t, cmd)
+	_, quit := cmd().(tea.QuitMsg)
+	assert.True(t, quit, "q still quits")
+}
