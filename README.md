@@ -493,6 +493,36 @@ on another origin cannot send. Every font and icon ships with the interface, so
 it makes no network call either. `?record=grind` (or `session`, `fill`, `weigh`)
 opens the form on that tab — a link to bookmark.
 
+## On the phone
+
+The same interface runs on a phone, with wits itself inside it: the
+repository, the recorder and the API that `wits-server` runs, compiled to
+WebAssembly. The phone keeps its own copy of the journal in the browser and
+refuses the same things in the same words as the terminal. It works offline
+once it has loaded, and a home-screen shortcut opens the grind form directly.
+
+![The phone, after its first sync](./assets/wits-phone-dashboard.png)
+
+It's served from GitHub Pages at <https://thedondope.github.io/wits/>, and
+holds no data there. Install it from the browser's menu (**Add to home
+screen**). The phone syncs through the same folder as `wits push` and
+`wits pull`, by hand:
+
+1. On the device that made the folder, show the key: `cat .wits/remote.key`.
+2. On the phone, open **Sync**, open `wits.age` from the shared folder (on
+   Android, the folder Syncthing keeps), and paste the key the first time.
+3. **Sync** pulls the folder's entries in, chains the phone's own on top, and
+   pushes. **Save wits.age** then hands the result to the Files or Syncthing
+   app to save over the one in the folder.
+
+![Sync, on the phone](./assets/wits-phone-sync.png)
+
+A browser on a phone can read a file you pick, but it can't write into a
+folder by itself. That's why the result is shared or downloaded, and why you
+save it over the folder's copy yourself. The key and the journal never leave
+the phone except inside that encrypted file. `make pages` builds what Pages
+serves, and `make wasm-check` syncs the engine with the command line both ways.
+
 ## Layout
 
 One Go module, several commands, and a web interface beside them. Not a
@@ -505,6 +535,7 @@ wits/                     module github.com/TheDonDope/wits
     wits/                 the terminal interface and the commands
     witsnap/              the camera and the tap: screens as text, the fold as JSON
     wits-server/          the JSON API, and the web interface it serves
+    wits-wasm/            the same API, in WebAssembly, for the phone
   pkg/
     journal/              the append-only log
     ledger/               the fold: balances, cycles, statistics
@@ -513,6 +544,7 @@ wits/                     module github.com/TheDonDope/wits
     catalog/              products and devices
     record/               applying entries, with the checks that guard them
     bundle/               the portable archive format
+    remote/               push and pull through a shared folder
     importer/             reading the tracking spreadsheet
     cannabis/             cannabinoids, terpenes and their boiling points
     api/                  the repository over HTTP, for wits-server

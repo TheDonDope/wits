@@ -14,6 +14,8 @@ make test              # go test -race ./... with coverage
 ./preflight.sh         # what CI and Codacy will say, said first — before every push
 make serve             # wits-server + the Angular client on http://127.0.0.1:7341
 make ui-test           # the client's Vitest suite (Node and npm; nothing else needs them)
+make wasm-check        # the phone's engine (cmd/wits-wasm) synced with the CLI, both ways
+make pages             # the phone's build, as GitHub Pages serves it under /wits/
 ```
 
 Single test: `go test ./pkg/ledger -run TestCycleGap -v`. TUI tests live in
@@ -218,6 +220,12 @@ Angular client (signals, zoneless, standalone components, `httpResource`).
   service has to be undone.
 - Charts are SVG drawn by components in `wits-ui/src/app/viz`, geometry from d3
   (`d3-shape`, `d3-scale`), never a chart library. Honour reduced motion.
+- **The phone** runs the same API in the page: `cmd/wits-wasm` (`GOOS=js`) on
+  `data/memfs.ts`, answered through `engineInterceptor` when `ENGINE` is set
+  (the `pages` configuration swaps in `mode.pages.ts`). Anything the server
+  does, the phone does by the same code — so a new endpoint needs nothing
+  phone-side, but a new `os` call Go makes may need MemFS to answer it, and
+  `make wasm-check` is what finds out.
 - **Verify by looking**: `make serve` on a copy of the workbook, then a headless
   Chromium screenshot (`~/.cache/rod/browser/*/chrome --headless=new
   --force-prefers-reduced-motion --screenshot=… --window-size=1440,1700 <url>`,

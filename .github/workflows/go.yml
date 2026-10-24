@@ -36,6 +36,22 @@ jobs:
       - name: Vet
         run: make vet
 
+      # The phone's engine is the same Go, built for the browser: vetted and
+      # built here, since the tests above compile none of its js-only files.
+      - name: Build for the phone
+        run: |
+          GOOS=js GOARCH=wasm go vet ./cmd/wits-wasm ./pkg/journal
+          make wasm
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+
+      # The engine on the client's MemFS, synced with the CLI both ways.
+      - name: The phone against the CLI
+        run: ./wasm-check.sh
+
       - name: Test
         run: make test-ci
 

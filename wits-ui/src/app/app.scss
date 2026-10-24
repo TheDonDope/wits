@@ -116,6 +116,11 @@ main {
   border-top: 1px solid var(--w-glass-edge);
   font-size: 12px;
   color: var(--w-dim);
+
+  // A phone has no keys to press: the line would only cover the page.
+  @media (hover: none) and (pointer: coarse) {
+    display: none;
+  }
 }
 
 .k {
