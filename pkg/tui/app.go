@@ -50,12 +50,10 @@ const (
 	stashScreen
 	sessionsScreen
 	devicesScreen
-	seanceScreen
 )
 
-// tabs are the screen names, in order. The last one is the Séance: the ledger
-// summoned back and played out as cards on a table.
-var tabs = []string{"Dashboard", "Journal", "Analysis", "Storage", "Stash", "Sessions", "Devices", "Séance"}
+// tabs are the screen names, in order.
+var tabs = []string{"Dashboard", "Journal", "Analysis", "Storage", "Stash", "Sessions", "Devices"}
 
 // keyMap is the global key bindings. Screens add their own on top, borrowing
 // from here where the key is shared, so that a binding is declared once and
@@ -149,7 +147,6 @@ type App struct {
 	stash     stashView
 	sessions  sessionsView
 	devices   devicesView
-	seance    seanceView
 	device    *deviceForm
 }
 
@@ -168,7 +165,6 @@ func New(data Data) *App {
 	a.stash = newStashView()
 	a.sessions = newSessionsView()
 	a.devices = newDevicesView()
-	a.seance = newSeanceView()
 	return a
 }
 
@@ -216,16 +212,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case deviceDoneMsg:
 		return a.deviceDone(msg)
-
-	case seanceDatesMsg:
-		if msg.err != nil {
-			a.notice, a.failed = msg.err.Error(), true
-			return a, nil
-		}
-		a.seance = a.seance.reframe(msg.from, msg.to)
-		a.notice, a.failed = fmt.Sprintf("summoning %s → %s",
-			msg.from.Format("02 Jan 2006"), msg.to.AddDate(0, 0, -1).Format("02 Jan 2006")), false
-		return a, nil
 
 	case reloadedMsg:
 		if msg.err != nil {
@@ -280,8 +266,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.sessions, cmd = a.sessions.Update(msg, a)
 	case devicesScreen:
 		a.devices, cmd = a.devices.Update(msg, a)
-	case seanceScreen:
-		a.seance, cmd = a.seance.Update(msg, a)
 	}
 	return a, cmd
 }
@@ -332,8 +316,6 @@ func (a *App) View() tea.View {
 		body = a.sessions.View(a, bodyHeight)
 	case devicesScreen:
 		body = a.devices.View(a, bodyHeight)
-	case seanceScreen:
-		body = a.seance.View(a, bodyHeight)
 	}
 
 	// Clamp the finished frame. Inner layout tries to fit, but a narrow terminal
@@ -412,7 +394,7 @@ func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 // only tab and shift+tab to change screens.
 func (a *App) slides() bool {
 	switch a.screen {
-	case journalScreen, analysisScreen, storageScreen, stashScreen, seanceScreen:
+	case journalScreen, analysisScreen, storageScreen, stashScreen:
 		return true
 	}
 	return false
@@ -645,8 +627,6 @@ func (a *App) screenKeys() help.KeyMap {
 		return a.sessions.keys(a.keys)
 	case devicesScreen:
 		return a.devices.keys(a.keys)
-	case seanceScreen:
-		return a.seance.keys(a.keys)
 	default:
 		return a.keys
 	}
@@ -693,10 +673,7 @@ func ScreenNames() []string {
 func Snapshot(data Data, screenName string, width, height int, presses []string) (string, error) {
 	at := -1
 	for i, name := range tabs {
-		// The Séance wears an accent on the tab bar, but nobody should have to
-		// type one into a terminal to photograph it.
-		if strings.EqualFold(name, screenName) ||
-			strings.EqualFold(strings.ReplaceAll(name, "é", "e"), screenName) {
+		if strings.EqualFold(name, screenName) {
 			at = i
 		}
 	}

@@ -65,20 +65,5 @@ Sleep 3500ms
 # Devices.
 Tab
 Sleep 3500ms
-# The Séance: the ledger summoned back — every event a playing card with a
-# figurine for its action, the jars and tins filling as the replay runs.
-Tab
-Sleep 2500ms
-Type "p"
-Sleep 4s
-Type "+"
-Sleep 5s
-# x flips the card to the record on its back; f turns the frame to one cycle.
-Type "x"
-Sleep 3s
-Type "x"
-Sleep 1500ms
-Type "f"
-Sleep 3s
 Type "q"
 Sleep 1s

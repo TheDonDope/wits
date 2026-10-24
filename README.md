@@ -157,7 +157,7 @@ shelf.
 sessions, devices, two rhythm calendars and a projection of the supply's
 decline to its empty day — then the journal, an analysis view scoping from the
 current cycle out to the whole history, the storage, the stash, the sessions,
-the devices — and the Séance. `tab` moves between them. Entries can be recorded
+and the devices. `tab` moves between them. Entries can be recorded
 there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh — and
 `?` lists every key the current screen honours.
 
@@ -167,15 +167,9 @@ one cell per day, colour carrying the amount — so a year of habit reads the wa
 a contribution graph does: the heavy weeks, the pauses, whether weekends
 differ. `s` changes the scope.
 
-The Séance is where the ledger is summoned back. It replays any stretch of the
-record — the whole ledger, one prescription cycle, or a date window picked by
-hand: `f` turns the frame, `d` picks the dates, and the transport is the same
-one every replay uses — `p` plays, `←/→` steps, `+/-` retunes. Each event
-takes the table as a playing card wearing a stylized figurine for its action;
-`x` flips the card to the record on its back — both timestamps, the accounts
-the grams moved between, the hash chaining it to the entry before. Beneath the
-table the storage jars and stash tins fill and drain as the replay walks the
-history.
+Because everything is replayed from the log, the analysis, storage and stash
+screens can start from empty and grow the way the record grew: `p` plays,
+`←/→` steps an entry at a time, and `+/-` retunes the speed.
 
 ## Commands
 

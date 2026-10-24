@@ -97,7 +97,7 @@ Wits is a **ledger**. `.wits/journal.ndjson` is an append-only, hash-chained
 event log; everything on screen is derived by replaying it (`ledger.Fold`).
 Nothing is edited in place — corrections are compensating entries (`wits
 revert`, adjustments), and the log keeps both. This is load-bearing: the replay
-transport, the Séance, and witsnap's JSON all exist because any state can be
+transport and witsnap's JSON both exist because any state can be
 rebuilt from any prefix of events.
 
 Grams move between four accounts (storage → stash → consumed → avb), one stash
