@@ -46,23 +46,25 @@ type State struct {
 	lots map[string][]lot
 }
 
-// Fill, Shelf and Jar are grams in each of the three scopes every figure on
-// screen speaks (ROADMAP.md has the table):
+// Fill is grams in the fill's scope: one cycle's own grams — what it
+// dispensed, and what of that is left.
 //
-//   - Fill is one cycle's own grams — what it dispensed, what of that is left.
-//   - Shelf is every jar standing at a moment, whichever fill dispensed it.
-//   - Jar is one product across its lifetime, every fill of it.
-//
-// Mixing scopes in one figure — a fill's remaining over the shelf's held, say
-// — has been the most recurring bug in this codebase. As distinct types they
-// cannot be added, compared or divided without a conversion, so a mix does
-// not compile, and every place one scope is deliberately turned into another
-// is a conversion that can be read and searched for.
-type (
-	Fill  float64
-	Shelf float64
-	Jar   float64
-)
+// It is one of the three scopes every figure on screen speaks, with Shelf and
+// Jar (ROADMAP.md has the table). Mixing scopes in one figure — a fill's
+// remaining over the shelf's held, say — has been the most recurring bug in
+// this codebase. As distinct types they cannot be added, compared or divided
+// without a conversion, so a mix does not compile, and every place one scope
+// is deliberately turned into another is a conversion that can be read and
+// searched for.
+type Fill float64
+
+// Shelf is grams in the shelf's scope: every jar standing at a moment,
+// whichever fill dispensed it. See Fill.
+type Shelf float64
+
+// Jar is grams in the jar's scope: one product across its lifetime, every
+// fill of it. See Fill.
+type Jar float64
 
 // CycleGap is how long after a cycle opened a further purchase still counts as
 // part of the same fill.
