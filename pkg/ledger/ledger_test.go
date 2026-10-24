@@ -452,3 +452,12 @@ func TestFoldAtLeavesTheFutureOut(t *testing.T) {
 	assert.Equal(t, 21.0, Fold(events).Balances["wedding-cake"].Storage, "Fold still replays everything")
 	assert.Empty(t, Fold(events).Upcoming())
 }
+
+func TestShortfallSaysWhatTheJarHeld(t *testing.T) {
+	short := Shortfalls([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 1, day(0)),
+		event(journal.Grind, "wedding-cake", 5, day(1)),
+	})
+	require.Len(t, short, 1)
+	assert.Equal(t, "on 2026-07-02, grind 5.00 g of wedding-cake took more than storage held — 1.00 g", short[0].String())
+}

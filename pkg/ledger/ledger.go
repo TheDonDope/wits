@@ -235,6 +235,20 @@ type Shortfall struct {
 	Held    float64 // what the account held just before; never less than nothing
 }
 
+// String says what happened, in the jar's terms: on 2026-07-02, grind 5.00 g
+// of wcake-221 took more than storage held — 1.00 g.
+func (s Shortfall) String() string {
+	return fmt.Sprintf("on %s, %s %.2f g of %s took more than %s held — %.2f g",
+		s.Event.OccurredAt.Format(time.DateOnly), s.Event.Type, s.Event.Grams, s.Event.Product,
+		jarName[s.Account], s.Held)
+}
+
+// jarName is what each account is called in a sentence.
+var jarName = map[journal.Account]string{
+	journal.Storage: "storage", journal.Stash: "the stash",
+	journal.Consumed: "the vaporizer", journal.AVB: "the AVB jar",
+}
+
 // Shortfalls replays the events in the order they happened and returns each
 // entry that takes more than its account held at that moment — a grind dated
 // before the fill it draws on, say.

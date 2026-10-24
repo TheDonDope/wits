@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -378,4 +379,16 @@ func TestSpan(t *testing.T) {
 		assert.True(t, first.IsZero(), "Should have no first entry")
 		assert.True(t, last.IsZero(), "Should have no last entry")
 	})
+}
+
+func TestAnomaliesNameWhatWasNotThere(t *testing.T) {
+	at := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	from, to, _ := journal.Flow(journal.Grind)
+	result := &Result{Events: []journal.Event{
+		{Type: journal.Purchase, Product: "wcake", Grams: 1, From: journal.External, To: journal.Storage, OccurredAt: at},
+		{Type: journal.Grind, Product: "wcake", Grams: 5, From: from, To: to, OccurredAt: at.AddDate(0, 0, 1)},
+	}}
+
+	assert.Equal(t, []string{"on 2026-07-02, grind 5.00 g of wcake took more than storage held — 1.00 g"},
+		result.Anomalies(), "The dry run should say so before anything is written")
 }

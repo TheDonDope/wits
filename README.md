@@ -321,8 +321,9 @@ disk — is left out when reading, and cut away before the next entry is appende
 
 The chain is checked every time a repository opens. If the journal was changed
 outside Wits, `wits status` and the interface say so, and `wits fsck` says
-where — along with any entry naming a product or device the catalogs lack, and
-whether every gram that came in is held or went out:
+where — along with any entry that took grams that were not in the jar at the
+time, any entry naming a product or device the catalogs lack, and whether every
+gram that came in is held or went out:
 
 ```console
 $ wits fsck

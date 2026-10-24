@@ -46,9 +46,10 @@ func warnChain(out io.Writer, ws *workspace.Workspace) {
 var Fsck = &cobra.Command{
 	Use:   "fsck",
 	Short: "Check the journal and the catalogs for damage",
-	Long: "Check that the journal's hash chain verifies, that every entry names a\n" +
-		"product and device the catalogs know, that every correction corrects\n" +
-		"something, and that every gram that came in is either held or went out.\n\n" +
+	Long: "Check that the journal's hash chain verifies, that no entry takes grams\n" +
+		"that were not in the jar at the time, that every entry names a product\n" +
+		"and device the catalogs know, that every correction corrects something,\n" +
+		"and that every gram that came in is either held or went out.\n\n" +
 		"Nothing is changed. A problem is reported, and the command fails.",
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
@@ -77,6 +78,11 @@ func fsck(ws *workspace.Workspace) []string {
 	var problems []string
 	if ws.Chain != nil {
 		problems = append(problems, ws.Chain.Error())
+	}
+	// Written past the recorder — imported, restored, edited by hand — an
+	// entry can take grams that were not in the jar at its moment.
+	for _, short := range ledger.Shortfalls(ws.State.Events) {
+		problems = append(problems, shortHash(short.Event.Hash)+" "+short.String())
 	}
 	// Recorded before amounts were held to centigrams: shown and bundled as
 	// the nearest centigram, so a restore would not give back this journal.
