@@ -51,6 +51,7 @@ func init() {
 		commands.Restore,
 		commands.Revert,
 		commands.Export,
+		commands.Report,
 		commands.Fsck,
 		commands.Remote,
 		commands.Push,

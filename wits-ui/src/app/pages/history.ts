@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -12,7 +13,7 @@ import { Heatmap } from '../viz/heatmap';
 /** The whole record: every day, every fill, every device. */
 @Component({
   selector: 'w-history',
-  imports: [CountUp, DecimalPipe, FillRiver, Heatmap, MatButtonToggleModule, MatIconModule],
+  imports: [CountUp, DecimalPipe, FillRiver, Heatmap, MatButtonModule, MatButtonToggleModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="strip">
@@ -21,6 +22,19 @@ import { Heatmap } from '../viz/heatmap';
           <span class="eyebrow">{{ s.label }}</span>
           <span class="v num"><w-count [value]="s.value" [decimals]="s.decimals" />{{ s.unit }}</span>
         </div>
+      }
+    </section>
+
+    <section class="glass pad report">
+      <div>
+        <span class="eyebrow">a report for the prescriber</span>
+        <p class="dim">One page: grams a day, which strains, what the sessions did, and what is left — as a PDF.</p>
+      </div>
+      <label>from <input type="date" [value]="from()" (change)="from.set(value($event))" /></label>
+      <label>to <input type="date" [value]="to()" (change)="to.set(value($event))" /></label>
+      <button mat-flat-button [disabled]="busy()" (click)="download()"><mat-icon>picture_as_pdf</mat-icon>Download</button>
+      @if (error()) {
+        <span class="bad">{{ error() }}</span>
       }
     </section>
 
@@ -75,6 +89,13 @@ import { Heatmap } from '../viz/heatmap';
       background: linear-gradient(120deg, #fff, var(--w-mint));
       -webkit-background-clip: text; background-clip: text; color: transparent; }
     .pad { padding: 22px 26px; display: grid; gap: 14px; }
+    .report { grid-template-columns: 1fr auto auto auto; align-items: center; }
+    .report p { margin: 6px 0 0; font-size: 13px; }
+    .report label { display: grid; gap: 4px; font-size: 12px; color: var(--w-dim); }
+    .report input { font: inherit; color: var(--mat-sys-on-surface); background: transparent;
+      border: 1px solid var(--w-glass-edge); border-radius: 10px; padding: 8px 10px; color-scheme: dark; }
+    .bad { color: var(--w-warn); grid-column: 1 / -1; }
+    @media (width <= 720px) { .report { grid-template-columns: 1fr 1fr; } .report > div { grid-column: 1 / -1; } }
     header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
     header p { margin: 6px 0 0; font-size: 13px; }
     .devices { display: grid; gap: 14px; }
@@ -89,6 +110,37 @@ import { Heatmap } from '../viz/heatmap';
 export class History {
   protected readonly wits = inject(Wits);
   protected readonly metric = signal<'ground' | 'seshed'>('ground');
+  protected readonly to = signal(isoDay(new Date()));
+  protected readonly from = signal(isoDay(new Date(Date.now() - 89 * 86_400_000)));
+  protected readonly busy = signal(false);
+  protected readonly error = signal('');
+
+  protected value(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  /** Fetches the PDF and hands it over to save, or to share on a phone. */
+  protected async download(): Promise<void> {
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      const blob = await this.wits.report(this.from(), this.to());
+      const file = new File([blob], `wits-report-${this.to()}.pdf`, { type: 'application/pdf' });
+      if ('canShare' in navigator && navigator.maxTouchPoints > 0 && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] }).catch(() => undefined);
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(file);
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'the report could not be made');
+    } finally {
+      this.busy.set(false);
+    }
+  }
 
   constructor() {
     inject(Keys).register(
@@ -118,4 +170,9 @@ export class History {
   });
 
   protected readonly mostDevice = computed(() => Math.max(...this.wits.devices.value().map((d) => d.grams), 1));
+}
+
+function isoDay(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }

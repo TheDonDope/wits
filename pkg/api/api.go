@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -33,6 +34,8 @@ import (
 	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/report"
+	"github.com/TheDonDope/wits/pkg/version"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -72,6 +75,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/costs", s.read(costsOf))
 	mux.HandleFunc("GET /api/unpriced", s.unpriced)
 	mux.HandleFunc("POST /api/price", s.price)
+	mux.HandleFunc("GET /api/report.pdf", s.report)
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
@@ -367,6 +371,39 @@ func (s *Server) price(w http.ResponseWriter, r *http.Request) {
 	e, _ := ws.Recorder.Find(p.Purchase)
 	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g of %s",
 		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
+}
+
+// report is the page for the prescriber, as a PDF: the days ?from= to ?to=,
+// both included, the last 90 by default.
+func (s *Server) report(w http.ResponseWriter, r *http.Request) {
+	ws, err := workspace.Read(s.repo)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	y, m, d := ws.OpenedAt.Date()
+	to := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+	from := to.AddDate(0, 0, -89)
+	for name, at := range map[string]*time.Time{"from": &from, "to": &to} {
+		if v := r.URL.Query().Get(name); v != "" {
+			if *at, err = time.ParseInLocation(time.DateOnly, v, time.Local); err != nil {
+				fail(w, http.StatusBadRequest, fmt.Errorf("%s %q is not a date, expected YYYY-MM-DD", name, v))
+				return
+			}
+		}
+	}
+	if to.Before(from) {
+		fail(w, http.StatusBadRequest, errors.New("the report ends before it starts"))
+		return
+	}
+	var buf strings.Builder
+	if err := report.PDF(&buf, report.Build(ws, from, to, version.String())); err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `attachment; filename="wits-report-`+to.Format(time.DateOnly)+`.pdf"`)
+	_, _ = io.WriteString(w, buf.String())
 }
 
 // flush records stashes as consumed — the named ones, or every one holding

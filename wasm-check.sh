@@ -34,4 +34,7 @@ total=$(node -p "require('$work/second.json').overview")
 deck=$("$wits" log --oneline | wc -l)
 echo "phone pulled $fetched, holds $total; deck holds $deck"
 [ "$fetched" -eq 1 ] && [ "$total" -eq "$deck" ] || { echo "✗ the copies differ"; exit 1; }
+pdf=$(node -p "const r = require('$work/second.json').report; r.type + ' ' + r.head + ' ' + r.tail")
+echo "the phone's report: $pdf"
+[ "$pdf" = "application/pdf %PDF- %%EOF" ] || { echo "✗ the report did not come across as a PDF"; exit 1; }
 echo "✓ the phone and the deck agree"

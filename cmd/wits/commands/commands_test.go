@@ -829,3 +829,21 @@ func TestPriceCommands(t *testing.T) {
 	out, err = run(t, dir, Fsck)
 	require.NoError(t, err, out)
 }
+
+func TestReportCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", time.Now().AddDate(0, 0, -3).Format(time.DateOnly))
+	require.NoError(t, err)
+	pdf := filepath.Join(t.TempDir(), "report.pdf")
+
+	out, err := run(t, dir, Report, "--out", pdf)
+
+	require.NoError(t, err)
+	assert.Contains(t, out, "Wrote a report for ", "Should say what it wrote")
+	data, err := os.ReadFile(pdf)
+	require.NoError(t, err)
+	assert.True(t, bytes.HasPrefix(data, []byte("%PDF-")), "Should write a PDF")
+
+	_, err = run(t, dir, Report, "--from", "2026-10-31", "--to", "2026-10-01", "--out", pdf)
+	assert.ErrorContains(t, err, "is before")
+}

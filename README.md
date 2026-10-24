@@ -229,6 +229,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
 | `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
+| `wits report` | One page for the prescriber, as a PDF; `--from`/`--to`, the last 90 days by default |
 | `wits bundle` | The whole repository as one compact file; `--gzip` to compress it |
 | `wits restore <file>` | Rebuild a repository from a bundle |
 | `wits remote add <folder>` | Share the repository through a folder; `--key` on every device after the first |
@@ -434,6 +435,27 @@ kept as written, and `wits pull`, `wits status` and `wits fsck` name the one
 that took grams that weren't there. The jar takes nothing more except an undo
 until one of the two is reverted with `wits revert`. Every other jar records
 as usual.
+
+## For the prescriber
+
+`wits report` writes one page for an appointment, as a PDF. It covers the days
+asked for (the last 90 unless `--from` and `--to` say otherwise): grams a day,
+with grinding and per calendar day, the weeks as bars, which strains, what the
+sessions did by the effect log, each mean with the count it stands on, and
+today's fill and shelf with the date the next prescription is due. The footer
+names the head of the journal's hash chain. The browser's History page
+downloads the same file, and a phone hands it over to share.
+
+```console
+$ wits report --from 2026-08-01 --to 2026-10-24
+Wrote a report for 2026-08-01 to 2026-10-24 to wits-report-2026-10-24.pdf
+```
+
+![The report, from the workbook](./assets/wits-report.png)
+
+Its figures are the range's own, the same `wits export --from --to` gives:
+67.56 g ground on 33 of the 85 days. The PDF is written by wits itself, in the
+Helvetica every reader has, and this one is 5,004 bytes.
 
 ## What it costs
 

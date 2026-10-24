@@ -278,3 +278,15 @@ func TestPrices(t *testing.T) {
 	assert.Equal(t, 0, c.Unpriced)
 	assert.Empty(t, decodeInto[[]entry](t, call(t, s, "GET", "/api/unpriced?all=1", "")))
 }
+
+func TestReport(t *testing.T) {
+	s, _ := server(t, "")
+
+	w := call(t, s, "GET", "/api/report.pdf", "")
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, "application/pdf", w.Header().Get("Content-Type"))
+	assert.True(t, strings.HasPrefix(w.Body.String(), "%PDF-"))
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/report.pdf?from=2026-10-31&to=2026-10-01", "").Code)
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/report.pdf?from=soon", "").Code)
+}
