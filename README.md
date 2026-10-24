@@ -129,7 +129,10 @@ wits completion fish > ~/.config/fish/completions/wits.fish  # fish
 
 Anything can be backdated with `--date 2026-07-29`, which is what makes a
 forgotten evening loggable the next morning without pretending it was entered
-then.
+then. Without it the entry is dated now. A fill can be dated anywhere, however
+far back, and lands where its date puts it — a fill entered a month late opens
+its own cycle a month back. Grinds and sessions are held to what was there on
+their date: a grind dated before the fill it draws on is refused.
 
 ```console
 $ wits status

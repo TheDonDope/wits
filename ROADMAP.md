@@ -64,7 +64,13 @@ the cycles it still belongs to.
 ### Entries carry two timestamps
 
 **Occurred-at** and **recorded-at**, so a backdated entry is honest about being
-late. Both are kept to second precision: nanoseconds say nothing about when
+late. The fold replays by occurred-at, keeping the recorded order among entries
+at the same moment; the journal and its hash chain keep the recorded order, and
+bundles are written from the journal, not the fold. Folding in recorded order
+put a fill entered a month late into whichever cycle was open when it was typed
+in. Recording refuses an entry that would overdraw an account on any date, not
+only today — a grind dated before its fill — and a correction is never dated
+before what it corrects. Both are kept to second precision: nanoseconds say nothing about when
 something was ground, and would have to be carried through every export to keep
 hashes reproducible.
 

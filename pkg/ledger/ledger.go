@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"math"
+	"slices"
 	"sort"
 	"time"
 
@@ -24,8 +25,17 @@ func (b Balance) Total() float64 { return Round(b.Storage + b.Stash) }
 // State is the result of replaying a journal.
 type State struct {
 	Balances map[string]*Balance
-	Events   []journal.Event
-	Cycles   []Cycle
+	// Events are the journal's entries in the order they happened, which is
+	// the order they are folded in. Entries at the same moment keep the order
+	// they were recorded in. The journal itself stays in recording order —
+	// its hash chain is that order — so anything that needs the chain reads
+	// the journal, not this.
+	Events []journal.Event
+	Cycles []Cycle
+	// Overdrawn are the entries after which an account of their product
+	// stood below zero. The recorder refuses to add one; an imported or
+	// restored history may hold some, and they are kept, not hidden.
+	Overdrawn []Overdraft
 
 	// lots is each product's jar split into the fills that stocked it,
 	// oldest first. It is how a gram in storage stays on the account of the
@@ -61,7 +71,7 @@ type Cycle struct {
 	Carried   float64 // grams already in storage when the fill arrived
 	Ground    float64
 	Products  []string
-	Events    []journal.Event // everything recorded during the fill's tenure
+	Events    []journal.Event // everything that happened during the fill's tenure
 
 	// Opening is the storage balance each product carried into the cycle,
 	// noted for the record: those grams stay on their own cycles' accounts.
@@ -191,16 +201,41 @@ func (f *folder) purchase(e journal.Event) {
 	f.last[e.Product] = f.cur
 }
 
+// Overdraft is an entry that left an account of its product below zero.
+type Overdraft struct {
+	Event   journal.Event
+	Account journal.Account
+	Grams   float64 // what the account stood at afterwards
+}
+
+// Chronological returns a copy of the events in the order they happened,
+// keeping the recorded order among entries at the same moment.
+//
+// Entries can be backdated, so recording order is not the order of events:
+// a fill entered a month late used to fold into whichever cycle was open
+// when it was typed in, however far back it was dated.
+func Chronological(events []journal.Event) []journal.Event {
+	out := slices.Clone(events)
+	slices.SortStableFunc(out, func(a, b journal.Event) int {
+		return a.OccurredAt.Compare(b.OccurredAt)
+	})
+	return out
+}
+
 // Fold replays the events and returns the state they describe. Events are
-// folded in journal order, which is the order they were recorded in.
+// folded in the order they happened (see Chronological), so a backdated entry
+// lands where its date puts it rather than where it was typed in.
 func Fold(events []journal.Event) *State {
-	s := &State{Balances: map[string]*Balance{}, Events: events, lots: map[string][]lot{}}
+	s := &State{Balances: map[string]*Balance{}, Events: Chronological(events), lots: map[string][]lot{}}
 	f := &folder{s: s, last: map[string]int{}, cur: -1}
 
-	for _, e := range events {
+	for _, e := range s.Events {
 		b := s.balance(e.Product)
 		apply(b, e.From, -e.Grams)
 		apply(b, e.To, e.Grams)
+		if held := b.In(e.From); e.Product != "" && held < 0 {
+			s.Overdrawn = append(s.Overdrawn, Overdraft{Event: e, Account: e.From, Grams: held})
+		}
 
 		switch e.Type {
 		case journal.Purchase:
@@ -381,6 +416,21 @@ func Summarise(events []journal.Event) Stats {
 		st.PerElapsedDay = Round(st.Ground / float64(st.ElapsedDays))
 	}
 	return st
+}
+
+// In returns the grams the balance holds in an account; External holds none.
+func (b Balance) In(account journal.Account) float64 {
+	switch account {
+	case journal.Storage:
+		return b.Storage
+	case journal.Stash:
+		return b.Stash
+	case journal.Consumed:
+		return b.Consumed
+	case journal.AVB:
+		return b.AVB
+	}
+	return 0
 }
 
 // apply moves grams into an account on a balance. Movements to and from

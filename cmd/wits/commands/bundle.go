@@ -51,15 +51,21 @@ var Bundle = &cobra.Command{
 			out = z
 		}
 
+		// The journal, not the fold: the fold orders entries by date, and a
+		// bundle has to keep the recorded order its hash chain is made of.
+		events, err := s.Journal().Events()
+		if err != nil {
+			return err
+		}
 		if err := bundle.Write(out, bundle.Contents{
 			Products: s.Products,
 			Devices:  s.Devices,
-			Events:   s.State.Events,
+			Events:   events,
 		}); err != nil {
 			return err
 		}
 		if bundleOut != "" {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Bundled %d events into %s\n", len(s.State.Events), bundleOut)
+			fmt.Fprintf(cmd.ErrOrStderr(), "Bundled %d events into %s\n", len(events), bundleOut)
 		}
 		return nil
 	},
