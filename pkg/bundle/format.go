@@ -10,9 +10,12 @@ import (
 )
 
 // Magic identifies a bundle, and Version is the format it is written in.
+//
+// Version 2 writes an event's accounts when its type does not imply them; a
+// version 1 bundle is still read, its adjustments' accounts recovered.
 const (
 	Magic   = "wits-bundle"
-	Version = 1
+	Version = 2
 )
 
 // separator ends the header and begins the events.

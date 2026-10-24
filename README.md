@@ -338,7 +338,10 @@ anywhere; the application makes no network calls at all.
 `wits restore` reads back, reproducing the journal **exactly, hash chain
 included**. That is what makes it worth trusting as a backup. A restore writes
 every entry in one go and checks the chain it made; a bundle that does not
-restore whole restores nothing.
+restore whole restores nothing. Bundles written before v0.41.0 left out the
+accounts of undos and weighings; they are recovered when such a bundle is
+restored, and one that cannot be recovered is refused rather than restored
+wrong.
 
 It is plain text, so the record stays legible with nothing but a text editor and
 diffs cleanly in git. Small, too, because most of what the journal stores is
@@ -351,7 +354,7 @@ Three years of real history, 1429 entries across 53 products:
 | --- | ---: | --- |
 | journal | 528,321 | |
 | **bundle** | **29,417** | **18×** |
-| bundle, `--gzip` | 7,009 | 75× |
+| bundle, `--gzip` | 6,693 | 79× |
 
 ![Bundling and restoring](./assets/wits-bundle.gif)
 

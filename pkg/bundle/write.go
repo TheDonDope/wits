@@ -20,8 +20,9 @@ type Contents struct {
 // Write encodes the contents as a bundle.
 //
 // Only what cannot be derived is written down. Sequence numbers follow from
-// position, the account pair follows from the event type, and the hash chain is
-// recomputed on restore, so none of them appear in the file. Timestamps and
+// position, the account pair follows from the event type — except where it
+// does not, an adjustment's, which is written — and the hash chain is
+// recomputed on restore, so none of the rest appear in the file. Timestamps and
 // amounts are stored as deltas against the previous event, which is what makes
 // a run of daily entries cost a handful of bytes each.
 func Write(w io.Writer, c Contents) error {
@@ -51,58 +52,78 @@ func Write(w io.Writer, c Contents) error {
 	}
 	fmt.Fprintln(out, separator)
 
-	var prevOccurred, prevRecorded int64
-	prevOffset := -1 << 30
-	prevRecordedOffset := -1 << 30
+	cur := cursor{offset: -1 << 30, recordedOffset: -1 << 30}
 	for _, e := range c.Events {
-		code, ok := typeCodes[e.Type]
-		if !ok {
-			return fmt.Errorf("cannot bundle unknown event type %q", e.Type)
+		if err := cur.write(out, e, products.index, devices.index, notes.index); err != nil {
+			return err
 		}
-		occurred := e.OccurredAt.Unix()
-		recorded := e.RecordedAt.Unix()
-
-		fmt.Fprintf(out, "%c%s %s %s",
-			code,
-			num(int64(products.index[e.Product])),
-			num(occurred-prevOccurred),
-			num(centigrams(e.Grams)),
-		)
-		// The recorded time is written relative to the previous event's recorded
-		// time, not to this event's occurred time. Entries are typed in roughly
-		// in order, so consecutive recorded times are close together even when a
-		// whole history is backfilled years after the fact.
-		if d := recorded - prevRecorded; d != 0 || prevRecorded == 0 {
-			fmt.Fprintf(out, " r=%s", num(d))
-		}
-		if off := offsetOf(e.OccurredAt); off != prevOffset {
-			fmt.Fprintf(out, " z=%s", num(int64(off)))
-			prevOffset = off
-		}
-		// The recorded time is in whatever zone the entry was typed in, which is
-		// not always the zone the event occurred in: a backdated entry keeps the
-		// original day's offset while being recorded in today's.
-		if off := offsetOf(e.RecordedAt); off != prevRecordedOffset {
-			fmt.Fprintf(out, " zr=%s", num(int64(off)))
-			prevRecordedOffset = off
-		}
-		if e.Device != "" {
-			fmt.Fprintf(out, " d=%s", num(int64(devices.index[e.Device])))
-		}
-		if e.Temperature != 0 {
-			fmt.Fprintf(out, " t=%s", num(int64(e.Temperature)))
-		}
-		if e.Note != "" {
-			fmt.Fprintf(out, " n=%s", num(int64(notes.index[e.Note])))
-		}
-		if e.Reverts != "" {
-			fmt.Fprintf(out, " v=%s", e.Reverts)
-		}
-		fmt.Fprint(out, "\n")
-
-		prevOccurred, prevRecorded = occurred, recorded
 	}
 	return out.Flush()
+}
+
+// cursor is what the previous event line left behind, which the next one is
+// written relative to.
+type cursor struct {
+	occurred, recorded     int64
+	offset, recordedOffset int
+}
+
+// write encodes one event as a line, relative to the cursor, and moves it on.
+func (c *cursor) write(out io.Writer, e journal.Event, products, devices, notes map[string]int) error {
+	code, ok := typeCodes[e.Type]
+	if !ok {
+		return fmt.Errorf("cannot bundle unknown event type %q", e.Type)
+	}
+	occurred := e.OccurredAt.Unix()
+	recorded := e.RecordedAt.Unix()
+
+	fmt.Fprintf(out, "%c%s %s %s", code, num(int64(products[e.Product])),
+		num(occurred-c.occurred), num(centigrams(e.Grams)))
+	// The recorded time is written relative to the previous event's recorded
+	// time, not to this event's occurred time. Entries are typed in roughly
+	// in order, so consecutive recorded times are close together even when a
+	// whole history is backfilled years after the fact.
+	if d := recorded - c.recorded; d != 0 || c.recorded == 0 {
+		fmt.Fprintf(out, " r=%s", num(d))
+	}
+	if off := offsetOf(e.OccurredAt); off != c.offset {
+		fmt.Fprintf(out, " z=%s", num(int64(off)))
+		c.offset = off
+	}
+	// The recorded time is in whatever zone the entry was typed in, which is
+	// not always the zone the event occurred in: a backdated entry keeps the
+	// original day's offset while being recorded in today's.
+	if off := offsetOf(e.RecordedAt); off != c.recordedOffset {
+		fmt.Fprintf(out, " zr=%s", num(int64(off)))
+		c.recordedOffset = off
+	}
+	writeRefs(out, e, devices, notes)
+	fmt.Fprint(out, "\n")
+	c.occurred, c.recorded = occurred, recorded
+	return nil
+}
+
+// writeRefs appends the attributes an event has only sometimes: its device,
+// temperature, note, the entry it undoes, and its accounts when they are not
+// the ones its type implies — an adjustment's never are. Format 1 left them
+// out, taking every event's accounts to follow from its type, and every undo
+// and weighing came back from a restore moving nothing.
+func writeRefs(out io.Writer, e journal.Event, devices, notes map[string]int) {
+	if e.Device != "" {
+		fmt.Fprintf(out, " d=%s", num(int64(devices[e.Device])))
+	}
+	if e.Temperature != 0 {
+		fmt.Fprintf(out, " t=%s", num(int64(e.Temperature)))
+	}
+	if e.Note != "" {
+		fmt.Fprintf(out, " n=%s", num(int64(notes[e.Note])))
+	}
+	if e.Reverts != "" {
+		fmt.Fprintf(out, " v=%s", e.Reverts)
+	}
+	if from, to, _ := journal.Flow(e.Type); e.From != from || e.To != to {
+		fmt.Fprintf(out, " f=%s>%s", e.From, e.To)
+	}
 }
 
 // writeProduct appends a product's details as key=value attributes. Empty

@@ -166,11 +166,22 @@ the stash on the table.
 
 The whole repository as one plain-text file, restoring to a journal identical
 **byte for byte**, hash chain included. 1429 entries: 528,321 bytes as a journal,
-29,417 as a bundle, 7,009 with `--gzip`.
+29,417 as a bundle, 6,693 with `--gzip`.
 
 Plain text and line-oriented on purpose: the record may outlive this program, and
 it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
 saved a few percent and cost the legibility that justifies a text format at all.
+
+Format 2 writes an entry's accounts (`f=stash>storage`) when its type does not
+imply them — an adjustment's never do. Format 1 took every entry's accounts to
+follow from its type, so every undo and weighing came back from a restore as
+external to external, moving nothing: the wrong balances, and a journal that
+was not the original, though the restore reported success. The workbook has no
+adjustments, so no test and no recording showed it. A format 1 bundle is still
+read: an undo's accounts are the entry it names, reversed — the chain is
+rebuilt while reading to find it — and a weighing's or a clean-up's are read
+from the note wits wrote for it. An adjustment whose note does not say them
+refuses the restore, naming it, rather than restoring it wrong.
 
 A restore is one batch through `AppendWith` — one write, all or nothing, the
 emptiness check under the lock — and verifies what it wrote. An entry at a time
