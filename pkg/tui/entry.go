@@ -210,6 +210,26 @@ type entryDoneMsg struct {
 	err     error
 }
 
+// init starts the form.
+func (f *entryForm) init() tea.Cmd { return f.form.Init() }
+
+// view draws the form at the terminal's width.
+func (f *entryForm) view(a *App) string { return f.View(a, a.width) }
+
+// dismiss is esc; nothing is written until the form completes, so there is
+// nothing to put back.
+func (f *entryForm) dismiss(*App) {}
+
+// update is Update as a modal: a closed form is a nil modal, not a modal
+// holding a nil form.
+func (f *entryForm) update(msg tea.Msg, a *App) (modal, tea.Cmd) {
+	next, cmd := f.Update(msg, a)
+	if next == nil {
+		return nil, cmd
+	}
+	return next, cmd
+}
+
 // Update advances the form and, once it is complete, writes the entry.
 func (f *entryForm) Update(msg tea.Msg, a *App) (*entryForm, tea.Cmd) {
 	model, cmd := f.form.Update(msg)

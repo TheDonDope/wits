@@ -58,7 +58,7 @@ func TestThemePicker(t *testing.T) {
 	m, _ = send(m, tea.WindowSizeMsg{Width: 96, Height: 40})
 	m, _ = send(m, tea.KeyPressMsg{Code: 't', Text: "t"})
 	app := m.(*App)
-	require.NotNil(t, app.picker, "t should open the picker")
+	require.NotNil(t, app.pickerInFront(), "t should open the picker")
 	assert.Contains(t, stripANSI(app.View().Content), "Dark+ (VS Code)")
 
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyDown})
@@ -72,7 +72,7 @@ func TestThemePicker(t *testing.T) {
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyDown})
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyDown})
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
-	assert.Nil(t, app.picker, "enter should close the picker")
+	assert.Nil(t, app.pickerInFront(), "enter should close the picker")
 	assert.Equal(t, "light-plus", app.theme.ID)
 	assert.Contains(t, stripANSI(app.View().Content), "✓ theme light-plus", "The footer should say what was chosen")
 

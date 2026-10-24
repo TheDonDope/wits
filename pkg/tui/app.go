@@ -169,8 +169,7 @@ type App struct {
 
 	// dark is what the terminal reported its background to be. Only the auto
 	// theme reads it; the editor themes bring a background of their own.
-	dark   bool
-	picker *themePicker
+	dark bool
 
 	// wall is the ticking wall clock the dashboard shows. Data.Now stays the
 	// frame every derived figure is computed against; the wall is only ever
@@ -181,9 +180,10 @@ type App struct {
 	// asked for again on every tick.
 	reloading bool
 
-	// entry is the form in front, if any. While it is open it takes every key,
-	// so navigation cannot fire underneath a half-filled entry.
-	entry  *entryForm
+	// front is the form in front, if any — an entry, a device, the theme
+	// picker. While it is open it takes every key, so navigation cannot fire
+	// underneath a half-filled entry.
+	front  modal
 	notice string
 	failed bool
 
@@ -194,7 +194,37 @@ type App struct {
 	stash     stashView
 	sessions  sessionsView
 	devices   devicesView
-	device    *deviceForm
+}
+
+// modal is a form in front of the screens. There is one slot for it, so the
+// rules — it takes every key, esc closes it, the notice waits behind it — are
+// written once rather than once for each kind of form, where they were three
+// nilable fields checked in turn in five places.
+type modal interface {
+	// init starts it.
+	init() tea.Cmd
+	// update advances it with any message, returning nil once it has closed.
+	update(msg tea.Msg, a *App) (modal, tea.Cmd)
+	// dismiss is esc: huh only aborts on ctrl+c, so the App closes the form
+	// itself, and the form puts back anything it changed while open.
+	dismiss(a *App)
+	// view draws it.
+	view(a *App) string
+}
+
+// show puts a form in front and starts it.
+func (a *App) show(m modal) (bool, tea.Cmd) {
+	a.front, a.notice = m, ""
+	return true, m.init()
+}
+
+// entryInFront, deviceInFront and pickerInFront return the form in front when
+// it is of that kind, or nil.
+func (a *App) entryInFront() *entryForm   { f, _ := a.front.(*entryForm); return f }
+func (a *App) deviceInFront() *deviceForm { f, _ := a.front.(*deviceForm); return f }
+func (a *App) pickerInFront() *themePicker {
+	p, _ := a.front.(*themePicker)
+	return p
 }
 
 // New returns the root model for a repository.
@@ -296,42 +326,42 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, nil
 
 	case tea.KeyPressMsg:
-		// A notice lasts until the next key, which then does what it always
-		// does — otherwise the outcome of the last entry hides the key hints.
-		if a.picker == nil && a.device == nil && a.entry == nil {
-			a.notice = ""
-		}
-		if handled, cmd := a.formKey(msg); handled {
-			return a, cmd
-		}
-		if handled, cmd := a.entryKey(msg); handled {
-			return a, cmd
-		}
-		if handled, cmd := a.correctionKey(msg); handled {
-			return a, cmd
-		}
-		if handled, cmd := a.navKey(msg); handled {
+		if handled, cmd := a.keyPress(msg); handled {
 			return a, cmd
 		}
 	}
 
-	if a.picker != nil {
-		return a, a.pickTheme(msg)
-	}
-	if a.device != nil {
+	// huh advances its fields through commands of its own, so the form in
+	// front sees every message, not only keys.
+	if a.front != nil {
 		var cmd tea.Cmd
-		a.device, cmd = a.device.Update(msg, a)
-		return a, cmd
-	}
-	if a.entry != nil {
-		var cmd tea.Cmd
-		a.entry, cmd = a.entry.Update(msg, a)
+		a.front, cmd = a.front.update(msg, a)
 		return a, cmd
 	}
 
-	// Whatever is left belongs to the screen in front. Each screen returns its
-	// own updated value rather than replacing the root, so the chrome and the
-	// data survive navigation.
+	return a, a.toScreen(msg)
+}
+
+// keyPress offers a key to the form in front, then to whatever opens a form,
+// then to navigation; a key none of them takes goes on to the screen.
+func (a *App) keyPress(msg tea.KeyPressMsg) (bool, tea.Cmd) {
+	// A notice lasts until the next key, which then does what it always
+	// does — otherwise the outcome of the last entry hides the key hints.
+	if a.front == nil {
+		a.notice = ""
+	}
+	for _, handle := range []func(tea.KeyPressMsg) (bool, tea.Cmd){a.formKey, a.entryKey, a.correctionKey, a.navKey} {
+		if handled, cmd := handle(msg); handled {
+			return true, cmd
+		}
+	}
+	return false, nil
+}
+
+// toScreen hands a message to the screen in front. Each screen returns its
+// own updated value rather than replacing the root, so the chrome and the
+// data survive navigation.
+func (a *App) toScreen(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch a.screen {
 	case dashboardScreen:
@@ -349,20 +379,15 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case devicesScreen:
 		a.devices, cmd = a.devices.Update(msg, a)
 	}
-	return a, cmd
+	return cmd
 }
 
-// dialog renders whichever form is in front, if one is.
+// dialog renders the form in front, if one is.
 func (a *App) dialog() (string, bool) {
-	switch {
-	case a.picker != nil:
-		return a.picker.form.View(), true
-	case a.entry != nil:
-		return a.entry.View(a, a.width), true
-	case a.device != nil:
-		return a.device.View(a, a.width), true
+	if a.front == nil {
+		return "", false
 	}
-	return "", false
+	return a.front.view(a), true
 }
 
 // View implements tea.Model.
@@ -468,8 +493,7 @@ func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 		a.showHelp = !a.showHelp
 		return true, nil
 	case key.Matches(msg, a.keys.Theme):
-		a.picker, a.notice = newThemePicker(a), ""
-		return true, a.picker.form.Init()
+		return a.show(newThemePicker(a))
 	case key.Matches(msg, a.keys.Next):
 		if a.slides() && msg.String() != "tab" {
 			return false, nil
@@ -539,40 +563,24 @@ func (a *App) deviceDone(msg deviceDoneMsg) (tea.Model, tea.Cmd) {
 	return a, a.reload()
 }
 
-// formKey routes a key to whatever form is in front, which owns the keyboard
-// while it is open, so navigation cannot fire underneath a half-filled entry.
+// formKey routes a key to the form in front, which owns the keyboard while it
+// is open, so navigation cannot fire underneath a half-filled entry.
 func (a *App) formKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
-	if a.picker != nil {
-		return a.themeKey(msg)
+	if a.front == nil {
+		return false, nil
 	}
-	if a.device != nil {
-		if msg.String() == "esc" {
-			a.device, a.notice = nil, ""
-			return true, nil
-		}
-		var cmd tea.Cmd
-		a.device, cmd = a.device.Update(msg, a)
-		return true, cmd
+	if msg.String() == "esc" {
+		a.front.dismiss(a)
+		a.front, a.notice = nil, ""
+		return true, nil
 	}
-	if a.entry != nil {
-		// huh only aborts on ctrl+c, so esc is handled here rather than
-		// leaving the panel promising something that does not work.
-		if msg.String() == "esc" {
-			a.entry, a.notice = nil, ""
-			return true, nil
-		}
-		var cmd tea.Cmd
-		a.entry, cmd = a.entry.Update(msg, a)
-		return true, cmd
-	}
-	return false, nil
+	var cmd tea.Cmd
+	a.front, cmd = a.front.update(msg, a)
+	return true, cmd
 }
 
 // open puts an entry form in front and starts it.
-func (a *App) open(f *entryForm) (bool, tea.Cmd) {
-	a.entry, a.notice = f, ""
-	return true, a.entry.form.Init()
-}
+func (a *App) open(f *entryForm) (bool, tea.Cmd) { return a.show(f) }
 
 // entryKey opens the forms that record something new: a grind, a session, a
 // fill, a weighing or the history clean-up.
@@ -623,46 +631,72 @@ func (a *App) weighKey() (bool, tea.Cmd) {
 // correctionKey opens the forms that correct what already exists: a product's
 // details, a journal entry, or a device.
 func (a *App) correctionKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
-	edit := key.Matches(msg, a.keys.Edit)
-	del := key.Matches(msg, a.keys.Delete)
+	var action string
 	switch {
-	case edit && a.screen == storageScreen:
-		if r := a.storage.Selected(a); r != nil {
-			return a.open(newDescribeForm(r.Slug, a))
-		}
-		return true, nil
-	case edit && a.screen == stashScreen:
-		if slug := a.stash.Selected(a); slug != "" {
-			return a.open(newDescribeForm(slug, a))
-		}
-		return true, nil
-	case edit && a.screen == journalScreen:
-		if e := a.journal.Selected(); e != nil {
-			return a.open(newAmendForm(e, a))
-		}
-		return true, nil
-	case del && a.screen == journalScreen:
-		if e := a.journal.Selected(); e != nil {
-			return a.open(newUndoForm(e, a))
-		}
-		return true, nil
-	case key.Matches(msg, a.keys.Add) && a.screen == devicesScreen:
-		a.device, a.notice = newDeviceForm(nil, a), ""
-		return true, a.device.form.Init()
-	case edit && a.screen == devicesScreen:
-		if d := a.devices.Selected(a); d != nil {
-			a.device, a.notice = newDeviceForm(d, a), ""
-			return true, a.device.form.Init()
-		}
-		return true, nil
-	case del && a.screen == devicesScreen:
-		if d := a.devices.Selected(a); d != nil {
-			a.device, a.notice = newDeviceRemoveForm(d, a), ""
-			return true, a.device.form.Init()
-		}
-		return true, nil
+	case key.Matches(msg, a.keys.Edit):
+		action = "edit"
+	case key.Matches(msg, a.keys.Delete):
+		action = "delete"
+	case key.Matches(msg, a.keys.Add):
+		action = "add"
+	default:
+		return false, nil
 	}
-	return false, nil
+	form, ok := corrections[a.screen][action]
+	if !ok {
+		return false, nil
+	}
+	if m := form(a); m != nil {
+		return a.show(m)
+	}
+	return true, nil // the key belongs here, but nothing is selected
+}
+
+// corrections is which form each screen opens on edit, delete and add, built
+// from what is selected there — or nil when nothing is. A key a screen does
+// not list falls through to navigation.
+var corrections = map[screen]map[string]func(a *App) modal{
+	storageScreen: {"edit": func(a *App) modal {
+		if r := a.storage.Selected(a); r != nil {
+			return newDescribeForm(r.Slug, a)
+		}
+		return nil
+	}},
+	stashScreen: {"edit": func(a *App) modal {
+		if slug := a.stash.Selected(a); slug != "" {
+			return newDescribeForm(slug, a)
+		}
+		return nil
+	}},
+	journalScreen: {
+		"edit": func(a *App) modal {
+			if e := a.journal.Selected(); e != nil {
+				return newAmendForm(e, a)
+			}
+			return nil
+		},
+		"delete": func(a *App) modal {
+			if e := a.journal.Selected(); e != nil {
+				return newUndoForm(e, a)
+			}
+			return nil
+		},
+	},
+	devicesScreen: {
+		"add": func(a *App) modal { return newDeviceForm(nil, a) },
+		"edit": func(a *App) modal {
+			if d := a.devices.Selected(a); d != nil {
+				return newDeviceForm(d, a)
+			}
+			return nil
+		},
+		"delete": func(a *App) modal {
+			if d := a.devices.Selected(a); d != nil {
+				return newDeviceRemoveForm(d, a)
+			}
+			return nil
+		},
+	},
 }
 
 // reloadedMsg carries a freshly folded repository.
@@ -683,7 +717,7 @@ func (a *App) reload() tea.Cmd {
 
 // footer draws the key hints, or the outcome of the last entry.
 func (a *App) footer() string {
-	if a.notice != "" && a.entry == nil && a.device == nil {
+	if a.notice != "" && a.front == nil {
 		style := a.theme.Positive
 		mark := "✓ "
 		if a.failed {

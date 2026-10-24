@@ -339,22 +339,18 @@ func newThemePicker(a *App) *themePicker {
 	return p
 }
 
-// themeKey takes every key while the picker is open. huh only aborts on
-// ctrl+c, so esc is caught here and puts back the theme the picker opened on.
-func (a *App) themeKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
-	if msg.String() == "esc" {
-		a.useTheme(a.picker.was)
-		a.picker, a.notice = nil, ""
-		return true, nil
-	}
-	return true, a.pickTheme(msg)
-}
+// init starts the picker.
+func (p *themePicker) init() tea.Cmd { return p.form.Init() }
 
-// pickTheme drives the picker: every move previews, and completing it saves
-// the choice to the repository's config. huh completes a form through a
-// command of its own, so this sees every message, not only keys.
-func (a *App) pickTheme(msg tea.Msg) tea.Cmd {
-	p := a.picker
+// view draws the picker.
+func (p *themePicker) view(*App) string { return p.form.View() }
+
+// dismiss is esc, which puts back the theme the picker opened on.
+func (p *themePicker) dismiss(a *App) { a.useTheme(p.was) }
+
+// update drives the picker: every move previews, and completing it saves
+// the choice to the repository's config.
+func (p *themePicker) update(msg tea.Msg, a *App) (modal, tea.Cmd) {
 	model, cmd := p.form.Update(msg)
 	if form, ok := model.(*huh.Form); ok {
 		p.form = form
@@ -362,22 +358,20 @@ func (a *App) pickTheme(msg tea.Msg) tea.Cmd {
 	switch p.form.State {
 	case huh.StateAborted:
 		a.useTheme(p.was)
-		a.picker = nil
-		return nil
+		return nil, nil
 	case huh.StateCompleted:
-		a.picker = nil
 		a.useTheme(p.choice)
 		a.notice, a.failed = fmt.Sprintf("theme %s", p.choice), false
 		if a.data.Workspace == nil || a.data.Repo == nil {
-			return nil
+			return nil, nil
 		}
 		if err := a.data.Repo.SetTheme(p.choice); err != nil {
 			a.notice, a.failed = err.Error(), true
 		}
-		return nil
+		return nil, nil
 	}
 	a.useTheme(p.choice)
-	return cmd
+	return p, cmd
 }
 
 // useTheme switches to a theme by id, keeping the current one if the id is
