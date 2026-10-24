@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.64.0"></a>
+## [v0.64.0] - 2026-10-25
+### Feat
+- **seal:** a chain others can check, signed and timestamped
+
+### Fix
+- **seal:** refuse SHA-1 in a proof, and test the timestamp against a calendar
+
+
 <a name="v0.63.0"></a>
 ## [v0.63.0] - 2026-10-24
+### Docs
+- update changelog for v0.63.0
+
 ### Feat
 - **analysis:** the tolerance curve, and the breaks it bends through
 
@@ -832,7 +844,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.63.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.64.0...HEAD
+[v0.64.0]: https://github.com/TheDonDope/wits/compare/v0.63.0...v0.64.0
 [v0.63.0]: https://github.com/TheDonDope/wits/compare/v0.62.0...v0.63.0
 [v0.62.0]: https://github.com/TheDonDope/wits/compare/v0.61.0...v0.62.0
 [v0.61.0]: https://github.com/TheDonDope/wits/compare/v0.60.0...v0.61.0
