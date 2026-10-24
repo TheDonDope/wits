@@ -141,7 +141,12 @@ Every figure on screen speaks exactly one of three scopes, and must say which
 - **the jar** — one product's lifetime (storage screen detail, history table)
 
 Mixing scopes in one line, or leaving a figure's scope unlabelled, has been the
-single most recurring bug class in this codebase.
+single most recurring bug class in this codebase. The scopes are types —
+`ledger.Fill`, `ledger.Shelf`, `ledger.Jar` — so a mix does not compile. Keep
+new figures in their type for as long as possible; a conversion between them,
+or to `float64`, is a claim about scope, and belongs where a comment can say
+why it holds. Helpers that take one figure of either side (`percent`, `grams`)
+are generic over `~float64`, so both sides must be of one scope.
 
 ### The TUI
 

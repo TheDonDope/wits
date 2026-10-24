@@ -87,8 +87,8 @@ func TestCycles(t *testing.T) {
 		require.Len(t, s.Cycles, 1)
 		c := &s.Cycles[0]
 		assert.True(t, c.Open(), "Should still be running")
-		assert.Equal(t, 2.0, c.Purchased, "Should count the fill")
-		assert.Equal(t, 1.0, s.FillOnShelf(c), "Should subtract what was ground")
+		assert.Equal(t, Fill(2.0), c.Purchased, "Should count the fill")
+		assert.Equal(t, Fill(1.0), s.FillOnShelf(c), "Should subtract what was ground")
 	})
 
 	t.Run("SeveralProductsInOneFillAreOneCycle", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestCycles(t *testing.T) {
 		})
 
 		require.Len(t, s.Cycles, 1, "Should not open a cycle per product")
-		assert.Equal(t, 60.0, s.Cycles[0].Purchased, "Should total the fill")
+		assert.Equal(t, Fill(60.0), s.Cycles[0].Purchased, "Should total the fill")
 		assert.Len(t, s.Cycles[0].Products, 3, "Should list every product in the fill")
 	})
 
@@ -136,7 +136,7 @@ func TestCycles(t *testing.T) {
 		})
 
 		require.Len(t, s.Cycles, 1, "Should not split a cycle that still has stock")
-		assert.Equal(t, 15.0, s.Cycles[0].Purchased, "Should add the top-up to the running cycle")
+		assert.Equal(t, Fill(15.0), s.Cycles[0].Purchased, "Should add the top-up to the running cycle")
 	})
 
 	t.Run("SurvivesManyCycles", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestCycles(t *testing.T) {
 
 		require.Len(t, s.Cycles, 64, "Should record every cycle")
 		for i, c := range s.Cycles {
-			assert.Equal(t, 1.0, c.Purchased, "Cycle %d should keep its own total", i)
+			assert.Equal(t, Fill(1.0), c.Purchased, "Cycle %d should keep its own total", i)
 		}
 		for i, c := range s.Cycles[:len(s.Cycles)-1] {
 			assert.False(t, c.Open(), "Cycle %d should have been closed by its successor", i)
@@ -201,18 +201,18 @@ func TestSummarise(t *testing.T) {
 		st := Summarise(nil)
 
 		assert.Zero(t, st.ActiveDays, "Should have no active days")
-		assert.Zero(t, st.DaysLeft(60), "Should not extrapolate without a rate")
+		assert.Zero(t, st.DaysWorth(60), "Should not extrapolate without a rate")
 	})
 }
 
-func TestDaysLeft(t *testing.T) {
+func TestDaysWorth(t *testing.T) {
 	st := Summarise([]journal.Event{
 		event(journal.Grind, "wedding-cake", 2.0, day(0)),
 		event(journal.Grind, "wedding-cake", 2.0, day(1)),
 	})
 
 	assert.Equal(t, 2.0, st.PerActiveDay, "Should average two grams a day")
-	assert.Equal(t, 10.0, st.DaysLeft(20), "Should estimate the supply at the observed rate")
+	assert.Equal(t, 10.0, st.DaysWorth(20), "Should estimate the supply at the observed rate")
 }
 
 func TestCycleGap(t *testing.T) {
@@ -228,14 +228,14 @@ func TestCycleGap(t *testing.T) {
 
 		require.Len(t, s.Cycles, 2, "Should not merge the next fill into an unfinished cycle")
 		assert.True(t, s.Cycles[0].Open(), "Should stay open while its own jar holds something")
-		assert.Equal(t, 20.0, s.Cycles[1].Purchased, "Should not move the remainder onto the new cycle")
-		assert.Equal(t, 5.0, s.Cycles[1].Carried, "Should note what stood on the shelf at the fill")
-		assert.Equal(t, 5.0, s.Cycles[1].Opening["wedding-cake"], "Should know which jar held it")
+		assert.Equal(t, Fill(20.0), s.Cycles[1].Purchased, "Should not move the remainder onto the new cycle")
+		assert.Equal(t, Shelf(5.0), s.Cycles[1].Carried, "Should note what stood on the shelf at the fill")
+		assert.Equal(t, Shelf(5.0), s.Cycles[1].Opening["wedding-cake"], "Should know which jar held it")
 
 		c := &s.Cycles[1]
-		assert.Equal(t, 20.0, s.FillOnShelf(c), "The new fill is untouched")
+		assert.Equal(t, Fill(20.0), s.FillOnShelf(c), "The new fill is untouched")
 		carried, jars, open := s.CarriedOnShelf(c)
-		assert.Equal(t, 5.0, carried, "The remainder stands on the old cycle's account")
+		assert.Equal(t, Shelf(5.0), carried, "The remainder stands on the old cycle's account")
 		assert.Equal(t, 1, jars)
 		assert.Equal(t, 1, open, "and keeps that one cycle open")
 	})
@@ -257,8 +257,8 @@ func TestCycleGap(t *testing.T) {
 		assert.Equal(t, day(35), s.Cycles[0].End, "closed by the grind that finished them")
 		c := &s.Cycles[1]
 		assert.True(t, c.Open())
-		assert.Equal(t, 4.0, s.FillOnShelf(c), "6 of the new 10 went after the old 6")
-		assert.Equal(t, 4.0, s.ShareOf(c, "wedding-cake"), "and the share never reads over its fill")
+		assert.Equal(t, Fill(4.0), s.FillOnShelf(c), "6 of the new 10 went after the old 6")
+		assert.Equal(t, Fill(4.0), s.ShareOf(c, "wedding-cake"), "and the share never reads over its fill")
 	})
 
 	t.Run("TheFillIsNotTheShelf", func(t *testing.T) {
@@ -284,16 +284,16 @@ func TestCycleGap(t *testing.T) {
 
 		require.Len(t, s.Cycles, 2)
 		c := &s.Cycles[1]
-		assert.Equal(t, 51.0, c.Held(), "The shelf at the fill: 40 dispensed + 11 standing")
-		assert.Equal(t, 40.0, c.Purchased, "The fill is what it dispensed, nothing more")
+		assert.Equal(t, Shelf(51.0), c.Held(), "The shelf at the fill: 40 dispensed + 11 standing")
+		assert.Equal(t, Fill(40.0), c.Purchased, "The fill is what it dispensed, nothing more")
 
 		// The day-36 grind of 4 g took the old jar-share of 3 g first, then
 		// 1 g of the new fill: 20 - 1 = 19 for wedding-cake, 15 for lemon.
-		assert.Equal(t, 19.0, s.ShareOf(c, "wedding-cake"), "The shared jar drains oldest first")
-		assert.Equal(t, 34.0, s.FillOnShelf(c), "19 + 15 of the fill still standing")
+		assert.Equal(t, Fill(19.0), s.ShareOf(c, "wedding-cake"), "The shared jar drains oldest first")
+		assert.Equal(t, Fill(34.0), s.FillOnShelf(c), "19 + 15 of the fill still standing")
 
 		carried, jars, open := s.CarriedOnShelf(c)
-		assert.Equal(t, 7.0, carried, "old-strain's remainder stays the earlier cycle's business")
+		assert.Equal(t, Shelf(7.0), carried, "old-strain's remainder stays the earlier cycle's business")
 		assert.Equal(t, 1, jars, "and it sits in one jar")
 		assert.Equal(t, 1, open, "keeping that first cycle open")
 		assert.True(t, s.Cycles[0].Open(), "the cycle with grams standing is not finished")
@@ -307,7 +307,7 @@ func TestCycleGap(t *testing.T) {
 		})
 
 		require.Len(t, s.Cycles, 1, "Should keep one prescription's products in one cycle")
-		assert.Equal(t, 60.0, s.Cycles[0].Purchased, "Should total the fill")
+		assert.Equal(t, Fill(60.0), s.Cycles[0].Purchased, "Should total the fill")
 	})
 
 	t.Run("TheTightestRealBoundaryStillSplits", func(t *testing.T) {
@@ -332,9 +332,9 @@ func TestFoldsByDate(t *testing.T) {
 
 		require.Len(t, s.Cycles, 2, "A fill dated a month earlier is a cycle of its own")
 		assert.Equal(t, day(0), s.Cycles[0].Start)
-		assert.Equal(t, 10.0, s.Cycles[0].Purchased, "The early fill should not join the later cycle")
-		assert.Equal(t, 20.0, s.Cycles[1].Purchased)
-		assert.Equal(t, 10.0, s.Cycles[1].Carried, "The later cycle arrived to the early fill still standing")
+		assert.Equal(t, Fill(10.0), s.Cycles[0].Purchased, "The early fill should not join the later cycle")
+		assert.Equal(t, Fill(20.0), s.Cycles[1].Purchased)
+		assert.Equal(t, Shelf(10.0), s.Cycles[1].Carried, "The later cycle arrived to the early fill still standing")
 	})
 
 	t.Run("EventsReadInTheOrderTheyHappened", func(t *testing.T) {
@@ -412,6 +412,23 @@ func TestFoldAddsInCentigrams(t *testing.T) {
 	s := Fold(events)
 
 	assert.Equal(t, 0.0, s.Balances["wedding-cake"].Storage, "Exactly nothing should be left")
-	assert.Equal(t, 3.0, s.Cycles[0].Purchased)
+	assert.Equal(t, Fill(3.0), s.Cycles[0].Purchased)
 	assert.False(t, s.Cycles[0].Open(), "and the fill should close, not hang open on a rounding remainder")
+}
+
+func TestFillGround(t *testing.T) {
+	s := Fold([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 10, day(0)),
+		event(journal.Grind, "wedding-cake", 6, day(1)),
+		event(journal.Purchase, "wedding-cake", 20, day(30)),
+		event(journal.Grind, "wedding-cake", 5, day(31)), // 4 from the old fill, 1 from the new
+	})
+	fill := &s.Cycles[1]
+
+	assert.Equal(t, Fill(19), s.ShareOf(fill, "wedding-cake"), "Grams drain oldest first")
+	assert.Equal(t, 11.0, s.Balances["wedding-cake"].Stash, "The stash holds both fills' ground grams")
+	stash, avb := s.FillGround(fill, "wedding-cake")
+	assert.Equal(t, Fill(1), stash, "Only 1 g of it can be this fill's — it used to read all 11, past the fill's 20")
+	assert.Equal(t, Fill(0), avb)
+	assert.Equal(t, Fill(20), s.ShareOf(fill, "wedding-cake")+stash+avb, "and the row adds up to what the fill dispensed")
 }

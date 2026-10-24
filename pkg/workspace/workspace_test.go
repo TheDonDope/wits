@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
 )
 
@@ -104,7 +105,7 @@ func TestCycle(t *testing.T) {
 
 	cycle := ws.Cycle()
 	require.NotNil(t, cycle, "Should report the cycle in progress")
-	assert.Equal(t, 20.0, cycle.Purchased, "Should be the fill that opened it")
+	assert.Equal(t, ledger.Fill(20.0), cycle.Purchased, "Should be the fill that opened it")
 }
 
 func TestReadEmptyRepository(t *testing.T) {

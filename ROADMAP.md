@@ -61,6 +61,23 @@ The dashboard's "+ 15.82 g in 7 older jars from 6 earlier cycles still open"
 is the seam between the first two: the shelf minus the fill, attributed to
 the cycles it still belongs to.
 
+The scopes are **types** in the ledger — `Fill`, `Shelf`, `Jar` — so a figure
+mixing them does not compile, and every deliberate crossing is a conversion.
+Typing them found three mixes the eye had passed:
+
+- A fill's row on the dashboard and in `wits status` stacked the fill's sealed
+  grams with the product's whole stash and AVB, which hold grams of every fill
+  of it: on the demo data a fill 100% sealed showed 12.35 g in its stash, and
+  its bar ran full past its end. `State.FillGround` caps the stash and AVB to
+  what the fill has had ground, which on a shelf of one-fill products is the
+  jars' figures exactly.
+- `Cycle.Ground` counted every grind during a fill's tenure, from whichever
+  jar — the shelf's grinding over the period, not the fill's. It is `Shelf`.
+- "Lasts ~19 days" divided the fill's remaining grams by the rate, as if they
+  were next — but grams drain oldest first, and the shelf's projection under it
+  counted the older jars too. The fill's figure is now what it is worth: "19
+  days' worth" (`Stats.DaysWorth`; witsnap's `days_worth`).
+
 ### Entries carry two timestamps
 
 **Occurred-at** and **recorded-at**, so a backdated entry is honest about being

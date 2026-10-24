@@ -147,7 +147,7 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	held := c.Purchased
 	fraction := 0.0
 	if held > 0 {
-		fraction = clamp(remaining/held, 0, 1)
+		fraction = clamp(float64(remaining/held), 0, 1)
 	}
 
 	headline := t.Big.Render(fmt.Sprintf("%.2f g", remaining)) +
@@ -157,8 +157,8 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	bar := GradientGauge(w, fraction, t.Good, t.Level(fraction), t.Dim)
 
 	runway := "nothing ground yet, no rate to project"
-	if days := stats.DaysLeft(remaining); days > 0 {
-		runway = fmt.Sprintf("lasts ~%.0f days at %.2f g per active day", days, stats.PerActiveDay)
+	if days := stats.DaysWorth(float64(remaining)); days > 0 {
+		runway = fmt.Sprintf("~%.0f days' worth at %.2f g per active day", days, stats.PerActiveDay)
 	}
 	lines := []string{
 		headline,
@@ -189,15 +189,16 @@ func (d dashboard) storageRows(a *App, c *ledger.Cycle, w int) []string {
 		if b == nil {
 			continue
 		}
-		share := data.State.ShareOf(c, slug)
+		share, bought := data.State.ShareOf(c, slug), c.PurchasedOf(slug)
+		stash, avb := data.State.FillGround(c, slug)
 		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Left,
 			t.Value.Width(labelW).Render(truncate(data.ProductName(slug), labelW)),
 			" ",
 			Stack(max(w-labelW-10, 6), []Bar{
-				{Value: share, Color: t.StorageC},
-				{Value: b.Stash, Color: t.StashC},
-				{Value: b.AVB, Color: t.AVBC},
-			}, c.PurchasedOf(slug), t),
+				{Value: float64(share), Color: t.StorageC},
+				{Value: float64(stash), Color: t.StashC},
+				{Value: float64(avb), Color: t.AVBC},
+			}, float64(bought), t),
 			t.Dim.Render(fmt.Sprintf(" %.2f g", share)),
 		))
 	}
@@ -367,19 +368,22 @@ func emptyDate(emptyAt time.Time, now time.Time) string {
 // empty. The history is padded with zeroes under the projection's tail, which
 // the area chart reads as absence, so the future is line and no fill.
 func storageProjection(a *App, c *ledger.Cycle) (hist, proj []float64, emptyAt time.Time) {
-	perDay := map[string]float64{}
+	// The projection is the shelf's: it starts from everything standing when
+	// the fill arrived, and takes away every grind since, from whichever jar.
+	perDay := map[string]journal.Centigrams{}
 	for _, e := range c.Events {
 		if e.Type == journal.Grind {
-			perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
+			perDay[e.OccurredAt.Format(time.DateOnly)] += journal.CG(e.Grams)
 		}
 	}
-	remaining := c.Held()
+	shelf := journal.CG(float64(c.Held()))
 	for d := c.Start; !d.After(a.data.Now); d = d.AddDate(0, 0, 1) {
-		remaining = ledger.Round(remaining - perDay[d.Format(time.DateOnly)])
-		hist = append(hist, math.Max(remaining, 0))
+		shelf -= perDay[d.Format(time.DateOnly)]
+		hist = append(hist, math.Max(shelf.Grams(), 0))
 	}
 
 	rate := ledger.Summarise(c.Events).PerActiveDay
+	remaining := shelf.Grams()
 	if rate <= 0 || remaining <= 0 {
 		return hist, nil, time.Time{}
 	}

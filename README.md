@@ -150,7 +150,7 @@ total                         36.73g                 61%
 36.73g of 60.00g left over 55 days, 23 of them with an entry
 8.07g more in 2 older jars, 1 earlier cycle still open
 1.93g per active day, 1.69g median, 0.81g per elapsed day
-About 19 days left at that rate
+About 19 days' worth at that rate
 ```
 
 Every gram in storage stands on the account of the cycle that dispensed it,

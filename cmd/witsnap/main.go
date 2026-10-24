@@ -117,7 +117,7 @@ type currentCycle struct {
 	CarriedJars   int       `json:"carried_jars,omitempty"`
 	CarriedCycles int       `json:"carried_cycles,omitempty"`
 	PerActiveDay  float64   `json:"per_active_day"`
-	DaysLeft      float64   `json:"days_left"`
+	DaysWorth     float64   `json:"days_worth"`
 }
 
 type dayTotals struct {
@@ -180,19 +180,19 @@ func current(ws *workspace.Workspace) *currentCycle {
 	held := c.Purchased
 	pct := 0.0
 	if held > 0 {
-		pct = remaining / held
+		pct = float64(remaining / held)
 	}
 	carried, jars, open := ws.State.CarriedOnShelf(c)
 	return &currentCycle{
 		Start:         c.Start,
-		Held:          held,
-		Remaining:     remaining,
+		Held:          float64(held),
+		Remaining:     float64(remaining),
 		RemainingPct:  pct,
-		CarriedGrams:  carried,
+		CarriedGrams:  float64(carried),
 		CarriedJars:   jars,
 		CarriedCycles: open,
 		PerActiveDay:  stats.PerActiveDay,
-		DaysLeft:      stats.DaysLeft(remaining),
+		DaysWorth:     stats.DaysWorth(float64(remaining)),
 	}
 }
 

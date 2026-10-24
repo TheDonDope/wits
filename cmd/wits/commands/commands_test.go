@@ -130,7 +130,7 @@ func TestStatusCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, out, "On cycle 1", "Should report the cycle")
 		assert.Contains(t, out, "18.00g", "Should report what is left in storage")
-		assert.Contains(t, out, "days left at that rate", "Should estimate the supply")
+		assert.Contains(t, out, "days' worth at that rate", "Should estimate the supply")
 	})
 
 	// A cycle opened today is what every new repository shows, so its wording is
