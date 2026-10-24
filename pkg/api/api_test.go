@@ -15,6 +15,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -289,4 +290,22 @@ func TestReport(t *testing.T) {
 	assert.True(t, strings.HasPrefix(w.Body.String(), "%PDF-"))
 	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/report.pdf?from=2026-10-31&to=2026-10-01", "").Code)
 	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/report.pdf?from=soon", "").Code)
+}
+
+func TestCarry(t *testing.T) {
+	s, _ := server(t, "")
+
+	w := call(t, s, "GET", "/api/carry", "")
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	out := decodeInto[struct {
+		Statement, URL, Fingerprint, QR string
+		Items                           []carryItem
+	}](t, w)
+	require.Len(t, out.Items, 1)
+	assert.Equal(t, 18.0, out.Items[0].Sealed)
+	assert.True(t, strings.HasPrefix(out.QR, "<svg"))
+	c, err := seal.ParseCarry(out.URL)
+	require.NoError(t, err)
+	assert.NoError(t, c.Verify(), "The address holds the signed statement")
 }

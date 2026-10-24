@@ -236,7 +236,8 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits push` / `wits pull` | Write the repository to the folder; bring in what other devices wrote there |
 | `wits fsck` | Check the journal and the catalogs for damage |
 | `wits seal` | Sign the journal's head; `--timestamp` anchors it with OpenTimestamps, `--upgrade` fetches the proof |
-| `wits verify <file.seal>` | Check a seal: its signature, the journal it seals, its timestamp |
+| `wits verify <file.seal>` | Check a seal, or a statement from `wits carry`: its signature, the journal it seals, its timestamp |
+| `wits carry` | What is held, against the fills that dispensed it, signed; `--out` a QR code (.svg, .png) or the statement (.txt) |
 | `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
 
 Every command takes `--help`, and `buy`, `grind` and `sesh` take `--date`.
@@ -492,6 +493,44 @@ in a block; `wits seal --upgrade` then fetches it. `wits report --seal` seals
 the head before writing the page, so the page names the seal it can be
 checked against. Seals travel in bundles and through push and pull, and fsck
 checks every one: its signature, its head in the journal, and its proof.
+
+## What I carry
+
+In Germany a patient must be able to show that what they carry is what was
+prescribed. `wits carry` lists what is held, each product sealed, ground and
+already vaped, against the fills that dispensed it. It signs that with the
+sealing key, as a statement that names the journal's head, and writes it as a
+QR code:
+
+```console
+$ wits carry --out carry.svg
+Held on 25 October 2026, 00:07, by the journal's 1429 entries up to 1639d82:
+
+PRODUCT                            SEALED  GROUND  AVB    DISPENSED
+Sumo 25/1 Papaya Bomb              12.94g  7.06g   0.00g  20.00g on 2026-08-29
+All Nations 29/1 Mac Doughnut      12.42g  7.58g   0.00g  20.00g on 2026-08-29
+NICE 32/1 Morning Sun              11.37g  8.63g   0.00g  20.00g on 2026-08-29
+420 Evolution 27/1 Ice Cream Cake  5.67g   14.33g  0.00g  20.00g on 2026-07-09
+Enua 36/1 Citrus Slap              2.40g   17.60g  0.00g  20.00g on 2026-07-09
+
+100.00g in all. Signed by SHA256:t3GaiTSwisPSicN8ccsjAcVflyo7R9oxCglLYSluQQM; the QR code opens it at https://thedondope.github.io/wits/verify.html
+```
+
+Scanned with any phone, the code opens a page that checks the signature in
+that browser and lists the holdings. The statement rides after the `#`, which
+a browser never sends to the server, so GitHub never sees it, and the page
+stores and sends nothing. It is plain HTML, uses the browser's own Ed25519
+where it has one and its own where not, and works offline once the app is
+installed. The browser shows the same code under **What I carry** on the Jars
+page. Only the products on the shelf are listed unless `--all` says every jar
+holding anything: a stash the record never worked down (the imported history
+has no sessions) is the ledger's, not what is in a pocket.
+
+The signature says who signed it. Whose key that is, the person checking
+learns from the fingerprint the patient gave their doctor, or the one on a
+sealed report. A phone makes a key of its own the first time, so its
+fingerprint differs from the computer's until the computer's
+`.wits/seal.key` is brought to it.
 
 ## What it costs
 

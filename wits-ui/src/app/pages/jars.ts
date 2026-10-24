@@ -17,6 +17,7 @@ import { Replay } from '../data/replay';
 import { Wits } from '../data/wits';
 import { GlassJar } from '../viz/glass-jar';
 import { Transport, replayKeys } from '../viz/transport';
+import { CarryDialog } from './carry';
 import { Confirm, ConfirmDialog } from './confirm';
 
 /**
@@ -46,6 +47,10 @@ import { Confirm, ConfirmDialog } from './confirm';
         <h1 class="num">{{ list().length }} <span class="dim">{{ which() === 'shelf' ? 'on the shelf' : 'finished' }}</span></h1>
       </div>
       <div class="actions">
+        <button mat-stroked-button (click)="carry()" matTooltip="A signed statement of what is held, as a QR code">
+          <mat-icon>qr_code_2</mat-icon>
+          What I carry
+        </button>
         <button mat-stroked-button (click)="toggleAll()" [disabled]="!replay.live() || !list().length">
           <mat-icon>{{ allSelected() ? 'deselect' : 'select_all' }}</mat-icon>
           {{ allSelected() ? 'Select none' : 'Select all' }}
@@ -162,6 +167,11 @@ export class Jars {
   protected readonly selectedWithStash = computed(() =>
     this.list().filter((j) => this.selected().has(j.slug) && j.stash > 0),
   );
+
+  /** Opens the signed statement of what is held. */
+  protected carry(): void {
+    this.dialog.open(CarryDialog, { maxWidth: 'min(640px, 94vw)' });
+  }
 
   constructor() {
     const destroy = inject(DestroyRef);

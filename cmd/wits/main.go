@@ -55,6 +55,7 @@ func init() {
 		commands.Fsck,
 		commands.Seal,
 		commands.Verify,
+		commands.Carry,
 		commands.Remote,
 		commands.Push,
 		commands.Pull,
