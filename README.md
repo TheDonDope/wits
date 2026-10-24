@@ -215,6 +215,8 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it, `--price` for what it cost |
 | `wits price <purchase> <euros>` | Write down what a purchase cost; `wits reconcile purchases` walks every one without |
 | `wits costs` | What the prescriptions cost: per gram, by fill, by month, and per session that helped |
+| `wits describe <product>` | What is known about a product; `--terpenes` writes down its profile, dominant first |
+| `wits like <product>` | The products most like one, by name, cannabinoids and terpenes |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
 | `wits avb collect <grams>` / `use <grams>` | AVB weighed out of a device, or used up; `wits avb` for the jar and every yield |
@@ -382,8 +384,9 @@ restore whole restores nothing. Bundles written before v0.41.0 left out the
 accounts of undos and weighings; they are recovered when such a bundle is
 restored, and one that cannot be recovered is refused rather than restored
 wrong. The effect log, the price log and the seals with their timestamps
-travel in the bundle too, after the entries (format 5; an older build refuses
-one, rather than dropping what it cannot read).
+travel in the bundle too, after the entries, and each product's terpenes with it
+(format 6; an older build refuses one, rather than dropping what it cannot
+read).
 
 It is plain text, so the record stays legible with nothing but a text editor and
 diffs cleanly in git. Small, too, because most of what the journal stores is
@@ -664,6 +667,25 @@ does the same from the command line, and `e` on the terminal interface's
 sessions screen.
 
 ![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
+
+Under it is **a map of the strains**: every product dispensed, across by THC,
+up and down by its name and terpenes so that alike sits at one height, sized by
+what was dispensed and coloured by how its sessions went. Pick one for what is
+most like it; `wits like` says the same on the command line:
+
+```console
+$ wits like cantourage-mac1-251
+Like Cantourage 25/1 MAC1+:
+  420 Evolution 25/1 CA MAC: MAC1
+  Cantourage 25/1 MAC 1+
+  Barongo 27/1 MAC3
+```
+
+The workbook names its cultivars but lists no terpenes, so for now the map
+knows the Wedding Cakes and the MAC1s by name and the rest by THC. Write a
+profile down as the label gives it, `wits describe wedding --terpenes "Myrcen,
+Limonen, Caryophyllen"` or the terminal's product form, and products alike in
+terpenes find each other whatever they are called.
 
 Every key the terminal has is here too, and the footer shows the ones the page
 answers: `g` `s` `b` `r` `v` to record, `1`–`7` or `h`/`l` between pages, `p` to

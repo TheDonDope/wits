@@ -15,6 +15,7 @@ import { DayWheel } from '../viz/day-wheel';
 import { EffectMatrix, scoreColor } from '../viz/effect-matrix';
 import { GroupBars } from '../viz/group-bars';
 import { ScoreDots } from '../viz/score-dots';
+import { StrainMap } from '../viz/strain-map';
 
 /** What each dimension asks, in a word a tap can answer. */
 const ASKS: Record<Dimension, string> = {
@@ -47,6 +48,7 @@ const ASKS: Record<Dimension, string> = {
     MatIconModule,
     MatInputModule,
     ScoreDots,
+    StrainMap,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -132,6 +134,18 @@ const ASKS: Record<Dimension, string> = {
         </section>
       }
 
+      @if (wits.strains.value().length) {
+        <section class="glass pad">
+          <div>
+            <span class="eyebrow">a map of the strains</span>
+            <p class="dim mapnote">Across by THC; up and down by name and terpenes, where they are written down
+              (<code>wits describe --terpenes</code>), alike at one height. Coloured by how the sessions went; pick one
+              for what is most like it.</p>
+          </div>
+          <w-strain-map [strains]="wits.strains.value()" />
+        </section>
+      }
+
       @if (log.rated.length) {
         <section class="glass pad">
           <span class="eyebrow">rated</span>
@@ -156,6 +170,7 @@ const ASKS: Record<Dimension, string> = {
   `,
   styles: `
     :host { display: grid; gap: 20px; }
+    .mapnote { margin: 6px 0 0; font-size: 13px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
     h1 .dim { font: 400 15px 'Inter Variable', sans-serif; }

@@ -981,3 +981,22 @@ func TestCarryCommand(t *testing.T) {
 	assert.Contains(t, verified, "✓ signed by SHA256:")
 	assert.Contains(t, verified, "holds what was sealed", "Should check it against the journal here")
 }
+
+func TestDescribeAndLike(t *testing.T) {
+	dir := repository(t)
+	for _, name := range []string{"Enua 22/1 Wedding Cake", "Khiron 20/1 Wedding Cake", "Sumo 25/1 Papaya Bomb"} {
+		_, err := run(t, dir, Buy, name, "10g", "--date", "2026-07-01")
+		require.NoError(t, err)
+	}
+
+	out, err := run(t, dir, Describe, "Enua", "--terpenes", "Caryophyllen, Limonen")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Terpenes: Caryophyllen, Limonen")
+	out, err = run(t, dir, Describe, "Khiron")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Terpenes: none written down yet")
+
+	out, err = run(t, dir, Like, "Enua")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Like Enua 22/1 Wedding Cake:\n  Khiron 20/1 Wedding Cake\n")
+}

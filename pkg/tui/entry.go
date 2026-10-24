@@ -74,6 +74,7 @@ type entryForm struct {
 	manufacturer string // describe
 	cultivar     string // describe
 	thc, cbd     string // describe
+	terpenes     string // describe
 
 	// target is the entry being corrected, for the amend and undo forms.
 	target *journal.Event
@@ -285,6 +286,7 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 			Cultivar:     f.cultivar,
 			THC:          parseFloatOrZero(f.thc),
 			CBD:          parseFloatOrZero(f.cbd),
+			Terpenes:     catalog.ParseTerpenes(f.terpenes),
 		})
 		if err != nil {
 			return journal.Event{}, err
@@ -605,7 +607,11 @@ func newDescribeForm(slug string, a *App) *entryForm {
 	f.cultivar = p.Cultivar
 	f.thc = trimZero(p.THC)
 	f.cbd = trimZero(p.CBD)
+	f.terpenes = strings.Join(p.Terpenes, ", ")
 
+	// The terpenes are a page of their own: seven fields on one would push
+	// the form past a terminal's height, and a form taller than the terminal
+	// submits what it holds.
 	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewNote().Title(slug).
 			Description("The slug stays as it is: every entry in the journal refers\nto it, and renaming it would orphan them."),
@@ -615,6 +621,10 @@ func newDescribeForm(slug string, a *App) *entryForm {
 		huh.NewInput().Title("Cultivar").Value(&f.cultivar),
 		huh.NewInput().Title("THC %").Value(&f.thc).Validate(optionalFloat),
 		huh.NewInput().Title("CBD %").Value(&f.cbd).Validate(optionalFloat),
+	), huh.NewGroup(
+		huh.NewInput().Title("Terpenes").
+			Description("Dominant first, as the label lists them, e.g. Myrcen, Limonen, Caryophyllen").
+			Value(&f.terpenes),
 	)))
 	return f
 }

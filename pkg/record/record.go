@@ -679,7 +679,14 @@ func (r *Recorder) Describe(ref string, p catalog.Product) (*catalog.Product, er
 		product.Manufacturer = strings.TrimSpace(p.Manufacturer)
 		product.Cultivar = strings.TrimSpace(p.Cultivar)
 		product.THC, product.CBD = p.THC, p.CBD
+		product.Terpenes = p.Terpenes
 	})
+}
+
+// Terpenes records a product's terpenes as its label lists them, dominant
+// first, leaving the rest of it as it is.
+func (r *Recorder) Terpenes(ref string, terpenes []string) (*catalog.Product, error) {
+	return r.changeProduct(ref, func(product *catalog.Product) { product.Terpenes = terpenes })
 }
 
 // ErrNothingToCollect is why a collection is refused when no session has been

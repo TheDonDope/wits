@@ -179,3 +179,18 @@ export interface Costs {
   fills: { number: number; start: string; dispensed: number; priced: number; cents: number; per_gram: number; unpriced: number }[];
   months: { month: string; cents: number; grams: number }[];
 }
+
+/** One product on the map of the strains: placed by profile, coloured by effect. */
+export interface Strain {
+  slug: string;
+  name: string;
+  x: number;
+  y: number;
+  thc: number;
+  cbd: number;
+  terpenes: string[];
+  dispensed: number;
+  overall?: number;
+  ratings: number;
+  like: string[];
+}

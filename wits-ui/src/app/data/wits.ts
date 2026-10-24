@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/htt
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { Avb, Costs, Cycle, Day, Device, Dimension, EffectLog, Entry, Jar, Overview, Written } from './models';
+import { Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, Jar, Overview, Written } from './models';
 
 /**
  * The repository, as wits-server answers for it.
@@ -25,6 +25,7 @@ export class Wits {
   readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
   readonly avb = httpResource<Avb>(() => `/api/avb?v=${this.version()}`);
   readonly costs = httpResource<Costs>(() => `/api/costs?v=${this.version()}`);
+  readonly strains = httpResource<Strain[]>(() => `/api/strains?v=${this.version()}`, { defaultValue: [] });
   readonly journal = httpResource<{ entries: Entry[]; total: number }>(
     () => `/api/journal?limit=100000&v=${this.version()}`,
     { defaultValue: { entries: [], total: 0 } },
