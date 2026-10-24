@@ -66,9 +66,9 @@ wits init .
 Record a fill, then use it:
 
 ```console
-$ wits buy "Enua 22/1 Wedding Cake" 20g
-New product Enua 22/1 Wedding Cake — refer to it as wcake-221
-[029efe8] purchase 20.00g wcake-221 into storage
+$ wits buy "Enua 36/1 Citrus Slap" 20g
+New product Enua 36/1 Citrus Slap — refer to it as cslap-361
+[ea8b2de] purchase 20.00g cslap-361 into storage
 ```
 
 Every product gets a short handle: three to five characters from the cultivar,
@@ -77,15 +77,17 @@ same maker at two strengths is two prescriptions — `wcake-221` and `wcake-251`
 are legible as a pair, and adding their grams together would be wrong. Pass
 `--slug lemon` to choose your own, which is taken as written. A handle is
 settled when the product first appears and never changes, because it is the
-name every later entry refers to.
+name every later entry refers to. Products brought in by `wits import` keep a
+handle spelled out from their full name (`nice-morning-sun-321`), since years
+of records were already written against those names.
 
 ```sh
-wits grind wcake 0.75
-wits sesh wcake-221 0.3 --device volcano --temp 185
+wits grind cslap 0.75
+wits sesh cslap-361 0.3 --device volcano --temp 185
 wits status
 ```
 
-References resolve by prefix, so `wcake` is enough while it is unambiguous.
+References resolve by prefix, so `cslap` is enough while it is unambiguous.
 
 ![Recording a fill and a session](./assets/wits-cli.gif)
 
@@ -95,9 +97,9 @@ in a stash rather than everything ever dispensed:
 
 ```console
 $ wits grind <TAB>
-lcook-281   10.00 g · Cannamedical 28/1 Lemon Cookie
+lcook-281   17.10 g · Cannamedical 28/1 Lemon Cookie
 mac1-251    15.00 g · Cantourage 25/1 MAC1+
-wcake-221   18.00 g · Enua 22/1 Wedding Cake
+wcake-221   16.90 g · Enua 22/1 Wedding Cake
 ```
 
 Completion is a script the shell sources, written by `wits completion bash`
@@ -129,23 +131,23 @@ then.
 
 ```console
 $ wits status
-On cycle 29, opened 2026-07-09 (day 26)
+On cycle 30, opened 2026-08-29 (day 57)
 
-PRODUCT                           STORAGE  STASH   AVB    LEFT
-420-evolution-ice-cream-cake-271  16.90g   3.10g   0.00g  84%
-enua-citrus-slap-361              17.09g   2.91g   0.00g  85%
-cantourage-mac1-251               17.23g   47.77g  0.00g  86%
+PRODUCT                       STORAGE  STASH  AVB    LEFT
+nice-morning-sun-321          11.37g   8.63g  0.00g  57%
+all-nations-mac-doughnut-291  12.42g   7.58g  0.00g  62%
+sumo-papaya-bomb-251          12.94g   7.06g  0.00g  65%
 
-total                             51.22g                  85%
+total                         36.73g                 61%
 
-51.22g of 60.00g left over 23 days, 11 of them with an entry
-15.82g more in 7 older jars, 6 earlier cycles still open
-1.73g per active day, 1.37g median, 0.83g per elapsed day
-About 30 days left at that rate
+36.73g of 60.00g left over 55 days, 23 of them with an entry
+8.07g more in 2 older jars, 1 earlier cycle still open
+1.93g per active day, 1.69g median, 0.81g per elapsed day
+About 19 days left at that rate
 ```
 
 Every gram in storage stands on the account of the cycle that dispensed it,
-so the total is the fill's own: 51.22 g of the 60 g this prescription
+so the total is the fill's own: 36.73 g of the 60 g this prescription
 brought. What older cycles still hold gets its own line — those cycles are
 simply still open. A jar refilled before it was empty holds two cycles'
 grams, and grinding draws the oldest first, the way inventory leaves a
@@ -155,14 +157,15 @@ shelf.
 sessions, devices, two rhythm calendars and a projection of the supply's
 decline to its empty day — then the journal, an analysis view scoping from the
 current cycle out to the whole history, the storage, the stash, the sessions,
-the devices — and the Séance. Entries can be recorded there too — `b` for a
-fill, `g` to grind, `s` for a session, `r` to weigh.
+the devices — and the Séance. `tab` moves between them. Entries can be recorded
+there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh — and
+`?` lists every key the current screen honours.
 
 The analysis view draws the daily amounts as a braille area chart with a
 seven-day average riding over it, and the longer scopes as a calendar heatmap —
 one cell per day, colour carrying the amount — so a year of habit reads the way
 a contribution graph does: the heavy weeks, the pauses, whether weekends
-differ.
+differ. `s` changes the scope.
 
 The Séance is where the ledger is summoned back. It replays any stretch of the
 record — the whole ledger, one prescription cycle, or a date window picked by
@@ -181,19 +184,20 @@ history.
 | `wits init [dir]` | Create a repository |
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
-| `wits sesh <product> <amount>` | Record a session, drawing on the stash |
+| `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
 | `wits status` | What is left, and how long it will last |
-| `wits log` | The journal, newest first |
+| `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
 | `wits revert <entry>` | Undo an entry by recording a correction |
 | `wits reconcile [account] [product] [weight]` | Make an account agree with the scale; interactive with no arguments |
-| `wits device add <name>` | Register a vaporizer |
+| `wits device add <name>` / `list` | Register a vaporizer and its temperature range; list them |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
-| `wits import <file.xlsx>` | Import a tracking spreadsheet |
-| `wits export` | Markdown, for reading or publishing |
-| `wits bundle` | The whole repository as one compact file |
+| `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
+| `wits export` | The current cycle as Markdown; `--all` for every cycle |
+| `wits bundle` | The whole repository as one compact file; `--gzip` to compress it |
 | `wits restore <file>` | Rebuild a repository from a bundle |
+| `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
 
-Every command takes `--help`. `import` writes nothing unless given `--commit`.
+Every command takes `--help`, and `buy`, `grind` and `sesh` take `--date`.
 
 ## Bringing a spreadsheet across
 
@@ -210,6 +214,10 @@ are dropdown values that were not always renamed as products changed. On the
 records this was written for, every one of the 1209.20 g ground is placed
 through a binding, never through a label.
 
+An import only goes into an empty repository: a second one would double every
+gram, and could not be told apart from a second helping of the same product on
+the same day.
+
 ## Correcting a mistake
 
 Nothing is edited in place. An entry is undone by recording a correction that
@@ -220,19 +228,21 @@ wits log --oneline -n 1
 wits revert 8297238 --reason "misread the scale"
 ```
 
+In the journal, `e` amends an amount and `d` undoes an entry. The log shows
+what currently stands; `v` reveals the corrections behind it, `f` filters it,
+and `←/→` browses the entries as cards.
+
 The storage screen is two tables: what still holds something, and the history
 of every jar weighed down to zero, newest first. The stash screen drills into
 the ground product the same way — the stashes holding something above, and
 under them every stash worked down to nothing, grouped under the day it was
 consumed. The sessions screen tells the other half of the story: how much came
 out of the stash, when, through which device and how hot, drawn with the same
-charts the analysis view uses. Space ticks jars in either
-table and `r` weighs the ticked ones together; `e` corrects a name; `c` records
-stale stash remainders from earlier cycles as consumed, which is what four
-imported years of grind-only records leave behind. Product names are never
-abbreviated — the name column takes what the longest name needs. In the
-journal, `e` amends an amount and `d` undoes an entry. The log shows what
-currently stands; `v` reveals the corrections behind it.
+charts the analysis view uses. Space ticks jars in either table and `r` weighs
+the ticked ones together; `e` corrects a name; `c` records stale stash
+remainders from earlier cycles as consumed, which is what four imported years of
+grind-only records leave behind. Product names are never abbreviated — the name
+column takes what the longest name needs.
 
 ## When the ledger and the scale disagree
 
@@ -242,22 +252,24 @@ wrong — instead the difference is recorded, and the account agrees with the ja
 again:
 
 ```console
-$ wits reconcile storage wcake-221 17.6 --dry-run
-storage holds 18.00g by the ledger and 17.60g on the scale: -0.40g
+$ wits reconcile storage wcake-221 16.5 --dry-run
+storage holds 16.90g by the ledger and 16.50g on the scale: -0.40g
 
-$ wits reconcile storage wcake-221 17.6 --reason "spilled on the desk"
-[21ee6ae] adjusted 0.40g out of storage of wcake-221, now 17.60g
+Dry run. Nothing was written. Re-run without --dry-run to record it.
+
+$ wits reconcile storage wcake-221 16.5 --reason "spilled on the desk"
+[4b36264] adjusted 0.40g out of storage of wcake-221, now 16.50g
 ```
 
 ![Reconciling against the scale](./assets/wits-reconcile.gif)
 
-For weighing day, `wits reconcile` on its own is interactive: pick storage or
-the stash, tick the jars to weigh — all of them by default — and each is asked
-for in turn, with the ledger's figure beside the prompt. A blank reading skips
-a jar; `wits reconcile stash` skips the first question. In the interface this
-is `r`, on any screen — it weighs the jars ticked on the storage screen, the
-one under the cursor, or otherwise the fullest one, since that is the one
-worth checking.
+For weighing day, `wits reconcile` on its own is interactive. Pick the account
+on the scale (storage, the stash, or the AVB once it holds anything) and tick
+the jars to weigh, all of them by default. Each is asked for in turn, with the
+ledger's figure beside the prompt, and a blank reading skips a jar; `wits reconcile stash` skips the first question. Nothing is
+written until every question is answered. In the interface this is `r`, on any
+screen — it weighs the jars ticked on the storage screen, the one under the
+cursor, or otherwise the fullest one, since that is the one worth checking.
 
 ## The repository
 
@@ -295,7 +307,7 @@ Three years of real history, 1429 entries across 53 products:
 | --- | ---: | --- |
 | journal | 528,321 | |
 | **bundle** | **29,417** | **18×** |
-| bundle, gzipped | 6,652 | 79× |
+| bundle, `--gzip` | 7,009 | 75× |
 
 ![Bundling and restoring](./assets/wits-bundle.gif)
 
@@ -309,20 +321,21 @@ producing benzene.
 $ wits temps 210
 COMPOUND         BOILS AT  EFFECTS
 THCA             120°C     anti-inflammatory, anti-epileptic, anti-proliferic
+Nerolidol        122°C     sedative, anti-fungal, anti-malarial, anti-parasitic, skin penetration enhancer
 CBDA             130°C     anti-inflammatory, anti-proliferic
-β-Caryophyllene  130°C     anti-malarial, cytoprotective, anti-inflammatory
+β-Caryophyllene  130°C     anti-inflammatory, anti-malarial, cytoprotective, analgesic
 …
 ⚠️  210°C is at or above the 205°C boiling point of Benzene.
 ```
 
 The devices screen shows the same for whichever device is selected, at its
-default setting.
+default setting, and `a` adds a device there.
 
 ## Layout
 
-One Go module, several commands, and a web interface beside them. Not a module
-per component: the domain is shared, and a boundary between a server and the
-ledger it serves would mean versioning the ledger against itself.
+One Go module, several commands, and a web interface planned beside them. Not a
+module per component: the domain is shared, and a boundary between a server and
+the ledger it serves would mean versioning the ledger against itself.
 
 ```text
 wits/                     module github.com/TheDonDope/wits
@@ -354,11 +367,12 @@ only, so a server is another caller of `pkg/workspace`, not a new layer.
 - [bubbles](https://github.com/charmbracelet/bubbles) — components 🫧
 - [huh](https://github.com/charmbracelet/huh) — forms and prompts 🤷
 - [lipgloss](https://github.com/charmbracelet/lipgloss) — layout and style 👄
-- [vhs](https://github.com/charmbracelet/vhs) — the recording above 📼
+- [vhs](https://github.com/charmbracelet/vhs) — the recordings above 📼
 - [cobra](https://github.com/spf13/cobra) — the command line
+- [excelize](https://github.com/xuri/excelize) — reading the spreadsheet
 
-All on the v2 line, which lives under `charm.land/…` rather than
-`github.com/charmbracelet/…`.
+The Charm libraries are all on the v2 line, which lives under `charm.land/…`
+rather than `github.com/charmbracelet/…`.
 
 The charts are drawn in-tree. The terminal charting libraries still target Bubble
 Tea v1, and mixing the majors puts two renderers and two colour-profile detectors
@@ -367,6 +381,7 @@ in one binary, which shows up on screen as inconsistent colour.
 ## Development
 
 ```sh
+./doctor.sh        # check the tools; `./doctor.sh install` fetches what is missing
 make build         # build ./bin/wits
 make run           # build it and run it
 make install-wits  # install the working tree as `wits`, replacing a release
@@ -375,6 +390,12 @@ make cover         # coverage as HTML
 make vet
 make preflight     # everything CI and the Codacy gate will say, said here first
 ```
+
+Building and testing need only Go. `./doctor.sh` checks the rest of the loop —
+`gh` and `git-chglog` for releases, `shellcheck` and lizard for the gate, and
+vhs with `ttyd`, `ffmpeg`, the Hack font and a Chromium that can start, for the
+recordings — and `install` puts whatever is missing in your home directory,
+without `sudo`.
 
 `make build` writes to `./bin/wits`, which is fine for a session in the
 checkout and wrong for daily use — the shell keeps finding whatever `wits` is
@@ -393,16 +414,16 @@ any screen as plain text — `--press p,tick,tick` photographs a replay mid-run 
 and `witsnap json` writes the whole derived state as JSON, which is the seam a
 new client or a new visualisation starts from.
 
-`make build-windows` cross-compiles `bin/wits.exe`. `make render-tapes` re-records
-every GIF in `assets/` from the `*.tape` files; it needs `vhs`, `gum` and `ttyd`
-(`make install` covers the first two). The tapes seed a throwaway repository
-with `demo-seed.sh` first, because `wits` reads a `.wits` directory and a source
+`make build-windows` cross-compiles `bin/wits.exe`. `make render-tapes`
+re-records every GIF in `assets/` from the `*.tape` files, and
+`./render-vhs-tapes.sh wits-cli.tape` just the ones named — one at a time,
+since each render starts a browser. The tapes seed a throwaway repository with
+`demo-seed.sh` first, because `wits` reads a `.wits` directory and a source
 checkout has none.
-
-`coverage.out` and `coverage.html` are ignored from source control.
 
 ## Changelog & Roadmap
 
 Features, bugs and refactorings are tracked in [ROADMAP.md](./ROADMAP.md) rather
 than GitHub Issues, so the plan and the code stay in one place. A detailed
-changelog is in [CHANGELOG.md](./CHANGELOG.md).
+changelog is in [CHANGELOG.md](./CHANGELOG.md), and the story of how it got
+here in [DEVDIARY.md](./DEVDIARY.md).

@@ -7,12 +7,13 @@ from [ROADMAP.md](../ROADMAP.md), say which entry.
 
 ## How it was verified
 
-`make test` and `make vet` should pass. If the change is visible in the
-interface, say what you looked at; if it changes what the demo tapes show,
-re-record them with `make render-tapes`.
+`./preflight.sh` should say "ready to push". If the change is visible in the
+interface, say what you looked at (`witsnap screens` renders any screen as
+text). If it changes what a demo tape shows, re-record it with
+`./render-vhs-tapes.sh <tape>`.
 
 ## Checklist
 
 - [ ] Tests cover the change
-- [ ] `make test` and `make vet` pass
-- [ ] Documentation (README, ROADMAP) still tells the truth
+- [ ] `./preflight.sh` passes
+- [ ] README.md and ROADMAP.md still tell the truth
