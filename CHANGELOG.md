@@ -2,8 +2,21 @@
 ## [Unreleased]
 
 
+<a name="v0.51.0"></a>
+## [v0.51.0] - 2026-10-24
+### Docs
+- **diary:** two reviews, and a window
+- **roadmap:** what wits could become — thirteen ideas, planned
+
+### Feat
+- **effects:** what the grams did, rated, and what that adds up to
+
+
 <a name="v0.50.0"></a>
 ## [v0.50.0] - 2026-10-24
+### Docs
+- update changelog for v0.50.0
+
 ### Feat
 - **ui:** the analysis tab and the replay, ticked jars, and every key
 
@@ -708,7 +721,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.50.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.51.0...HEAD
+[v0.51.0]: https://github.com/TheDonDope/wits/compare/v0.50.0...v0.51.0
 [v0.50.0]: https://github.com/TheDonDope/wits/compare/v0.49.0...v0.50.0
 [v0.49.0]: https://github.com/TheDonDope/wits/compare/v0.48.0...v0.49.0
 [v0.48.0]: https://github.com/TheDonDope/wits/compare/v0.47.0...v0.48.0
