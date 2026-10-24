@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.40.0"></a>
+## [v0.40.0] - 2026-10-24
+### Refactor
+- **tui:** one slot for the form in front
+
+
 <a name="v0.39.0"></a>
 ## [v0.39.0] - 2026-10-24
+### Docs
+- update changelog for v0.39.0
+
 ### Feat
 - **tui:** the screen keeps up, a fill waits for its day, and esc stays in
 
@@ -595,7 +604,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.39.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.40.0...HEAD
+[v0.40.0]: https://github.com/TheDonDope/wits/compare/v0.39.0...v0.40.0
 [v0.39.0]: https://github.com/TheDonDope/wits/compare/v0.38.0...v0.39.0
 [v0.38.0]: https://github.com/TheDonDope/wits/compare/v0.37.0...v0.38.0
 [v0.37.0]: https://github.com/TheDonDope/wits/compare/v0.36.0...v0.37.0
