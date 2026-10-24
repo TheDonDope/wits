@@ -1,5 +1,29 @@
 # Development Diary
 
+## 2026-10-25
+
+### Trust, a map, a film, and a cache that was not
+
+Phase 4 came first: making the record checkable by someone who trusts neither the patient nor wits. `wits seal` signs the journal's head with an Ed25519 key of one's own. The head's hash covers every entry before it, so six lines of text fix the whole journal. `--timestamp` sends the seal's SHA-256, and nothing else, to the four public OpenTimestamps calendars, the one network call wits makes and only when asked; the proof format is written in-tree, and a real proof writes back byte for byte. Codacy refused the first push for a SHA-1 operation in it, and the calendars only use SHA-256, so it went. `wits carry` then signs what is held against the fills that dispensed it, as a QR code that opens a plain verify page checking the signature on the checker's own phone, the statement riding after the `#` where no server sees it. The headless Chromium here is 128, which has no Ed25519 in WebCrypto, so the page carries its own RFC 8032 as well; both paths accepted the workbook's statement and refused it with one gram changed. Deflating the link took the code from 117 modules to 89.
+
+From "Later" came the map of the strains and the replay as a film. The workbook lists no terpenes, so the map places products by THC across and by their cultivar's words up and down. Building it found that bundles had never carried a product's terpenes; format 6 does. A profile not written down counts as halfway alike, or two unknown ones came out nearer than two that match. The film draws the replay on a canvas and lets the browser record it. MP4 failed part way in Chromium without its codecs, and VP9 fell behind and gave up twenty seconds in, so it is VP8, with the duration written into the header so players can seek. Last came the cached fold, measured before it was built. The fold is 0.63 ms of a 12.2 ms open, so what got cached is the read itself, in memory, while nothing changes. On the phone's engine the dashboard went from about 450 ms to 21. Shipped as v0.64.0 through v0.68.0.
+
+- `dafb981` feat(seal): a chain others can check, signed and timestamped
+- `cdfa1bd` fix(seal): refuse SHA-1 in a proof, and test the timestamp against a calendar
+- `940ffb9` docs: update changelog for v0.64.0
+- `632a294` feat(carry): what is held, against what was dispensed, as a signed QR code
+- `e4bd38f` docs: update changelog for v0.65.0
+- `35120e8` feat(strains): a map of the strains, and what each is like
+- `44b760f` docs: update changelog for v0.66.0
+- `1852a1f` feat(film): the replay as a film, three years of the shelf in thirty seconds
+- `1970bb2` docs: update changelog for v0.67.0
+- `d36e023` perf(server): read the repository once, while nothing changes
+- `5d7a4b1` docs: update changelog for v0.68.0
+
+### Notes for 2026-10-25
+
+Installing the reference OpenTimestamps JavaScript library to parse a proof independently was refused by the permission check, so the outside check left is `ots verify` on a proof once it is in a block (`wits seal --upgrade` fetches it, a few hours on). The QR code has not been read by a real phone's camera yet. A phone makes a sealing key of its own, so its fingerprint differs from the computer's until `.wits/seal.key` is brought over, and there is no way in the app to do that yet. Twice, a `pkill -f` matching its own command line killed the shell running it; a `timeout` around the server is the way here. A bulk find-and-replace in the API also rewrote the read inside the new snapshot function into a call to itself, which held its own lock and hung the race tests until it was stopped.
+
 ## 2026-10-24
 
 ### The records add up
@@ -130,6 +154,25 @@ Then phase 5 of the roadmap. `wits push` and `wits pull` keep one repository on 
 ### Notes for the end of 2026-10-24
 
 The six Dependabot alerts for vite were still open hours after v0.56.0, though main's lockfile holds only 8.3.5; GitHub had not re-scanned. The override in `wits-ui/package.json` comes out when Angular pins a fixed vite. Go's js port panics on any error code it has no errno for and reads anything but `null` as an error, so `data/memfs.ts` answers only with codes from `syscall/tables_js.go`. A first wasm build of 5.2 MB was a stub the linker had mostly dropped; the real engine is 8.9 MB, 2.4 MB gzipped, and swapping `net/http/httptest` out barely changed it. Node 26 runs the TypeScript MemFS directly for `wasm-check.sh`, so long as it uses no parameter properties. A plain folder still lets two simultaneous pushes overwrite each other; the losing device keeps its entries and rebases them on its next pull, and WebDAV with `If-Match` is planned to close that. The phone build has only been driven in headless Chromium, not yet installed on a real phone, and on Android "Save wits.age" shares or downloads rather than writing into the Syncthing folder.
+
+### Phases 1 to 3, a release each
+
+With the go-ahead to merge and release as each went green, the evening built the roadmap's first three phases. `wits refill` says when to order the next prescription: the supply projection's empty day less the pharmacy's lead time, in the command, the status line, the API and both dashboards, all from one function, so the dates cannot disagree. On the workbook that is empty on 17 November, order by the 14th. AVB tracking needed no format change after all, since the bundle already carried both entry types, so it shipped alone. A collection is shared between its sessions' products in exact centigrams, and its yield kept: 0.21 g from 0.75 g, 28%. Prices then made the one format change, a log beside the journal like the effect log, with "reconcile purchases" walking every unpriced fill in all three interfaces. The report for the doctor is a one-page PDF wits writes itself, no library, its figures the same as `wits export --from --to`: 67.56 g on 33 of 85 days. The tolerance curve rolls grams a day against the ratings on the Analysis tab. Its breaks were three days at first and marked eleven in 90 days, which was only the habit of grinding every two or three; at a week there is one. Shipped as v0.59.0 through v0.63.0.
+
+- `690d5b7` feat(refill): order by the day the shelf runs out, less the pharmacy's days
+- `55b075a` docs: update changelog for v0.59.0
+- `ca8ac72` feat(avb): what comes out of the vaporizer, weighed, and what it gave back
+- `4be6693` docs: update changelog for v0.60.0
+- `0dd6670` feat(prices): what each fill cost, beside the journal, and reconcile purchases
+- `4f9fbfc` docs: update changelog for v0.61.0
+- `99f9ed8` feat(report): one page for the prescriber, as a PDF wits writes itself
+- `6f9c87b` docs: update changelog for v0.62.0
+- `6c7c303` feat(analysis): the tolerance curve, and the breaks it bends through
+- `a6875a7` docs: update changelog for v0.63.0
+
+### Notes for the last of 2026-10-24
+
+Fixed along the way: on a phone the record dialog's side-by-side fields had never fit, because Material sizes a field's input at 180 px. The workbook has neither prices nor ratings, so the cost figures in the README come from pricing a copy by hand, and the curve's rating line waits for real ratings. No PDF renderer is installed here; pdf.js from npm, drawing into a canvas in the headless Chromium, was the way to look at the report. The terminal interface cannot record AVB or draw the tolerance curve yet.
 
 ## 2026-08-02
 
