@@ -7,10 +7,12 @@
 package record
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"math"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -677,4 +679,119 @@ func (r *Recorder) Describe(ref string, p catalog.Product) (*catalog.Product, er
 		product.Cultivar = strings.TrimSpace(p.Cultivar)
 		product.THC, product.CBD = p.THC, p.CBD
 	})
+}
+
+// ErrNothingToCollect is why a collection is refused when no session has been
+// through the device since it was last emptied.
+var ErrNothingToCollect = errors.New("no session has been through it since it was last emptied")
+
+// CollectAVB records the AVB weighed out of a device: grams, from the
+// sessions put through it since its last collection. A device left unnamed is
+// the one those sessions used, when there is only one. The grams are shared
+// between the sessions' products in proportion to what each put in, an entry
+// a product, all at one moment, written together; more cannot come out than
+// went in.
+func (r *Recorder) CollectAVB(device string, grams float64, at time.Time, note string) ([]journal.Event, error) {
+	if err := notAhead(journal.Event{Type: journal.AVBCollect, OccurredAt: at}, time.Now()); err != nil {
+		return nil, err
+	}
+	if device != "" {
+		d, err := r.devices.Find(device)
+		if err != nil {
+			return nil, err
+		}
+		device = d.Slug
+	}
+	return r.write(func() ([]journal.Event, error) {
+		slug, sessions, err := r.pending(device, at)
+		if err != nil {
+			return nil, err
+		}
+		put := map[string]journal.Centigrams{}
+		var total journal.Centigrams
+		for _, s := range sessions {
+			put[s.Product] += journal.CG(s.Grams)
+			total += journal.CG(s.Grams)
+		}
+		if journal.CG(grams) > total {
+			return nil, fmt.Errorf("%.2fg of AVB cannot come out of the %.2fg its %s put in",
+				grams, total.Grams(), plural(len(sessions), "session"))
+		}
+		if note == "" {
+			note = fmt.Sprintf("from %s, %.2fg", plural(len(sessions), "session"), total.Grams())
+		}
+		return r.shared(journal.AVBCollect, ledger.Split(journal.CG(grams), put), at, slug, note, journal.Consumed)
+	})
+}
+
+// pending is the device a collection is from, and its sessions since it was
+// last emptied: the one named, or the only one with sessions waiting.
+func (r *Recorder) pending(device string, at time.Time) (string, []journal.Event, error) {
+	waiting := ledger.Uncollected(r.state.Events, at)
+	if device != "" || len(waiting) == 0 {
+		if len(waiting[device]) == 0 {
+			return "", nil, ErrNothingToCollect
+		}
+		return device, waiting[device], nil
+	}
+	if len(waiting) > 1 {
+		names := make([]string, 0, len(waiting))
+		for d := range waiting {
+			names = append(names, cmp.Or(d, "no device named"))
+		}
+		sort.Strings(names)
+		return "", nil, fmt.Errorf("sessions are waiting on more than one device (%s): say which was emptied",
+			strings.Join(names, ", "))
+	}
+	for d, sessions := range waiting {
+		return d, sessions, nil
+	}
+	return "", nil, ErrNothingToCollect
+}
+
+// UseAVB records AVB used up — for butter, a tincture — drawn from every
+// product's AVB in proportion to what each holds: the jar is one jar.
+func (r *Recorder) UseAVB(grams float64, at time.Time, note string) ([]journal.Event, error) {
+	if err := notAhead(journal.Event{Type: journal.AVBUse, OccurredAt: at}, time.Now()); err != nil {
+		return nil, err
+	}
+	return r.write(func() ([]journal.Event, error) {
+		held := map[string]journal.Centigrams{}
+		var total journal.Centigrams
+		for slug, b := range r.state.Balances {
+			held[slug] = journal.CG(b.AVB)
+			total += held[slug]
+		}
+		if journal.CG(grams) > total {
+			return nil, fmt.Errorf("only %.2fg in the AVB jar, cannot take %.2fg", total.Grams(), grams)
+		}
+		return r.shared(journal.AVBUse, ledger.Split(journal.CG(grams), held), at, "", note, journal.AVB)
+	})
+}
+
+// shared is an entry a product for grams shared out between them, each
+// checked against the account it draws on.
+func (r *Recorder) shared(typ journal.Type, shares map[string]journal.Centigrams, at time.Time, device, note string, from journal.Account) ([]journal.Event, error) {
+	slugs := make([]string, 0, len(shares))
+	for slug := range shares {
+		slugs = append(slugs, slug)
+	}
+	sort.Strings(slugs)
+	var batch []journal.Event
+	for _, slug := range slugs {
+		g := shares[slug].Grams()
+		if err := r.check(slug, g, from); err != nil {
+			return nil, err
+		}
+		batch = append(batch, journal.Event{Type: typ, Product: slug, Grams: g, OccurredAt: at, Device: device, Note: note})
+	}
+	return batch, nil
+}
+
+// plural counts a noun, adding an s past one.
+func plural(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }

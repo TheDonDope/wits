@@ -67,6 +67,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/weigh", s.write(weigh))
 	mux.HandleFunc("POST /api/undo", s.write(undo))
 	mux.HandleFunc("POST /api/flush", s.flush)
+	mux.HandleFunc("GET /api/avb", s.read(avbOf))
+	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
+	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		fail(w, http.StatusNotFound, errors.New("no such endpoint"))
 	})
@@ -158,6 +161,115 @@ func (s *Server) write(do func(*workspace.Workspace, *http.Request) (journal.Eve
 		}
 		reply(w, http.StatusCreated, written{Entry: entryOf(e, ws, nil), Message: message})
 	}
+}
+
+// batch is write for a recorder call that writes an entry a product.
+func (s *Server) batch(do func(*workspace.Workspace, *http.Request) ([]journal.Event, string, error)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ws, ok := s.writable(w, r)
+		if !ok {
+			return
+		}
+		events, message, err := do(ws, r)
+		if err != nil {
+			fail(w, http.StatusBadRequest, err)
+			return
+		}
+		out := flushed{Entries: make([]entry, 0, len(events)), Message: message}
+		for _, e := range events {
+			out.Entries = append(out.Entries, entryOf(e, ws, nil))
+		}
+		reply(w, http.StatusCreated, out)
+	}
+}
+
+type avbRequest struct {
+	Grams  float64 `json:"grams"`
+	Device string  `json:"device"`
+	Date   string  `json:"date"`
+	Note   string  `json:"note"`
+}
+
+// collect records the AVB weighed out of a device.
+func collect(ws *workspace.Workspace, r *http.Request) ([]journal.Event, string, error) {
+	var req avbRequest
+	if err := decode(r, &req); err != nil {
+		return nil, "", err
+	}
+	at, err := when(req.Date)
+	if err != nil {
+		return nil, "", err
+	}
+	events, err := ws.Recorder.CollectAVB(strings.TrimSpace(req.Device), req.Grams, at, strings.TrimSpace(req.Note))
+	if err != nil {
+		return nil, "", err
+	}
+	y := ledger.Yields(ws.Recorder.State().Events)
+	last := y[len(y)-1]
+	return events, fmt.Sprintf("collected %.2f g of AVB from %.2f g: %.0f%% back", last.Collected, last.From, last.Ratio()*100), nil
+}
+
+// useAVB records AVB used up.
+func useAVB(ws *workspace.Workspace, r *http.Request) ([]journal.Event, string, error) {
+	var req avbRequest
+	if err := decode(r, &req); err != nil {
+		return nil, "", err
+	}
+	at, err := when(req.Date)
+	if err != nil {
+		return nil, "", err
+	}
+	events, err := ws.Recorder.UseAVB(req.Grams, at, strings.TrimSpace(req.Note))
+	if err != nil {
+		return nil, "", err
+	}
+	return events, fmt.Sprintf("used %.2f g of AVB", req.Grams), nil
+}
+
+// avb is the AVB jar, what is waiting to be collected, and every yield.
+type avb struct {
+	Held    float64        `json:"held"`
+	Waiting []waiting      `json:"waiting"`
+	Yields  []yieldOfEntry `json:"yields"`
+}
+
+// waiting is a device's sessions since it was last emptied.
+type waiting struct {
+	Device   string  `json:"device"`
+	Grams    float64 `json:"grams"`
+	Sessions int     `json:"sessions"`
+}
+
+// yieldOfEntry is one collection, as ledger.Yield.
+type yieldOfEntry struct {
+	At        time.Time `json:"at"`
+	Device    string    `json:"device"`
+	Collected float64   `json:"collected"`
+	From      float64   `json:"from"`
+	Sessions  int       `json:"sessions"`
+	Ratio     float64   `json:"ratio"`
+}
+
+func avbOf(ws *workspace.Workspace) any {
+	out := avb{Waiting: []waiting{}, Yields: []yieldOfEntry{}}
+	var held journal.Centigrams
+	for _, b := range ws.State.Balances {
+		held += journal.CG(b.AVB)
+	}
+	out.Held = held.Grams()
+	for device, sessions := range ledger.Uncollected(ws.State.Events, ws.OpenedAt) {
+		var g journal.Centigrams
+		for _, e := range sessions {
+			g += journal.CG(e.Grams)
+		}
+		out.Waiting = append(out.Waiting, waiting{Device: device, Grams: g.Grams(), Sessions: len(sessions)})
+	}
+	sort.Slice(out.Waiting, func(i, j int) bool { return out.Waiting[i].Device < out.Waiting[j].Device })
+	for _, y := range ledger.Yields(ws.State.Events) {
+		out.Yields = append(out.Yields, yieldOfEntry{At: y.At, Device: y.Device, Collected: y.Collected,
+			From: y.From, Sessions: y.Sessions, Ratio: y.Ratio()})
+	}
+	return out
 }
 
 // flush records stashes as consumed — the named ones, or every one holding

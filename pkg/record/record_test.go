@@ -767,3 +767,37 @@ func TestAClashedJarTakesOnlyAnUndo(t *testing.T) {
 	_, err = rec.Session("wedding", 0.5, time.Now(), "", 0, "")
 	assert.NoError(t, err, "Should record on the jar again once it adds up")
 }
+
+func TestCollectAndUseAVB(t *testing.T) {
+	rec := stocked(t)
+	_, err := rec.repo.UpdateDevices(func(d *catalog.Devices) error {
+		return d.Add(&catalog.Device{Name: "Mighty"})
+	})
+	require.NoError(t, err)
+	devices, err := catalog.LoadDevices(rec.repo.DevicesPath())
+	require.NoError(t, err)
+	*rec.devices = *devices
+	_, err = rec.Session("wedding", 0.5, time.Now(), "mighty", 0, "")
+	require.NoError(t, err)
+	_, err = rec.Session("wedding", 0.3, time.Now(), "", 0, "")
+	require.NoError(t, err)
+
+	_, err = rec.CollectAVB("", 0.1, time.Now(), "")
+	assert.ErrorContains(t, err, "more than one device", "Should ask which device was emptied")
+	_, err = rec.CollectAVB("mighty", 0.6, time.Now(), "")
+	assert.ErrorContains(t, err, "cannot come out of the 0.50g", "Should not give back more than went in")
+
+	stored, err := rec.CollectAVB("mighty", 0.15, time.Now(), "")
+	require.NoError(t, err)
+	require.Len(t, stored, 1)
+	assert.Equal(t, "from 1 session, 0.50g", stored[0].Note, "Should say what it came from")
+	assert.Equal(t, 0.15, rec.Available(stored[0].Product, journal.AVB))
+	_, err = rec.CollectAVB("mighty", 0.1, time.Now(), "")
+	assert.ErrorIs(t, err, ErrNothingToCollect, "Should not collect twice from one emptying")
+
+	_, err = rec.UseAVB(0.2, time.Now(), "")
+	assert.ErrorContains(t, err, "only 0.15g in the AVB jar")
+	_, err = rec.UseAVB(0.15, time.Now(), "butter")
+	require.NoError(t, err)
+	assert.Equal(t, 0.0, rec.Available(stored[0].Product, journal.AVB))
+}

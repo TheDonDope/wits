@@ -189,7 +189,7 @@ record.
 
 `init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
 `device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`,
+`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`,
 and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
 only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
@@ -216,6 +216,29 @@ entry and its correction count in no total. `--site` writes a folder GitHub
 Pages serves as it is: an index of the fills, newest first, and a page for each,
 linked to the index and to its neighbours. A fill's grinding is labelled "from
 any jar", since jars drain oldest first and a fill's tenure grinds the shelf.
+
+`avb collect` and `avb use` put grams into the AVB jar and take them out
+(`Recorder.CollectAVB`, `UseAVB`). A collection is from one device and from the
+sessions put through it since it was last emptied (`ledger.Uncollected`). It is
+shared between their products in proportion to what each put in, in whole
+centigrams that add up exactly (`ledger.Split`, largest remainder), as an entry
+a product written together, and more cannot come out than went in. A use
+draws the jar down as a whole, in proportion to what each product holds. What
+stays in **consumed** is what the vapour took. `wits avb` and the API's
+`/api/avb` give the jar, what each device has waiting, and every collection's
+yield, put back together from its entries by moment and device
+(`ledger.Yields`). The browser records both on Record's **AVB** tab (`v`),
+picking the device when only one has sessions waiting, and its AVB tile shows
+the last yield. The bundle already carried both types, so nothing in the
+format changed. The terminal interface shows AVB but cannot record it yet.
+
+Imported history holds no sessions, because the spreadsheet only recorded
+grinding, and nothing was invented to fill the gap. So the stash of a product
+recurring across cycles reads high until it is worked down.
+
+On a phone the record dialog's two-field rows did not fit: Material sizes a
+field's input at 180 px, and the form was sized to the dialog without its
+border. Fields in it now shrink to the form, and the form to the dialog.
 
 `refill` is when to order the next prescription (`ledger.PlanRefill`): the
 supply projection's empty day, the shelf held when the fill arrived less every
@@ -578,18 +601,6 @@ the server opening up. Timestamping a chain and syncing over WebDAV are the
 first things wits would send anywhere, so both are opt-in and said plainly.
 
 ### 2 · The physical record, complete
-
-#### 🔹 AVB tracking
-
-- **Status**: Planned
-- The event types and the account exist and the fold handles them, and the AVB
-  can be weighed (`wits reconcile --avb`, or `r` once it holds anything) — but
-  nothing puts grams into it yet. Wanted: `avb collect` recording what is
-  actually weighed out of a device, `avb use` drawing it down, and the observed
-  yield ratio over time.
-- Imported history holds no sessions at all, because the spreadsheet only ever
-  recorded grinding. Nothing was invented to fill that gap, so the stash balance
-  of a product recurring across cycles reads high until it is worked down.
 
 #### 🔹 What it costs
 
