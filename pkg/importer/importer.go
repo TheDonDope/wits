@@ -173,20 +173,31 @@ func events(s *Sheet) []journal.Event {
 // entries.
 var ErrNotEmpty = fmt.Errorf("the journal already holds entries")
 
-// Commit writes a result into a repository.
+// Commit writes a result into a repository, calling step, if it is given,
+// as each stage begins.
 //
 // The repository must be empty. Importing the same workbook twice would double
 // every gram in it, and there is no way to tell a re-import from a genuine
 // second helping of the same product on the same day.
-func Commit(r *repo.Repo, result *Result) error {
+//
+// The entries go in as one batch: one write and one flush to disk, where an
+// entry at a time made 1429 of each and took 13 seconds on a real disk, in
+// silence, against 0.3 in memory. A batch is also all or nothing — an entry
+// that does not validate refuses the import before anything is written, where
+// it used to stop halfway and leave a journal too full to import into again.
+func Commit(r *repo.Repo, result *Result, step func(string)) error {
+	if step == nil {
+		step = func(string) {}
+	}
 	events, err := r.Journal().Events()
 	if err != nil {
 		return err
 	}
 	if len(events) > 0 {
-		return fmt.Errorf("%w: %d of them; import into an empty repository", ErrNotEmpty, len(events))
+		return notEmpty(len(events))
 	}
 
+	step(fmt.Sprintf("adding %d products to the catalog", len(result.Products)))
 	products, err := catalog.Load(r.ProductsPath())
 	if err != nil {
 		return err
@@ -200,11 +211,19 @@ func Commit(r *repo.Repo, result *Result) error {
 		return err
 	}
 
-	for i, e := range result.Events {
-		if _, err := r.Journal().Append(e); err != nil {
-			return fmt.Errorf("entry %d of %d, dated %s: %w",
-				i+1, len(result.Events), e.OccurredAt.Format(time.DateOnly), err)
+	step(fmt.Sprintf("writing %d entries to the journal", len(result.Events)))
+	_, err = r.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
+		// Checked again under the lock: something may have been recorded
+		// since the look above.
+		if len(events) > 0 {
+			return nil, notEmpty(len(events))
 		}
-	}
-	return nil
+		return result.Events, nil
+	})
+	return err
+}
+
+// notEmpty is the refusal to import into a journal that holds entries.
+func notEmpty(n int) error {
+	return fmt.Errorf("%w: %d of them; import into an empty repository", ErrNotEmpty, n)
 }

@@ -224,7 +224,10 @@ through a binding, never through a label.
 
 An import only goes into an empty repository: a second one would double every
 gram, and could not be told apart from a second helping of the same product on
-the same day.
+the same day. It says what it is doing as it goes, timed, on stderr — reading
+the workbook, adding the products, writing the entries — and writes every entry
+in one go: an entry that does not validate refuses the import before anything
+is written.
 
 ## Correcting a mistake
 
