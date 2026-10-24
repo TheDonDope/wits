@@ -35,6 +35,10 @@ type State struct {
 	// the journal, not this.
 	Events []journal.Event
 	Cycles []Cycle
+	// At is the moment the state stands at: entries dated after it are in
+	// Events but not in the balances or the cycles (FoldAt). Zero means every
+	// entry is applied.
+	At time.Time
 
 	// lots is each product's jar split into the fills that stocked it,
 	// oldest first. It is how a gram in storage stays on the account of the
@@ -279,43 +283,84 @@ func Chronological(events []journal.Event) []journal.Event {
 	return out
 }
 
-// Fold replays the events and returns the state they describe. Events are
-// folded in the order they happened (see Chronological), so a backdated entry
-// lands where its date puts it rather than where it was typed in.
-func Fold(events []journal.Event) *State {
-	s := &State{Balances: map[string]*Balance{}, Events: Chronological(events), lots: map[string][]lot{}}
+// Fold replays every event and returns the state they describe, future-dated
+// ones included. Events are folded in the order they happened (see
+// Chronological), so a backdated entry lands where its date puts it rather
+// than where it was typed in. What is true now is FoldAt.
+func Fold(events []journal.Event) *State { return FoldAt(events, time.Time{}) }
+
+// FoldAt replays the events that have happened by at, and holds the rest as
+// upcoming. A zero at replays everything.
+//
+// A fill can be dated ahead — entered before the pickup — and its grams are
+// not on the shelf until it arrives. Replayed with everything else, they were:
+// storage read 2 g more than the jar held, and weighing it honestly recorded
+// a 2 g loss, which would leave the ledger 2 g short when the fill came. The
+// balances, the cycles and every check against them speak of now; Events still
+// holds every entry, so the journal lists the future ones and they can still
+// be corrected.
+func FoldAt(events []journal.Event, at time.Time) *State {
+	s := &State{Balances: map[string]*Balance{}, Events: Chronological(events), At: at, lots: map[string][]lot{}}
 	f := &folder{s: s, last: map[string]int{}, cur: -1}
-
 	for _, e := range s.Events {
-		cg := journal.CG(e.Grams)
-		b := s.balance(e.Product)
-		b.apply(e.From, -cg)
-		b.apply(e.To, cg)
-
-		switch e.Type {
-		case journal.Purchase:
-			f.purchase(e)
-		case journal.Grind:
-			if f.cur != -1 {
-				s.Cycles[f.cur].Ground = Shelf(plus(float64(s.Cycles[f.cur].Ground), e.Grams))
-			}
-			f.consume(e.Product, cg, e.OccurredAt)
-		default:
-			// Anything else that moves grams through storage — adjustments
-			// down and up, corrections either way — settles the lots too, so
-			// a jar reconciled to zero closes its cycles' claims.
-			if e.From == journal.Storage {
-				f.consume(e.Product, cg, e.OccurredAt)
-			}
-			if e.To == journal.Storage && e.Product != "" {
-				f.credit(e.Product, cg, e.OccurredAt)
-			}
+		if !at.IsZero() && e.OccurredAt.After(at) {
+			break // chronological, so everything after is upcoming too
 		}
-		if f.cur != -1 {
-			s.Cycles[f.cur].Events = append(s.Cycles[f.cur].Events, e)
-		}
+		f.apply(e)
 	}
 	return s
+}
+
+// apply folds one event into the running state.
+func (f *folder) apply(e journal.Event) {
+	s := f.s
+	cg := journal.CG(e.Grams)
+	b := s.balance(e.Product)
+	b.apply(e.From, -cg)
+	b.apply(e.To, cg)
+
+	switch e.Type {
+	case journal.Purchase:
+		f.purchase(e)
+	case journal.Grind:
+		if f.cur != -1 {
+			s.Cycles[f.cur].Ground = Shelf(plus(float64(s.Cycles[f.cur].Ground), e.Grams))
+		}
+		f.consume(e.Product, cg, e.OccurredAt)
+	default:
+		// Anything else that moves grams through storage — adjustments
+		// down and up, corrections either way — settles the lots too, so
+		// a jar reconciled to zero closes its cycles' claims.
+		if e.From == journal.Storage {
+			f.consume(e.Product, cg, e.OccurredAt)
+		}
+		if e.To == journal.Storage && e.Product != "" {
+			f.credit(e.Product, cg, e.OccurredAt)
+		}
+	}
+	if f.cur != -1 {
+		s.Cycles[f.cur].Events = append(s.Cycles[f.cur].Events, e)
+	}
+}
+
+// Upcoming returns the events dated after the state's moment, which it holds
+// but has not applied, soonest first.
+func (s *State) Upcoming() []journal.Event {
+	if s.At.IsZero() {
+		return nil
+	}
+	for i, e := range s.Events {
+		if e.OccurredAt.After(s.At) {
+			return s.Events[i:]
+		}
+	}
+	return nil
+}
+
+// Applied returns the events the state was folded from: all of them, less
+// the upcoming.
+func (s *State) Applied() []journal.Event {
+	return s.Events[:len(s.Events)-len(s.Upcoming())]
 }
 
 // balance returns the balance record for a product, creating it on first use.

@@ -433,3 +433,22 @@ func TestFillGround(t *testing.T) {
 	assert.Equal(t, Fill(0), avb)
 	assert.Equal(t, Fill(20), s.ShareOf(fill, "wedding-cake")+stash+avb, "and the row adds up to what the fill dispensed")
 }
+
+func TestFoldAtLeavesTheFutureOut(t *testing.T) {
+	events := []journal.Event{
+		event(journal.Purchase, "wedding-cake", 20, day(0)),
+		event(journal.Grind, "wedding-cake", 1, day(1)),
+		event(journal.Purchase, "wedding-cake", 2, day(100)),
+	}
+
+	s := FoldAt(events, day(10))
+
+	assert.Equal(t, 19.0, s.Balances["wedding-cake"].Storage, "A fill dated ahead is not on the shelf yet")
+	assert.Len(t, s.Cycles, 1, "nor a cycle")
+	assert.Len(t, s.Events, 3, "but it is in the journal")
+	require.Len(t, s.Upcoming(), 1)
+	assert.Equal(t, day(100), s.Upcoming()[0].OccurredAt)
+	assert.Len(t, s.Applied(), 2)
+	assert.Equal(t, 21.0, Fold(events).Balances["wedding-cake"].Storage, "Fold still replays everything")
+	assert.Empty(t, Fold(events).Upcoming())
+}

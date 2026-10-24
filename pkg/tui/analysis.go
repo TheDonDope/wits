@@ -534,7 +534,7 @@ func (v analysisView) cycles(a *App, events []journal.Event, width int) string {
 	t := a.theme
 	all := a.data.State.Cycles
 	if v.playhead >= 0 {
-		all = ledger.Fold(events).Cycles
+		all = ledger.FoldAt(events, a.data.Now).Cycles
 	}
 	if len(all) == 0 {
 		return t.Dim.Render("no cycles yet")

@@ -75,7 +75,10 @@ func Read(r *repo.Repo) (*Workspace, error) {
 	if err != nil {
 		return nil, err
 	}
-	state := ledger.Fold(events)
+	// One moment for the snapshot: what it holds is what had happened by
+	// then, and what it reports is measured against the same instant.
+	now := time.Now()
+	state := ledger.FoldAt(events, now)
 	return &Workspace{
 		Repo:     r,
 		Products: products,
@@ -83,7 +86,7 @@ func Read(r *repo.Repo) (*Workspace, error) {
 		State:    state,
 		Recorder: record.New(r, products, devices, state),
 		Chain:    r.Journal().Verify(),
-		OpenedAt: time.Now(),
+		OpenedAt: now,
 	}, nil
 }
 
