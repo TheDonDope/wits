@@ -87,7 +87,15 @@ bundles are written from the journal, not the fold. Folding in recorded order
 put a fill entered a month late into whichever cycle was open when it was typed
 in. Recording refuses an entry whose grams were not in the jar at its moment,
 on any date, not only today — a grind dated before its fill — and a correction
-is never dated before what it corrects. Grams are flower, not money: an account
+is never dated before what it corrects.
+
+What is true **now** is a replay of the entries dated by now (`ledger.FoldAt`);
+the rest are upcoming. A fill dated ahead used to count from the day it was
+typed in: storage read 2 g more than the jar held, and weighing it honestly
+recorded a 2 g loss, leaving the ledger 2 g short once the fill arrived. Every
+entry is still in `State.Events`, so the journal lists the future ones —
+marked upcoming — and they can still be undone; today's-balance checks judge
+only entries dated by today, and `Shortfalls` judges every entry on its date. Grams are flower, not money: an account
 is never below zero, not even in the past, so there is no overdraft to record —
 `ledger.Shortfalls` names an entry that takes more than was there, following
 each jar down to empty and no further. Both are kept to second precision: nanoseconds say nothing about when

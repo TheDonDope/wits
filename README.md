@@ -171,8 +171,9 @@ closes the form in front.
 
 The interface keeps up with the repository: an entry made with a command in
 another terminal shows within a second, and at midnight "today" moves on. A
-fill dated ahead — entered before the pickup — waits off the dashboard until
-its day.
+fill dated ahead — entered before the pickup — waits off the dashboard and out
+of every balance until its day: the journal lists it as upcoming, `wits status`
+says when it arrives, and weighing a jar before then weighs only what is in it.
 
 `t` picks a theme: wits' own, which follows the terminal's light or dark
 background, or one of twenty editor themes — Dark+ and Light+, One Dark Pro,
