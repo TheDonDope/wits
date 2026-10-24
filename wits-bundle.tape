@@ -21,7 +21,7 @@ Type "wits import Tracking.xlsx --commit >/dev/null" Enter
 Type "clear" Enter
 Show
 
-# Nearly three years of history, 1369 entries.
+# Three years of history, 1420 entries.
 Type "wits bundle --out history.wits" Sleep 400ms Enter
 Sleep 2s
 Type "ls -l .wits/journal.ndjson history.wits" Sleep 400ms Enter

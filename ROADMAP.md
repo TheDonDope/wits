@@ -131,8 +131,8 @@ the stash on the table.
 ### Bundles — `wits bundle` / `wits restore`
 
 The whole repository as one plain-text file, restoring to a journal identical
-**byte for byte**, hash chain included. 1369 entries: 506,205 bytes as a journal,
-27,968 as a bundle, 6,399 gzipped.
+**byte for byte**, hash chain included. 1420 entries: 524,834 bytes as a journal,
+29,207 as a bundle, 6,644 gzipped.
 
 Plain text and line-oriented on purpose: the record may outlive this program, and
 it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
@@ -279,7 +279,7 @@ range is checked when it is typed rather than later when a session is refused.
 
 - **Status**: Planned
 - `wits init` creates `.wits/index/` and **nothing writes to it**. Replaying the
-  journal on every open is milliseconds at 1369 entries, so it does not matter
+  journal on every open is milliseconds at 1420 entries, so it does not matter
   yet; a long-lived server changes that. `wits reindex` should rebuild it, and it
   must stay disposable.
 
@@ -313,16 +313,13 @@ The tracking spreadsheet was imported once. These describe the records rather
 than the tool, and are worth correcting at the source:
 
 - **`2025-03` is dated a year early.** All 32 of its entries fall in March 2024.
-- **`2025-10` has 2.40 g with no product selected**, on 24 and 26 November. The
-  spreadsheet never subtracted those grams from anything either, so they are
-  missing from that cycle's arithmetic too.
 - **`2025-06` lists Ghost Train Haze at 0.01 g** where the other two products are
   10 g. Either a typo or a deliberate "trace left" marker.
 - **Two cultivars were dispensed at two strengths each** — `420 Evolution CA MAC:
   MAC1` at 22/1 and 25/1, and `All Nations Lemon Tartz` at 21/1 and 25/1. These
   used to become one product apiece, because the slug dropped the ratio. The
   ratio is now the end of every slug and they stand apart, which is why the
-  import reports 50 products where it once reported 48.
+  import reported 50 products where it once reported 48.
 
 ---
 
