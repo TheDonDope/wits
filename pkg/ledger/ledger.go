@@ -1,9 +1,12 @@
 package ledger
 
 import (
+	"fmt"
 	"math"
 	"slices"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/journal"
@@ -20,7 +23,7 @@ type Balance struct {
 
 // Total returns the grams of this product still held, that is everything that
 // has not yet gone through a device.
-func (b Balance) Total() float64 { return Round(b.Storage + b.Stash) }
+func (b Balance) Total() float64 { return plus(b.Storage, b.Stash) }
 
 // State is the result of replaying a journal.
 type State struct {
@@ -84,17 +87,17 @@ func (c Cycle) Open() bool { return c.End.IsZero() }
 // Held returns the grams on the whole shelf when the cycle opened: the fill
 // itself plus everything earlier cycles still had standing. The supply
 // projection starts here; the cycle's own arithmetic does not.
-func (c Cycle) Held() float64 { return Round(c.Purchased + c.Carried) }
+func (c Cycle) Held() float64 { return plus(c.Purchased, c.Carried) }
 
 // PurchasedOf returns how many grams of one product the cycle's fill brought.
 func (c Cycle) PurchasedOf(slug string) float64 {
-	var grams float64
+	var cg journal.Centigrams
 	for _, e := range c.Events {
 		if e.Product == slug && e.Type == journal.Purchase {
-			grams += e.Grams
+			cg += journal.CG(e.Grams)
 		}
 	}
-	return Round(grams)
+	return cg.Grams()
 }
 
 // lot is one fill's share of a product's jar. A jar refilled before it was
@@ -103,7 +106,7 @@ func (c Cycle) PurchasedOf(slug string) float64 {
 // and each cycle's claim shrinks in the order it was dispensed.
 type lot struct {
 	cycle int
-	grams float64
+	cg    journal.Centigrams
 }
 
 // folder carries a fold's running accounts: what each cycle still holds in
@@ -112,7 +115,7 @@ type lot struct {
 // the slice can move the backing array, which would strand a pointer.
 type folder struct {
 	s     *State
-	share []float64
+	share []journal.Centigrams
 	last  map[string]int
 	cur   int
 }
@@ -120,7 +123,7 @@ type folder struct {
 // settle closes a cycle the moment its share is ground away, and reopens it
 // if a reconciliation finds grams again.
 func (f *folder) settle(cycle int, at time.Time) {
-	if Round(f.share[cycle]) <= 0 {
+	if f.share[cycle] <= 0 {
 		f.share[cycle] = 0
 		f.s.Cycles[cycle].End = at
 	} else if !f.s.Cycles[cycle].End.IsZero() {
@@ -129,15 +132,15 @@ func (f *folder) settle(cycle int, at time.Time) {
 }
 
 // consume draws grams out of a product's jar, oldest lot first.
-func (f *folder) consume(product string, grams float64, at time.Time) {
+func (f *folder) consume(product string, cg journal.Centigrams, at time.Time) {
 	q := f.s.lots[product]
-	for grams > 0 && len(q) > 0 {
-		take := math.Min(grams, q[0].grams)
-		q[0].grams = Round(q[0].grams - take)
-		grams = Round(grams - take)
-		f.share[q[0].cycle] = Round(f.share[q[0].cycle] - take)
+	for cg > 0 && len(q) > 0 {
+		take := min(cg, q[0].cg)
+		q[0].cg -= take
+		cg -= take
+		f.share[q[0].cycle] -= take
 		f.settle(q[0].cycle, at)
-		if q[0].grams <= 0 {
+		if q[0].cg <= 0 {
 			q = q[1:]
 		}
 	}
@@ -146,7 +149,7 @@ func (f *folder) consume(product string, grams float64, at time.Time) {
 
 // credit puts found grams back into the jar's newest lot: an upward
 // reconciliation corrects the present jar, not a bygone fill.
-func (f *folder) credit(product string, grams float64, at time.Time) {
+func (f *folder) credit(product string, cg journal.Centigrams, at time.Time) {
 	if len(f.s.Cycles) == 0 {
 		return
 	}
@@ -154,12 +157,12 @@ func (f *folder) credit(product string, grams float64, at time.Time) {
 	q := f.s.lots[product]
 	if n := len(q); n > 0 {
 		cycle = q[n-1].cycle
-		q[n-1].grams = Round(q[n-1].grams + grams)
+		q[n-1].cg += cg
 	} else {
-		q = append(q, lot{cycle: cycle, grams: grams})
+		q = append(q, lot{cycle: cycle, cg: cg})
 	}
 	f.s.lots[product] = q
-	f.share[cycle] = Round(f.share[cycle] + grams)
+	f.share[cycle] += cg
 	f.settle(cycle, at)
 }
 
@@ -174,30 +177,30 @@ func (f *folder) purchase(e journal.Event) {
 		// snapshot backs it out again: what was carried in is what sat in
 		// storage before this fill arrived.
 		opening := map[string]float64{}
-		carried := 0.0
+		var carried journal.Centigrams
 		for slug, bal := range s.Balances {
-			held := bal.Storage
+			held := journal.CG(bal.Storage)
 			if slug == e.Product {
-				held = Round(held - e.Grams)
+				held -= journal.CG(e.Grams)
 			}
 			if held > 0 {
-				opening[slug] = held
+				opening[slug] = held.Grams()
 				carried += held
 			}
 		}
 		s.Cycles = append(s.Cycles, Cycle{
 			Seq: len(s.Cycles), Start: e.OccurredAt,
-			Opening: opening, Carried: Round(carried),
+			Opening: opening, Carried: carried.Grams(),
 		})
 		f.share = append(f.share, 0)
 		f.cur = len(s.Cycles) - 1
 	}
-	s.Cycles[f.cur].Purchased = Round(s.Cycles[f.cur].Purchased + e.Grams)
+	s.Cycles[f.cur].Purchased = plus(s.Cycles[f.cur].Purchased, e.Grams)
 	if !contains(s.Cycles[f.cur].Products, e.Product) {
 		s.Cycles[f.cur].Products = append(s.Cycles[f.cur].Products, e.Product)
 	}
-	s.lots[e.Product] = append(s.lots[e.Product], lot{cycle: f.cur, grams: e.Grams})
-	f.share[f.cur] = Round(f.share[f.cur] + e.Grams)
+	s.lots[e.Product] = append(s.lots[e.Product], lot{cycle: f.cur, cg: journal.CG(e.Grams)})
+	f.share[f.cur] += journal.CG(e.Grams)
 	f.last[e.Product] = f.cur
 }
 
@@ -230,9 +233,10 @@ func Fold(events []journal.Event) *State {
 	f := &folder{s: s, last: map[string]int{}, cur: -1}
 
 	for _, e := range s.Events {
+		cg := journal.CG(e.Grams)
 		b := s.balance(e.Product)
-		apply(b, e.From, -e.Grams)
-		apply(b, e.To, e.Grams)
+		b.apply(e.From, -cg)
+		b.apply(e.To, cg)
 		if held := b.In(e.From); e.Product != "" && held < 0 {
 			s.Overdrawn = append(s.Overdrawn, Overdraft{Event: e, Account: e.From, Grams: held})
 		}
@@ -242,18 +246,18 @@ func Fold(events []journal.Event) *State {
 			f.purchase(e)
 		case journal.Grind:
 			if f.cur != -1 {
-				s.Cycles[f.cur].Ground = Round(s.Cycles[f.cur].Ground + e.Grams)
+				s.Cycles[f.cur].Ground = plus(s.Cycles[f.cur].Ground, e.Grams)
 			}
-			f.consume(e.Product, e.Grams, e.OccurredAt)
+			f.consume(e.Product, cg, e.OccurredAt)
 		default:
 			// Anything else that moves grams through storage — adjustments
 			// down and up, corrections either way — settles the lots too, so
 			// a jar reconciled to zero closes its cycles' claims.
 			if e.From == journal.Storage {
-				f.consume(e.Product, e.Grams, e.OccurredAt)
+				f.consume(e.Product, cg, e.OccurredAt)
 			}
 			if e.To == journal.Storage && e.Product != "" {
-				f.credit(e.Product, e.Grams, e.OccurredAt)
+				f.credit(e.Product, cg, e.OccurredAt)
 			}
 		}
 		if f.cur != -1 {
@@ -318,24 +322,27 @@ func (s *State) CycleAt(t time.Time) *Cycle {
 
 // ShareOf returns the grams of one product still standing on the cycle's own
 // account — the jar's balance minus whatever older or newer fills hold in it.
-func (s *State) ShareOf(c *Cycle, slug string) float64 {
-	var grams float64
+func (s *State) ShareOf(c *Cycle, slug string) float64 { return s.shareOf(c, slug).Grams() }
+
+// shareOf is ShareOf in centigrams.
+func (s *State) shareOf(c *Cycle, slug string) journal.Centigrams {
+	var cg journal.Centigrams
 	for _, l := range s.lots[slug] {
 		if l.cycle == c.Seq {
-			grams += l.grams
+			cg += l.cg
 		}
 	}
-	return Round(grams)
+	return cg
 }
 
 // FillOnShelf returns the grams of the cycle's fill still in storage: its
 // own lots, summed over its products.
 func (s *State) FillOnShelf(c *Cycle) float64 {
-	var grams float64
+	var cg journal.Centigrams
 	for _, slug := range c.Products {
-		grams += s.ShareOf(c, slug)
+		cg += s.shareOf(c, slug)
 	}
-	return Round(grams)
+	return cg.Grams()
 }
 
 // CarriedOnShelf returns the storage still standing on other cycles'
@@ -343,20 +350,21 @@ func (s *State) FillOnShelf(c *Cycle) float64 {
 // cycles still open for it.
 func (s *State) CarriedOnShelf(c *Cycle) (grams float64, jars, cycles int) {
 	open := map[int]bool{}
+	var total journal.Centigrams
 	for _, q := range s.lots {
-		var other float64
+		var other journal.Centigrams
 		for _, l := range q {
-			if l.cycle != c.Seq && l.grams > 0 {
-				other += l.grams
+			if l.cycle != c.Seq && l.cg > 0 {
+				other += l.cg
 				open[l.cycle] = true
 			}
 		}
 		if other > 0 {
 			jars++
-			grams += other
+			total += other
 		}
 	}
-	return Round(grams), jars, len(open)
+	return total.Grams(), jars, len(open)
 }
 
 // Stats summarises a run of events over time.
@@ -387,15 +395,15 @@ func (st Stats) DaysLeft(grams float64) float64 {
 // Grinding is what the spreadsheet recorded and what there is history for;
 // consumption out of the stash is tracked separately.
 func Summarise(events []journal.Event) Stats {
-	perDay := map[string]float64{}
+	perDay := map[string]journal.Centigrams{}
+	var ground journal.Centigrams
 	var st Stats
 	for _, e := range events {
 		if e.Type != journal.Grind {
 			continue
 		}
-		day := e.OccurredAt.Format(time.DateOnly)
-		perDay[day] = Round(perDay[day] + e.Grams)
-		st.Ground = Round(st.Ground + e.Grams)
+		perDay[e.OccurredAt.Format(time.DateOnly)] += journal.CG(e.Grams)
+		ground += journal.CG(e.Grams)
 		if st.First.IsZero() || e.OccurredAt.Before(st.First) {
 			st.First = e.OccurredAt
 		}
@@ -404,10 +412,11 @@ func Summarise(events []journal.Event) Stats {
 		}
 	}
 
+	st.Ground = ground.Grams()
 	amounts := make([]float64, 0, len(perDay))
-	for _, g := range perDay {
-		if g > 0 {
-			amounts = append(amounts, g)
+	for _, cg := range perDay {
+		if cg > 0 {
+			amounts = append(amounts, cg.Grams())
 		}
 	}
 	sort.Float64s(amounts)
@@ -428,33 +437,38 @@ func Summarise(events []journal.Event) Stats {
 
 // In returns the grams the balance holds in an account; External holds none.
 func (b Balance) In(account journal.Account) float64 {
-	switch account {
-	case journal.Storage:
-		return b.Storage
-	case journal.Stash:
-		return b.Stash
-	case journal.Consumed:
-		return b.Consumed
-	case journal.AVB:
-		return b.AVB
+	if p := b.slot(account); p != nil {
+		return *p
 	}
 	return 0
 }
 
-// apply moves grams into an account on a balance. Movements to and from
-// External fall outside the tracked accounts and are ignored.
-func apply(b *Balance, account journal.Account, grams float64) {
-	switch account {
-	case journal.Storage:
-		b.Storage = Round(b.Storage + grams)
-	case journal.Stash:
-		b.Stash = Round(b.Stash + grams)
-	case journal.Consumed:
-		b.Consumed = Round(b.Consumed + grams)
-	case journal.AVB:
-		b.AVB = Round(b.AVB + grams)
+// apply moves centigrams into an account on a balance, adding in centigrams
+// so the balance is exact however many entries it is the sum of. Movements to
+// and from External fall outside the tracked accounts and are ignored.
+func (b *Balance) apply(account journal.Account, cg journal.Centigrams) {
+	if p := b.slot(account); p != nil {
+		*p = (journal.CG(*p) + cg).Grams()
 	}
 }
+
+// slot is the field holding an account's grams, or nil for External.
+func (b *Balance) slot(account journal.Account) *float64 {
+	switch account {
+	case journal.Storage:
+		return &b.Storage
+	case journal.Stash:
+		return &b.Stash
+	case journal.Consumed:
+		return &b.Consumed
+	case journal.AVB:
+		return &b.AVB
+	}
+	return nil
+}
+
+// plus adds two amounts in centigrams.
+func plus(a, b float64) float64 { return (journal.CG(a) + journal.CG(b)).Grams() }
 
 // median returns the median of a sorted slice.
 func median(sorted []float64) float64 {
@@ -466,6 +480,24 @@ func median(sorted []float64) float64 {
 		return sorted[n/2]
 	}
 	return Round((sorted[n/2-1] + sorted[n/2]) / 2)
+}
+
+// ParseGrams reads an amount as typed — "0.75", "0.75g", "0,75 g" — and
+// refuses one finer than a centigram, which nothing after the journal keeps:
+// the screens show two places and a bundle stores centigrams, so 0.333 g came
+// back from a restore as 0.33 g. Every place an amount is typed in, the
+// commands and every form, reads it here; it was seven copies, each a little
+// different. Whether zero or less is allowed is the caller's to say.
+func ParseGrams(s string) (float64, error) {
+	t := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(s)), "g"))
+	grams, err := strconv.ParseFloat(strings.Replace(t, ",", ".", 1), 64)
+	if err != nil || math.IsNaN(grams) || math.IsInf(grams, 0) {
+		return 0, fmt.Errorf("%q is not an amount in grams", strings.TrimSpace(s))
+	}
+	if !journal.Whole(grams) {
+		return 0, fmt.Errorf("%s g is finer than a scale reads; give it to two decimal places", t)
+	}
+	return grams, nil
 }
 
 // Round trims a value to centigrams, which is the precision a jeweller's scale

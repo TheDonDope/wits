@@ -136,6 +136,17 @@ Days-with-an-entry and days-elapsed are reported **separately and labelled**. Th
 spreadsheet conflated them, because its date column was pre-filled with zero
 rows, so its average depended on how far ahead it had been filled in.
 
+Amounts are **centigrams** wherever they are added up (`journal.Centigrams`):
+balances, the per-fill lots, each cycle's share and daily totals are integer
+sums, so a total is exact whatever order it is added in, not exact because
+every path remembered to round. The journal still stores grams as a decimal —
+the encoding every hash is over — and the journal refuses an amount finer than
+a centigram: 0.333 g used to be stored as typed, shown as 0.33 g everywhere,
+and bundled as 0.33 g, so its restore was not the original. Every amount typed
+into a command or a form is read by one parser, `ledger.ParseGrams`, where
+there were seven copies; `wits fsck` reports any finer amount an older wits
+recorded.
+
 Every gram in storage stands on the account of the cycle that dispensed it,
 in per-fill lots drained oldest-first. Grinding down last month's remainder
 draws on last month's cycle, not this month's fill; a product's "left" cannot

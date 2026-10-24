@@ -494,4 +494,31 @@ func TestFsckCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, status, "⚠ the journal was changed outside wits", "status should say so too")
 	})
+
+	t.Run("AnAmountFinerThanACentigram", func(t *testing.T) {
+		dir := repository(t)
+		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+		require.NoError(t, err)
+		r, err := repo.Discover(dir)
+		require.NoError(t, err)
+		// What an older wits wrote when given 0.333: a line with a valid
+		// hash, which this one would refuse to append.
+		path := r.JournalPath()
+		data, err := os.ReadFile(path)
+		require.NoError(t, err)
+		events, err := r.Journal().Events()
+		require.NoError(t, err)
+		old := events[0]
+		old.Seq, old.Prev, old.Type, old.From, old.To, old.Grams = 2, old.Hash, journal.Grind, journal.Storage, journal.Stash, 0.333
+		old.Hash, err = journal.Hash(old, old.Prev)
+		require.NoError(t, err)
+		line, err := journal.Marshal(old)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(path, append(append(data, line...), '\n'), 0600))
+
+		out, err := run(t, dir, Fsck)
+
+		assert.EqualError(t, err, "1 problem found")
+		assert.Contains(t, out, "is 0.333 g, finer than a centigram; a bundle keeps 0.33 g")
+	})
 }

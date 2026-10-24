@@ -523,3 +523,13 @@ func TestVerifyReadsTheBytesOnDisk(t *testing.T) {
 		assert.ErrorIs(t, j.Verify(), ErrBrokenChain, "The same event, written differently, is not the line that was hashed")
 	})
 }
+
+func TestCentigrams(t *testing.T) {
+	assert.Equal(t, Centigrams(29), CG(0.29), "0.29 is 28.999… in floating point; it is still 29 centigrams")
+	assert.Equal(t, 0.29, CG(0.29).Grams())
+	assert.True(t, Whole(1.25))
+	assert.False(t, Whole(0.333))
+
+	_, err := testJournal(t).Append(Event{Type: Grind, Product: "wcake", Grams: 0.333})
+	assert.ErrorContains(t, err, "finer than a centigram", "The journal should not keep a precision nothing after it keeps")
+}

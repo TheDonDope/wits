@@ -81,6 +81,14 @@ func fsck(ws *workspace.Workspace) []string {
 		problems = append(problems, fmt.Sprintf("%s %s on %s left %s at %.2fg",
 			shortHash(o.Event.Hash), o.Event.Type, o.Event.OccurredAt.Format(time.DateOnly), o.Account, o.Grams))
 	}
+	// Recorded before amounts were held to centigrams: shown and bundled as
+	// the nearest centigram, so a restore would not give back this journal.
+	for _, e := range ws.State.Events {
+		if !journal.Whole(e.Grams) {
+			problems = append(problems, fmt.Sprintf("%s is %v g, finer than a centigram; a bundle keeps %.2f g",
+				shortHash(e.Hash), e.Grams, e.Grams))
+		}
+	}
 	return append(problems, dangling(ws)...)
 }
 

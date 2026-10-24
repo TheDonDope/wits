@@ -9,13 +9,13 @@ package commands
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -36,10 +36,9 @@ func open() (*session, error) {
 
 // parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".
 func parseGrams(s string) (float64, error) {
-	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(s)), "g"))
-	grams, err := strconv.ParseFloat(strings.Replace(trimmed, ",", ".", 1), 64)
+	grams, err := ledger.ParseGrams(s)
 	if err != nil {
-		return 0, fmt.Errorf("%q is not an amount in grams", s)
+		return 0, err
 	}
 	if grams <= 0 {
 		return 0, fmt.Errorf("amount must be positive, got %v", grams)

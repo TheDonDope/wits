@@ -180,9 +180,9 @@ func required(what string) func(string) error {
 
 // validGrams accepts a positive amount, in the shapes a scale reads out.
 func validGrams(s string) error {
-	v, err := strconv.ParseFloat(strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(s), "g")), ",", ".", 1), 64)
+	v, err := ledger.ParseGrams(s)
 	if err != nil {
-		return fmt.Errorf("not an amount in grams")
+		return err
 	}
 	if v <= 0 {
 		return fmt.Errorf("must be more than zero")
@@ -283,8 +283,7 @@ func (f *entryForm) commit(a *App) (journal.Event, error) {
 		}
 		return journal.Event{Product: p.Slug, Note: p.Name}, nil
 	case entryReconcile:
-		weighed, err := strconv.ParseFloat(
-			strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(f.amount), "g")), ",", ".", 1), 64)
+		weighed, err := ledger.ParseGrams(f.amount)
 		if err != nil {
 			return journal.Event{}, err
 		}
@@ -331,10 +330,9 @@ var errCancelled = errors.New("cancelled")
 
 // parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".
 func parseGrams(s string) (float64, error) {
-	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(s)), "g"))
-	grams, err := strconv.ParseFloat(strings.Replace(trimmed, ",", ".", 1), 64)
+	grams, err := ledger.ParseGrams(s)
 	if err != nil {
-		return 0, fmt.Errorf("%q is not an amount in grams", s)
+		return 0, err
 	}
 	if grams <= 0 {
 		return 0, fmt.Errorf("amount must be positive, got %v", grams)
@@ -418,9 +416,9 @@ func newReconcileForm(slug string, a *App, account journal.Account) *entryForm {
 
 // nonNegativeGrams accepts zero, because an empty jar is a real reading.
 func nonNegativeGrams(s string) error {
-	v, err := strconv.ParseFloat(strings.Replace(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(s), "g")), ",", ".", 1), 64)
+	v, err := ledger.ParseGrams(s)
 	if err != nil {
-		return fmt.Errorf("not a weight in grams")
+		return err
 	}
 	if v < 0 {
 		return fmt.Errorf("a weight cannot be negative")
@@ -482,10 +480,9 @@ func (f *entryForm) commitMany(a *App) (string, error) {
 			skipped++
 			continue
 		}
-		weighed, err := strconv.ParseFloat(
-			strings.Replace(strings.TrimSuffix(strings.TrimSpace(strings.ToLower(reading)), "g"), ",", ".", 1), 64)
+		weighed, err := ledger.ParseGrams(reading)
 		if err != nil {
-			return "", fmt.Errorf("%q is not a weight in grams", reading)
+			return "", err
 		}
 		_, err = rec.Reconcile(slug, account, weighed, "")
 		if errors.Is(err, record.ErrNothingToReconcile) {

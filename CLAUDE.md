@@ -108,7 +108,9 @@ checks a new one against every date in the replay (`State.Overdrawn`), not only
 against today's balance.
 
 Grams move between four accounts (storage → stash → consumed → avb), one stash
-per product, every entry a transfer — mass is conserved end to end.
+per product, every entry a transfer — mass is conserved end to end. Add amounts
+in `journal.Centigrams` (`journal.CG`), not floats with `ledger.Round` after;
+read typed amounts with `ledger.ParseGrams`.
 `pkg/record` applies entries with the guard rails (no overdrawing an account);
 the CLI commands and the TUI forms both go through it, so they cannot disagree.
 Every recorder entry is a builder run by `Journal.AppendWith`, under the lock,
