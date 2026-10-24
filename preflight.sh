@@ -31,6 +31,16 @@ base() {
 	fi
 }
 
+# lizard_warnings prints lizard's complaints about one file against Codacy's
+# thresholds: past 50 lines of code, or a cyclomatic complexity past 15.
+lizard_warnings() {
+	"$1" -m lizard -T nloc=50 -T cyclomatic_complexity=15 --warnings_only "$2" 2>/dev/null |
+		grep 'warning:' || true
+}
+
+# function_names reduces lizard warnings to the names of the functions flagged.
+function_names() { sed -n 's/.*warning: \([^ ]*\) has .*/\1/p'; }
+
 check() {
 	b="$(base)"
 	say "preflight against $b"
@@ -75,15 +85,37 @@ check() {
 		py="${WITS_TOOLS:-$HOME/.cache/wits-dev}/venv/bin/python"
 		[ -x "$py" ] || py=python3
 		if "$py" -c 'import lizard' 2>/dev/null; then
-			# shellcheck disable=SC2086 # the file list is meant to split
-			warnings="$("$py" -m lizard -T nloc=50 -T cyclomatic_complexity=15 \
-				--warnings_only $changed 2>/dev/null | grep 'warning:' || true)"
-			if [ -n "$warnings" ]; then
+			# Codacy refuses only what is new, so a function already over the
+			# limits on the base is reported, not failed: touching a file must
+			# not make its old debts look like yours.
+			fresh_warnings="" old=0
+			while IFS= read -r f; do
+				now="$(lizard_warnings "$py" "$f")"
+				[ -n "$now" ] || continue
+				before=""
+				if git cat-file -e "$b:$f" 2>/dev/null; then
+					tmp="$(mktemp --suffix=".${f##*.}")"
+					git show "$b:$f" >"$tmp"
+					before="$(lizard_warnings "$py" "$tmp" | function_names)"
+					rm -f "$tmp"
+				fi
+				while IFS= read -r w; do
+					if grep -qxF "$(function_names <<<"$w")" <<<"$before"; then
+						old=$((old + 1))
+					else
+						fresh_warnings+="$w"$'\n'
+					fi
+				done <<<"$now"
+			done <<<"$changed"
+			if [ -n "$fresh_warnings" ]; then
 				say "✗ Codacy will flag these functions (nloc > 50 or ccn > 15):"
-				say "$warnings"
+				say "${fresh_warnings%$'\n'}"
 				fail=1
 			else
-				say "✓ lizard (changed files inside Codacy's limits)"
+				say "✓ lizard (nothing new past Codacy's limits)"
+			fi
+			if [ "$old" -gt 0 ]; then
+				say "  $old function(s) in the changed files were already past them on $b"
 			fi
 		else
 			say "· lizard not installed (./doctor.sh install); skipping the complexity check"
