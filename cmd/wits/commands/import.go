@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"text/tabwriter"
 	"time"
 
@@ -31,10 +32,13 @@ var Import = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		step := progress(cmd.ErrOrStderr())
+		step("reading " + filepath.Base(args[0]))
 		result, err := importer.Read(args[0])
 		if err != nil {
 			return err
 		}
+		step(fmt.Sprintf("read %d worksheets", len(result.Sheets)))
 
 		out := cmd.OutOrStdout()
 		writeReport(out, result)
@@ -43,13 +47,28 @@ var Import = &cobra.Command{
 			fmt.Fprintf(out, "\nDry run. Nothing was written. Re-run with --commit to import.\n")
 			return nil
 		}
-		if err := importer.Commit(s.Repo, result); err != nil {
+		if err := importer.Commit(s.Repo, result, step); err != nil {
 			return err
 		}
+		step("done")
 		fmt.Fprintf(out, "\nImported %d products and %d entries.\n",
 			len(result.Products), len(result.Events))
 		return nil
 	},
+}
+
+// progress returns a step function that writes each stage of a long command
+// as it begins, stamped with the time since the first, so a wait is never
+// silent and a slow stage names itself. It writes to stderr, leaving the
+// report on stdout as it was.
+func progress(w io.Writer) func(string) {
+	var start time.Time
+	return func(stage string) {
+		if start.IsZero() {
+			start = time.Now()
+		}
+		fmt.Fprintf(w, "%6.2fs  %s\n", time.Since(start).Seconds(), stage)
+	}
 }
 
 // writeReport describes what an import found, and what it could not make sense

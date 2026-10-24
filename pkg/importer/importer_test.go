@@ -290,7 +290,7 @@ func TestCommit(t *testing.T) {
 		r, err := repo.Init(t.TempDir())
 		require.NoError(t, err)
 
-		require.NoError(t, Commit(r, result))
+		require.NoError(t, Commit(r, result, nil))
 
 		events, err := r.Journal().Events()
 		require.NoError(t, err)
@@ -308,15 +308,41 @@ func TestCommit(t *testing.T) {
 		require.NoError(t, err)
 		r, err := repo.Init(t.TempDir())
 		require.NoError(t, err)
-		require.NoError(t, Commit(r, result))
+		require.NoError(t, Commit(r, result, nil))
 
-		err = Commit(r, result)
+		err = Commit(r, result, nil)
 
 		assert.ErrorIs(t, err, ErrNotEmpty,
 			"Should refuse to import twice, which would double every gram")
 		events, err := r.Journal().Events()
 		require.NoError(t, err)
 		assert.Len(t, events, 5, "and should not have added anything")
+	})
+
+	t.Run("NamesEachStage", func(t *testing.T) {
+		result, err := Read(build(t, twoProducts()))
+		require.NoError(t, err)
+		r, err := repo.Init(t.TempDir())
+		require.NoError(t, err)
+
+		var stages []string
+		require.NoError(t, Commit(r, result, func(s string) { stages = append(stages, s) }))
+
+		assert.Equal(t, []string{"adding 2 products to the catalog", "writing 5 entries to the journal"}, stages)
+	})
+
+	t.Run("AnInvalidEntryWritesNoEntries", func(t *testing.T) {
+		result, err := Read(build(t, twoProducts()))
+		require.NoError(t, err)
+		result.Events[len(result.Events)-1].Grams = -1
+		r, err := repo.Init(t.TempDir())
+		require.NoError(t, err)
+
+		assert.Error(t, Commit(r, result, nil))
+
+		events, err := r.Journal().Events()
+		require.NoError(t, err)
+		assert.Empty(t, events, "One bad entry should refuse the batch, not stop it halfway")
 	})
 
 	t.Run("ReadingWritesNothing", func(t *testing.T) {

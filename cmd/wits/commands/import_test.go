@@ -104,6 +104,12 @@ func TestImportCommand(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "Imported 2 products and 4 entries", "Should say what it wrote")
+		for _, stage := range []string{"reading ", "read 1 worksheets", "adding 2 products to the catalog",
+			"writing 4 entries to the journal", "s  done"} {
+			assert.Contains(t, out, stage, "Should say what it is doing while it does it")
+		}
+		assert.Less(t, strings.Index(out, "writing 4 entries"), strings.Index(out, "s  done"),
+			"in the order it does it")
 
 		status, err := run(t, dir, Status)
 		require.NoError(t, err)

@@ -122,7 +122,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 
 	r, err := repo.Init(t.TempDir())
 	require.NoError(t, err)
-	require.NoError(t, Commit(r, result))
+	require.NoError(t, Commit(r, result, nil))
 
 	events, err := r.Journal().Events()
 	require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestCommittingTheRealWorkbook(t *testing.T) {
 	})
 
 	t.Run("ImportingAgainIsRefused", func(t *testing.T) {
-		err := Commit(r, result)
+		err := Commit(r, result, nil)
 
 		assert.ErrorIs(t, err, ErrNotEmpty, "a second import would double every gram")
 		after, readErr := r.Journal().Events()
