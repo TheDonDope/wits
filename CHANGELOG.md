@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.45.0"></a>
+## [v0.45.0] - 2026-10-24
+### Docs
+- what has not arrived is not on the shelf
+
+### Fix
+- **ledger:** what has not arrived is not on the shelf
+
+
 <a name="v0.44.0"></a>
 ## [v0.44.0] - 2026-10-24
+### Docs
+- update changelog for v0.44.0
+
 ### Fix
 - **ledger:** flower, not money — no overdrafts, no negative grams
 
@@ -644,7 +656,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.44.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.45.0...HEAD
+[v0.45.0]: https://github.com/TheDonDope/wits/compare/v0.44.0...v0.45.0
 [v0.44.0]: https://github.com/TheDonDope/wits/compare/v0.43.0...v0.44.0
 [v0.43.0]: https://github.com/TheDonDope/wits/compare/v0.42.0...v0.43.0
 [v0.42.0]: https://github.com/TheDonDope/wits/compare/v0.41.0...v0.42.0
