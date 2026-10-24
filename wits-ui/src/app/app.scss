@@ -1,0 +1,67 @@
+:host { display: block; min-height: 100vh; }
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 28px;
+  height: 68px;
+  background: rgba(11, 14, 20, 0.72);
+  backdrop-filter: blur(18px) saturate(1.3);
+  border-bottom: 1px solid var(--w-glass-edge);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  font: 700 22px var(--w-num);
+  letter-spacing: -0.04em;
+  svg { width: 30px; height: 30px; }
+  .spin { transform-origin: 32px 32px; animation: spin 9s linear infinite; }
+}
+
+.nav {
+  flex: 1;
+  background: transparent;
+  --mat-tab-header-divider-height: 0;
+  a { min-width: 0; padding: 0 18px; }
+  mat-icon { margin-right: 8px; }
+}
+
+.right { display: flex; align-items: center; gap: 18px; }
+.clock { color: var(--w-dim); font-size: 13px; }
+.chain {
+  display: flex; align-items: center; gap: 6px;
+  font: 600 11px 'Inter Variable'; letter-spacing: .08em; text-transform: uppercase; color: var(--w-stash);
+  i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+  &.bad { color: var(--w-warn); }
+}
+
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 28px 120px;
+}
+
+.fab {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  background: linear-gradient(120deg, var(--w-violet), #5ee6b6) !important;
+  color: #0b0e14 !important;
+  box-shadow: 0 12px 40px -8px rgba(139, 123, 255, 0.7) !important;
+}
+
+@media (max-width: 900px) {
+  .label, .clock { display: none; }
+  .bar { gap: 12px; padding: 0 12px; }
+  main { padding: 16px 12px 110px; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

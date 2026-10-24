@@ -1,0 +1,44 @@
+<header class="bar">
+  <a class="brand" routerLink="/">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#7cf5c4" /><stop offset="1" stop-color="#8b7bff" />
+        </linearGradient>
+      </defs>
+      <circle cx="32" cy="32" r="24" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8" />
+      <circle class="spin" cx="32" cy="32" r="24" fill="none" stroke="url(#brand)" stroke-width="8"
+        stroke-linecap="round" stroke-dasharray="110 200" />
+      <circle cx="32" cy="32" r="8" fill="url(#brand)" />
+    </svg>
+    <span>wits</span>
+  </a>
+  <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false" class="nav">
+    @for (l of links; track l.path) {
+      <a mat-tab-link [routerLink]="l.path" routerLinkActive #rla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: l.path === '/' }" [active]="rla.isActive">
+        <mat-icon>{{ l.icon }}</mat-icon><span class="label">{{ l.label }}</span>
+      </a>
+    }
+  </nav>
+  <div class="right">
+    @if (wits.overview.value(); as o) {
+      <span class="chain" [class.bad]="!o.chain_ok"
+        [matTooltip]="o.chain_ok ? 'The journal’s hash chain verifies' : 'The journal was changed outside wits'">
+        <i></i>{{ o.chain_ok ? 'verified' : 'changed' }}
+      </span>
+    }
+    <span class="clock num">{{ now() | date: 'EEE d MMM · HH:mm:ss' }}</span>
+  </div>
+</header>
+
+<mat-tab-nav-panel #panel>
+  <main>
+    <router-outlet />
+  </main>
+</mat-tab-nav-panel>
+
+<button mat-fab extended class="fab" (click)="record()">
+  <mat-icon>add</mat-icon>
+  Record
+</button>
