@@ -435,6 +435,16 @@ scaffolding fetched them from a font service, which would have been the only
 network call wits made. Reduced motion is honoured throughout, the route
 cross-fade included.
 
+The analysis tab and the replay came across from the terminal: the same five
+scopes and the same transport (`Replay`, the terminal's `player` — adjustments
+ride along silently, stepping passes over them, the end settles to live), with a
+scrubber and `?at=` for a day added. Replayed figures are folded in the browser
+(`data/derive.ts`, in centigrams, mirroring `ledger.Summarise` and the fold's
+balances) so a frame never waits on the server. The jars are ticked and their
+stashes cleared together through `Recorder.Flush` — one batch, all or none.
+Every key is declared once in `Keys`, page layers over the shell's, and the
+footer is drawn from the same list, so it can only show keys that answer.
+
 ---
 
 ## 📌 Planned

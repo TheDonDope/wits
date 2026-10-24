@@ -683,3 +683,47 @@ func TestAFillDatedAheadIsNotWeighed(t *testing.T) {
 	_, err = rec.Revert(ahead.Hash, "")
 	assert.NoError(t, err, "A fill dated ahead can still be undone")
 }
+
+func TestFlush(t *testing.T) {
+	setup := func(t *testing.T) *Recorder {
+		rec := recorder(t)
+		for _, name := range []string{"Enua 22/1 Wedding Cake", "Cannamedical 28/1 Lemon Cookie"} {
+			_, _, _, err := rec.Buy(name, "", 10, time.Now().AddDate(0, 0, -2))
+			require.NoError(t, err)
+		}
+		_, err := rec.Grind("wcake-221", 2, time.Now().AddDate(0, 0, -1))
+		require.NoError(t, err)
+		_, err = rec.Grind("lcook-281", 1.5, time.Now().AddDate(0, 0, -1))
+		require.NoError(t, err)
+		return rec
+	}
+
+	t.Run("OneStash", func(t *testing.T) {
+		rec := setup(t)
+		events, err := rec.Flush([]string{"wcake"})
+		require.NoError(t, err)
+		require.Len(t, events, 1)
+		assert.Equal(t, FlushNote, events[0].Note)
+		assert.Equal(t, 0.0, rec.Available("wcake-221", journal.Stash))
+		assert.Equal(t, 1.5, rec.Available("lcook-281", journal.Stash), "only the one named")
+		assert.Equal(t, 8.0, rec.Available("wcake-221", journal.Storage), "storage is not a stash")
+	})
+
+	t.Run("EveryStashAtOnce", func(t *testing.T) {
+		rec := setup(t)
+		events, err := rec.Flush(nil)
+		require.NoError(t, err)
+		require.Len(t, events, 2)
+		assert.Equal(t, events[0].Hash, events[1].Prev, "one batch, chained in one write")
+		assert.Equal(t, 0.0, rec.Available("wcake-221", journal.Stash))
+		assert.Equal(t, 0.0, rec.Available("lcook-281", journal.Stash))
+
+		_, err = rec.Flush(nil)
+		assert.ErrorIs(t, err, ErrNothingToReconcile, "nothing left to flush")
+	})
+
+	t.Run("AnUnknownProduct", func(t *testing.T) {
+		_, err := setup(t).Flush([]string{"nothing-like-it"})
+		assert.Error(t, err)
+	})
+}

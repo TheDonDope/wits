@@ -95,10 +95,107 @@ main {
 .fab {
   position: fixed;
   right: 32px;
-  bottom: 32px;
+  bottom: 68px;
   background: linear-gradient(120deg, var(--w-violet), #5ee6b6) !important;
   color: #0b0e14 !important;
   box-shadow: 0 12px 40px -8px rgb(139 123 255 / 70%) !important;
+}
+
+// The keys the page answers, always in view: the terminal's help line.
+.keys {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  justify-content: center;
+  padding: 10px 24px;
+  background: rgb(11 14 20 / 80%);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--w-glass-edge);
+  font-size: 12px;
+  color: var(--w-dim);
+}
+
+.k {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+kbd {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-bottom-width: 2px;
+  background: rgb(255 255 255 / 5%);
+  color: var(--mat-sys-on-surface);
+
+  // Inter, not the mono face: the bundled mono has no arrows, and the
+  // fallback drew ← and → half their size.
+  font: 600 11px 'Inter Variable', system-ui, sans-serif;
+  text-align: center;
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgb(5 7 12 / 55%);
+  backdrop-filter: blur(6px);
+}
+
+.sheet {
+  position: fixed;
+  z-index: 21;
+  inset: 12vh 50% auto auto;
+  transform: translateX(50%);
+  width: min(880px, 92vw);
+  max-height: 72vh;
+  overflow: auto;
+  padding: 18px 26px 26px;
+  animation: sheet 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+  }
+
+  h3 {
+    margin: 8px 0 10px;
+    font: 600 14px var(--w-num);
+    color: var(--w-violet);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 13px;
+  }
+}
+
+@keyframes sheet {
+  from {
+    opacity: 0;
+    transform: translate(50%, 12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(50%);
+  }
 }
 
 @media (width <= 900px) {

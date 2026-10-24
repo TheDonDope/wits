@@ -540,6 +540,48 @@ func (r *Recorder) adjustment(slug string, account journal.Account, weighed floa
 	}, nil
 }
 
+// FlushNote is the note a flushed stash carries — the same words the
+// terminal's history clean-up writes, so a bundle made by an older wits reads
+// either back to the same accounts.
+const FlushNote = "clean history: consumed at some point"
+
+// Flush records stashes as empty: their grams went through a device at some
+// point, the sessions never logged. Every stash holding something is flushed
+// when no product is named. The adjustments are one batch under one lock —
+// all of them or none — and each stash is read as it stands then, so a grind
+// recorded elsewhere meanwhile is flushed with the rest rather than left over.
+func (r *Recorder) Flush(refs []string) ([]journal.Event, error) {
+	slugs := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		p, err := r.products.Find(ref)
+		if err != nil {
+			return nil, err
+		}
+		slugs = append(slugs, p.Slug)
+	}
+	return r.write(func() ([]journal.Event, error) {
+		names := slugs
+		if len(names) == 0 {
+			names = r.state.Products()
+		}
+		var batch []journal.Event
+		for _, slug := range names {
+			if slug == "" || r.Available(slug, journal.Stash) <= 0 {
+				continue
+			}
+			e, err := r.adjustment(slug, journal.Stash, 0, FlushNote)
+			if err != nil {
+				return nil, err
+			}
+			batch = append(batch, e)
+		}
+		if len(batch) == 0 {
+			return nil, ErrNothingToReconcile
+		}
+		return batch, nil
+	})
+}
+
 // Difference reports what reconciling an account to a weighed amount would
 // change, without recording anything. A screen can show it before it is
 // committed to.

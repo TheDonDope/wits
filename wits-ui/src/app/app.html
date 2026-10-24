@@ -38,6 +38,32 @@
   </main>
 </mat-tab-nav-panel>
 
+<footer class="keys">
+  @for (b of keys.footer(); track b.help) {
+    <span class="k"><kbd>{{ b.label ?? show(b.keys[0]) }}</kbd>{{ b.help }}</span>
+  }
+</footer>
+
+@if (keys.showAll()) {
+  <div class="sheet-backdrop" (click)="keys.showAll.set(false)" aria-hidden="true"></div>
+  <section class="sheet glass" role="dialog" aria-label="Every key">
+    <header>
+      <span class="eyebrow">keys</span>
+      <button mat-icon-button (click)="keys.showAll.set(false)" aria-label="Close"><mat-icon>close</mat-icon></button>
+    </header>
+    <div class="cols">
+      @for (s of keys.sections(); track s.name) {
+        <div>
+          <h3>{{ s.name }}</h3>
+          @for (b of s.bindings; track $index) {
+            <div class="row"><kbd>{{ b.label ?? show(b.keys[0]) }}</kbd><span>{{ b.help }}</span></div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}
+
 <button mat-fab extended class="fab" (click)="record()">
   <mat-icon>add</mat-icon>
   Record
