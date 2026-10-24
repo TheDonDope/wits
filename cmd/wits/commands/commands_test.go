@@ -535,18 +535,20 @@ func TestFsckCommand(t *testing.T) {
 	})
 }
 
-func TestStatusNamesWhatIsComing(t *testing.T) {
+func TestBuyRefusesADateAhead(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
-	require.NoError(t, err)
-	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "2g", "--date", "2099-01-01")
-	require.NoError(t, err)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "2g", "--date", "2099-01-01")
+	assert.ErrorContains(t, err, "purchase is dated 2099-01-01 00:00, after now: an entry is recorded once it has happened")
 
-	out, err := run(t, dir, Status)
-
+	// One written before the recorder refused them is found by fsck.
+	r, err := repo.Discover(dir)
 	require.NoError(t, err)
-	assert.Contains(t, out, "wcake-221  20.00g", "The shelf is what is there now")
-	assert.Contains(t, out, "2.00g of wcake-221 arriving 2099-01-01, not counted until then")
+	_, err = r.Journal().Append(journal.Event{Type: journal.Purchase, Product: "wcake", Grams: 2,
+		OccurredAt: time.Date(2099, 1, 1, 0, 0, 0, 0, time.Local)})
+	require.NoError(t, err)
+	out, err := run(t, dir, Fsck)
+	assert.Error(t, err)
+	assert.Contains(t, out, "purchase 2.00 g of wcake, is dated 2099-01-01")
 }
 
 func TestRestoreWarnsOfWhatWasNotThere(t *testing.T) {

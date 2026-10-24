@@ -226,7 +226,7 @@ func effectsOf(ws *workspace.Workspace) any {
 	out := effectLog{Dimensions: effects.Dimensions, Rated: []rated{}, Unrated: []entry{}}
 	for i := len(ws.State.Events) - 1; i >= 0; i-- {
 		e := ws.State.Events[i]
-		if e.Type != journal.Sesh || undone[e.Hash] || e.OccurredAt.After(ws.OpenedAt) {
+		if e.Type != journal.Sesh || undone[e.Hash] {
 			continue
 		}
 		if r, ok := latest[e.Hash]; ok {
@@ -236,7 +236,7 @@ func effectsOf(ws *workspace.Workspace) any {
 			out.Unrated = append(out.Unrated, entryOf(e, ws, nil))
 		}
 	}
-	out.Insights = effects.Analyse(ws.Ratings, ws.State.Applied(), ws.ProductName)
+	out.Insights = effects.Analyse(ws.Ratings, ws.State.Events, ws.ProductName)
 	return out
 }
 
@@ -284,14 +284,12 @@ func fail(w http.ResponseWriter, status int, err error) {
 	reply(w, status, map[string]string{"error": err.Error()})
 }
 
-// overview is the front page: the fill in progress, the shelf around it, and
-// what is on its way.
+// overview is the front page: the fill in progress, and the shelf around it.
 type overview struct {
-	Now      time.Time `json:"now"`
-	ChainOK  bool      `json:"chain_ok"`
-	Fill     *fill     `json:"fill"`
-	Shelf    shelf     `json:"shelf"`
-	Upcoming []entry   `json:"upcoming"`
+	Now     time.Time `json:"now"`
+	ChainOK bool      `json:"chain_ok"`
+	Fill    *fill     `json:"fill"`
+	Shelf   shelf     `json:"shelf"`
 }
 
 // fill is the cycle in progress, in the fill's scope: its own grams.
@@ -353,7 +351,7 @@ type shelf struct {
 }
 
 func overviewOf(ws *workspace.Workspace) any {
-	out := overview{Now: ws.OpenedAt, ChainOK: ws.Chain == nil, Fill: fillOf(ws), Upcoming: []entry{}}
+	out := overview{Now: ws.OpenedAt, ChainOK: ws.Chain == nil, Fill: fillOf(ws)}
 	var storage, stash, avb journal.Centigrams
 	for _, b := range ws.State.Balances {
 		storage += journal.CG(b.Storage)
@@ -364,12 +362,6 @@ func overviewOf(ws *workspace.Workspace) any {
 		}
 	}
 	out.Shelf.Storage, out.Shelf.Stash, out.Shelf.AVB = storage.Grams(), stash.Grams(), avb.Grams()
-	undone := record.Reverted(ws.State.Events)
-	for _, e := range ws.State.Upcoming() {
-		if !undone[e.Hash] {
-			out.Upcoming = append(out.Upcoming, entryOf(e, ws, undone))
-		}
-	}
 	return out
 }
 
@@ -450,7 +442,7 @@ func daysOf(ws *workspace.Workspace) any {
 	ground, seshed := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
 	seen := map[string]bool{}
 	var dates []string
-	for _, e := range ws.State.Applied() {
+	for _, e := range ws.State.Events {
 		d := e.OccurredAt.Format(time.DateOnly)
 		if !seen[d] {
 			seen[d] = true
@@ -487,7 +479,6 @@ type entry struct {
 	Note        string    `json:"note,omitempty"`
 	Reverts     string    `json:"reverts,omitempty"`
 	Corrected   bool      `json:"corrected,omitempty"`
-	Upcoming    bool      `json:"upcoming,omitempty"`
 }
 
 func entryOf(e journal.Event, ws *workspace.Workspace, undone map[string]bool) entry {
@@ -496,7 +487,6 @@ func entryOf(e journal.Event, ws *workspace.Workspace, undone map[string]bool) e
 		Product: e.Product, ProductName: ws.ProductName(e.Product), Grams: e.Grams,
 		From: string(e.From), To: string(e.To), Device: e.Device, Temperature: e.Temperature,
 		Note: e.Note, Reverts: e.Reverts, Corrected: undone[e.Hash] && e.Reverts == "",
-		Upcoming: e.OccurredAt.After(ws.OpenedAt),
 	}
 }
 
@@ -550,7 +540,7 @@ type jar struct {
 func jarsOf(ws *workspace.Workspace) any {
 	bought, ground := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
 	fills, seen := map[string]int{}, map[string]time.Time{}
-	for _, e := range ws.State.Applied() {
+	for _, e := range ws.State.Events {
 		switch e.Type {
 		case journal.Purchase:
 			bought[e.Product] += journal.CG(e.Grams)
@@ -624,7 +614,7 @@ type device struct {
 
 func devicesOf(ws *workspace.Workspace) any {
 	sessions, grams := map[string]int{}, map[string]journal.Centigrams{}
-	for _, e := range ws.State.Applied() {
+	for _, e := range ws.State.Events {
 		if e.Type == journal.Sesh && e.Device != "" {
 			sessions[e.Device]++
 			grams[e.Device] += journal.CG(e.Grams)

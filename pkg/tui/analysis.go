@@ -536,7 +536,7 @@ func (v analysisView) cycles(a *App, events []journal.Event, width int) string {
 	t := a.theme
 	all := a.data.State.Cycles
 	if v.playhead >= 0 {
-		all = ledger.FoldAt(events, a.data.Now).Cycles
+		all = ledger.Fold(events).Cycles
 	}
 	if len(all) == 0 {
 		return t.Dim.Render("no cycles yet")
@@ -622,7 +622,7 @@ func (v sessionsView) Update(msg tea.Msg, a *App) (sessionsView, tea.Cmd) {
 func recentSessions(a *App) []journal.Event {
 	undone := record.Reverted(a.data.State.Events)
 	var out []journal.Event
-	events := a.data.State.Applied()
+	events := a.data.State.Events
 	for i := len(events) - 1; i >= 0 && len(out) < recentShown; i-- {
 		if e := events[i]; e.Type == journal.Sesh && !undone[e.Hash] {
 			out = append(out, e)
@@ -867,7 +867,7 @@ func (v sessionsView) recent(a *App, width int) string {
 // whatWorks is each product's mean overall rating, with how many ratings it
 // stands on — one rating is a rating, not a finding, so the count is shown.
 func (v sessionsView) whatWorks(a *App, width int) string {
-	insights := effects.Analyse(a.data.Ratings, a.data.State.Applied(), a.data.ProductName)
+	insights := effects.Analyse(a.data.Ratings, a.data.State.Events, a.data.ProductName)
 	var bars []Bar
 	for _, g := range insights.ByProduct {
 		mean, ok := g.Means[effects.Overall]

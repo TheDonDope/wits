@@ -63,12 +63,7 @@ func (t *Theme) Day(d time.Time, now time.Time) string {
 	case 1:
 		return t.PanelTitle.Render("Yesterday") + t.Dim.Render(" · "+d.Format("Mon 02 Jan"))
 	}
-	title := t.PanelTitle.Render(d.Format("Mon 02 Jan 2006"))
-	if d.After(now) {
-		// Dated ahead: in the journal, not yet on the shelf.
-		return title + t.Dim.Render(" · upcoming")
-	}
-	return title
+	return t.PanelTitle.Render(d.Format("Mon 02 Jan 2006"))
 }
 
 // EventLine renders one journal entry as a single row.

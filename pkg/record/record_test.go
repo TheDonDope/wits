@@ -456,9 +456,6 @@ func TestBackdating(t *testing.T) {
 		require.NoError(t, err, "A year back")
 		require.Len(t, rec.State().Cycles, 2, "It opens a cycle of its own, a year earlier")
 		assert.Equal(t, ledger.Fill(5.0), rec.State().Cycles[0].Purchased)
-
-		_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "", 5, time.Now().AddDate(0, 1, 0))
-		require.NoError(t, err, "And ahead")
 	})
 
 	t.Run("AGrindCannotComeBeforeItsGrams", func(t *testing.T) {
@@ -467,15 +464,6 @@ func TestBackdating(t *testing.T) {
 		assert.ErrorContains(t, err, "there were only 0.00g in storage then",
 			"Today's storage holds enough, but two years ago there was none")
 		assert.Empty(t, ledger.Shortfalls(rec.State().Events), "Should have recorded nothing")
-	})
-
-	t.Run("UndoingAFillAheadOfTodayIsDatedWithIt", func(t *testing.T) {
-		ahead, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 3, time.Now().AddDate(0, 2, 0))
-		require.NoError(t, err)
-
-		undo, err := rec.Revert(ahead.Hash, "")
-		require.NoError(t, err, "Taking the grams back before they arrived would take grams that were not there")
-		assert.True(t, ahead.OccurredAt.Equal(undo.OccurredAt), "dated %s, not %s", undo.OccurredAt, ahead.OccurredAt)
 	})
 }
 
@@ -667,22 +655,24 @@ func TestABackdatedGrindCannotTakeALaterOnesGrams(t *testing.T) {
 	assert.Empty(t, ledger.Shortfalls(rec.State().Events))
 }
 
-func TestAFillDatedAheadIsNotWeighed(t *testing.T) {
+func TestNothingIsDatedAhead(t *testing.T) {
 	rec := recorder(t)
 	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now().AddDate(0, 0, -1))
 	require.NoError(t, err)
-	ahead, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 2, time.Now().AddDate(1, 0, 0))
-	require.NoError(t, err)
 
-	assert.Equal(t, 20.0, rec.Available("wcake-221", journal.Storage), "Next year's 2 g are not in the jar today")
-	_, err = rec.Reconcile("wcake-221", journal.Storage, 20, "")
-	assert.ErrorIs(t, err, ErrNothingToReconcile, "Weighing the 20 g that are there should record no loss")
+	_, _, _, err = rec.Buy("Enua 22/1 Wedding Cake", "", 2, time.Now().AddDate(0, 0, 1))
+	assert.ErrorIs(t, err, ErrAhead, "A fill is recorded once it is dispensed")
+	_, _, _, err = rec.Buy("Cannamedical 28/1 Lemon Cookie", "", 2, time.Now().AddDate(0, 0, 1))
+	assert.ErrorIs(t, err, ErrAhead)
+	assert.Nil(t, rec.products.Exact("Cannamedical 28/1 Lemon Cookie"), "and adds no product to the catalog")
+	_, err = rec.Grind("wedding", 1, time.Now().Add(time.Hour))
+	assert.ErrorIs(t, err, ErrAhead, "a grind once it is ground")
+	_, err = rec.Session("wedding", 0.1, time.Now().Add(time.Hour), "", 0, "")
+	assert.ErrorIs(t, err, ErrAhead)
+	assert.Len(t, rec.State().Events, 1, "and nothing was written")
 
-	_, err = rec.Grind("wedding", 21, time.Now())
-	assert.ErrorContains(t, err, "only 20.00g", "and they cannot be ground today")
-
-	_, err = rec.Revert(ahead.Hash, "")
-	assert.NoError(t, err, "A fill dated ahead can still be undone")
+	_, err = rec.Grind("wedding", 1, time.Now())
+	assert.NoError(t, err, "Now is not ahead")
 }
 
 func TestFlush(t *testing.T) {

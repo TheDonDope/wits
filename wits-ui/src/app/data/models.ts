@@ -64,7 +64,6 @@ export interface Entry {
   note?: string;
   reverts?: string;
   corrected?: boolean;
-  upcoming?: boolean;
 }
 
 export interface Overview {
@@ -72,7 +71,6 @@ export interface Overview {
   chain_ok: boolean;
   fill: Fill | null;
   shelf: Shelf;
-  upcoming: Entry[];
 }
 
 /** One product across its lifetime — the jar's scope. */

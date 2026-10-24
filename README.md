@@ -131,10 +131,11 @@ wits completion fish > ~/.config/fish/completions/wits.fish  # fish
 
 Anything can be backdated with `--date 2026-07-29`, which is what makes a
 forgotten evening loggable the next morning without pretending it was entered
-then. Without it the entry is dated now. A fill can be dated anywhere, however
-far back, and lands where its date puts it — a fill entered a month late opens
-its own cycle a month back. Grinds and sessions are held to what was there on
-their date: a grind dated before the fill it draws on is refused.
+then. Without it the entry is dated now. A fill can be dated however far back,
+and lands where its date puts it — a fill entered a month late opens its own
+cycle a month back. Nothing is dated ahead: the journal records what happened,
+so an entry is written once it has. Grinds and sessions are held to what was
+there on their date: a grind dated before the fill it draws on is refused.
 
 ```console
 $ wits status
@@ -170,10 +171,7 @@ there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh — 
 closes the form in front.
 
 The interface keeps up with the repository: an entry made with a command in
-another terminal shows within a second, and at midnight "today" moves on. A
-fill dated ahead — entered before the pickup — waits off the dashboard and out
-of every balance until its day: the journal lists it as upcoming, `wits status`
-says when it arrives, and weighing a jar before then weighs only what is in it.
+another terminal shows within a second, and at midnight "today" moves on.
 
 `t` picks a theme: wits' own, which follows the terminal's light or dark
 background, or one of twenty editor themes — Dark+ and Light+, One Dark Pro,

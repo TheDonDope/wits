@@ -89,13 +89,14 @@ in. Recording refuses an entry whose grams were not in the jar at its moment,
 on any date, not only today — a grind dated before its fill — and a correction
 is never dated before what it corrects.
 
-What is true **now** is a replay of the entries dated by now (`ledger.FoldAt`);
-the rest are upcoming. A fill dated ahead used to count from the day it was
-typed in: storage read 2 g more than the jar held, and weighing it honestly
-recorded a 2 g loss, leaving the ledger 2 g short once the fill arrived. Every
-entry is still in `State.Events`, so the journal lists the future ones —
-marked upcoming — and they can still be undone; today's-balance checks judge
-only entries dated by today, and `Shortfalls` judges every entry on its date. Grams are flower, not money: an account
+Nothing is dated ahead. Entries dated in the future were once allowed, a fill
+entered before its pickup held off the balances until its day; it took a
+second fold, an "upcoming" list in status, the journal, the API and the
+browser, and a special case in every check, for something that is a plan and
+not a record. The recorder refuses an entry dated after the moment it is
+written ("an entry is recorded once it has happened") — before `buy` touches
+the catalog — and `fsck` names any a journal written before then still holds.
+`Shortfalls` judges every entry on its date. Grams are flower, not money: an account
 is never below zero, not even in the past, so there is no overdraft to record —
 `ledger.Shortfalls` names an entry that takes more than was there, following
 each jar down to empty and no further. Both are kept to second precision: nanoseconds say nothing about when
@@ -301,8 +302,8 @@ The snapshot follows the repository. Each second's clock tick stats the journal
 and the catalogs, and reloads when another process has written to them or the
 day has turned; until then the screen showed the repository as it was when it
 opened, with "today" frozen at launch. The cycle in progress is the one at the
-frame's moment (`ledger.State.CycleAt`): a fill dated ahead is not in progress
-until it arrives, where it used to put "day -1529" on the dashboard. `esc` no
+frame's moment (`ledger.State.CycleAt`), so a replay's frame is on the fill of
+its day. `esc` no
 longer quits — it closes forms, and one press too many closed the interface.
 
 Because everything is derived from an append-only log, any screen can start

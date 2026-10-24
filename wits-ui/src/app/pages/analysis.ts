@@ -123,7 +123,7 @@ export class Analysis {
 
   /** Every entry that has happened, oldest first. */
   private readonly history = computed(() =>
-    [...this.wits.everything.value().entries].reverse().filter((e) => !e.upcoming),
+    [...this.wits.everything.value().entries].reverse(),
   );
 
   /** The entries the scope covers. */

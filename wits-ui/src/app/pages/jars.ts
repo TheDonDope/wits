@@ -140,7 +140,7 @@ export class Jars {
 
   /** Every entry that has happened, oldest first: what the replay plays. */
   private readonly history = computed(() =>
-    [...this.wits.everything.value().entries].reverse().filter((e) => !e.upcoming),
+    [...this.wits.everything.value().entries].reverse(),
   );
   protected readonly replay = new Replay(this.history);
 

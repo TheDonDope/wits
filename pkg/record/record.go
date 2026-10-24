@@ -41,6 +41,11 @@ func New(r *repo.Repo, products *catalog.Catalog, devices *catalog.Devices, stat
 // that is not already taken. It is the name every later entry refers to, so it
 // is settled once, when the product first appears, and never afterwards.
 func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.Event, *catalog.Product, bool, error) {
+	// Before the catalog is touched: a refused fill must not leave a product
+	// behind.
+	if err := notAhead(journal.Event{Type: journal.Purchase, OccurredAt: at}, time.Now()); err != nil {
+		return journal.Event{}, nil, false, err
+	}
 	product := r.products.Exact(name)
 	added := false
 	if product == nil {
@@ -147,12 +152,15 @@ func partial(c *catalog.Catalog, name, slug string) error {
 
 // Grind moves grams from a product's storage into its stash.
 func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event, error) {
+	if err := notAhead(journal.Event{Type: journal.Grind, OccurredAt: at}, time.Now()); err != nil {
+		return journal.Event{}, err
+	}
 	product, err := r.products.Find(ref)
 	if err != nil {
 		return journal.Event{}, err
 	}
 	return r.one(func() (journal.Event, error) {
-		if err := r.checkAt(product.Slug, grams, journal.Storage, at); err != nil {
+		if err := r.check(product.Slug, grams, journal.Storage); err != nil {
 			return journal.Event{}, err
 		}
 		return journal.Event{
@@ -166,6 +174,9 @@ func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event
 
 // Session records a session drawing on a product's stash.
 func (r *Recorder) Session(ref string, grams float64, at time.Time, device string, temp int, note string) (journal.Event, error) {
+	if err := notAhead(journal.Event{Type: journal.Sesh, OccurredAt: at}, time.Now()); err != nil {
+		return journal.Event{}, err
+	}
 	product, err := r.products.Find(ref)
 	if err != nil {
 		return journal.Event{}, err
@@ -186,7 +197,7 @@ func (r *Recorder) Session(ref string, grams float64, at time.Time, device strin
 		}
 	}
 	return r.one(func() (journal.Event, error) {
-		if err := r.checkAt(product.Slug, grams, journal.Stash, at); err != nil {
+		if err := r.check(product.Slug, grams, journal.Stash); err != nil {
 			return journal.Event{}, err
 		}
 		return journal.Event{
@@ -233,17 +244,6 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 	return fmt.Errorf("only %.2fg of %s %s, cannot take %.2fg", have, slug, where, grams)
 }
 
-// checkAt is check for an entry at a moment. Today's balance only judges an
-// entry dated by today: one dated ahead draws on grams that may arrive before
-// it, which today's balance knows nothing of, and impossible judges it on its
-// own date — as it judges every entry.
-func (r *Recorder) checkAt(slug string, grams float64, account journal.Account, at time.Time) error {
-	if at.After(time.Now()) {
-		return nil
-	}
-	return r.check(slug, grams, account)
-}
-
 // write appends the entries build makes, and folds them into the running
 // state, so a recorder used twice in a row sees its own first entry.
 //
@@ -259,14 +259,19 @@ func (r *Recorder) checkAt(slug string, grams float64, account journal.Account, 
 // the fill it draws on. check only sees today; impossible sees every day.
 func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event, error) {
 	stored, err := r.repo.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
-		r.state = ledger.FoldAt(events, time.Now())
+		r.state = ledger.Fold(events)
 		batch, err := build()
 		if err != nil {
 			return nil, err
 		}
+		// Taken after the builder, which dates corrections with its own now.
+		now := time.Now()
 		for i := range batch {
 			if batch[i].OccurredAt.IsZero() {
-				batch[i].OccurredAt = time.Now()
+				batch[i].OccurredAt = now
+			}
+			if err := notAhead(batch[i], now); err != nil {
+				return nil, err
 			}
 			// The journal fills the accounts in on append; the replay needs
 			// them now, or the entry moves nothing and takes nothing.
@@ -279,8 +284,21 @@ func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event
 	if err != nil {
 		return nil, err
 	}
-	r.state = ledger.FoldAt(append(slices.Clip(r.state.Events), stored...), time.Now())
+	r.state = ledger.Fold(append(slices.Clip(r.state.Events), stored...))
 	return stored, nil
+}
+
+// ErrAhead is why an entry dated after the moment it is written is refused:
+// the journal records what happened, and a fill or a grind that has not
+// happened yet is a plan, not a record.
+var ErrAhead = errors.New("an entry is recorded once it has happened")
+
+// notAhead refuses an entry dated after now.
+func notAhead(e journal.Event, now time.Time) error {
+	if e.OccurredAt.After(now) {
+		return fmt.Errorf("%s is dated %s, after now: %w", e.Type, e.OccurredAt.Format("2006-01-02 15:04"), ErrAhead)
+	}
+	return nil
 }
 
 // one is write for a single entry.
@@ -353,17 +371,11 @@ func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 	if reason == "" {
 		reason = "reverts " + short(hash)
 	}
-	// A correction cannot come before what it corrects: undoing an entry
-	// dated ahead of today is dated with it, or the fold would take the grams
-	// back before they arrived.
 	at := time.Now()
-	if original.OccurredAt.After(at) {
-		at = original.OccurredAt
-	}
 	// Putting the grams back must not take more than the account they went
 	// into holds: if they have since been ground on or used, the later entries
 	// have to go first.
-	if err := r.checkAt(original.Product, original.Grams, original.To, at); err != nil {
+	if err := r.check(original.Product, original.Grams, original.To); err != nil {
 		return journal.Event{}, fmt.Errorf("cannot undo %s: %w", short(hash), err)
 	}
 	return journal.Event{
@@ -396,7 +408,7 @@ func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event
 		// The revert frees the original amount back into the source account,
 		// so only the difference beyond it has to be there already.
 		if extra := round(grams - original.Grams); extra > 0 {
-			if err := r.checkAt(original.Product, extra, original.From, original.OccurredAt); err != nil {
+			if err := r.check(original.Product, extra, original.From); err != nil {
 				return nil, fmt.Errorf("cannot amend %s to %.2fg: %w", short(hash), grams, err)
 			}
 		}

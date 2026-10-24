@@ -137,19 +137,8 @@ import { ProjectionChart } from '../viz/projection-chart';
           <span class="eyebrow">sessions · last 20 weeks</span>
           <w-heatmap [days]="wits.days.value()" metric="seshed" [weeks]="20" tone="var(--w-sesh)" />
         </div>
-        <div class="glass pad upcoming">
-          <span class="eyebrow">on the way</span>
-          @for (u of o.upcoming; track u.hash) {
-            <div class="up">
-              <mat-icon>local_shipping</mat-icon>
-              <div>
-                <strong>{{ u.grams | number: '1.2-2' }} g {{ u.product_name }}</strong>
-                <span class="dim">arriving {{ u.occurred_at | date: 'EEE d MMM y' }}</span>
-              </div>
-            </div>
-          } @empty {
-            <p class="dim">Nothing dated ahead. A fill entered before its pickup waits here until its day.</p>
-          }
+        <div class="glass pad">
+          <span class="eyebrow">the journal</span>
           <div class="chain" [class.bad]="!o.chain_ok">
             <mat-icon>{{ o.chain_ok ? 'verified' : 'gpp_bad' }}</mat-icon>
             {{ o.chain_ok ? 'the journal’s hash chain verifies' : 'the journal was changed outside wits — run wits fsck' }}
@@ -195,9 +184,6 @@ import { ProjectionChart } from '../viz/projection-chart';
     figcaption { display: grid; text-align: center; gap: 2px; font-size: 13px; }
     .rhythm { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .pad { padding: 18px 22px; display: grid; gap: 12px; align-content: start; }
-    .up { display: flex; gap: 12px; align-items: center; }
-    .up div { display: grid; }
-    .up mat-icon { color: var(--w-avb); }
     .chain { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--w-stash); margin-top: auto; }
     .chain.bad { color: var(--w-warn); }
     .empty { padding: 48px; display: grid; justify-items: center; text-align: center; }
