@@ -1,5 +1,8 @@
 //go:build js
 
+// Package journal is the append-only, hash-chained log; doc.go says the rest.
+// This file is its lock in a browser, built only there, which is why it says
+// so again: a linter reading one file at a time cannot see doc.go.
 package journal
 
 import "os"
