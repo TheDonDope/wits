@@ -2,8 +2,28 @@
 ## [Unreleased]
 
 
+<a name="v0.26.0"></a>
+## [v0.26.0] - 2026-10-24
+### Chore
+- update seed data
+- **deps:** bump the gomod-minor group across 1 directory with 4 updates
+- **deps:** bump codecov/codecov-action in the actions group
+- **deps:** bump the gomod-minor group with 2 updates
+
+### Docs
+- close the fence markdownlint tripped over
+- teach Claude the house rules
+
+### Test
+- **importer:** the records add up, so say so
+- **importer:** reconcile against the workbook through october 2026
+
+
 <a name="v0.25.0"></a>
 ## [v0.25.0] - 2026-08-03
+### Docs
+- update changelog for v0.25.0
+
 ### Feat
 - **analysis:** a graph per cycle in the by-product breakdown
 
@@ -442,7 +462,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.26.0...HEAD
+[v0.26.0]: https://github.com/TheDonDope/wits/compare/v0.25.0...v0.26.0
 [v0.25.0]: https://github.com/TheDonDope/wits/compare/v0.24.0...v0.25.0
 [v0.24.0]: https://github.com/TheDonDope/wits/compare/v0.23.0...v0.24.0
 [v0.23.0]: https://github.com/TheDonDope/wits/compare/v0.22.0...v0.23.0
