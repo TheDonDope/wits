@@ -2,6 +2,7 @@ import { DestroyRef, signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { balances, breaks, byProduct, movingAverage, perDay, summarise, tolerance } from './derive';
+import { capacities, filmFrames } from './film';
 import { Binding, Keys } from './keys';
 import { Entry } from './models';
 import { Replay, SPEEDS } from './replay';
@@ -212,5 +213,29 @@ describe('tolerance', () => {
   it('counts a session as use, though nothing was ground', () => {
     const entries = [entry('grind', day(1), 1), sesh(5, 'a'), entry('grind', day(10), 1)];
     expect(breaks(entries, day(1), day(10))).toEqual([]);
+  });
+});
+
+describe('filmFrames', () => {
+  const at = (n: number) => `2026-07-${String(n).padStart(2, '0')}`;
+  const buy = (n: number, product: string, g: number) => entry('purchase', at(n), g, product);
+  const grind = (n: number, product: string, g: number) => entry('grind', at(n), g, product);
+
+  it('spaces its moments evenly from the first entry to the last', () => {
+    const frames = filmFrames([buy(1, 'a', 20), grind(11, 'a', 5), grind(21, 'a', 5)], 3);
+    expect(frames.map((f) => f.day)).toEqual([at(1), at(11), at(21)]);
+    expect(frames.map((f) => f.shelf)).toEqual([20, 15, 10]);
+  });
+
+  it('shows the shelf, each jar sealed and ground, and lets an emptied jar go', () => {
+    const frames = filmFrames([buy(1, 'a', 10), buy(2, 'b', 10), grind(3, 'a', 10)], 3);
+    expect(frames[2].jars).toEqual([{ slug: 'b', storage: 10, stash: 0 }]);
+    const middle = filmFrames([buy(1, 'a', 10), grind(2, 'a', 4), grind(3, 'a', 1)], 3)[1];
+    expect(middle.jars).toEqual([{ slug: 'a', storage: 6, stash: 4 }]);
+  });
+
+  it('draws each jar against the most it ever held', () => {
+    const frames = filmFrames([buy(1, 'a', 10), grind(2, 'a', 4), buy(3, 'a', 10)], 3);
+    expect(capacities(frames).get('a')).toBe(20);
   });
 });
