@@ -54,11 +54,30 @@ with an empty status — that is not a pass. Confirm with `gh pr checks`.
 
 ```sh
 gh pr merge <pr> --rebase --delete-branch
-git checkout main && git pull && git remote prune origin
+git checkout main && git pull --ff-only && git remote prune origin
+git branch --show-current   # must say main before anything below runs
 ```
 
 Rebase-merge rewrites the SHAs. Quote the new ones from `git log` on main,
 never the branch's.
+
+**Never hide a checkout's errors** (`2>/dev/null`), and never chain past one
+with `;`. If `git checkout main` fails, stop: on v0.30.0 it failed silently,
+`make release` ran on the merged feature branch, and pushed a tag pointing
+off main that the maintainer had to delete by hand.
+
+**The working tree may hold someone else's work.** The maintainer, or another
+session, may be editing in the same checkout. Uncommitted changes you did not
+make are theirs: never stash, reset or check out over them. Release from a
+worktree of main instead, which leaves their folder alone:
+
+```sh
+git fetch --prune --tags origin
+git worktree add <scratchpad>/release-wt main
+cd <scratchpad>/release-wt && git pull --ff-only
+make release VERSION=vX.Y.0
+cd - && git worktree remove <scratchpad>/release-wt
+```
 
 ## 5. Release
 
