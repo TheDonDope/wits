@@ -36,10 +36,10 @@ attributable to a single product end to end. No blends, no proportional guessing
 
 A cycle opens with a prescription fill — purchases within three days count as
 one pickup, see `ledger.CycleGap` — and closes when **its own jars are
-empty**, not when the next fill arrives. 13 of 47 historical cycles ended
-with a remainder, and a remainder belongs to the cycle that dispensed it: that
-cycle simply stays open beside its successors until the last of its grams is
-ground, reconciled, or cleaned away.
+empty**, not when the next fill arrives. A remainder belongs to the cycle
+that dispensed it: that cycle simply stays open beside its successors until the
+last of its grams is ground, reconciled, or cleaned away. In the imported
+records, cycles 25, 26 and 27 were all open at once in March 2026.
 
 Every gram in storage stands on the account of one cycle. A jar refilled
 before it was empty holds two cycles' grams, and grinds draw the oldest lot
@@ -119,8 +119,10 @@ record.
 
 ### The commands
 
-`init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `reconcile`, `device`,
-`temps`, `import`, `export`, `bundle`, `restore`. Only the parts of git's vocabulary with
+`init`, `buy`, `grind`, `sesh`, `status`, `log`, `revert`, `reconcile`, `device add`
+and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, and `completion`
+for bash, zsh and fish — which offers product handles with what each holds, and
+only the ones the command can act on. Only the parts of git's vocabulary with
 a real referent were borrowed; branching and merging mean nothing for a
 prescription and are absent.
 
@@ -132,7 +134,7 @@ the stash on the table.
 
 The whole repository as one plain-text file, restoring to a journal identical
 **byte for byte**, hash chain included. 1429 entries: 528,321 bytes as a journal,
-29,417 as a bundle, 6,652 gzipped.
+29,417 as a bundle, 7,009 with `--gzip`.
 
 Plain text and line-oriented on purpose: the record may outlive this program, and
 it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
@@ -226,7 +228,9 @@ Every product gets a short handle when it is first bought — three to five
 characters from the cultivar, then the THC/CBD ratio: `wcake-221`. Handles are
 never one keystroke from another, since references resolve by prefix, and a
 prefix is enough while it is unambiguous. `--slug` chooses one by hand and is
-taken as written.
+taken as written. Imported products keep a handle spelled out from their full
+name (`nice-morning-sun-321`), because the imported years refer to them that
+way.
 
 **The ratio is part of the slug** because one cultivar from one manufacturer at
 two strengths is two prescriptions. Without it the two collapsed into one
@@ -249,6 +253,15 @@ account skips the first question, and `wits reconcile stash wcake-221 1.75` is
 the whole thing as one line. Nothing is written until every question is
 answered, so abandoning the forms halfway records nothing.
 
+### witsnap — the camera and the tap
+
+`witsnap screens` renders any screen as plain text, with scripted key presses
+(`--press p,tick,tick` photographs a replay mid-run); `witsnap json` writes the
+whole derived state. It drives the same `Snapshot` the tests do, draining Bubble
+Tea commands the way the runtime does, so a form renders as it would on screen.
+It is how a screen is verified without a terminal, and the seam a new client
+starts from.
+
 ### Temperatures and devices
 
 Every cannabinoid and terpene with its boiling point, so a setting on a dial reads
@@ -262,9 +275,11 @@ range is checked when it is typed rather than later when a session is refused.
 ### 🔹 AVB tracking
 
 - **Status**: Planned
-- The event types and the account exist and the fold handles them; there are no
-  commands yet. Wanted: `avb collect` recording what is actually weighed out of a
-  device, `avb use` drawing it down, and the observed yield ratio over time.
+- The event types and the account exist and the fold handles them, and the AVB
+  can be weighed (`wits reconcile --avb`, or `r` once it holds anything) — but
+  nothing puts grams into it yet. Wanted: `avb collect` recording what is
+  actually weighed out of a device, `avb use` drawing it down, and the observed
+  yield ratio over time.
 - Imported history holds no sessions at all, because the spreadsheet only ever
   recorded grinding. Nothing was invented to fill that gap, so the stash balance
   of a product recurring across cycles reads high until it is worked down.
@@ -325,5 +340,5 @@ source, and `wits import` now finds nothing that does not add up.
 ## 📜 Notes
 
 - Status is **Planned**, **In Progress**, or listed under Built.
-- Anything under Built is in `v2` and can be read in the code; the sections above
-  say why it is the way it is, which the code cannot.
+- Anything under Built is on `main` and can be read in the code; the sections
+  above say why it is the way it is, which the code cannot.

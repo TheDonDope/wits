@@ -82,9 +82,9 @@ func Read(path string) (*Result, error) {
 	result := &Result{}
 	seen := map[string]bool{}
 	// Different spellings that resolve to the same product are worth saying out
-	// loud: the slug drops the THC ratio, so the same cultivar from the same
-	// manufacturer at two potencies becomes one product, and only the first
-	// spelling's figures are kept.
+	// loud: two names that slug alike at the same strength become one product,
+	// and only the first spelling's catalog entry is kept. Two strengths never
+	// merge, since the THC/CBD ratio ends every slug.
 	spellings := map[string]map[string]bool{}
 
 	for _, name := range f.GetSheetList() {

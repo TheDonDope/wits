@@ -1,23 +1,34 @@
-# How to contribute to wits
+# Contributing to wits
 
-## **Did you find a bug?**
+## Found a bug, or want something?
 
-- **Ensure it is not already known** by reading the [ROADMAP.md](./ROADMAP.md). We
-  do not use GitHub Issues: features, bugs and refactorings are tracked there, so
-  that the plan and the code stay in one place.
+Wits doesn't use GitHub Issues. Features, bugs and refactorings live in
+[ROADMAP.md](./ROADMAP.md), so the plan and the code stay in one place.
 
-- If it is not there, open a pull request adding it to the roadmap, or one fixing
-  it. Include what you expected to happen, what happened instead, and enough to
+- **Check the roadmap first** — it may already be known, with the reasoning
+  behind it.
+- If it isn't there, open a pull request that adds it to the roadmap, or one
+  that fixes it. Say what you expected, what happened instead, and enough to
   reproduce it.
 
-## **Did you write a patch that fixes a bug?**
+## Sending a patch
 
-- Open a new GitHub pull request with the patch.
+```sh
+./doctor.sh      # the tools; only Go is needed to build and test
+make test
+./preflight.sh   # what CI and the Codacy gate will say, said first
+```
 
-- Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+- Branch from `main` and open a pull request; the template asks what changed,
+  why, and how it was verified.
+- Commit messages use conventional prefixes in the repository's own voice —
+  read `git log` for a few before writing one.
+- If behaviour changes, update README.md and ROADMAP.md in the same pull
+  request. Both are claims checked against the code, not aspirations.
+- If the change is visible on screen, re-record the GIFs it affects
+  (`./render-vhs-tapes.sh <tape>`).
 
-wits is a volunteer effort. We encourage you to pitch in!
+Pull requests are rebase-merged once the checks are green, and each one ships
+as its own release.
 
-Thanks! :heart: :heart: :heart:
-
-wits Team
+Wits is a volunteer effort. Thank you for pitching in! :heart:
