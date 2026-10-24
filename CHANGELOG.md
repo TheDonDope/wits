@@ -2,10 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.28.0"></a>
+## [v0.28.0] - 2026-10-24
+### Docs
+- **diary:** the records add up
+
+### Fix
+- **deps:** take excelize from master, where its fifteen advisories are fixed
+
+
 <a name="v0.27.0"></a>
 ## [v0.27.0] - 2026-10-24
 ### Chore
 - **vhs:** re-record the bundle gif against the october workbook
+
+### Docs
+- update changelog for v0.27.0
 
 
 <a name="v0.26.0"></a>
@@ -469,7 +481,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.28.0...HEAD
+[v0.28.0]: https://github.com/TheDonDope/wits/compare/v0.27.0...v0.28.0
 [v0.27.0]: https://github.com/TheDonDope/wits/compare/v0.26.0...v0.27.0
 [v0.26.0]: https://github.com/TheDonDope/wits/compare/v0.25.0...v0.26.0
 [v0.25.0]: https://github.com/TheDonDope/wits/compare/v0.24.0...v0.25.0
