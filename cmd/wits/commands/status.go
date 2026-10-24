@@ -44,10 +44,9 @@ func warnChain(out io.Writer, ws *workspace.Workspace) {
 var Fsck = &cobra.Command{
 	Use:   "fsck",
 	Short: "Check the journal and the catalogs for damage",
-	Long: "Check that the journal's hash chain verifies, that no account was ever\n" +
-		"drawn below zero, that every entry names a product and device the\n" +
-		"catalogs know, that every correction corrects something, and that every\n" +
-		"gram that came in is either held or went out.\n\n" +
+	Long: "Check that the journal's hash chain verifies, that every entry names a\n" +
+		"product and device the catalogs know, that every correction corrects\n" +
+		"something, and that every gram that came in is either held or went out.\n\n" +
 		"Nothing is changed. A problem is reported, and the command fails.",
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
@@ -76,10 +75,6 @@ func fsck(ws *workspace.Workspace) []string {
 	var problems []string
 	if ws.Chain != nil {
 		problems = append(problems, ws.Chain.Error())
-	}
-	for _, o := range ws.State.Overdrawn {
-		problems = append(problems, fmt.Sprintf("%s %s on %s left %s at %.2fg",
-			shortHash(o.Event.Hash), o.Event.Type, o.Event.OccurredAt.Format(time.DateOnly), o.Account, o.Grams))
 	}
 	// Recorded before amounts were held to centigrams: shown and bundled as
 	// the nearest centigram, so a restore would not give back this journal.

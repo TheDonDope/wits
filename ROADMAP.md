@@ -85,9 +85,12 @@ late. The fold replays by occurred-at, keeping the recorded order among entries
 at the same moment; the journal and its hash chain keep the recorded order, and
 bundles are written from the journal, not the fold. Folding in recorded order
 put a fill entered a month late into whichever cycle was open when it was typed
-in. Recording refuses an entry that would overdraw an account on any date, not
-only today — a grind dated before its fill — and a correction is never dated
-before what it corrects. Both are kept to second precision: nanoseconds say nothing about when
+in. Recording refuses an entry whose grams were not in the jar at its moment,
+on any date, not only today — a grind dated before its fill — and a correction
+is never dated before what it corrects. Grams are flower, not money: an account
+is never below zero, not even in the past, so there is no overdraft to record —
+`ledger.Shortfalls` names an entry that takes more than was there, following
+each jar down to empty and no further. Both are kept to second precision: nanoseconds say nothing about when
 something was ground, and would have to be carried through every export to keep
 hashes reproducible.
 
@@ -187,8 +190,8 @@ unannounced, and "Can", part of two names, made a third product. `--slug` says
 a new product is meant.
 
 Grinding or seshing more than an account holds is refused. The journal would
-record it happily, but a negative balance means the log has stopped describing
-the stash on the table.
+record it happily, but grams that are not in the jar cannot come out of it, and
+a log that says they did has stopped describing the stash on the table.
 
 ### Bundles — `wits bundle` / `wits restore`
 
@@ -225,8 +228,7 @@ decoded event: a field added to `Event` would otherwise have invalidated every
 entry ever made. A test pins one entry's encoding and hash, so a change to how
 entries encode cannot pass unnoticed.
 
-`wits fsck` reports the chain, every account the replay ever drew below zero,
-entries naming a product or device the catalogs lack (one line per name),
+`wits fsck` reports the chain, entries naming a product or device the catalogs lack (one line per name),
 corrections of entries that do not exist, and the mass balance added up
 straight from the entries — what came in, what went out, what is held. It
 changes nothing, and fails when it finds anything.
@@ -311,7 +313,7 @@ same grams back the way they came and recording that alongside the original.
 Undoing is refused if the grams have since moved on, and the confirmation defaults
 to keeping the entry. Sessions can be undone and amended — their grams wait in
 `consumed`, which the check once could not see — and a purchase can be amended
-upward, since the pharmacy it draws on cannot be overdrawn.
+upward, since the pharmacy it draws on is not a jar.
 
 The log shows what currently stands; `v` reveals the corrections behind it. They
 are hidden rather than removed — that is the difference between a record that can

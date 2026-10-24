@@ -2,7 +2,7 @@
 //
 // It exists so that the commands and the interface record an entry the same
 // way. The checks here are the ones that keep the journal describing the stashes
-// on the table — chiefly that an account cannot be drawn below zero — and they
+// on the table — chiefly that nothing takes more from a jar than is in it — and they
 // should not live in two places where one could drift from the other.
 package record
 
@@ -208,12 +208,12 @@ func (r *Recorder) Available(slug string, account journal.Account) float64 {
 	return 0
 }
 
-// check refuses to draw an account below zero. The journal would record it
-// happily, but a negative balance means the log has stopped describing what is
-// actually there.
+// check refuses to take more from an account than it holds. The journal
+// would record it happily, but grams that are not in the jar cannot come out
+// of it, and a log that says they did has stopped describing the jar.
 //
-// External is outside the system and cannot be overdrawn: undoing a use of
-// AVB, or amending a purchase upward, draws on it freely.
+// External is outside the system, and is not a jar: undoing a use of AVB, or
+// amending a purchase upward, draws on it freely.
 func (r *Recorder) check(slug string, grams float64, account journal.Account) error {
 	if account == journal.External {
 		return nil
@@ -242,9 +242,9 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 // against the snapshot, two grinds of the same jar both passed and left
 // storage at -17.10 g.
 //
-// The ledger folds entries by date, so a backdated one can overdraw an account
-// in the past while today's balance looks fine — a grind dated before the fill
-// it draws on. check only sees today; overdraws sees every day.
+// The ledger folds entries by date, so a backdated one can take grams that
+// were not there yet while today's balance looks fine — a grind dated before
+// the fill it draws on. check only sees today; impossible sees every day.
 func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event, error) {
 	stored, err := r.repo.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
 		r.state = ledger.Fold(events)
@@ -256,13 +256,13 @@ func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event
 			if batch[i].OccurredAt.IsZero() {
 				batch[i].OccurredAt = time.Now()
 			}
-			// The journal fills the accounts in on append; the trial fold
-			// needs them now, or the entry moves nothing and cannot overdraw.
+			// The journal fills the accounts in on append; the replay needs
+			// them now, or the entry moves nothing and takes nothing.
 			if batch[i].From == "" && batch[i].To == "" {
 				batch[i].From, batch[i].To, _ = journal.Flow(batch[i].Type)
 			}
 		}
-		return batch, r.overdraws(batch)
+		return batch, r.impossible(batch)
 	})
 	if err != nil {
 		return nil, err
@@ -283,31 +283,31 @@ func (r *Recorder) one(build func() (journal.Event, error)) (journal.Event, erro
 	return stored[0], nil
 }
 
-// overdraws refuses entries that would leave an account below zero at any
-// point in the replay, where none was before.
-func (r *Recorder) overdraws(batch []journal.Event) error {
+// impossible refuses entries that take grams that were not there to take at
+// their moment, or that leave a later entry without the grams it took.
+func (r *Recorder) impossible(batch []journal.Event) error {
 	before := map[string]bool{}
-	for _, o := range r.state.Overdrawn {
-		before[o.Event.Hash] = true
+	for _, short := range ledger.Shortfalls(r.state.Events) {
+		before[short.Event.Hash] = true
 	}
-	next := ledger.Fold(append(slices.Clip(r.state.Events), batch...))
-	for _, o := range next.Overdrawn {
-		if o.Event.Hash != "" && before[o.Event.Hash] {
+	for _, short := range ledger.Shortfalls(append(slices.Clip(r.state.Events), batch...)) {
+		e := short.Event
+		if e.Hash != "" && before[e.Hash] {
 			continue
 		}
-		// Name the new entry: the overdrawn one is either it, or an older
-		// entry it has taken the grams from under.
-		e := batch[len(batch)-1]
-		if o.Event.Hash == "" {
-			e = o.Event
-		}
-		where := string(o.Account)
-		if name, ok := reconcilable[o.Account]; ok {
+		where := string(short.Account)
+		if name, ok := reconcilable[short.Account]; ok {
 			where = name
 		}
-		return fmt.Errorf("%s %.2fg of %s on %s would leave %.2fg in %s on %s: the grams were not there yet",
-			e.Type, e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly),
-			o.Grams, where, o.Event.OccurredAt.Format(time.DateOnly))
+		if e.Hash == "" {
+			return fmt.Errorf("%s %.2fg of %s on %s: there were only %.2fg in %s then",
+				e.Type, e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly), short.Held, where)
+		}
+		// An entry already recorded loses the grams it took to the new one.
+		added := batch[len(batch)-1]
+		return fmt.Errorf("%s %.2fg of %s on %s would leave only %.2fg in %s for the %s of %.2fg on %s",
+			added.Type, added.Grams, added.Product, added.OccurredAt.Format(time.DateOnly),
+			short.Held, where, e.Type, e.Grams, e.OccurredAt.Format(time.DateOnly))
 	}
 	return nil
 }
@@ -338,8 +338,9 @@ func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 	if r.RevertOf(original.Hash) != nil {
 		return journal.Event{}, fmt.Errorf("%s has already been corrected", short(hash))
 	}
-	// Putting the grams back must not overdraw the account they went into: if
-	// they have since been ground on or used, the later entries have to go first.
+	// Putting the grams back must not take more than the account they went
+	// into holds: if they have since been ground on or used, the later entries
+	// have to go first.
 	if err := r.check(original.Product, original.Grams, original.To); err != nil {
 		return journal.Event{}, fmt.Errorf("cannot undo %s: %w", short(hash), err)
 	}

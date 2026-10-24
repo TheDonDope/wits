@@ -354,16 +354,17 @@ func TestFoldsByDate(t *testing.T) {
 		assert.Equal(t, []int{3, 1, 2}, seqs, "By date, and in recorded order within the same moment")
 	})
 
-	t.Run("NotesAnAccountOverdrawnInThePast", func(t *testing.T) {
-		s := Fold([]journal.Event{
+	t.Run("NamesAnEntryWhoseGramsWereNotThereYet", func(t *testing.T) {
+		events := []journal.Event{
 			event(journal.Purchase, "wedding-cake", 20, day(5)),
 			event(journal.Grind, "wedding-cake", 2, day(1)),
-		})
+		}
 
-		assert.Equal(t, 18.0, s.Balances["wedding-cake"].Storage, "Today's balance is fine")
-		require.Len(t, s.Overdrawn, 1, "But on day 1 the grams had not arrived")
-		assert.Equal(t, journal.Storage, s.Overdrawn[0].Account)
-		assert.Equal(t, -2.0, s.Overdrawn[0].Grams)
+		assert.Equal(t, 18.0, Fold(events).Balances["wedding-cake"].Storage, "Today's balance is fine")
+		short := Shortfalls(events)
+		require.Len(t, short, 1, "But on day 1 the grams had not arrived")
+		assert.Equal(t, journal.Storage, short[0].Account)
+		assert.Equal(t, 0.0, short[0].Held, "The jar held nothing then — not less than nothing")
 	})
 }
 

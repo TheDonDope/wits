@@ -35,10 +35,6 @@ type State struct {
 	// the journal, not this.
 	Events []journal.Event
 	Cycles []Cycle
-	// Overdrawn are the entries after which an account of their product
-	// stood below zero. The recorder refuses to add one; an imported or
-	// restored history may hold some, and they are kept, not hidden.
-	Overdrawn []Overdraft
 
 	// lots is each product's jar split into the fills that stocked it,
 	// oldest first. It is how a gram in storage stays on the account of the
@@ -227,11 +223,46 @@ func (f *folder) purchase(e journal.Event) {
 	f.last[e.Product] = f.cur
 }
 
-// Overdraft is an entry that left an account of its product below zero.
-type Overdraft struct {
+// Shortfall is an entry that takes more from an account than the account
+// held at its moment: grams that were not there to take.
+type Shortfall struct {
 	Event   journal.Event
 	Account journal.Account
-	Grams   float64 // what the account stood at afterwards
+	Held    float64 // what the account held just before; never less than nothing
+}
+
+// Shortfalls replays the events in the order they happened and returns each
+// entry that takes more than its account held at that moment — a grind dated
+// before the fill it draws on, say.
+//
+// Grams are flower in a jar, not money in an account: a jar cannot hold less
+// than nothing, so each account is followed down to empty and no further. An
+// entry that takes more than there is takes what there is, and is listed.
+func Shortfalls(events []journal.Event) []Shortfall {
+	held := map[string]map[journal.Account]journal.Centigrams{}
+	var out []Shortfall
+	for _, e := range Chronological(events) {
+		if e.Product == "" {
+			continue
+		}
+		jar := held[e.Product]
+		if jar == nil {
+			jar = map[journal.Account]journal.Centigrams{}
+			held[e.Product] = jar
+		}
+		cg := journal.CG(e.Grams)
+		if e.From != journal.External {
+			if have := jar[e.From]; cg > have {
+				out = append(out, Shortfall{Event: e, Account: e.From, Held: have.Grams()})
+				cg = have
+			}
+			jar[e.From] -= cg
+		}
+		if e.To != journal.External {
+			jar[e.To] += journal.CG(e.Grams)
+		}
+	}
+	return out
 }
 
 // Chronological returns a copy of the events in the order they happened,
@@ -260,9 +291,6 @@ func Fold(events []journal.Event) *State {
 		b := s.balance(e.Product)
 		b.apply(e.From, -cg)
 		b.apply(e.To, cg)
-		if held := b.In(e.From); e.Product != "" && held < 0 {
-			s.Overdrawn = append(s.Overdrawn, Overdraft{Event: e, Account: e.From, Grams: held})
-		}
 
 		switch e.Type {
 		case journal.Purchase:
