@@ -2,9 +2,13 @@
 ## [Unreleased]
 
 
+<a name="v0.54.0"></a>
+## [v0.54.0] - 2026-10-24
+
 <a name="v0.53.0"></a>
 ## [v0.53.0] - 2026-10-24
 ### Docs
+- update changelog for v0.53.0
 - **roadmap:** the plan has an order, and purchases get their prices
 
 ### Feat
@@ -740,7 +744,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.53.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.54.0...HEAD
+[v0.54.0]: https://github.com/TheDonDope/wits/compare/v0.53.0...v0.54.0
 [v0.53.0]: https://github.com/TheDonDope/wits/compare/v0.52.0...v0.53.0
 [v0.52.0]: https://github.com/TheDonDope/wits/compare/v0.51.0...v0.52.0
 [v0.51.0]: https://github.com/TheDonDope/wits/compare/v0.50.0...v0.51.0
