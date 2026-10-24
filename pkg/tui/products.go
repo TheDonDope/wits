@@ -230,7 +230,7 @@ func (v storageView) tables(a *App) (shelf, history []productRow) {
 	events := v.played(a.data.State.Events)
 	balances := a.data.State.Balances
 	if v.playhead >= 0 {
-		balances = ledger.FoldAt(events, a.data.Now).Balances
+		balances = ledger.Fold(events).Balances
 	}
 
 	byProduct := map[string]*productRow{}
@@ -659,7 +659,7 @@ func (v stashView) balances(a *App) map[string]*ledger.Balance {
 	if v.playhead < 0 {
 		return a.data.State.Balances
 	}
-	return ledger.FoldAt(v.played(a.data.State.Events), a.data.Now).Balances
+	return ledger.Fold(v.played(a.data.State.Events)).Balances
 }
 
 // active returns the stashes holding something, fullest first: the tin most

@@ -10,7 +10,6 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
-	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +29,6 @@ var Status = &cobra.Command{
 		}
 		warnChain(cmd.ErrOrStderr(), s.Workspace)
 		writeStatus(cmd.OutOrStdout(), s.State, s.Cycle())
-		writeUpcoming(cmd.OutOrStdout(), s.State)
 		return nil
 	},
 }
@@ -80,6 +78,7 @@ func fsck(ws *workspace.Workspace) []string {
 		problems = append(problems, ws.Chain.Error())
 	}
 	problems = append(problems, effectProblems(ws)...)
+	problems = append(problems, ahead(ws)...)
 	// Written past the recorder — imported, restored, edited by hand — an
 	// entry can take grams that were not in the jar at its moment.
 	for _, short := range ledger.Shortfalls(ws.State.Events) {
@@ -94,6 +93,20 @@ func fsck(ws *workspace.Workspace) []string {
 		}
 	}
 	return append(problems, dangling(ws)...)
+}
+
+// ahead lists entries dated after the repository was opened. The recorder
+// refuses them now; a journal written before it did may still hold one, and
+// the fold counts it as though it had happened.
+func ahead(ws *workspace.Workspace) []string {
+	var out []string
+	for _, e := range ws.State.Events {
+		if e.OccurredAt.After(ws.OpenedAt) {
+			out = append(out, fmt.Sprintf("%s, %s %.2f g of %s, is dated %s — it is counted as though it had happened",
+				shortHash(e.Hash), e.Type, e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly)))
+		}
+	}
+	return out
 }
 
 // effectProblems is what is wrong with the effect log: a chain that does not
@@ -173,7 +186,7 @@ func entries(n int) string {
 // the rest "held", vaped grams included.
 func massLine(state *ledger.State) string {
 	var in, out, jars, vaped journal.Centigrams
-	for _, e := range state.Applied() {
+	for _, e := range state.Events {
 		if e.From == journal.External && e.To != journal.External {
 			in += journal.CG(e.Grams)
 		}
@@ -249,19 +262,6 @@ func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 			plural(int(math.Round(stats.DaysWorth(float64(remaining)))), "day"))
 	} else {
 		fmt.Fprintln(out, "Nothing ground yet this cycle, so there is no rate to extrapolate from")
-	}
-}
-
-// writeUpcoming lists the fills dated ahead, which the figures above leave
-// out until they arrive — less any undone, the way the journal leaves out a
-// corrected entry and its correction.
-func writeUpcoming(out io.Writer, state *ledger.State) {
-	undone := record.Reverted(state.Events)
-	for _, e := range state.Upcoming() {
-		if e.Type == journal.Purchase && !undone[e.Hash] {
-			fmt.Fprintf(out, "%.2fg of %s arriving %s, not counted until then\n",
-				e.Grams, e.Product, e.OccurredAt.Format(time.DateOnly))
-		}
 	}
 }
 

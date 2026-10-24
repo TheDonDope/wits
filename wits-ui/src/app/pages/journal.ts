@@ -67,7 +67,6 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
         @if (r.day) {
           <div class="day">
             <span>{{ r.day | date: 'EEEE, d MMMM y' }}</span>
-            @if (isAhead(r.day)) { <span class="scope ahead">upcoming</span> }
           </div>
         } @else if (r.entry; as e) {
           <div class="entry" [class.corrected]="e.corrected" [class.fix]="e.reverts">
@@ -105,7 +104,6 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
     .row { height: 56px; box-sizing: border-box; padding: 0 18px; }
     .day { height: 100%; display: flex; align-items: flex-end; gap: 10px; padding-bottom: 8px;
       font: 600 12px 'Inter Variable'; letter-spacing: .08em; text-transform: uppercase; color: var(--w-violet); }
-    .ahead { color: var(--w-avb); }
     .entry { height: 100%; display: grid; grid-template-columns: 36px 120px 84px 90px 1fr auto 40px; gap: 14px; align-items: center;
       border-radius: 14px; padding: 0 8px; transition: background .2s; }
     .entry:hover { background: rgba(255,255,255,0.04); }
@@ -225,10 +223,6 @@ export class Journal {
   });
 
   protected track = (_: number, r: Row) => r.entry?.hash ?? `day-${r.day}`;
-
-  protected isAhead(day: string): boolean {
-    return day > new Date().toISOString().slice(0, 10);
-  }
 
   protected async undo(e: Entry): Promise<void> {
     const ok = await firstValueFrom(

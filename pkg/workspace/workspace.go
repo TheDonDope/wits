@@ -85,10 +85,10 @@ func Read(r *repo.Repo) (*Workspace, error) {
 	if err != nil {
 		return nil, err
 	}
-	// One moment for the snapshot: what it holds is what had happened by
-	// then, and what it reports is measured against the same instant.
+	// One moment for the snapshot, which everything it reports is measured
+	// against.
 	now := time.Now()
-	state := ledger.FoldAt(events, now)
+	state := ledger.Fold(events)
 	return &Workspace{
 		Repo:     r,
 		Products: products,
