@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "lint:styles": "stylelint \"src/**/*.scss\""
   },
   "private": true,
   "packageManager": "npm@12.2.1",
@@ -42,6 +43,8 @@
     "eslint": "^10.12.0",
     "jsdom": "^30.0.0",
     "prettier": "^3.8.1",
+    "stylelint": "^16.26.1",
+    "stylelint-config-standard-scss": "^15.0.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "8.71.0",
     "vitest": "^5.0.0"

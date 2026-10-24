@@ -1,7 +1,6 @@
 // The look: deep ink surfaces, a violet-to-mint accent, and the account
 // colours the terminal has always used — storage blue, stash green, AVB amber,
 // sessions violet — so a colour means the same thing on every screen.
-//
 // Every font and icon ships with the app. wits makes no network calls, and an
 // interface that fetched its type from a font service would make one on every
 // load.
@@ -14,6 +13,7 @@
 html {
   height: 100%;
   color-scheme: dark;
+
   @include mat.theme(
     (
       color: (
@@ -52,8 +52,8 @@ html {
   --w-mint: #7cf5c4;
   --w-violet: #8b7bff;
   --w-ink: #0b0e14;
-  --w-glass: rgba(24, 30, 44, 0.62);
-  --w-glass-edge: rgba(255, 255, 255, 0.07);
+  --w-glass: rgb(24 30 44 / 62%);
+  --w-glass-edge: rgb(255 255 255 / 7%);
   --w-dim: #7d879c;
   --w-num: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
   --w-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
@@ -63,9 +63,9 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(139, 123, 255, 0.16), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(124, 245, 196, 0.1), transparent 60%),
-    radial-gradient(800px 800px at 50% 120%, rgba(110, 168, 255, 0.08), transparent 60%),
+    radial-gradient(1200px 600px at 10% -10%, rgb(139 123 255 / 16%), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgb(124 245 196 / 10%), transparent 60%),
+    radial-gradient(800px 800px at 50% 120%, rgb(110 168 255 / 8%), transparent 60%),
     var(--w-ink);
   background-attachment: fixed;
   color: var(--mat-sys-on-surface);
@@ -85,8 +85,8 @@ body {
   border-radius: 24px;
   backdrop-filter: blur(18px) saturate(1.2);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 24px 48px -24px rgba(0, 0, 0, 0.6);
+    0 1px 0 rgb(255 255 255 / 4%) inset,
+    0 24px 48px -24px rgb(0 0 0 / 60%);
 }
 
 .num {
@@ -138,17 +138,16 @@ body {
 
 // Dialogs float over a blurred page, on the same glass as the cards.
 .cdk-overlay-dark-backdrop {
-  background: rgba(5, 7, 12, 0.55);
+  background: rgb(5 7 12 / 55%);
   backdrop-filter: blur(8px);
 }
 
-.record-panel .mat-mdc-dialog-surface,
 .mat-mdc-dialog-surface {
-  background: rgba(20, 25, 37, 0.94) !important;
+  background: rgb(20 25 37 / 94%) !important;
   border: 1px solid var(--w-glass-edge);
   border-radius: 28px !important;
   box-shadow:
-    0 0 0 1px rgba(139, 123, 255, 0.08),
-    0 40px 80px -24px rgba(0, 0, 0, 0.8),
-    0 0 120px -40px rgba(139, 123, 255, 0.45) !important;
+    0 0 0 1px rgb(139 123 255 / 8%),
+    0 40px 80px -24px rgb(0 0 0 / 80%),
+    0 0 120px -40px rgb(139 123 255 / 45%) !important;
 }
