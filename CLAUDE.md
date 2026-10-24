@@ -102,8 +102,9 @@ rebuilt from any prefix of events.
 
 Two orders, never mixed: the journal is in **recorded order** (the hash chain),
 the fold in **occurred order** (`ledger.Chronological`, ties kept recorded).
-`State.Events` is the fold's order; anything that needs the chain — bundles —
-reads `Journal().Events()`. Entries can be backdated anywhere, so the recorder
+`State.Events` is the fold's order, every entry; the balances and cycles are
+only those dated by `State.At` (`FoldAt`) — `Upcoming()` is the rest. Anything
+that needs the chain — bundles — reads `Journal().Events()`. Entries can be backdated anywhere, so the recorder
 checks a new one against every date in the replay (`ledger.Shortfalls`), not
 only against today's balance. Grams are physical: nothing models a negative
 balance or an overdraft — an entry either had its grams in the jar or is
