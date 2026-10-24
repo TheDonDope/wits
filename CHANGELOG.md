@@ -2,9 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v0.46.0"></a>
+## [v0.46.0] - 2026-10-24
+### Feat
+- **fsck:** say when an entry took grams that were not in the jar
+
+
 <a name="v0.45.0"></a>
 ## [v0.45.0] - 2026-10-24
 ### Docs
+- update changelog for v0.45.0
 - what has not arrived is not on the shelf
 
 ### Fix
@@ -656,7 +663,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.45.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.46.0...HEAD
+[v0.46.0]: https://github.com/TheDonDope/wits/compare/v0.45.0...v0.46.0
 [v0.45.0]: https://github.com/TheDonDope/wits/compare/v0.44.0...v0.45.0
 [v0.44.0]: https://github.com/TheDonDope/wits/compare/v0.43.0...v0.44.0
 [v0.43.0]: https://github.com/TheDonDope/wits/compare/v0.42.0...v0.43.0
