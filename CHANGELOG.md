@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.77.0"></a>
+## [v0.77.0] - 2026-10-25
+### Feat
+- **wits-ui:** five scopes in a phone's width, and the shelf as a list
+
+
 <a name="v0.76.0"></a>
 ## [v0.76.0] - 2026-10-25
+### Docs
+- update changelog for v0.76.0
+
 ### Feat
 - **wits-ui:** a phone navigates by thumb, and nothing scrolls sideways
 
@@ -976,7 +985,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.76.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.77.0...HEAD
+[v0.77.0]: https://github.com/TheDonDope/wits/compare/v0.76.0...v0.77.0
 [v0.76.0]: https://github.com/TheDonDope/wits/compare/v0.75.0...v0.76.0
 [v0.75.0]: https://github.com/TheDonDope/wits/compare/v0.74.0...v0.75.0
 [v0.74.0]: https://github.com/TheDonDope/wits/compare/v0.73.0...v0.74.0
