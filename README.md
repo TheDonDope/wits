@@ -562,6 +562,16 @@ helped is one rated 4 or more overall, at its product's price per gram. The
 same walk is `$` in the terminal interface and the **Costs** page in the
 browser.
 
+The **Costs** page walks it a fill at a time, as the prescription was picked
+up: on the workbook, 88 purchases in 30 fills, three strains to most of them.
+Type each strain's price a gram, and **Add 19% VAT (Germany)**, on unless
+switched off, puts the tax on top; the fill's total is worked out as the server
+writes it. Or **Scan invoice**: the pharmacy's PDF is read in the browser and
+its prices fill the strains, the invoice's first page shown beside them to
+check against. If the invoice is dated a few days off the pickup (ordered one
+day, picked up the next), it asks first. If it belongs to another fill, it says
+which one and offers to go there.
+
 ## AVB
 
 Already vaped bud is what is left of a session once it has been through a
@@ -650,7 +660,10 @@ typed in. **Read invoices** takes one or more of the pharmacy's PDF invoices and
 fills in their strains, matched to your jars, with the invoice's own totals —
 which already include VAT, so none is added to them — and the fill dated the
 day ordered. The PDF is read in the browser by pdf.js, and only its text is
-sent, so the invoice, which names you, goes nowhere either.
+sent, so the invoice, which names you, goes nowhere either. An invoice for a
+fill already recorded is not recorded again: on the same day, the form says so
+and offers to price that fill from it. Within a week, it asks whether it is
+that fill. Only an invoice that matches no fill adds its strains as a new one.
 
 On a phone the tabs give way to a dock under the thumb: Dashboard, Journal, a
 raised **Record**, Jars, and **More** for the other pages. The top bar names

@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 
 import {
-  Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, Verdict, Written,
+  Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
 } from './models';
 
 /**
@@ -112,13 +112,16 @@ export class Wits {
   }
 
   /** The purchases without a price: those still in storage, or every one. */
-  unpriced(all: boolean): Promise<Entry[]> {
-    return firstValueFrom(this.http.get<Entry[]>(`/api/unpriced${all ? '?all=1' : ''}`));
+  unpriced(all: boolean): Promise<UnpricedEntry[]> {
+    return firstValueFrom(this.http.get<UnpricedEntry[]>(`/api/unpriced${all ? '?all=1' : ''}`));
   }
 
-  /** Writes down what a purchase cost, in euros as typed. */
-  price(purchase: string, euros: string) {
-    return this.write<{ message: string }>('price', { purchase, euros });
+  /**
+   * Writes down a fill's prices: a price a gram for each purchase, VAT added
+   * when asked for, or the invoice's line total. One left blank keeps no price.
+   */
+  priceFill(lines: PriceLine[], vat: boolean) {
+    return this.write<{ message: string }>('price/fill', { lines, vat });
   }
 
   /** The page for the prescriber, as a PDF, for the days from and to. */

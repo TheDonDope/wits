@@ -142,6 +142,9 @@ type invoiceReading struct {
 	Rate   int           `json:"rate"`
 	Gross  int64         `json:"gross_cents"`
 	Sum    int64         `json:"sum_cents"`
+	// Match is the fill already recorded that the invoice is for, if any:
+	// pricing that one, not recording its purchases again.
+	Match *invoiceMatch `json:"match,omitempty"`
 }
 
 type invoiceLine struct {
@@ -187,6 +190,9 @@ func (s *Server) readInvoice(w http.ResponseWriter, r *http.Request) {
 			line.Name, line.Slug = p.Name, p.Slug
 		}
 		out.Lines[i] = line
+	}
+	if !inv.Date.IsZero() {
+		out.Match = matchInvoice(ws, inv.Date, out.Lines)
 	}
 	reply(w, http.StatusOK, out)
 }

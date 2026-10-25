@@ -756,6 +756,16 @@ and past a jar of the same name at another strength, 351.80 € with VAT. The
 example stays out of the repository, as it names its patient; the tests use its
 rows without them.
 
+An invoice is matched against the fills already recorded (`matchInvoice`,
+`pkg/api/match.go`): of the pickups within a week of its date, the one holding
+most of its strains, with how many days apart and which purchase each line is.
+An invoice is dated the day it was ordered and a fill the day it was picked
+up, so they are often a day apart: the example is dated 28 August and the
+workbook's fill 30 was picked up on the 29th, and it matches with all three
+lines. Matched on the same day, the Fill tab does not add the strains again but
+offers to price that fill from the invoice's totals; a few days off, it asks
+first; matched to nothing, the strains go on a new fill as before.
+
 ### Reading the pharmacy label — Record's Fill tab
 
 **Read the label** on the Fill tab takes a photograph, the camera's on a phone,
@@ -942,6 +952,19 @@ in storage without one, or every purchase with `--all`, a question each, a blank
 one skipped, nothing written until the end. It is the same walk in all three
 interfaces: `wits reconcile purchases`, `$` in the terminal, and the browser's
 **Costs** page. A buy whose price fails still stands, and says how to price it.
+
+The browser walks it a fill at a time (`PickupCard`): `/api/unpriced` names
+each purchase's fill, and a fill is priced together (`POST /api/price/fill`,
+`Recorder.PriceAll`). Every purchase is checked before any price is written, so
+a bad line refuses the fill whole. Each strain takes a price a gram, with 19% VAT
+on top when the switch is on, worked out by the fill form's `rowCents` on the
+page and `lineCents` on the server. Or it takes its invoice's line total:
+**Scan invoice** reads the PDF on the device and shows its first page beside
+the figures. The invoice's match decides what happens: this fill on the same
+day fills the prices; a few days off, it asks first; another fill's says whose
+it is and hands it over. On the workbook, 88 purchases fall in 30 fills (28 of
+three strains, 2 of two). The example invoice prices fill 30 at 351.80 €, its
+own total to the cent; 20 g at 5,80 € with VAT is 138,04 € on both sides.
 
 `wits costs` and `/api/costs` (`prices.Analyse`) give what was paid in all and
 per gram, by fill and by month, and per session that helped: rated 4 or more
