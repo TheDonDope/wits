@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 
 import {
-  Avb, Costs, Cycle, Strain, Day, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
+  Avb, Costs, Cycle, Findings, Strain, Day, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
 } from './models';
 
 /**
@@ -132,7 +132,23 @@ export class Wits {
     return firstValueFrom(this.http.get(`/api/report.pdf?from=${from}&to=${to}`, { responseType: 'blob' }));
   }
 
-  /** Records the named stashes as consumed, as one batch. */
+  /** Looks a product's terpenes up on the web. It writes nothing down. */
+  research(slug: string): Promise<Findings> {
+    return this.get<Findings>(`/api/jars/${encodeURIComponent(slug)}/research`);
+  }
+
+  /** Writes down a product's terpenes, dominant first; none clears them. */
+  async terpenes(slug: string, terpenes: string[]): Promise<{ message: string; terpenes: string[] }> {
+    try {
+      const out = await firstValueFrom(this.http.put<{ message: string; terpenes: string[] }>(
+        `/api/jars/${encodeURIComponent(slug)}/terpenes`, { terpenes }));
+      this.version.update((v) => v + 1);
+      return out;
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
   /** Puts a device in the catalog. */
   addDevice(device: DeviceFields) {
     return this.write<{ message: string; slug: string }>('devices', device);
@@ -149,6 +165,7 @@ export class Wits {
     }
   }
 
+  /** Records the named stashes as consumed, as one batch. */
   async flush(products: string[]): Promise<{ message: string }> {
     return this.write<{ message: string }>('flush', { products });
   }

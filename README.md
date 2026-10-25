@@ -701,18 +701,59 @@ make serve          # builds both, then serves the repository here
 open http://127.0.0.1:7341
 ```
 
-The dashboard draws the fill as a ring — sealed, ground, AVB — with the older
-jars around it as a halo; each product of the fill as a jar of glass, filled to
-what it holds; and the shelf's supply as a curve to the day it runs out. The
-history is three years of grinding as a calendar, and every fill as a lane on
-one timeline, overlapping the way fills do. The journal scrolls all of its
-entries and undoes one with a correction, the jars are a gallery, and **Record**
-grinds, records a session, a fill or a weighing — through the same recorder as
-the commands, with the same refusals in the same words. The interface follows
-the repository: an entry made with the command line shows within a few seconds.
+It reads and writes through the same recorder as the commands, with the same
+refusals in the same words, and follows the repository: an entry made with the
+command line shows within a few seconds. There are four tabs — **Dashboard**,
+**I forgot to**, **Shelf** (Jars, the Journal, Devices) and **Insights**
+(Analysis, Effects, History, Costs) — and **Record**, always in reach, to
+grind, record a session, a fill or a weighing.
 
-There are four tabs. **Dashboard** is what is happening now. **I forgot to** is
-everything left undone that the ledger can show, each section there only
+### The dashboard
+
+![The dashboard](./assets/wits-ui-dashboard.png)
+
+What is happening now. The fill in progress is a ring — sealed, ground, AVB —
+with the older jars around it as a halo. Under it stands **every fill not yet
+emptied**, jar by jar: fill 30 above, and fill 29 below it still holding
+8.07 g of its own, each jar of glass filled to what that fill holds of it.
+Then the shelf's supply as a curve to the day it runs out, with the day to
+order the next prescription by, and the last twenty weeks of grinding and
+sessions as calendars.
+
+### One jar in full
+
+![One jar in full, its terpenes looked up](./assets/wits-ui-jar.png)
+
+A jar, on the dashboard or on the Shelf, opens in full:
+
+- what the product is — producer, strain, THC and CBD — and its **terpene
+  profile**;
+- **every fill of it**, what that fill dispensed and still holds sealed, and
+  each pickup with what it cost and where;
+- what it cost a gram, over every priced pickup;
+- what was ground and seshed of it **month by month**;
+- its **sessions**: how many, on which devices, the temperatures set, each
+  rating's mean and the latest eight;
+- the products most like it.
+
+The jar's own figures are its whole life; each fill's are that fill's. (The
+picture is the workbook's MAC1+ with ten sessions, their ratings and four
+prices added, since the workbook has none of them.)
+
+No terpenes written down? **Research terpene profile** looks them up. It
+searches the web for the product as the pharmacy sells it — Brave Search, or
+DuckDuckGo when Brave turns the request away — and asks Leafly for its
+strain, reads which terpenes each page names, in German or English, and
+offers a profile: the terpenes most pages name first, five at most, with the
+pages it came from. Leafly's is marked as the strain's, not this product's.
+Nothing is written down until you keep it, as found or as you correct it
+against the label; **Edit** types one in. On the workbook's MAC1+ it found
+seven pages, and the first eight jars on the list each came back with a
+profile, from three to eight pages each.
+
+### I forgot to
+
+Everything left undone that the ledger can show, each section there only
 while there is some, and the tab counts them:
 
 - sessions of the last week waiting for a rating;
@@ -721,14 +762,110 @@ while there is some, and the tab counts them:
   still holds grams, all ticked and cleared together;
 - AVB waiting in a device, with **Collect**.
 
-It also lists the jars still sealed with **Weigh**, which opens Record on that
-jar. These are offered but not counted, since a weighing that agrees with the
-ledger writes nothing. On the workbook it counts 50: two pickups and 48
-stashes left behind, 1,154.00 g. **Shelf** holds Jars, the Journal and
-Devices: what is on hand, every entry, and what it is all taken with. **Insights** holds Analysis, Effects, History and
-Costs. `1` to `4` go to the tabs, and `h` and `l` step through every page in
-turn. The old addresses (`/jars`, `/costs` and so on) still lead to their
-pages. The theme's name is beside the build at the end of the help line.
+On the workbook it counts 50: two pickups and 48 stashes left behind,
+1,154.00 g. Two more are offered but not counted: the jars still sealed, with
+**Weigh**, since a weighing that agrees with the ledger writes nothing; and
+the jars with no terpene profile, since one no page names would never clear.
+**Research all** looks those up one after another, a pause between, and
+**Keep all found** writes down every profile it found at once.
+
+![Every jar without terpenes, looked up in turn](./assets/wits-ui-terpenes.png)
+
+### Recording a fill
+
+A fill holds one strain or several, each with its grams and its price a gram,
+and records as one: all of them or none, each with its price written down.
+**Add 19% VAT (Germany)**, on unless switched off, adds the tax to the prices
+typed in.
+
+**Read the label** takes a photograph of the pharmacy label and fills in the
+product and the grams, matched to a jar you already have when it is one. The
+text is read in the browser, by Tesseract compiled to WebAssembly and served
+by wits itself, so the photograph goes nowhere — check what it read, then
+record.
+
+**Read invoices** takes one or more of the pharmacy's PDF invoices and fills in
+their strains, matched to your jars, with the invoice's own totals — which
+already include VAT, so none is added to them — and the fill dated the day
+ordered. The PDF is read in the browser by pdf.js, and only its text is sent,
+so the invoice, which names you, goes nowhere either. An invoice for a fill
+already recorded is not recorded again: on the same day, the form says so and
+offers to price that fill from it. Within two weeks, it asks whether it is
+that fill. Only an invoice that matches no fill adds its strains as a new one.
+
+### The jars, the journal and the replay
+
+The jars are a gallery, every product a card across its life; tick the cards
+— or **Select all** — and **Clear stash** records their stashes as consumed,
+one adjustment each in a single write: the terminal's history clean-up, for
+the stashes you choose. The journal scrolls all of its entries and undoes one
+with a correction.
+
+![Every day, and every fill](./assets/wits-ui-history.png)
+
+The history is three years of grinding as a calendar, and every fill as a
+lane on one timeline, overlapping the way fills do. **Analysis** is the
+terminal's long view — this fill, the last 30 or 90 days, 12 months, all
+time — and the record played back through it. Press play and everything
+replays from empty, an entry a moment: the daily chart fills in, the products
+race each other up the ranking, the fills grow on their timeline; drag the
+scrubber to any point, step with `←`/`→`. The jars replay the same way,
+filling as fills arrive and draining as they are ground. `?at=2025-02-14`
+opens either as the record stood that day.
+
+![The record played back to February 2025](./assets/wits-ui-analysis.png)
+
+The analysis tab also draws **tolerance**: grams a day against how the sessions
+went, both over the same 14 days rolling. Tolerance creeps when the grams climb
+and the rating stays flat. Breaks, a week or more with nothing ground and no
+session, are shaded behind the curve, and the replay draws it day by day, so you
+can see whether it comes back down after one. A week, not three days: the
+workbook grinds every two or three days, and at three days its last 90 held
+eleven "breaks" that were only the habit. At a week it holds one, 12 to 18
+September, and ten over the whole record, the longest 99 days.
+
+**Film** on the Jars page records the replay as a video: three years of the
+shelf in thirty seconds, from the same replay the page plays, each jar sealed
+blue under ground green, paced evenly through time rather than entry by entry.
+It is WebM, MP4 on Safari, recorded by the browser itself, and a phone hands it
+over to share.
+
+![The shelf, three years in thirty seconds](./assets/wits-film.gif)
+
+### Effects, and the map of the strains
+
+**Effects** is the effect log. Each session waits to be rated, under **I
+forgot to** — 1 to 5, tapped, on how it went overall and on pain, sleep,
+calm, mood, focus or appetite, any of them — and what the ratings add up to is
+drawn three ways: every product against every dimension, each dimension by
+temperature band, and by time of day as a wheel. Every mean says how many
+ratings it stands on, and one that stands on a single rating is hatched: a
+rating, not a finding. `wits rate last sleep=5` does the same from the command
+line, and `e` on the terminal interface's sessions screen.
+
+![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
+
+Under it is **a map of the strains**: every product dispensed, across by THC,
+up and down by its name and terpenes so that alike sits at one height, sized by
+what was dispensed and coloured by how its sessions went. Pick one for what is
+most like it; `wits like` says the same on the command line:
+
+```console
+$ wits like cantourage-mac1-251
+Like Cantourage 25/1 MAC1+:
+  420 Evolution 25/1 CA MAC: MAC1
+  Cantourage 25/1 MAC 1+
+  Barongo 27/1 MAC3
+```
+
+The workbook names its cultivars but lists no terpenes, so until profiles are
+written down the map knows the Wedding Cakes and the MAC1s by name and the
+rest by THC. Look them up from **I forgot to**, or write one down as the label
+gives it — `wits describe wedding --terpenes "Myrcen, Limonen, Caryophyllen"`
+or the terminal's product form — and products alike in terpenes find each
+other whatever they are called.
+
+### Devices
 
 **Devices** lists every device by what it is for:
 
@@ -766,39 +903,25 @@ heated it, and at which of the heater's settings: an induction heater's
 wattage. The Journal shows it all, as in "Vestratto Tornado · heated with YLL
 3.0 at 45 W".
 
-The **Repository** page, off the header's menu (⋮), is where the server is pointed.
-Browse this computer's folders to open another repository, those that are one
-marked *wits*, or make one in an empty folder or a new one; the server serves it from then
-on, and every page reads it. There, too, a tracking workbook can be
-**imported** from the browser: it is read and reported first, as `wits import`
-reports it, and written only when you import, into an empty journal only. The
-phone has the tab too, on its own storage: see below.
+### Which repository
 
-A fill can be read off the pharmacy label: **Read the label** on the Fill tab
-takes a photograph and fills in the product and the grams, matched to a jar you
-already have when it is one. The text is read in the browser, by Tesseract
-compiled to WebAssembly and served by wits itself, so the photograph goes
-nowhere — check what it read, then record.
+The **Repository** page, off the header's menu (⋮), is where the server is
+pointed. Browse this computer's folders to open another repository, those
+that are one marked *wits*, or make one in an empty folder or a new one; the
+server serves it from then on, and every page reads it. There, too, a
+tracking workbook can be **imported** from the browser: it is read and
+reported first, as `wits import` reports it, and written only when you
+import, into an empty journal only. The phone has the page too, on its own
+storage: see below.
 
-A fill holds one strain or several, each with its grams and its price a gram,
-and records as one: all of them or none, each with its price written down.
-**Add 19% VAT (Germany)**, on unless switched off, adds the tax to the prices
-typed in. **Read invoices** takes one or more of the pharmacy's PDF invoices and
-fills in their strains, matched to your jars, with the invoice's own totals —
-which already include VAT, so none is added to them — and the fill dated the
-day ordered. The PDF is read in the browser by pdf.js, and only its text is
-sent, so the invoice, which names you, goes nowhere either. An invoice for a
-fill already recorded is not recorded again: on the same day, the form says so
-and offers to price that fill from it. Within two weeks, it asks whether it is
-that fill. Only an invoice that matches no fill adds its strains as a new one.
+### Keys, themes and small screens
 
-On a phone the tabs give way to a dock under the thumb: Dashboard, Forgot, a
-raised **Record**, Shelf and Insights, with the count on Forgot. The header's
-menu holds Repository (and Sync), and the build and theme at its foot. The top
-bar names the page you are on, and the bars keep clear of the notch and the home
-indicator. It is laid out for an iPhone 11 Pro held upright (375 px) and
-nothing narrower; no page scrolls sideways. There, Analysis's scopes go by
-short names (Fill, 30 d, 90 d, 12 mo, All) and the jars are a compact list.
+Every key the terminal has is here too, and the footer shows the ones the page
+answers: `g` `s` `b` `r` `v` to record, `1` to `4` for the tabs and `h`/`l`
+through every page in turn, `p` to replay, `j`/`k` to move, `space` to tick,
+`o` to open a jar, and `?` for all of them. The old addresses (`/jars`,
+`/costs` and so on) still lead to their pages. `?record=grind` (or `session`,
+`fill`, `weigh`) opens the form on that tab — a link to bookmark.
 
 The palette in the header picks one of 41 themes, and `t` steps through them
 (`T` back): wits' own Aurora, then Nord, Dracula, Gruvbox, Solarized, Tokyo
@@ -808,89 +931,33 @@ Contrast in the dark, and Paper, Solarized Light, Latte, Sakura, Bauhaus,
 Daylight, Dune, Drafting, Greenbar, Risograph, Swiss, Chicago, Sumi, Kraft, Dot
 Matrix, E-Ink, Glacier and Memphis in the light. Some draw their paper:
 Blueprint a cyanotype grid in three line weights, Greenbar tractor-feed bands,
-Deco a gold sunburst, Noir light through the blinds, Topo contour lines. They differ in more than colour — Paper is cream and serif with
-square corners, Phosphor a green CRT in monospace with scanlines, Bauhaus hard
-black edges and offset shadows on a grid, Mocha and Latte rounded and pastel.
-Each keeps the account colours' meaning — storage blue, stash green, AVB amber —
-in its own shades. The choice is this browser's, kept in its local storage;
-`?theme=paper` opens the page in one without keeping it.
+Deco a gold sunburst, Noir light through the blinds, Topo contour lines. They
+differ in more than colour — Paper is cream and serif with square corners,
+Phosphor a green CRT in monospace with scanlines, Bauhaus hard black edges and
+offset shadows on a grid, Mocha and Latte rounded and pastel. Each keeps the
+account colours' meaning — storage blue, stash green, AVB amber — in its own
+shades. The choice is this browser's, kept in its local storage;
+`?theme=paper` opens the page in one without keeping it. The theme's name is
+beside the build at the end of the help line.
 
-![The dashboard](./assets/wits-ui-dashboard.png)
+On a phone the tabs give way to a dock under the thumb: Dashboard, Forgot, a
+raised **Record**, Shelf and Insights, with the count on Forgot. The header's
+menu holds Repository (and Sync), and the build and theme at its foot. The top
+bar names the page you are on, and the bars keep clear of the notch and the home
+indicator. It is laid out for an iPhone 11 Pro held upright (375 px) and
+nothing narrower; no page scrolls sideways. There, Analysis's scopes go by
+short names (Fill, 30 d, 90 d, 12 mo, All), the jars are a compact list, and
+the dashboard's jars stand three to a row.
 
-![Every day, and every fill](./assets/wits-ui-history.png)
-
-**Analysis** is the terminal's long view — this fill, the last 30 or 90 days,
-12 months, all time — and the record played back through it. Press play and
-everything replays from empty, an entry a moment: the daily chart fills in, the
-products race each other up the ranking, the fills grow on their timeline; drag
-the scrubber to any point, step with `←`/`→`. The jars replay the same way,
-filling as fills arrive and draining as they are ground. `?at=2025-02-14`
-opens either as the record stood that day.
-
-![The record played back to February 2025](./assets/wits-ui-analysis.png)
-
-The analysis tab also draws **tolerance**: grams a day against how the sessions
-went, both over the same 14 days rolling. Tolerance creeps when the grams climb
-and the rating stays flat. Breaks, a week or more with nothing ground and no
-session, are shaded behind the curve, and the replay draws it day by day, so you
-can see whether it comes back down after one. A week, not three days: the
-workbook grinds every two or three days, and at three days its last 90 held
-eleven "breaks" that were only the habit. At a week it holds one, 12 to 18
-September, and ten over the whole record, the longest 99 days.
-
-**Film** on the Jars page records the replay as a video: three years of the
-shelf in thirty seconds, from the same replay the page plays, each jar sealed
-blue under ground green, paced evenly through time rather than entry by entry.
-It is WebM, MP4 on Safari, recorded by the browser itself, and a phone hands it
-over to share.
-
-![The shelf, three years in thirty seconds](./assets/wits-film.gif)
-
-On the jars, tick the cards — or **Select all** — and **Clear stash** records
-their stashes as consumed, one adjustment each in a single write: the
-terminal's history clean-up, for the stashes you choose.
-
-**Effects** is the effect log. Each session waits to be rated, under **I
-forgot to** — 1 to 5, tapped,
-on how it went overall and on pain, sleep, calm, mood, focus or appetite, any of
-them — and what the ratings add up to is drawn three ways: every product against
-every dimension, each dimension by temperature band, and by time of day as a
-wheel. Every mean says how many ratings it stands on, and one that stands on a
-single rating is hatched: a rating, not a finding. `wits rate last sleep=5`
-does the same from the command line, and `e` on the terminal interface's
-sessions screen.
-
-![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
-
-Under it is **a map of the strains**: every product dispensed, across by THC,
-up and down by its name and terpenes so that alike sits at one height, sized by
-what was dispensed and coloured by how its sessions went. Pick one for what is
-most like it; `wits like` says the same on the command line:
-
-```console
-$ wits like cantourage-mac1-251
-Like Cantourage 25/1 MAC1+:
-  420 Evolution 25/1 CA MAC: MAC1
-  Cantourage 25/1 MAC 1+
-  Barongo 27/1 MAC3
-```
-
-The workbook names its cultivars but lists no terpenes, so for now the map
-knows the Wedding Cakes and the MAC1s by name and the rest by THC. Write a
-profile down as the label gives it, `wits describe wedding --terpenes "Myrcen,
-Limonen, Caryophyllen"` or the terminal's product form, and products alike in
-terpenes find each other whatever they are called.
-
-Every key the terminal has is here too, and the footer shows the ones the page
-answers: `g` `s` `b` `r` `v` to record, `1`–`7` or `h`/`l` between pages, `p` to
-replay, `j`/`k` to move, `space` to tick, and `?` for all of them.
+### What it talks to
 
 It answers this machine only. The server listens on a loopback address and
 refuses one that is not; a request naming any other host is refused, which keeps
 a web page elsewhere from reaching it; and every write must be JSON, which a page
 on another origin cannot send. Every font and icon ships with the interface, so
-it makes no network call either. `?record=grind` (or `session`, `fill`, `weigh`)
-opens the form on that tab — a link to bookmark.
+the page itself makes no network call. The one thing that reaches out is a
+terpene lookup, and only when asked: the server, not the page, asks the search
+and Leafly, sending the names of the product and its strain and nothing else.
 
 ## On the phone
 
@@ -899,8 +966,10 @@ repository, the recorder and the API that `wits-server` runs, compiled to
 WebAssembly. The phone keeps its own copy of the journal in the browser and
 refuses the same things in the same words as the terminal. It works offline
 once it has loaded, and a home-screen shortcut opens the grind form directly.
+Everything above is there, except looking terpenes up: the phone's browser
+cannot ask other sites, so on the phone a profile is typed in.
 
-![The phone, after its first sync](./assets/wits-phone-dashboard.png)
+![Every open fill, on the phone](./assets/wits-phone-dashboard.png)
 
 It's served from GitHub Pages at <https://thedondope.github.io/wits/>, and
 holds no data there. Install it from the browser's menu (**Add to home
@@ -957,6 +1026,7 @@ wits/                     module github.com/TheDonDope/wits
     remote/               push and pull through a shared folder
     importer/             reading the tracking spreadsheet
     cannabis/             cannabinoids, terpenes and their boiling points
+    research/             a product's terpenes, looked up on the web
     api/                  the repository over HTTP, for wits-server
     tui/                  the screens
     version/              the build stamp every binary reports from

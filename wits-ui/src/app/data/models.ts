@@ -84,6 +84,8 @@ export interface Overview {
   now: string;
   chain_ok: boolean;
   fill: Fill | null;
+  /** Every fill still holding grams of its own, newest first — each in its own scope. */
+  fills: Fill[];
   shelf: Shelf;
 }
 
@@ -95,6 +97,8 @@ export interface Jar {
   cultivar?: string;
   thc?: number;
   cbd?: number;
+  /** Dominant first; empty until written down. */
+  terpenes: string[];
   storage: number;
   stash: number;
   avb: number;
@@ -382,4 +386,72 @@ export interface FillLine {
   total?: string;
   /** Beside the price: the invoice it is from. */
   note?: string;
+}
+
+/** One purchase of a product, with its price when one is written down. */
+export interface Pickup {
+  hash: string;
+  at: string;
+  grams: number;
+  cents?: number;
+  per_gram?: number;
+  unknown?: boolean;
+  priced: boolean;
+  seller?: string;
+  note?: string;
+}
+
+/** One fill of a product — the fill's scope: what it dispensed of it, what is still sealed. */
+export interface JarFill {
+  number: number;
+  start: string;
+  open: boolean;
+  dispensed: number;
+  sealed: number;
+  pickups: Pickup[];
+}
+
+/** One product in full — the jar's scope, with each of its fills in theirs. */
+export interface JarDetail extends Jar {
+  country?: string;
+  radiated?: boolean;
+  strain: string;
+  first_seen: string;
+  /** Through a device as logged sessions; cleared from the stash unlogged. */
+  seshed: number;
+  flushed: number;
+  fill_list: JarFill[];
+  price: { cents: number; priced: number; per_gram: number; unpriced: number };
+  months: { month: string; ground: number; seshed: number }[];
+  sessions: {
+    count: number;
+    grams: number;
+    first?: string;
+    last?: string;
+    devices: { slug: string; name: string; sessions: number; grams: number }[];
+    min_temp?: number;
+    max_temp?: number;
+    rated: number;
+    scores: Partial<Record<Dimension, number>>;
+    /** The latest sessions, newest first; a hash and scores when rated. */
+    recent: Rated[];
+  };
+  like: { slug: string; name: string }[];
+}
+
+/** A page that names a product's terpenes: a search result, or the strain's profile on Leafly. */
+export interface TerpeneSource {
+  site: string;
+  title: string;
+  url: string;
+  terpenes: string[];
+  /** About the strain, not this product: another grower's harvest can run differently. */
+  strain?: boolean;
+}
+
+/** What a terpene lookup found, and a profile from it, dominant first. Nothing is written down. */
+export interface Findings {
+  search: string;
+  sources: TerpeneSource[];
+  suggested: string[];
 }

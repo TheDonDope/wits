@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 
 import { Wits } from '../data/wits';
 import { CountUp } from '../viz/count-up';
@@ -24,6 +25,7 @@ import { ProjectionChart } from '../viz/projection-chart';
     MatProgressSpinnerModule,
     MatTooltipModule,
     ProjectionChart,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -87,25 +89,37 @@ import { ProjectionChart } from '../viz/projection-chart';
 
         <section class="jars glass">
           <header>
-            <span class="eyebrow">this fill, jar by jar</span>
-            <span class="scope">the fill</span>
+            <span class="eyebrow">{{ o.fills.length > 1 ? 'every open fill, jar by jar' : 'this fill, jar by jar' }}</span>
+            <span class="scope" matTooltip="Each fill's own grams: what it dispensed, and what of that is still sealed">the fill</span>
           </header>
-          <div class="row">
-            @for (p of f.products; track p.slug) {
-              <figure>
-                <w-jar [capacity]="p.dispensed"
-                  [layers]="[
-                    { grams: p.sealed, color: 'var(--w-storage)', label: 'sealed' },
-                    { grams: p.stash, color: 'var(--w-stash)', label: 'ground' },
-                    { grams: p.avb, color: 'var(--w-avb)', label: 'AVB' },
-                  ]" />
-                <figcaption>
-                  <strong>{{ p.name }}</strong>
-                  <span class="num">{{ p.sealed | number: '1.2-2' }} g <span class="dim">of {{ p.dispensed | number: '1.0-0' }}</span></span>
-                </figcaption>
-              </figure>
-            }
-          </div>
+          @for (g of o.fills; track g.number; let first = $first) {
+            <div class="group" [class.older]="!first">
+              @if (o.fills.length > 1) {
+                <div class="group-head">
+                  <strong>Fill {{ g.number }}</strong>
+                  <span class="dim">{{ first ? 'in progress' : 'older' }} · since {{ g.start | date: 'd MMMM' }} · day {{ g.day }}</span>
+                  <span class="num">{{ g.remaining | number: '1.2-2' }} g <span class="dim">of {{ g.dispensed | number: '1.0-0' }} still sealed ·
+                    {{ g.remaining_pct * 100 | number: '1.0-0' }}%</span></span>
+                </div>
+              }
+              <div class="row">
+                @for (p of g.products; track p.slug) {
+                  <a class="figure" [routerLink]="['/shelf/jars', p.slug]" [attr.aria-label]="'Open ' + p.name">
+                    <w-jar [capacity]="p.dispensed"
+                      [layers]="[
+                        { grams: p.sealed, color: 'var(--w-storage)', label: 'sealed' },
+                        { grams: p.stash, color: 'var(--w-stash)', label: 'ground' },
+                        { grams: p.avb, color: 'var(--w-avb)', label: 'AVB' },
+                      ]" />
+                    <span class="caption">
+                      <strong>{{ p.name }}</strong>
+                      <span class="num">{{ p.sealed | number: '1.2-2' }} g <span class="dim">of {{ p.dispensed | number: '1.0-0' }}</span></span>
+                    </span>
+                  </a>
+                }
+              </div>
+            </div>
+          }
         </section>
 
         <section class="projection glass">
@@ -171,6 +185,7 @@ import { ProjectionChart } from '../viz/projection-chart';
     }
   `,
   styles: `
+    @use 'breakpoints' as bp;
     :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .hero { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 32px; padding: 28px 32px; align-items: center; }
     @media (max-width: 760px) { .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
@@ -197,10 +212,19 @@ import { ProjectionChart } from '../viz/projection-chart';
     .refill .dim { color: var(--w-dim); }
     .yield { display: block; margin-top: 8px; font-size: 12px; color: var(--w-dim); }
     header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .group { display: grid; gap: 14px; }
+    .group + .group { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--w-glass-edge); }
+    .group-head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 13px; }
+    .group-head strong { font: 600 15px var(--w-num); }
+    .dim { color: var(--w-dim); }
     .row { display: flex; gap: 28px; flex-wrap: wrap; justify-content: space-around; }
-    figure { margin: 0; display: grid; justify-items: center; gap: 10px; width: 150px; }
-    figure w-jar { width: 110px; height: 154px; }
-    figcaption { display: grid; text-align: center; gap: 2px; font-size: 13px; }
+    .older .row { justify-content: flex-start; }
+    .figure { margin: 0; display: grid; justify-items: center; gap: 10px; width: 150px; color: inherit; text-decoration: none;
+      border-radius: 14px; padding: 6px 0; transition: transform .25s, background .25s; }
+    .figure:hover, .figure:focus-visible { transform: translateY(-3px); background: color-mix(in srgb, var(--w-primary) 8%, transparent); outline: none; }
+    .figure w-jar { width: 110px; height: 154px; }
+    .older .figure w-jar { width: 80px; height: 112px; }
+    .caption { display: grid; text-align: center; gap: 2px; font-size: 13px; }
     .rhythm { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .pad { padding: 18px 22px; display: grid; gap: 12px; align-content: start; }
     .chain { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--w-stash); margin-top: auto; }
@@ -208,6 +232,20 @@ import { ProjectionChart } from '../viz/projection-chart';
     .empty { padding: 48px; display: grid; justify-items: center; text-align: center; }
     .empty mat-icon { font-size: 48px; width: 48px; height: 48px; color: var(--w-primary); }
     .loading { display: grid; place-items: center; height: 50vh; }
+    /* A phone: three jars to a row, every fill's, so two fills are not a screen each. */
+    @include bp.phone {
+      .jars { padding: 18px 16px; }
+      .row, .older .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 8px; }
+      .figure { width: auto; gap: 6px; }
+      .figure w-jar { width: 60px; height: 84px; }
+      .older .figure w-jar { width: 48px; height: 67px; }
+      .caption { font-size: 11px; }
+      /* One line of words that wraps, not four columns of them. */
+      .refill { display: block; }
+      .refill mat-icon { vertical-align: -3px; margin-right: 4px; }
+      .refill .dim { margin-left: 4px; }
+      .projection { padding: 18px 16px; }
+    }
   `,
 })
 export class Dashboard {

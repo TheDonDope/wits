@@ -29,6 +29,17 @@ export class Todo {
   /** Jars still sealed, to weigh against the scale now and then. Offered, not counted. */
   readonly sealed = computed(() => this.wits.jars.value().filter((j) => j.storage > 0));
 
+  /**
+   * Every jar ever dispensed with no terpene profile written down, those
+   * still sealed first, then the most lately used. Offered, not counted: a profile no page names stays
+   * missing, and would hold the tab's count up for good.
+   */
+  readonly terpenes = computed(() => {
+    const missing = this.wits.jars.value().filter((j) => j.bought > 0 && !j.terpenes.length);
+    const sealed = (j: { storage: number }) => (j.storage > 0 ? 0 : 1);
+    return missing.sort((a, b) => sealed(a) - sealed(b) || b.last_seen.localeCompare(a.last_seen));
+  });
+
   /** Everything counted, for the tab. */
   readonly count = computed(() => this.rate().length + this.pickups() + this.stashes().length + this.avb().length);
 }

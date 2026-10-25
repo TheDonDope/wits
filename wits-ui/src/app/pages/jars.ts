@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,8 +23,9 @@ import { CarryDialog } from './carry';
 import { Confirm, ConfirmDialog } from './confirm';
 
 /**
- * Every product, one card each, in the jar's scope: its whole life. Cards are
- * ticked to have their stashes cleared together — recorded as consumed, the
+ * Every product, one card each, in the jar's scope: its whole life. A card
+ * opens its jar in full (jar.ts). Cards are ticked to have their stashes
+ * cleared together — recorded as consumed, the
  * sessions never logged — and the whole shelf can be played back, the jars
  * filling as fills arrive and draining as they are ground.
  */
@@ -80,7 +81,8 @@ import { Confirm, ConfirmDialog } from './confirm';
     <section class="grid">
       @for (j of list(); track j.slug; let i = $index) {
         <article class="card glass" [class.picked]="selected().has(j.slug)" [class.focus]="i === cursor()"
-          [style.animation-delay.ms]="i * 30" (click)="toggle(j.slug)" (keydown.enter)="toggle(j.slug)" tabindex="0">
+          [style.animation-delay.ms]="i * 30" (click)="open(j.slug)" (keydown.enter)="open(j.slug)" tabindex="0"
+          [attr.aria-label]="'Open ' + j.name">
           <mat-checkbox class="tick" [checked]="selected().has(j.slug)" [disabled]="!replay.live()"
             (click)="$event.stopPropagation()" (change)="toggle(j.slug)" [aria-label]="'Select ' + j.name" />
           <w-jar [capacity]="j.bought"
@@ -173,6 +175,7 @@ export class Jars {
   private readonly wits = inject(Wits);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly router = inject(Router);
   protected readonly which = signal<'shelf' | 'finished'>('shelf');
   protected readonly selected = signal(new Set<string>());
   protected readonly cursor = signal(-1);
@@ -294,7 +297,7 @@ export class Jars {
       .map(([slug, l]) => {
         const h = held.get(slug) ?? { storage: 0, stash: 0, avb: 0 };
         return {
-          ...(known.get(slug) ?? { slug, name: slug }),
+          ...(known.get(slug) ?? { slug, name: slug, terpenes: [] }),
           storage: h.storage,
           stash: h.stash,
           avb: h.avb,
@@ -321,6 +324,12 @@ export class Jars {
           this.toggle(j.slug);
         }
       } },
+      { keys: ['o'], help: 'open', run: () => {
+        const j = this.list().at(this.cursor());
+        if (j) {
+          this.open(j.slug);
+        }
+      } },
       { keys: ['a'], help: this.allSelected() ? 'select none' : 'select all', run: () => {
         this.toggleAll();
       } },
@@ -332,6 +341,11 @@ export class Jars {
       } },
       ...replayKeys(this.replay).map((b) => (b.keys.includes(' ') ? { ...b, keys: ['p'] } : b)),
     ];
+  }
+
+  /** Opens a jar in full. A jar the replay shows as it stood is opened as it stands now. */
+  protected open(slug: string): void {
+    void this.router.navigate(['/shelf/jars', slug]);
   }
 
   protected toggle(slug: string): void {

@@ -669,6 +669,14 @@ section shown only while there is something in it:
   jar. These are offered, never counted: a weighing that agrees with the
   ledger writes nothing (`record.ErrNothingToReconcile`), so wits cannot tell
   a jar was checked. Counting them would be a reminder that never clears.
+- **Terpene profiles** missing (`TerpeneQueue`): every jar dispensed with no
+  terpenes written down, those on the shelf first, each looked up on its own
+  or all in turn (**Research all**, a pause between so the searches are not
+  asked too fast), and kept one at a time or together. The first ten are
+  listed and the rest folded under **Show all**, so 53 jars are not a page
+  of their own. Offered, never
+  counted, for the same reason: a profile no page names would hold the count
+  up for good.
 
 On the imported workbook it counts 50: fills 29 and 30 to price, and 48 stashes
 left behind holding 1,154.00 g, since the workbook logs no sessions. Clearing
@@ -1055,9 +1063,46 @@ page of the terminal's product form; that form is two pages so it does not
 outgrow the terminal. "Myrcen" and "β-Myrcene" are one terpene
 (`catalog.TerpeneKey`). Bundles had never carried a product's terpenes, so a
 restore dropped them; format 6 carries them. The workbook lists none, so it
-places by name and THC for now: the two Wedding Cakes find each other first,
+places by name and THC until profiles are written down or looked up (the jar's
+page, below): the two Wedding Cakes find each other first,
 then the other Cakes, and the MAC1s find their family. A tested profile shows
 the terpenes pulling two products together past one nearer in THC.
+
+### One jar in full, and its terpenes looked up — Shelf → Jars → a jar
+
+The dashboard shows every fill not yet emptied (`overview.fills`, newest
+first), jar by jar, each in its own scope: its own sealed grams and rate. The
+shelf's projection and the refill stay with the fill in progress. Before, an
+older fill was only "+ 8.07 g in 2 older jars"; on the workbook it is now fill
+29 under fill 30, its 8.07 g in its own three jars, which is the same figure.
+
+A jar on the dashboard or a card on the Shelf opens the jar in full
+(`/shelf/jars/<slug>`, `GET /api/jars/{slug}`): the catalog's facts and
+terpenes; every fill of it, its own grams dispensed and still sealed, and its
+pickups with the price paid and the seller; what the priced ones cost a gram;
+ground and seshed month by month; its sessions by device, the temperatures
+set, each dimension's mean rating and the latest eight; and the products most
+like it. The jar's figures are its life, each fill's that fill's. Ticking a
+card selects it for clearing as before; the card itself opens the jar (`o` on
+the keys).
+
+**Research terpene profile** (`GET /api/jars/{slug}/research`, `pkg/research`)
+searches the web for the product as the pharmacy sells it — Brave Search, then
+DuckDuckGo when Brave turns it away, since each answers a client it takes for
+a bot with a page of no results — and asks Leafly for the strain
+(`prices.StrainOf`, spaced as Leafly spells it: "MAC1" is found as "MAC 1",
+and only a hit of that very name counts). Each result's words are read for
+terpenes in any spelling (`catalog.TerpeneKey`), cannabinoids and flavonoids
+left out; the profile is the terpenes most pages name, then those named
+earlier, five at most. Leafly's is marked as the strain's, not the product's.
+Nothing is written until kept (`PUT /api/jars/{slug}/terpenes`, through
+`Recorder.Terpenes`). On the workbook's first four tried, Lemon Tartz, Wedding
+Cake, Bucket List and MAC 1+ each came back with a profile from two to seven
+pages. On a phone the dashboard's jars stand three to a row, so two fills are
+not a screen each, and the line saying when to order the next prescription
+wraps as a sentence; it had been laid out as four squeezed columns. The
+lookup runs where the server does: the phone's engine reaches no
+other site, and says so.
 
 ### Proof of what is carried — `wits carry`
 
