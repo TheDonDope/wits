@@ -634,13 +634,13 @@ none.
 
 ### Themes in the browser — the palette, `t`
 
-Twenty-one themes for `wits-ui`, chosen from the header or stepped with `t`
+Forty-one themes for `wits-ui`, chosen from the header or stepped with `t`
 and `T`, as the terminal's `t` picks among its own. A theme is data in
 `src/themes.scss`: a background, text, a primary and an accent, the four
 account colours in its own shades, and a style — corners (square to pill, down
 to Material's own corner scale), glass (opacity and blur), a backdrop (aurora,
-vignette, grid, scanlines, a synthwave horizon or none), a shadow (soft, glow,
-a hard offset, none) and typefaces (Inter, Space Grotesk, JetBrains Mono, and
+vignette, grid, scanlines, a synthwave horizon, a blueprint grid, Bauhaus shapes, greenbar paper, halftone, a sunburst, contours, blinds, stars, warning tape, a desktop, or none), a shadow (soft, glow,
+a hard offset in any colour, a 1995 bevel, none) and typefaces (Inter, Space Grotesk, JetBrains Mono, and
 Fraunces and Nunito added for the serif and rounded ones, bundled like the
 rest). Each sets custom properties under `[data-theme]`, and Material is built
 for both schemes (`theme-type: color-scheme`) with the theme's colours laid

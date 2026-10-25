@@ -27,7 +27,7 @@ describe('Theme', () => {
 
   it('names every theme once', () => {
     expect(new Set(THEMES.map((t) => t.id)).size).toBe(THEMES.length);
-    expect(THEMES.length).toBe(21);
+    expect(THEMES.length).toBe(41);
   });
 });
 
