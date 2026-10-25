@@ -86,7 +86,7 @@ function blank(): Row {
     <h2 mat-dialog-title>Record</h2>
     <mat-dialog-content>
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event); error.set('')" animationDuration="200ms">
-        <mat-tab><ng-template mat-tab-label><mat-icon>grain</mat-icon>&nbsp;Grind</ng-template>
+        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>grain</mat-icon><span>Grind</span></span></ng-template>
           <div class="form">
             <mat-form-field appearance="outline">
               <mat-label>From the jar</mat-label>
@@ -99,7 +99,7 @@ function blank(): Row {
             <ng-container *ngTemplateOutlet="amount" />
           </div>
         </mat-tab>
-        <mat-tab><ng-template mat-tab-label><mat-icon>air</mat-icon>&nbsp;Session</ng-template>
+        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>air</mat-icon><span>Session</span></span></ng-template>
           <div class="form">
             <mat-form-field appearance="outline">
               <mat-label>From the stash</mat-label>
@@ -134,7 +134,7 @@ function blank(): Row {
             </mat-form-field>
           </div>
         </mat-tab>
-        <mat-tab><ng-template mat-tab-label><mat-icon>local_pharmacy</mat-icon>&nbsp;Fill</ng-template>
+        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>local_pharmacy</mat-icon><span>Fill</span></span></ng-template>
           <div class="form">
             <div class="label">
               <button mat-stroked-button type="button" (click)="pdf.click()" [disabled]="reading() !== null">
@@ -246,7 +246,7 @@ function blank(): Row {
             </mat-form-field>
           </div>
         </mat-tab>
-        <mat-tab><ng-template mat-tab-label><mat-icon>scale</mat-icon>&nbsp;Weigh</ng-template>
+        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>scale</mat-icon><span>Weigh</span></span></ng-template>
           <div class="form">
             <mat-form-field appearance="outline">
               <mat-label>Jar</mat-label>
@@ -271,7 +271,7 @@ function blank(): Row {
             </mat-form-field>
           </div>
         </mat-tab>
-        <mat-tab><ng-template mat-tab-label><mat-icon>recycling</mat-icon>&nbsp;AVB</ng-template>
+        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>recycling</mat-icon><span>AVB</span></span></ng-template>
           <div class="form">
             <mat-form-field appearance="outline">
               <mat-label>What happened</mat-label>
@@ -281,7 +281,7 @@ function blank(): Row {
               </mat-select>
             </mat-form-field>
             @if (avbMode() === 'collect') {
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="hinted">
                 <mat-label>The device emptied</mat-label>
                 <mat-select [ngModel]="emptied()" (ngModelChange)="device.set($event)">
                   @for (w of wits.avb.value()?.waiting ?? []; track w.device) {
@@ -337,6 +337,13 @@ function blank(): Row {
     .error { display: flex; gap: 8px; align-items: center; color: var(--w-warn); background: color-mix(in srgb, var(--w-warn) 8%, transparent);
       border: 1px solid color-mix(in srgb, var(--w-warn) 25%, transparent); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
     mat-icon { vertical-align: middle; }
+    /* A hint that wraps on a phone takes its room, rather than running into the field under it. */
+    .hinted { margin-bottom: 18px; }
+    .tab { display: inline-flex; align-items: center; gap: 6px; }
+    /* A phone: the five tabs side by side, each its icon over its name, none paged out of sight. */
+    @media (width <= 640px) {
+      .tab { flex-direction: column; gap: 2px; font-size: 11px; line-height: 1.1; }
+    }
     .label { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
     .label mat-icon { margin-right: 6px; }
     .read { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; border: 1px solid var(--w-glass-edge);
