@@ -181,3 +181,11 @@ body {
   }
 
 }
+
+// Analysis's five scopes on a phone: Material pads each label by 12 px, more
+// than five segments in 343 px can spare once a theme's type runs wide.
+@media (width <= 640px) {
+  w-analysis .mat-button-toggle-label-content {
+    padding: 0 4px;
+  }
+}

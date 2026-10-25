@@ -566,6 +566,15 @@ its column at the screen (`minmax(0, 1fr)`): a grid column grows to its widest
 child, and Analysis's five scopes had pushed it to 503 px; they scroll on their
 own now. Measured with the scroll width of each page at 375 px: none wider.
 
+Two pages were then fitted to it. Analysis's scopes go by short names on a
+phone (Fill, 30 d, 90 d, 12 mo, All), five equal segments the width of the
+card, no check mark beside the chosen one, so all five show in every theme,
+the monospace ones included. The Jars page was 12,900 px tall at 243 px a
+jar: a phone gets a compact card, the jar small beside the name, the chips
+with the day it was last used, and the four figures in one line, and the
+buttons as a grid of two under the shelf/finished switch. 6,800 px for the
+53 jars of the workbook.
+
 ### Themes in the browser — the palette, `t`
 
 Twenty-one themes for `wits-ui`, chosen from the header or stepped with `t`

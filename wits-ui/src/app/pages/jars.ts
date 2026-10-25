@@ -101,7 +101,8 @@ import { Confirm, ConfirmDialog } from './confirm';
               <div><dt>ground</dt><dd class="num">{{ j.ground | number: '1.0-0' }}</dd></div>
               <div><dt>dispensed</dt><dd class="num">{{ j.bought | number: '1.0-0' }}</dd></div>
             </dl>
-            <span class="dim seen"><mat-icon>schedule</mat-icon>last {{ j.last_seen | date: 'd MMM y' }}</span>
+            <span class="dim seen" [attr.aria-label]="'last used ' + (j.last_seen | date: 'd MMMM y')"><mat-icon>schedule</mat-icon><span
+              class="long">last {{ j.last_seen | date: 'd MMM y' }}</span><span class="short">{{ j.last_seen | date: 'd MMM' }}</span></span>
           </div>
         </article>
       } @empty {
@@ -139,6 +140,31 @@ import { Confirm, ConfirmDialog } from './confirm';
     dd { margin: 0; font-size: 15px; font-weight: 600; }
     .seen { display: flex; gap: 4px; align-items: center; font-size: 12px; }
     .seen mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .seen .short { display: none; }
+    /*
+     * A phone: one compact row a jar instead of a card a screen, so the shelf
+     * is a list to scan — the jar small, the name, the chips with the day it
+     * was last used beside them, the four figures in a line — and the buttons
+     * a tidy grid of two by two under the shelf/finished switch.
+     */
+    @media (width <= 640px) {
+      .head { padding: 16px; gap: 14px; }
+      .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+      .actions mat-button-toggle-group { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: 1fr 1fr; }
+      .actions button { min-width: 0; padding: 0 10px; }
+      .grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .card { grid-template-columns: 48px 1fr; gap: 12px; padding: 12px 14px; }
+      .card:hover { transform: none; }
+      w-jar { width: 48px; height: 68px; align-self: center; }
+      .body { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; padding-right: 0; }
+      h3 { grid-column: 1 / -1; padding-right: 32px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .seen { grid-row: 2; grid-column: 2; align-self: start; font-size: 11px; line-height: 20px; }
+      .seen .long { display: none; }
+      .seen .short { display: inline; }
+      dl { grid-column: 1 / -1; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 8px; margin: 0; }
+      dd { font-size: 14px; }
+      .tick { top: 2px; right: 2px; }
+    }
     @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   `,
 })

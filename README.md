@@ -639,7 +639,8 @@ On a phone the tabs give way to a dock under the thumb: Dashboard, Journal, a
 raised **Record**, Jars, and **More** for the other pages. The top bar names
 the page you are on, and the bars keep clear of the notch and the home
 indicator. It is laid out for an iPhone 11 Pro held upright (375 px) and
-nothing narrower; no page scrolls sideways.
+nothing narrower; no page scrolls sideways. There, Analysis's scopes go by
+short names (Fill, 30 d, 90 d, 12 mo, All) and the jars are a compact list.
 
 The palette in the header picks one of 21 themes, and `t` steps through them
 (`T` back): wits' own Aurora, then Nord, Dracula, Gruvbox, Solarized, Tokyo

@@ -18,11 +18,11 @@ import { Transport, replayKeys } from '../viz/transport';
 
 /** The terminal's scopes, and how far back each reaches. */
 const SCOPES = [
-  { key: 'fill', label: 'This fill', days: 0 },
-  { key: '30', label: '30 days', days: 30 },
-  { key: '90', label: '90 days', days: 90 },
-  { key: '365', label: '12 months', days: 365 },
-  { key: 'all', label: 'All time', days: -1 },
+  { key: 'fill', label: 'This fill', short: 'Fill', days: 0 },
+  { key: '30', label: '30 days', short: '30 d', days: 30 },
+  { key: '90', label: '90 days', short: '90 d', days: 90 },
+  { key: '365', label: '12 months', short: '12 mo', days: 365 },
+  { key: 'all', label: 'All time', short: 'All', days: -1 },
 ] as const;
 
 /**
@@ -40,9 +40,10 @@ const SCOPES = [
         <span class="eyebrow">analysis</span>
         <h1>{{ scope().label }} <span class="dim">{{ range().from }} → {{ range().to }}</span></h1>
       </div>
-      <mat-button-toggle-group [value]="scope().key" (change)="pick($event.value)" aria-label="Scope">
+      <mat-button-toggle-group [value]="scope().key" (change)="pick($event.value)" aria-label="Scope"
+        hideSingleSelectionIndicator>
         @for (s of scopes; track s.key) {
-          <mat-button-toggle [value]="s.key">{{ s.label }}</mat-button-toggle>
+          <mat-button-toggle [value]="s.key" [aria-label]="s.label"><span class="long">{{ s.label }}</span><span class="short">{{ s.short }}</span></mat-button-toggle>
         }
       </mat-button-toggle-group>
     </section>
@@ -122,8 +123,16 @@ const SCOPES = [
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
     h1 .dim { font: 400 14px var(--w-font); margin-left: 8px; }
-    // A phone is narrower than the five scopes: they scroll on their own, the page stays put.
-    mat-button-toggle-group { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+    .short { display: none; }
+    /* A phone has room for the five scopes only by their short names: all of them, the width of the card. */
+    @media (width <= 640px) {
+      .head { padding: 16px; }
+      .head > div { width: 100%; }
+      mat-button-toggle-group { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; }
+      mat-button-toggle { min-width: 0; }
+      .long { display: none; }
+      .short { display: inline; }
+    }
     .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
     .tile { padding: 18px 22px; display: grid; gap: 4px; }
     .v { font-size: 30px; font-weight: 600; }
