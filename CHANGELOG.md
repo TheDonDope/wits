@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.78.0"></a>
+## [v0.78.0] - 2026-10-25
+### Feat
+- **api:** the browser picks the repository, and brings the workbook
+
+### Fix
+- **api:** a folder is made absolute, not cleaned
+
+
 <a name="v0.77.0"></a>
 ## [v0.77.0] - 2026-10-25
+### Docs
+- update changelog for v0.77.0
+
 ### Feat
 - **wits-ui:** five scopes in a phone's width, and the shelf as a list
 
@@ -985,7 +997,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.77.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.78.0...HEAD
+[v0.78.0]: https://github.com/TheDonDope/wits/compare/v0.77.0...v0.78.0
 [v0.77.0]: https://github.com/TheDonDope/wits/compare/v0.76.0...v0.77.0
 [v0.76.0]: https://github.com/TheDonDope/wits/compare/v0.75.0...v0.76.0
 [v0.75.0]: https://github.com/TheDonDope/wits/compare/v0.74.0...v0.75.0
