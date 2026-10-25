@@ -1100,9 +1100,21 @@ Nothing is written until kept (`PUT /api/jars/{slug}/terpenes`, through
 Cake, Bucket List and MAC 1+ each came back with a profile from two to seven
 pages. On a phone the dashboard's jars stand three to a row, so two fills are
 not a screen each, and the line saying when to order the next prescription
-wraps as a sentence; it had been laid out as four squeezed columns. The
-lookup runs where the server does: the phone's engine reaches no
-other site, and says so.
+wraps as a sentence; it had been laid out as four squeezed columns.
+
+On the phone the lookup failed with a bare 504. The engine's requests go out
+as the page's own `fetch`, and a browser lets a page read another site only
+when that site allows it: neither search does, nor Leafly (whose API allows
+leafly.com alone), and the service worker turns the refused request into a
+504. The phone's engine now asks through Jina's Reader (`research.Phone`,
+`Sites.Relay`), which allows any page to read what it fetches: the search as
+HTML, Leafly's API as its text, so the same parsers read both. Brave's results
+do not come through it, so the phone searches DuckDuckGo. The reader takes
+twenty requests a minute and a jar is up to three, so **Research all** on the
+phone waits nine seconds between jars and, on a 429, half a minute before
+asking once more. Checked in the Pages build in Chromium: the workbook
+imported on the phone's own storage, Lemon Tartz found on six pages in 1.7 s
+and kept, and Research all found three jars in thirty seconds.
 
 ### Proof of what is carried — `wits carry`
 

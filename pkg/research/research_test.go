@@ -2,6 +2,7 @@ package research
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -121,4 +122,41 @@ func TestRank(t *testing.T) {
 	})
 	assert.Equal(t, []string{"Limonene", "Myrcene", "Pinene", "Humulene", "Linalool"}, got)
 	assert.Empty(t, Rank(nil))
+}
+
+// TestLookThroughRelay: through a relay every page is asked for by the
+// relay's address before its own — the search as HTML, Leafly's API as its
+// text — with no User-Agent of its own, which a browser would have to clear
+// with the relay first.
+func TestLookThroughRelay(t *testing.T) {
+	sites := web(t)
+	formats := map[string]string{}
+	relay := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotContains(t, r.Header.Get("User-Agent"), "wits")
+		inner := strings.TrimPrefix(r.RequestURI, "/")
+		formats[strings.SplitN(strings.TrimPrefix(inner, "http://"), "/", 2)[1]] = r.Header.Get("X-Return-Format")
+		resp, err := http.Get(inner)
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+		w.WriteHeader(resp.StatusCode)
+		_, _ = io.Copy(w, resp.Body)
+	}))
+	defer relay.Close()
+	sites.Relay = relay.URL + "/"
+	sites.Engines = sites.Engines[1:]
+	f, err := Look(context.Background(), http.DefaultClient, sites, Query{Name: "All Nations 21/1 Lemon Tartz", Strain: "MAC1"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"Limonene", "Linalool", "Nerolidol", "Caryophyllene", "Pinene"}, f.Suggested)
+	assert.Equal(t, "html", formats["search?q=All+Nations+21%2F1+Lemon+Tartz+terpene"])
+	assert.Equal(t, "text", formats["leafly/search?q=MAC+1"])
+	assert.Equal(t, "html", formats["leafly/strains/mac-1"])
+}
+
+// TestPhoneSites: the phone asks through the reader, and DuckDuckGo only —
+// Brave's results do not come through it.
+func TestPhoneSites(t *testing.T) {
+	assert.Equal(t, "https://r.jina.ai/", Phone.Relay)
+	require.Len(t, Phone.Engines, 1)
+	assert.Equal(t, "DuckDuckGo", Phone.Engines[0].Name)
+	assert.Empty(t, Web.Relay)
 }

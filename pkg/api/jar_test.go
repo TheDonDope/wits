@@ -123,3 +123,11 @@ func TestOverviewEveryOpenFill(t *testing.T) {
 	assert.Empty(t, o.Fills[1].ShelfProjection.History, "the projection is the fill in progress's")
 	assert.Nil(t, o.Fills[1].Refill)
 }
+
+// TestSitesFor: the phone's engine looks up through the reader; a computer
+// asks the sites themselves.
+func TestSitesFor(t *testing.T) {
+	assert.Equal(t, research.Phone.Relay, sitesFor("js").Relay)
+	assert.NotEmpty(t, sitesFor("js").Relay)
+	assert.Empty(t, sitesFor("linux").Relay)
+}
