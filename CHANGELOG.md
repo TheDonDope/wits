@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.71.0"></a>
+## [v0.71.0] - 2026-10-25
+### Fix
+- **seal:** one key, however many ask for it first
+
+
 <a name="v0.70.0"></a>
 ## [v0.70.0] - 2026-10-25
+### Docs
+- update changelog for v0.70.0
+
 ### Fix
 - **ledger:** an undone entry counts in no total, wherever it is read
 
@@ -902,7 +911,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.70.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.71.0...HEAD
+[v0.71.0]: https://github.com/TheDonDope/wits/compare/v0.70.0...v0.71.0
 [v0.70.0]: https://github.com/TheDonDope/wits/compare/v0.69.0...v0.70.0
 [v0.69.0]: https://github.com/TheDonDope/wits/compare/v0.68.0...v0.69.0
 [v0.68.0]: https://github.com/TheDonDope/wits/compare/v0.67.0...v0.68.0
