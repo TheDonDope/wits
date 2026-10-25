@@ -2,9 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v0.92.0"></a>
+## [v0.92.0] - 2026-10-25
+### Feat
+- **devices:** every device, what it is and cost, and what a session was taken with
+
+
 <a name="v0.91.0"></a>
 ## [v0.91.0] - 2026-10-25
 ### Docs
+- update changelog for v0.91.0
 - **diary:** what a gram cost, and one file to run it
 
 ### Fix
@@ -1132,7 +1139,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.91.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.92.0...HEAD
+[v0.92.0]: https://github.com/TheDonDope/wits/compare/v0.91.0...v0.92.0
 [v0.91.0]: https://github.com/TheDonDope/wits/compare/v0.90.0...v0.91.0
 [v0.90.0]: https://github.com/TheDonDope/wits/compare/v0.89.0...v0.90.0
 [v0.89.0]: https://github.com/TheDonDope/wits/compare/v0.88.0...v0.89.0
