@@ -73,7 +73,7 @@ export class App {
   );
   /** The page showing, which a phone names in its top bar for want of tabs. */
   protected readonly here = computed(() => {
-    const path = this.url().split(/[?#]/)[0];
+    const path = this.url().split('?')[0].split('#')[0];
     return this.links.find((l) => l.path !== '/' && path.startsWith(l.path)) ?? this.links[0];
   });
   protected readonly inMore = computed(() => this.more.includes(this.here()));
