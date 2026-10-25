@@ -1,5 +1,7 @@
 // Command wits-server serves a wits repository over HTTP: the JSON API in
 // pkg/api, and the Angular interface built from wits-ui when told where it is.
+// --repo is the one it starts with; the interface's Repository page can open
+// another, or make one, and import a workbook into it.
 //
 //	wits-server                                  # the repository here, on 127.0.0.1:7341
 //	wits-server --repo ~/wits --ui wits-ui/dist/wits-ui/browser

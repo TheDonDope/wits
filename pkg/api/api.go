@@ -42,21 +42,24 @@ import (
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
-// Server answers for one repository.
+// Server answers for one repository at a time. On a computer the interface
+// can open another (desk.go); the phone has the one.
 type Server struct {
-	repo *repo.Repo
-	ui   string
+	ui string
 
-	// The repository as last read, and the stamp of its files then: every
+	// The repository, and the stamp of its files when it was last read: every
 	// GET read and verified the whole journal, 12 ms here and ten times that
-	// on a phone, for a journal that had not changed since the last.
+	// on a phone, for a journal that had not changed since the last. mu guards
+	// all three, since opening another repository changes them together.
 	mu     sync.Mutex
+	repo   *repo.Repo
 	cached *workspace.Workspace
 	stamp  string
 }
 
 // New returns a server for the repository, serving the built interface from
-// ui when it is not empty.
+// ui when it is not empty. On a computer, the interface can have it serve
+// another (desk.go).
 func New(r *repo.Repo, ui string) *Server {
 	// The journal is created on first use; creating it here, before any
 	// request, keeps two first requests from racing to create it.
@@ -91,6 +94,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/strains", s.read(strainsOf))
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
+	s.desk(mux)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		fail(w, http.StatusNotFound, errors.New("no such endpoint"))
 	})
@@ -139,6 +143,22 @@ func spa(dir string) http.Handler {
 	})
 }
 
+// current is the repository being served.
+func (s *Server) current() *repo.Repo {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.repo
+}
+
+// serve makes r the repository being served, and forgets the last one's
+// snapshot. A request already under way finishes with the one it began on.
+func (s *Server) serve(r *repo.Repo) {
+	r.Journal()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.repo, s.cached, s.stamp = r, nil, ""
+}
+
 // snapshot is the repository as it stands: the one read last, when nothing
 // has been written since — its files' sizes and times unchanged — and read
 // afresh when anything has. A snapshot is only read from; the time it
@@ -178,7 +198,7 @@ func (s *Server) writable(w http.ResponseWriter, r *http.Request) (*workspace.Wo
 	if !jsonBody(w, r) {
 		return nil, false
 	}
-	ws, err := workspace.Read(s.repo)
+	ws, err := workspace.Read(s.current())
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return nil, false

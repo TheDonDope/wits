@@ -10,6 +10,8 @@ export const routes: Routes = [
   { path: 'jars', loadComponent: () => import('./pages/jars').then((m) => m.Jars), title: 'wits · jars' },
   { path: 'history', loadComponent: () => import('./pages/history').then((m) => m.History), title: 'wits · history' },
   { path: 'costs', loadComponent: () => import('./pages/costs').then((m) => m.Costs), title: 'wits · costs' },
+  // Which repository, and importing a workbook: a computer's server only, since the phone has the one.
+  ...(ENGINE ? [] : [{ path: 'repository', loadComponent: () => import('./pages/repository').then((m) => m.Repository), title: 'wits · repository' }]),
   // The phone keeps its own copy and syncs it by hand; the server has no need.
   ...(ENGINE ? [{ path: 'sync', loadComponent: () => import('./pages/sync').then((m) => m.Sync), title: 'wits · sync' }] : []),
   { path: '**', redirectTo: '' },

@@ -206,3 +206,35 @@ export interface Strain {
   ratings: number;
   like: string[];
 }
+
+/** The repository being served, and the home folder to browse from. */
+export interface Place {
+  path: string;
+  name: string;
+  entries: number;
+  home: string;
+}
+
+/** A folder, as the repository browser shows it. */
+export interface Listing {
+  path: string;
+  parent?: string;
+  repo: boolean;
+  dirs: { name: string; path: string; repo: boolean }[];
+}
+
+/** What a workbook holds, as wits import reports it, and whether it was written. */
+export interface Verdict {
+  sheets: number;
+  products: number;
+  entries: number;
+  dispensed: number;
+  ground: number;
+  fills: number;
+  grinds: number;
+  first?: string;
+  last?: string;
+  merged: { slug: string; names: string[] }[];
+  anomalies: string[];
+  committed: boolean;
+}

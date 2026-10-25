@@ -2,7 +2,11 @@ import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/htt
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, Jar, LabelReading, Overview, Written } from './models';
+import { ENGINE } from './mode';
+
+import {
+  Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, Jar, LabelReading, Listing, Overview, Place, Verdict, Written,
+} from './models';
 
 /**
  * The repository, as wits-server answers for it.
@@ -25,6 +29,8 @@ export class Wits {
   readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
   readonly avb = httpResource<Avb>(() => `/api/avb?v=${this.version()}`);
   readonly costs = httpResource<Costs>(() => `/api/costs?v=${this.version()}`);
+  /** The repository being served; the phone has the one, and no such endpoint. */
+  readonly place = httpResource<Place>(() => (ENGINE ? undefined : `/api/repo?v=${this.version()}`));
   readonly strains = httpResource<Strain[]>(() => `/api/strains?v=${this.version()}`, { defaultValue: [] });
   readonly journal = httpResource<{ entries: Entry[]; total: number }>(
     () => `/api/journal?limit=100000&v=${this.version()}`,
@@ -120,6 +126,58 @@ export class Wits {
     return this.write<{ message: string }>('flush', { products });
   }
 
+  /** The repository being served. */
+  where(): Promise<Place> {
+    return this.get<Place>('/api/repo');
+  }
+
+  /** The folders in a folder, the home folder when none is named. */
+  dirs(path?: string): Promise<Listing> {
+    return this.get<Listing>(`/api/dirs${path ? `?path=${encodeURIComponent(path)}` : ''}`);
+  }
+
+  /** Serves the repository in a folder, or a new one made there; every view then reads it. */
+  async open(path: string, create = false): Promise<Place> {
+    const place = await this.post<Place>('repo', { path, create });
+    this.refresh();
+    return place;
+  }
+
+  /**
+   * What a workbook holds; with commit, imports it into the repository, which
+   * must be empty. Sent as the file itself, in the type only a spreadsheet has.
+   */
+  async importBook(file: Blob, commit: boolean): Promise<Verdict> {
+    const type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const out = await this.send<Verdict>(`/api/import${commit ? '?commit=1' : ''}`, new Blob([file], { type }), type);
+    if (out.committed) {
+      this.refresh();
+    }
+    return out;
+  }
+
+  /** Every view reads again, and the poll starts counting afresh. */
+  private refresh(): void {
+    this.seen = -1;
+    this.version.update((v) => v + 1);
+  }
+
+  private async get<T>(url: string): Promise<T> {
+    try {
+      return await firstValueFrom(this.http.get<T>(url));
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
+  private async send<T>(url: string, body: Blob, type: string): Promise<T> {
+    try {
+      return await firstValueFrom(this.http.post<T>(url, body, { headers: { 'Content-Type': type } }));
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
   /** Writes an entry and refreshes everything; rejects with the server's words. */
   private async write<T = Written>(what: string, body: object): Promise<T> {
     const out = await this.post<T>(what, body);
@@ -132,10 +190,14 @@ export class Wits {
     try {
       return await firstValueFrom(this.http.post<T>(`/api/${what}`, body));
     } catch (err) {
-      // The server says why in {"error": "…"}; anything else says it itself.
-      const e = err as HttpErrorResponse;
-      const body = e.error as { error?: string } | null;
-      throw new Error(body?.error ?? e.message, { cause: err });
+      throw said(err);
     }
   }
+}
+
+/** The server says why in {"error": "…"}; anything else says it itself. */
+function said(err: unknown): Error {
+  const e = err as HttpErrorResponse;
+  const body = e.error as { error?: string } | null;
+  return new Error(body?.error ?? e.message, { cause: err });
 }

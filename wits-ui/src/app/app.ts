@@ -60,9 +60,14 @@ export class App {
     { path: '/costs', label: 'Costs', icon: 'euro' },
     ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
   ];
+  /**
+   * Which repository: on a computer, the header's chip rather than a tab, as
+   * it is a place, not a page of the record. The phone has the one.
+   */
+  protected readonly desk = ENGINE ? [] : [{ path: '/repository', label: 'Repository', icon: 'folder_open' }];
   /** A phone's dock and its More sheet: the same links, split for a thumb. */
   protected readonly dock = this.links.filter((l) => DOCK.includes(l.path));
-  protected readonly more = this.links.filter((l) => !DOCK.includes(l.path));
+  protected readonly more = [...this.links.filter((l) => !DOCK.includes(l.path)), ...this.desk];
   protected readonly moreOpen = signal(false);
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -74,7 +79,7 @@ export class App {
   /** The page showing, which a phone names in its top bar for want of tabs. */
   protected readonly here = computed(() => {
     const path = this.url().split('?')[0].split('#')[0];
-    return this.links.find((l) => l.path !== '/' && path.startsWith(l.path)) ?? this.links[0];
+    return [...this.links, ...this.desk].find((l) => l.path !== '/' && path.startsWith(l.path)) ?? this.links[0];
   });
   protected readonly inMore = computed(() => this.more.includes(this.here()));
 
