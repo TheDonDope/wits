@@ -126,6 +126,18 @@ export interface Written {
   message: string;
 }
 
+/** What a pharmacy label says about a fill, read from the text of its photograph. */
+export interface LabelReading {
+  /** The product line, or the name of the product it already is; empty when none was found. */
+  name: string;
+  thc?: number;
+  cbd?: number;
+  /** Absent when the label gave no amount. */
+  grams?: number;
+  /** The product already in the catalog, when the label names one. */
+  slug?: string;
+}
+
 /** What a session can be rated on, 1 to 5. */
 export type Dimension = 'overall' | 'pain' | 'sleep' | 'calm' | 'mood' | 'focus' | 'appetite';
 

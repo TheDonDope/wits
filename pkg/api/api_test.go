@@ -352,3 +352,37 @@ func TestSnapshotsAreShared(t *testing.T) {
 	}](t, call(t, s, "GET", "/api/journal?limit=1", ""))
 	assert.Equal(t, 4, got.Total, "Should read the journal again once it has grown")
 }
+
+func TestLabel(t *testing.T) {
+	s, _ := server(t, "")
+
+	t.Run("AProductAlreadyKnown", func(t *testing.T) {
+		w := call(t, s, "POST", "/api/label", `{"text":"Apotheke am Markt\nENUA WEDDING CAKE 22/1\nInhalt: 10 g"}`)
+
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		assert.Equal(t, reading{Name: "Enua 22/1 Wedding Cake", THC: 22, CBD: 1, Grams: 10, Slug: "wcake-221"},
+			decodeInto[reading](t, w), "Should name the product as the catalog does, so the fill adds none")
+	})
+
+	t.Run("ANewProduct", func(t *testing.T) {
+		w := call(t, s, "POST", "/api/label", `{"text":"Cannabisblüten\nTweed 27/1 Jack Herer\n15 g"}`)
+
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		assert.Equal(t, reading{Name: "Tweed 27/1 Jack Herer", THC: 27, CBD: 1, Grams: 15}, decodeInto[reading](t, w))
+	})
+
+	t.Run("RecordsNothing", func(t *testing.T) {
+		w := call(t, s, "GET", "/api/jars", "")
+
+		assert.Len(t, decodeInto[[]jar](t, w), 1, "Reading a label adds no product")
+	})
+
+	t.Run("OnlyJSON", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "http://127.0.0.1:7341/api/label", strings.NewReader("text=x"))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		w := httptest.NewRecorder()
+		s.Handler().ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnsupportedMediaType, w.Code)
+	})
+}

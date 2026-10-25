@@ -3,12 +3,14 @@ package importer
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
@@ -183,4 +185,30 @@ func TestWorkbookIsWhereTheDocumentationSaysItIs(t *testing.T) {
 
 	assert.NoError(t, err,
 		"%s is committed and the importer tests read it; moving it silently skips them", workbook)
+}
+
+// Every product the workbook names was copied off a pharmacy label, so each is
+// a label line wits must read back to the product it already has — as written,
+// and in the capitals a pharmacy's system prints it in.
+func TestLabelsOfTheRealWorkbook(t *testing.T) {
+	result, err := Read(realWorkbook(t))
+	require.NoError(t, err)
+	c := &catalog.Catalog{}
+	for _, p := range result.Products {
+		p.Slug = catalog.NewHandle(p, c.Handles())
+		require.NoError(t, c.Add(p))
+	}
+	require.Len(t, c.Products, 53)
+
+	for _, p := range c.Products {
+		for _, printed := range []string{p.Name, strings.ToUpper(p.Name)} {
+			l := catalog.ReadLabel("Apotheke am Markt\n" + printed + "\nInhalt: 10 g")
+
+			assert.Equal(t, p.THC, l.THC, "%q: the ratio", printed)
+			assert.Equal(t, journal.CG(10), l.Grams, "%q: the grams", printed)
+			if assert.NotNil(t, c.Matching(l.Name), "%q read as %q", printed, l.Name) {
+				assert.Equal(t, p.Slug, c.Matching(l.Name).Slug, "%q read as %q", printed, l.Name)
+			}
+		}
+	}
 }

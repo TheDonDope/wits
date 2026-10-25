@@ -1,4 +1,4 @@
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,13 +13,15 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { Written } from '../data/models';
+import { readLabel } from '../data/label';
+import { LabelReading, Written } from '../data/models';
 import { Wits } from '../data/wits';
 
 /**
  * Records an entry: a grind, a session, a fill, a weighing, or AVB collected or used. Every check is
  * the recorder's, on the server — what this form refuses is what the command
- * line would refuse, said in the same words.
+ * line would refuse, said in the same words. A fill can be read off a
+ * photograph of its pharmacy label, on this device (data/label.ts).
  */
 @Component({
   selector: 'w-record',
@@ -28,6 +30,7 @@ import { Wits } from '../data/wits';
     DecimalPipe,
     FormsModule,
     NgTemplateOutlet,
+    PercentPipe,
     MatButtonModule,
     MatDatepickerModule,
     MatDialogModule,
@@ -93,6 +96,38 @@ import { Wits } from '../data/wits';
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><mat-icon>local_pharmacy</mat-icon>&nbsp;Fill</ng-template>
           <div class="form">
+            <div class="label">
+              <button mat-stroked-button type="button" (click)="photo.click()" [disabled]="reading() !== null">
+                <mat-icon>photo_camera</mat-icon>Read the label
+              </button>
+              <input #photo type="file" accept="image/*" capture="environment" hidden (change)="readPhoto(photo)" />
+              @if (reading() !== null) {
+                <span class="dim num">reading… {{ reading() | percent }}</span>
+              } @else {
+                <span class="dim">Read on this device; the photograph goes nowhere.</span>
+              }
+            </div>
+            @if (read(); as r) {
+              <div class="read">
+                <mat-icon>{{ r.reading.name ? 'fact_check' : 'help' }}</mat-icon>
+                <div>
+                  @if (r.reading.slug) {
+                    <p><b>{{ r.reading.name }}</b> — already a jar.</p>
+                  } @else if (r.reading.name) {
+                    <p><b>{{ r.reading.name }}</b> — a new product. Check the name against the label.</p>
+                  } @else if (r.reading.thc) {
+                    <p>No product line found; its THC and CBD make it {{ r.reading.thc }}/{{ r.reading.cbd }}. Type the name in.</p>
+                  } @else {
+                    <p>Nothing on the photograph reads as a label. Type it in, or try a sharper photograph.</p>
+                  }
+                  <p class="dim">{{ r.reading.grams ? (r.reading.grams | number: '1.2-2') + ' g, as dispensed.' : 'No amount found.' }}</p>
+                  <details>
+                    <summary class="dim">What it read</summary>
+                    <pre>{{ r.text }}</pre>
+                  </details>
+                </div>
+              </div>
+            }
             <mat-form-field appearance="outline">
               <mat-label>Product, as on the label</mat-label>
               <input matInput [ngModel]="name()" (ngModelChange)="name.set($event)" placeholder="Enua 22/1 Wedding Cake" />
@@ -192,6 +227,12 @@ import { Wits } from '../data/wits';
     .error { display: flex; gap: 8px; align-items: center; color: var(--w-warn); background: rgba(255,122,138,.08);
       border: 1px solid rgba(255,122,138,.25); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
     mat-icon { vertical-align: middle; }
+    .label { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .label mat-icon { margin-right: 6px; }
+    .read { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; border: 1px solid var(--w-glass-edge);
+      border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
+    .read p { margin: 0 0 4px; }
+    .read pre { white-space: pre-wrap; font: 12px var(--w-mono); max-height: 160px; overflow: auto; margin: 6px 0 0; }
   `,
 })
 export class RecordDialog {
@@ -211,6 +252,10 @@ export class RecordDialog {
   protected readonly avbMode = signal<'collect' | 'use'>('collect');
   protected readonly error = signal('');
   protected readonly busy = signal(false);
+  /** How far the label is read, 0 to 1, while it is; null otherwise. */
+  protected readonly reading = signal<number | null>(null);
+  /** The label last read: what the API made of it, and the text it was made of. */
+  protected readonly read = signal<{ reading: LabelReading; text: string } | null>(null);
 
   protected readonly sealed = computed(() => this.wits.jars.value().filter((j) => j.storage > 0));
   protected readonly stashed = computed(() => this.wits.jars.value().filter((j) => j.stash > 0));
@@ -235,6 +280,35 @@ export class RecordDialog {
     const d = this.wits.devices.value().find((x) => x.slug === slug);
     if (d?.default_temp) {
       this.temp.set(d.default_temp);
+    }
+  }
+
+  /** Reads the photograph just taken or picked, and fills the form with what the label says. */
+  protected async readPhoto(input: HTMLInputElement): Promise<void> {
+    const photo = input.files?.[0];
+    input.value = '';
+    if (!photo) {
+      return;
+    }
+    this.error.set('');
+    this.read.set(null);
+    this.reading.set(0);
+    try {
+      const text = await readLabel(photo, (done) => {
+        this.reading.set(done);
+      });
+      const reading = await this.wits.label(text);
+      this.read.set({ reading, text: text.trim() });
+      if (reading.name) {
+        this.name.set(reading.name);
+      }
+      if (reading.grams) {
+        this.grams.set(reading.grams);
+      }
+    } catch (err) {
+      this.error.set(`The label could not be read: ${(err as Error).message}`);
+    } finally {
+      this.reading.set(null);
     }
   }
 

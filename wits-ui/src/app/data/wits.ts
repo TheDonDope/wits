@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/htt
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, Jar, Overview, Written } from './models';
+import { Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, Jar, LabelReading, Overview, Written } from './models';
 
 /**
  * The repository, as wits-server answers for it.
@@ -72,6 +72,11 @@ export class Wits {
     return this.write('buy', body);
   }
 
+  /** What a label's text says about a fill. It records nothing. */
+  label(text: string): Promise<LabelReading> {
+    return this.post<LabelReading>('label', { text });
+  }
+
   weigh(body: { product: string; account: string; weighed: number }) {
     return this.write('weigh', body);
   }
@@ -117,10 +122,15 @@ export class Wits {
 
   /** Writes an entry and refreshes everything; rejects with the server's words. */
   private async write<T = Written>(what: string, body: object): Promise<T> {
+    const out = await this.post<T>(what, body);
+    this.version.update((v) => v + 1);
+    return out;
+  }
+
+  /** Posts to the API; rejects with the server's words. */
+  private async post<T>(what: string, body: object): Promise<T> {
     try {
-      const out = await firstValueFrom(this.http.post<T>(`/api/${what}`, body));
-      this.version.update((v) => v + 1);
-      return out;
+      return await firstValueFrom(this.http.post<T>(`/api/${what}`, body));
     } catch (err) {
       // The server says why in {"error": "…"}; anything else says it itself.
       const e = err as HttpErrorResponse;
