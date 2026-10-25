@@ -635,6 +635,17 @@ already have when it is one. The text is read in the browser, by Tesseract
 compiled to WebAssembly and served by wits itself, so the photograph goes
 nowhere — check what it read, then record.
 
+The palette in the header picks one of 21 themes, and `t` steps through them
+(`T` back): wits' own Aurora, then Nord, Dracula, Gruvbox, Solarized, Tokyo
+Night, Mocha, Rosé Pine, Phosphor, Synthwave, Void, Forest, Ember and Abyss in
+the dark, and Paper, Solarized Light, Latte, Sakura, Bauhaus, Daylight and Dune
+in the light. They differ in more than colour — Paper is cream and serif with
+square corners, Phosphor a green CRT in monospace with scanlines, Bauhaus hard
+black edges and offset shadows on a grid, Mocha and Latte rounded and pastel.
+Each keeps the account colours' meaning — storage blue, stash green, AVB amber —
+in its own shades. The choice is this browser's, kept in its local storage;
+`?theme=paper` opens the page in one without keeping it.
+
 ![The dashboard](./assets/wits-ui-dashboard.png)
 
 ![Every day, and every fill](./assets/wits-ui-history.png)

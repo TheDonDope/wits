@@ -224,8 +224,8 @@ import { Wits } from '../data/wits';
     .form { display: grid; gap: 4px; padding-top: 18px; width: min(580px, calc(94vw - 52px)); }
     .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .temp { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
-    .error { display: flex; gap: 8px; align-items: center; color: var(--w-warn); background: rgba(255,122,138,.08);
-      border: 1px solid rgba(255,122,138,.25); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+    .error { display: flex; gap: 8px; align-items: center; color: var(--w-warn); background: color-mix(in srgb, var(--w-warn) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--w-warn) 25%, transparent); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
     mat-icon { vertical-align: middle; }
     .label { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
     .label mat-icon { margin-right: 6px; }

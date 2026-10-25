@@ -30,10 +30,10 @@ const RIGHT = 86;
           <path [attr.d]="inside" />
         </clipPath>
         <linearGradient [attr.id]="shine" x1="0" x2="1">
-          <stop offset="0" stop-color="rgba(255,255,255,0.16)" />
-          <stop offset="0.18" stop-color="rgba(255,255,255,0.02)" />
-          <stop offset="0.8" stop-color="rgba(255,255,255,0)" />
-          <stop offset="1" stop-color="rgba(255,255,255,0.08)" />
+          <stop offset="0" stop-color="color-mix(in srgb, var(--w-fg) 16%, transparent)" />
+          <stop offset="0.18" stop-color="color-mix(in srgb, var(--w-fg) 2%, transparent)" />
+          <stop offset="0.8" stop-color="transparent" />
+          <stop offset="1" stop-color="color-mix(in srgb, var(--w-fg) 8%, transparent)" />
         </linearGradient>
       </defs>
       <!-- lid -->
@@ -60,12 +60,12 @@ const RIGHT = 86;
   styles: `
     :host { display: block; }
     svg { width: 100%; height: 100%; overflow: visible; }
-    .lid { fill: #2a3346; stroke: rgba(255,255,255,0.08); }
-    .rim { fill: #1d2433; }
-    .empty { fill: rgba(255, 255, 255, 0.025); }
+    .lid { fill: color-mix(in srgb, var(--w-fg) 16%, var(--w-ink)); stroke: color-mix(in srgb, var(--w-fg) 8%, transparent); }
+    .rim { fill: color-mix(in srgb, var(--w-fg) 9%, var(--w-ink)); }
+    .empty { fill: color-mix(in srgb, var(--w-fg) 25%, transparent); }
     .band { transition: y 900ms cubic-bezier(.2,.8,.2,1), height 900ms cubic-bezier(.2,.8,.2,1); }
-    .glass { stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.2; }
-    .glint { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 2.4; stroke-linecap: round; }
+    .glass { stroke: color-mix(in srgb, var(--w-fg) 16%, transparent); stroke-width: 1.2; }
+    .glint { fill: none; stroke: color-mix(in srgb, var(--w-fg) 22%, transparent); stroke-width: 2.4; stroke-linecap: round; }
     .wave { transform-box: fill-box; }
     .wave.back { opacity: 0.45; animation: drift 7s linear infinite reverse; }
     .wave.front { opacity: 0.95; animation: drift 4.5s linear infinite; }

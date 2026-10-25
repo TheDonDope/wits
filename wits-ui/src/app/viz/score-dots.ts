@@ -21,14 +21,14 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
     .dots { display: flex; gap: 6px; }
     button {
       width: 18px; height: 18px; border-radius: 50%; padding: 0; cursor: pointer;
-      border: 1.5px solid rgb(255 255 255 / 18%); background: transparent;
+      border: 1.5px solid color-mix(in srgb, var(--w-fg) 18%, transparent); background: transparent;
       transition: transform .15s, background .2s, box-shadow .2s;
     }
-    button:hover { transform: scale(1.18); border-color: var(--tone, var(--w-violet)); }
+    button:hover { transform: scale(1.18); border-color: var(--tone, var(--w-primary)); }
     button.on {
       border-color: transparent;
-      background: var(--tone, var(--w-violet));
-      box-shadow: 0 0 10px var(--tone, var(--w-violet));
+      background: var(--tone, var(--w-primary));
+      box-shadow: 0 0 10px var(--tone, var(--w-primary));
       opacity: calc(.45 + var(--i) * .11);
     }
   `,

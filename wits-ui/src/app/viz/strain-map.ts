@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { scaleLinear, scaleSqrt } from 'd3-scale';
 
 import { Strain } from '../data/models';
+import { scoreColor } from './effect-matrix';
 import { hostWidth } from './width';
 
 const H = 380;
@@ -26,7 +27,7 @@ const PAD = 28;
         }
       }
       @for (d of dots(); track d.slug) {
-        <circle [attr.cx]="d.cx" [attr.cy]="d.cy" [attr.r]="d.r" [attr.fill]="d.fill" class="dot"
+        <circle [attr.cx]="d.cx" [attr.cy]="d.cy" [attr.r]="d.r" [style.fill]="d.fill" class="dot"
           [class.on]="picked()?.slug === d.slug" [class.near]="isNear(d.slug)" [class.dim]="picked() && !isNear(d.slug) && picked()?.slug !== d.slug"
           (click)="pick(d.slug)"><title>{{ d.name }}</title></circle>
       }
@@ -40,7 +41,7 @@ const PAD = 28;
     </svg>
     <div class="legend">
       <span><i class="sw" style="background: var(--w-warn)"></i>rated low</span>
-      <span><i class="sw" style="background: var(--w-mint)"></i>rated high</span>
+      <span><i class="sw" style="background: var(--w-accent)"></i>rated high</span>
       <span><i class="sw" style="background: var(--w-dim)"></i>not rated yet</span>
       <span class="dim">size: grams dispensed · pick one for what is like it</span>
     </div>
@@ -56,13 +57,13 @@ const PAD = 28;
   styles: `
     :host { display: block; width: 100%; }
     svg { display: block; width: 100%; }
-    .dot { stroke: rgb(11 14 20 / 80%); stroke-width: 1.5; cursor: pointer; opacity: .85; transition: opacity .2s; }
-    .dot.on { stroke: #fff; stroke-width: 2.5; opacity: 1; }
-    .dot.near { stroke: #fff; opacity: 1; }
+    .dot { stroke: color-mix(in srgb, var(--w-ink) 80%, transparent); stroke-width: 1.5; cursor: pointer; opacity: .85; transition: opacity .2s; }
+    .dot.on { stroke: var(--w-hi); stroke-width: 2.5; opacity: 1; }
+    .dot.near { stroke: var(--w-hi); opacity: 1; }
     .dot.dim { opacity: .25; }
-    .link { stroke: rgb(255 255 255 / 35%); stroke-width: 1.5; }
+    .link { stroke: color-mix(in srgb, var(--w-fg) 35%, transparent); stroke-width: 1.5; }
     .tick { fill: var(--w-dim); font: 500 10px var(--w-num); }
-    .label { fill: var(--mat-sys-on-surface); font: 500 11px 'Inter Variable', sans-serif; pointer-events: none; }
+    .label { fill: var(--mat-sys-on-surface); font: 500 11px var(--w-font); pointer-events: none; }
     .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--w-dim); margin-top: 6px; }
     .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     .like { margin: 10px 0 0; font-size: 14px; }
@@ -91,13 +92,12 @@ export class StrainMap {
     const rank = new Map(order.map(([, i], r) => [i, r]));
     const y = scaleLinear().domain([0, Math.max(all.length - 1, 1)]).range([H - PAD * 2, PAD]);
     const r = scaleSqrt().domain([0, Math.max(...all.map((s) => s.dispensed), 1)]).range([3, 16]);
-    const colour = scaleLinear<string>().domain([1, 3, 5]).range(['#ff7a8a', '#ffb454', '#7cf5c4']);
     return all.map((s, i) => ({
       ...s,
       cx: x(s.x),
       cy: y(rank.get(i) ?? 0),
       r: r(s.dispensed),
-      fill: s.ratings ? colour(s.overall ?? 3) : '#4a5266',
+      fill: s.ratings ? scoreColor(s.overall ?? 3) : 'color-mix(in srgb, var(--w-dim) 55%, var(--w-ink))',
     }));
   });
 

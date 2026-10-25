@@ -86,14 +86,14 @@ import { Heatmap } from '../viz/heatmap';
     .stat { padding: 18px 22px; display: grid; gap: 6px; }
     /* Room under the line: text clipped to a gradient loses its descenders otherwise. */
     .v { font-size: 30px; font-weight: 600; line-height: 1.3; padding-bottom: 2px;
-      background: linear-gradient(120deg, #fff, var(--w-mint));
+      background: linear-gradient(120deg, var(--w-hi), var(--w-accent));
       -webkit-background-clip: text; background-clip: text; color: transparent; }
     .pad { padding: 22px 26px; display: grid; gap: 14px; }
     .report { grid-template-columns: 1fr auto auto auto; align-items: center; }
     .report p { margin: 6px 0 0; font-size: 13px; }
     .report label { display: grid; gap: 4px; font-size: 12px; color: var(--w-dim); }
     .report input { font: inherit; color: var(--mat-sys-on-surface); background: transparent;
-      border: 1px solid var(--w-glass-edge); border-radius: 10px; padding: 8px 10px; color-scheme: dark; }
+      border: 1px solid var(--w-glass-edge); border-radius: 10px; padding: 8px 10px; }
     .bad { color: var(--w-warn); grid-column: 1 / -1; }
     @media (width <= 720px) { .report { grid-template-columns: 1fr 1fr; } .report > div { grid-column: 1 / -1; } }
     header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
@@ -102,8 +102,8 @@ import { Heatmap } from '../viz/heatmap';
     .device { display: grid; grid-template-columns: 32px minmax(180px, 280px) 1fr; gap: 14px; align-items: center; }
     .device div:nth-child(2) { display: grid; }
     .device mat-icon { color: var(--w-sesh); }
-    .use { height: 8px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; }
-    .use i { display: block; height: 100%; background: linear-gradient(90deg, var(--w-violet), var(--w-sesh));
+    .use { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); overflow: hidden; }
+    .use i { display: block; height: 100%; background: linear-gradient(90deg, var(--w-primary), var(--w-sesh));
       box-shadow: 0 0 12px var(--w-sesh); border-radius: 99px; }
   `,
 })

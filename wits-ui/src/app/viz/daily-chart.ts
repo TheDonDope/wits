@@ -56,20 +56,20 @@ const M = { top: 16, right: 12, bottom: 30, left: 40 };
   styles: `
     :host { display: block; width: 100%; }
     svg { display: block; width: 100%; }
-    .grid { stroke: rgb(255 255 255 / 6%); stroke-dasharray: 2 6; }
+    .grid { stroke: color-mix(in srgb, var(--w-fg) 6%, transparent); stroke-dasharray: 2 6; }
     .tick { fill: var(--w-dim); font: 500 10px var(--w-num); }
     .bar { transition: y .35s ease-out, height .35s ease-out; }
-    .bar.hot { fill: #fff; }
-    .avg { fill: none; stroke: var(--w-violet); stroke-width: 2.4; stroke-linecap: round; }
-    .avg-glow { fill: none; stroke: var(--w-violet); stroke-width: 6; opacity: .4; }
-    .tip { fill: rgb(16 20 28 / 95%); stroke: rgb(255 255 255 / 12%); }
-    .tip-d { fill: var(--w-dim); font: 600 11px 'Inter Variable', sans-serif; }
-    .tip-g { fill: #fff; font: 600 12px var(--w-num); }
+    .bar.hot { fill: var(--w-hi); }
+    .avg { fill: none; stroke: var(--w-primary); stroke-width: 2.4; stroke-linecap: round; }
+    .avg-glow { fill: none; stroke: var(--w-primary); stroke-width: 6; opacity: .4; }
+    .tip { fill: color-mix(in srgb, var(--w-ink) 95%, transparent); stroke: color-mix(in srgb, var(--w-fg) 12%, transparent); }
+    .tip-d { fill: var(--w-dim); font: 600 11px var(--w-font); }
+    .tip-g { fill: var(--w-hi); font: 600 12px var(--w-num); }
     .tipg { pointer-events: none; }
     .legend { display: flex; gap: 18px; font-size: 12px; color: var(--w-dim); margin-top: 6px; }
     .sw { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
     .bar-sw { background: var(--w-stash); }
-    .line-sw { background: var(--w-violet); }
+    .line-sw { background: var(--w-primary); }
   `,
 })
 export class DailyChart {

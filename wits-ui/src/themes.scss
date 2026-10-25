@@ -1,0 +1,346 @@
+// The themes. Each is data: a background, text, a primary and an accent, the
+// four account colours (storage blue, stash green, AVB amber, sessions violet,
+// in whatever shade the theme speaks), and a style — corners, glass, a
+// backdrop, a shadow, typefaces. A theme sets custom properties under
+// [data-theme='…'], so any element can wear one: the picker's swatches show
+// each theme by wearing it.
+@use 'sass:color';
+@use 'sass:list';
+@use 'sass:math';
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+$fonts: (
+  inter: ("'Inter Variable', system-ui, sans-serif"),
+  grotesk: ("'Space Grotesk Variable', 'Inter Variable', sans-serif"),
+  mono: ("'JetBrains Mono Variable', ui-monospace, monospace"),
+  serif: ("'Fraunces Variable', Georgia, serif"),
+  rounded: ("'Nunito Variable', 'Inter Variable', sans-serif"),
+);
+
+// Corner radii: a card, a dialog, and Material's own corner scale (buttons,
+// fields, tabs). `round` keeps Material's defaults.
+$shapes: (
+  square: (card: 0, dialog: 0, corners: (0, 0, 0, 0, 0, 0)),
+  sharp: (card: 4px, dialog: 6px, corners: (2px, 3px, 4px, 4px, 6px, 6px)),
+  soft: (card: 12px, dialog: 16px, corners: (4px, 6px, 8px, 10px, 14px, 9999px)),
+  round: (card: 24px, dialog: 28px, corners: null),
+  pill: (card: 32px, dialog: 36px, corners: null),
+);
+
+// Every theme's defaults; a theme names only what it changes.
+$base: (
+  scheme: dark,
+  shape: round,
+  glass: 0.62,
+  blur: 18px,
+  edge: 7%,
+  border: 1px,
+  shadow: soft,
+  backdrop: aurora,
+  glow: 1,
+  font: inter,
+  num: grotesk,
+  head: grotesk,
+  good: null,
+  on: null,
+  panel: null,
+);
+$themes: (
+  aurora: (
+    ink: #0b0e14, fg: #e7ebf3, dim: #7d879c, primary: #8b7bff, accent: #7cf5c4,
+    storage: #6ea8ff, stash: #34d39a, avb: #ffb454, sesh: #b48cff, warn: #ff7a8a, panel: #181e2c,
+  ),
+  nord: (
+    ink: #2e3440, fg: #eceff4, dim: #8f99ad, primary: #88c0d0, accent: #8fbcbb,
+    storage: #5e81ac, stash: #a3be8c, avb: #ebcb8b, sesh: #b48ead, warn: #bf616a, good: #a3be8c,
+    shape: soft, glass: 0.9, blur: 0, edge: 9%, backdrop: flat, num: inter, head: inter,
+  ),
+  dracula: (
+    ink: #282a36, fg: #f8f8f2, dim: #8890b8, primary: #bd93f9, accent: #ff79c6,
+    storage: #8be9fd, stash: #50fa7b, avb: #ffb86c, sesh: #d6b4fc, warn: #f55, good: #50fa7b,
+    glow: 0.8,
+  ),
+  gruvbox: (
+    ink: #282828, fg: #ebdbb2, dim: #a89984, primary: #fe8019, accent: #b8bb26,
+    storage: #83a598, stash: #b8bb26, avb: #fabd2f, sesh: #d3869b, warn: #fb4934,
+    shape: sharp, glass: 1, blur: 0, edge: 12%, backdrop: flat, shadow: none, font: mono, num: mono, head: mono,
+  ),
+  solarized: (
+    ink: #002b36, fg: #eee8d5, dim: #839496, primary: #2aa198, accent: #859900,
+    storage: #268bd2, stash: #859900, avb: #b58900, sesh: #6c71c4, warn: #dc322f,
+    shape: soft, glass: 0.85, blur: 6px, backdrop: vignette, num: mono,
+  ),
+  tokyo-night: (
+    ink: #1a1b26, fg: #c0caf5, dim: #737aa2, primary: #7aa2f7, accent: #bb9af7,
+    storage: #7dcfff, stash: #9ece6a, avb: #e0af68, sesh: #bb9af7, warn: #f7768e, good: #9ece6a,
+    glow: 1.3, shadow: glow,
+  ),
+  mocha: (
+    ink: #1e1e2e, fg: #cdd6f4, dim: #9399b2, primary: #cba6f7, accent: #f5c2e7,
+    storage: #89b4fa, stash: #a6e3a1, avb: #fab387, sesh: #cba6f7, warn: #f38ba8, good: #a6e3a1,
+    shape: pill, glow: 0.6, font: rounded, num: rounded, head: rounded,
+  ),
+  rose-pine: (
+    ink: #191724, fg: #e0def4, dim: #908caa, primary: #c4a7e7, accent: #ebbcba,
+    storage: #9ccfd8, stash: #8fbf9f, avb: #f6c177, sesh: #c4a7e7, warn: #eb6f92, good: #9ccfd8,
+    shape: soft, backdrop: vignette, num: serif, head: serif,
+  ),
+  phosphor: (
+    ink: #040a05, fg: #b8ffb0, dim: #5c9c56, primary: #39ff14, accent: #a8ff60,
+    storage: #5fe3ff, stash: #d4ff4a, avb: #ffd23f, sesh: #c79bff, warn: #ff5f5f,
+    shape: square, glass: 0.92, blur: 0, edge: 22%, backdrop: scan, shadow: glow, glow: 0.7,
+    font: mono, num: mono, head: mono,
+  ),
+  synthwave: (
+    ink: #120b24, fg: #f6e8ff, dim: #a08cc8, primary: #ff2bd6, accent: #22e5ff,
+    storage: #4d9bff, stash: #2bffb0, avb: #ffb000, sesh: #c36bff, warn: #ff3d6e, good: #2bffb0,
+    backdrop: horizon, shadow: glow, glow: 1.4,
+  ),
+  void: (
+    ink: #000, fg: #f2f2f2, dim: #7a7a7a, primary: #e8e8e8, accent: #00e0a4,
+    storage: #4c9bff, stash: #00e0a4, avb: #ffae3d, sesh: #a78bfa, warn: #ff4d6a,
+    shape: sharp, glass: 1, blur: 0, edge: 14%, backdrop: flat, shadow: none, num: mono, head: inter,
+  ),
+  forest: (
+    ink: #0f1a14, fg: #e3eedf, dim: #86a08b, primary: #d9c27a, accent: #7fb77e,
+    storage: #6fa8c9, stash: #8fd46b, avb: #d9a35a, sesh: #b49ad9, warn: #e07a5f, good: #8fd46b,
+    shape: soft, glow: 0.7, num: serif, head: serif,
+  ),
+  ember: (
+    ink: #141110, fg: #f3e9e2, dim: #9c8b80, primary: #ff6b2c, accent: #ffc857,
+    storage: #5aa9e6, stash: #6cd48c, avb: #ffc857, sesh: #c58cff, warn: #ff4d4d, good: #6cd48c,
+    shape: sharp, glass: 0.8, blur: 10px, glow: 0.9,
+  ),
+  abyss: (
+    ink: #04141c, fg: #d6f3f5, dim: #6f98a3, primary: #18c7c1, accent: #7af0d6,
+    storage: #3aa0ff, stash: #8de06a, avb: #f6b65c, sesh: #a68cff, warn: #ff6f86,
+    glass: 0.45, blur: 28px, glow: 1.2,
+  ),
+  paper: (
+    scheme: light,
+    ink: #f4efe4, fg: #2a241c, dim: #7c7264, primary: #9c3d1f, accent: #2f6f5e,
+    storage: #2c5d9e, stash: #2f7d4f, avb: #a8650f, sesh: #6b4aa0, warn: #b3261e, good: #2f7d4f,
+    shape: square, glass: 1, blur: 0, edge: 22%, backdrop: flat, shadow: none,
+    font: serif, num: serif, head: serif,
+  ),
+  solarized-light: (
+    scheme: light,
+    ink: #fdf6e3, fg: #073642, dim: #657b83, primary: #d33682, accent: #2aa198,
+    storage: #268bd2, stash: #859900, avb: #b58900, sesh: #6c71c4, warn: #dc322f, good: #859900,
+    shape: soft, glass: 0.9, blur: 6px, backdrop: vignette, num: mono,
+  ),
+  latte: (
+    scheme: light,
+    ink: #eff1f5, fg: #4c4f69, dim: #7c7f93, primary: #8839ef, accent: #ea76cb,
+    storage: #1e66f5, stash: #40a02b, avb: #fe640b, sesh: #8839ef, warn: #d20f39, good: #40a02b,
+    shape: pill, glow: 0.8, font: rounded, num: rounded, head: rounded,
+  ),
+  sakura: (
+    scheme: light,
+    ink: #fff4f6, fg: #4a2a35, dim: #9a7480, primary: #d6457a, accent: #3f9e8a,
+    storage: #4f86c6, stash: #3f9e6e, avb: #c77d1e, sesh: #9a62c9, warn: #c9304c, good: #3f9e6e,
+    shape: pill, glow: 1.2, font: rounded, num: serif, head: serif,
+  ),
+  bauhaus: (
+    scheme: light,
+    ink: #f2efe8, fg: #111, dim: #5a5a5a, primary: #d62828, accent: #1f4fd1,
+    storage: #1f4fd1, stash: #138a36, avb: #c98a00, sesh: #6a3fb5, warn: #d62828, good: #138a36,
+    shape: square, glass: 1, blur: 0, edge: 100%, border: 2px, backdrop: grid, shadow: hard,
+    num: grotesk, head: grotesk,
+  ),
+  daylight: (
+    scheme: light,
+    ink: #f6f8fa, fg: #1f2328, dim: #656d76, primary: #bf3989, accent: #1a7f37,
+    storage: #0969da, stash: #1a7f37, avb: #9a6700, sesh: #8250df, warn: #cf222e,
+    shape: soft, glass: 1, blur: 0, edge: 14%, backdrop: flat, num: inter, head: inter,
+  ),
+  dune: (
+    scheme: light,
+    ink: #efe3cf, fg: #3b2a1c, dim: #8a735b, primary: #c2562b, accent: #3d7f7a,
+    storage: #3f6fa0, stash: #5d8a3a, avb: #a8670f, sesh: #8a5a9e, warn: #b23a2e, good: #5d8a3a,
+    glass: 0.55, glow: 1.1, num: serif, head: grotesk,
+  ),
+);
+
+// Sass deprecated its if(); this is it, as a function.
+@function w-pick($cond, $yes, $no) {
+  @if $cond {
+    @return $yes;
+  }
+
+  @return $no;
+}
+
+@function w-alpha($c, $a) {
+  @return color.change($c, $alpha: $a);
+}
+
+// The page's backdrop: the colour behind the cards, in the theme's own manner.
+@function w-backdrop($kind, $t, $glow) {
+  $ink: map.get($t, ink);
+  $p: map.get($t, primary);
+  $a: map.get($t, accent);
+  $s: map.get($t, storage);
+  $fg: map.get($t, fg);
+
+  @if $kind == aurora {
+    @return (
+      radial-gradient(1200px 600px at 10% -10%, w-alpha($p, 0.16 * $glow), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, w-alpha($a, 0.1 * $glow), transparent 60%),
+      radial-gradient(800px 800px at 50% 120%, w-alpha($s, 0.08 * $glow), transparent 60%),
+      $ink
+    );
+  }
+
+  @if $kind == vignette {
+    @return (radial-gradient(1400px 700px at 50% -20%, w-alpha($p, 0.12), transparent 70%), $ink);
+  }
+
+  @if $kind == grid {
+    @return (
+      linear-gradient(w-alpha($fg, 0.06) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, w-alpha($fg, 0.06) 1px, transparent 1px) 0 0 / 32px 32px,
+      $ink
+    );
+  }
+
+  @if $kind == scan {
+    @return (
+      repeating-linear-gradient(0deg, w-alpha($fg, 0.035) 0 1px, transparent 1px 3px),
+      radial-gradient(1200px 800px at 50% 30%, w-alpha($p, 0.1 * $glow), transparent 70%),
+      $ink
+    );
+  }
+
+  @if $kind == horizon {
+    @return (
+      linear-gradient(w-alpha($a, 0.07) 1px, transparent 1px) 0 0 / 100% 40px,
+      radial-gradient(1400px 500px at 50% 110%, w-alpha($p, 0.35), transparent 70%),
+      radial-gradient(900px 400px at 50% -10%, w-alpha($a, 0.14), transparent 70%),
+      linear-gradient(180deg, $ink 0%, color.mix($p, $ink, 12%) 100%),
+    );
+  }
+
+  @return $ink;
+}
+
+@function w-shadow($kind, $t, $dark) {
+  $fg: map.get($t, fg);
+  $p: map.get($t, primary);
+
+  @if $kind == hard {
+    @return 6px 6px 0 $fg;
+  }
+
+  @if $kind == glow {
+    @return (0 0 0 1px w-alpha($p, 0.14), 0 0 36px -10px w-alpha($p, 0.45), 0 24px 48px -24px rgb(0 0 0 / 60%));
+  }
+
+  @if $kind == none {
+    @return none;
+  }
+
+  $depth: w-pick($dark, 0.6, 0.16);
+
+  @return (0 1px 0 w-alpha($fg, 0.04) inset, 0 24px 48px -24px rgba(#000, $depth));
+}
+
+@mixin w-theme($name, $theme) {
+  $t: map.merge($base, $theme);
+  $dark: map.get($t, scheme) == dark;
+  $ink: map.get($t, ink);
+  $fg: map.get($t, fg);
+  $dim: map.get($t, dim);
+  $p: map.get($t, primary);
+  $on: map.get($t, on) or w-pick($dark, $ink, #fff);
+  $panel: map.get($t, panel) or w-pick($dark, color.mix($fg, $ink, 9%), color.mix(#fff, $ink, 72%));
+  $shape: map.get($shapes, map.get($t, shape));
+  $corners: map.get($shape, corners);
+
+  color-scheme: map.get($t, scheme);
+
+  --w-ink: #{$ink};
+  --w-fg: #{$fg};
+  --w-hi: #{w-pick($dark, color.mix(#fff, $fg, 60%), color.mix(#000, $fg, 50%))};
+  --w-dim: #{$dim};
+  --w-primary: #{$p};
+  --w-accent: #{map.get($t, accent)};
+  --w-good: #{map.get($t, good) or map.get($t, accent)};
+  --w-on-accent: #{$on};
+  --w-storage: #{map.get($t, storage)};
+  --w-stash: #{map.get($t, stash)};
+  --w-avb: #{map.get($t, avb)};
+  --w-sesh: #{map.get($t, sesh)};
+  --w-warn: #{map.get($t, warn)};
+  --w-glass: #{w-alpha($panel, map.get($t, glass))};
+  --w-glass-edge: #{w-alpha($fg, math.div(map.get($t, edge), 100%))};
+  --w-dialog: #{w-alpha($panel, 0.97)};
+  --w-bar: #{w-alpha($ink, 0.78)};
+  --w-blur: #{map.get($t, blur)};
+  --w-border: #{map.get($t, border)};
+  --w-radius: #{map.get($shape, card)};
+  --w-radius-dialog: #{map.get($shape, dialog)};
+  --w-shadow: #{w-shadow(map.get($t, shadow), $t, $dark)};
+  --w-bg: #{w-backdrop(map.get($t, backdrop), $t, map.get($t, glow))};
+  --w-font: #{map.get($fonts, map.get($t, font))};
+  --w-num: #{map.get($fonts, map.get($t, num))};
+  --w-head: #{map.get($fonts, map.get($t, head))};
+  --w-mono: #{map.get($fonts, mono)};
+
+  @include mat.theme-overrides(
+    (
+      primary: $p,
+      on-primary: $on,
+      primary-container: color.mix($p, $ink, 28%),
+      on-primary-container: $fg,
+      secondary-container: color.mix($p, $ink, 20%),
+      on-secondary-container: $fg,
+      tertiary: map.get($t, accent),
+      error: map.get($t, warn),
+      surface-tint: $p,
+      background: $ink,
+      on-background: $fg,
+      surface: $ink,
+      surface-dim: $ink,
+      surface-bright: color.mix($fg, $ink, 14%),
+      surface-container-lowest: w-pick($dark, color.mix(#000, $ink, 25%), color.mix(#fff, $ink, 80%)),
+      surface-container-low: color.mix(w-pick($dark, $fg, #fff), $ink, w-pick($dark, 3%, 40%)),
+      surface-container: color.mix(w-pick($dark, $fg, #fff), $ink, w-pick($dark, 5%, 60%)),
+      surface-container-high: w-pick($dark, color.mix($fg, $ink, 8%), color.mix($fg, $ink, 4%)),
+      surface-container-highest: w-pick($dark, color.mix($fg, $ink, 11%), color.mix($fg, $ink, 8%)),
+      on-surface: $fg,
+      on-surface-variant: color.mix($fg, $dim, 35%),
+      outline: $dim,
+      outline-variant: color.mix($fg, $ink, 16%),
+      inverse-surface: $fg,
+      inverse-on-surface: $ink,
+      inverse-primary: color.mix($p, w-pick($dark, #000, #fff), 60%),
+    )
+  );
+
+  @if $corners {
+    @include mat.theme-overrides(
+      (
+        corner-extra-small: list.nth($corners, 1),
+        corner-small: list.nth($corners, 2),
+        corner-medium: list.nth($corners, 3),
+        corner-large: list.nth($corners, 4),
+        corner-extra-large: list.nth($corners, 5),
+        corner-full: list.nth($corners, 6),
+      )
+    );
+  }
+}
+
+// The default theme on the root, and every theme under its name — on the root
+// when chosen, on a swatch to show it.
+:root {
+  @include w-theme(aurora, map.get($themes, aurora));
+}
+
+@each $name, $theme in $themes {
+  [data-theme='#{$name}'] {
+    @include w-theme($name, $theme);
+  }
+}

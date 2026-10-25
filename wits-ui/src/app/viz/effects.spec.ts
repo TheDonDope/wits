@@ -12,10 +12,10 @@ const groups: EffectGroup[] = [
 ];
 
 describe('scoreColor', () => {
-  it('runs from rose at 1 to mint at 5, amber between', () => {
-    expect(scoreColor(1)).toBe('rgb(255 122 138)');
-    expect(scoreColor(3)).toBe('rgb(255 180 84)');
-    expect(scoreColor(5)).toBe('rgb(124 245 196)');
+  it('runs from the warning colour at 1 to the good colour at 5, AVB amber between', () => {
+    expect(scoreColor(1)).toBe('color-mix(in oklab, var(--w-avb) 0%, var(--w-warn))');
+    expect(scoreColor(3)).toBe('color-mix(in oklab, var(--w-good) 0%, var(--w-avb))');
+    expect(scoreColor(5)).toBe('color-mix(in oklab, var(--w-good) 100%, var(--w-avb))');
     expect(scoreColor(9)).toBe(scoreColor(5));
   });
 });

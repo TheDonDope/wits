@@ -12,7 +12,7 @@
   gap: 28px;
   padding: 0 28px;
   height: 68px;
-  background: rgb(11 14 20 / 72%);
+  background: color-mix(in srgb, var(--w-ink) 72%, transparent);
   backdrop-filter: blur(18px) saturate(1.3);
   border-bottom: 1px solid var(--w-glass-edge);
 }
@@ -68,7 +68,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font: 600 11px 'Inter Variable', sans-serif;
+  font: 600 11px var(--w-font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--w-stash);
@@ -96,9 +96,9 @@ main {
   position: fixed;
   right: 32px;
   bottom: 68px;
-  background: linear-gradient(120deg, var(--w-violet), #5ee6b6) !important;
-  color: #0b0e14 !important;
-  box-shadow: 0 12px 40px -8px rgb(139 123 255 / 70%) !important;
+  background: linear-gradient(120deg, var(--w-primary), var(--w-accent)) !important;
+  color: var(--w-on-accent) !important;
+  box-shadow: 0 12px 40px -8px color-mix(in srgb, var(--w-primary) 70%, transparent) !important;
 }
 
 // The keys the page answers, always in view: the terminal's help line.
@@ -111,7 +111,7 @@ main {
   gap: 4px 18px;
   justify-content: center;
   padding: 10px 24px;
-  background: rgb(11 14 20 / 80%);
+  background: color-mix(in srgb, var(--w-ink) 80%, transparent);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--w-glass-edge);
   font-size: 12px;
@@ -133,14 +133,14 @@ kbd {
   min-width: 18px;
   padding: 1px 6px;
   border-radius: 6px;
-  border: 1px solid rgb(255 255 255 / 14%);
+  border: 1px solid color-mix(in srgb, var(--w-fg) 14%, transparent);
   border-bottom-width: 2px;
-  background: rgb(255 255 255 / 5%);
+  background: color-mix(in srgb, var(--w-fg) 5%, transparent);
   color: var(--mat-sys-on-surface);
 
   // Inter, not the mono face: the bundled mono has no arrows, and the
   // fallback drew ← and → half their size.
-  font: 600 11px 'Inter Variable', system-ui, sans-serif;
+  font: 600 11px var(--w-font);
   text-align: center;
 }
 
@@ -148,7 +148,7 @@ kbd {
   position: fixed;
   inset: 0;
   z-index: 20;
-  background: rgb(5 7 12 / 55%);
+  background: color-mix(in srgb, var(--w-ink) 55%, transparent);
   backdrop-filter: blur(6px);
 }
 
@@ -178,7 +178,7 @@ kbd {
   h3 {
     margin: 8px 0 10px;
     font: 600 14px var(--w-num);
-    color: var(--w-violet);
+    color: var(--w-primary);
   }
 
   .row {

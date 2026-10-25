@@ -64,22 +64,22 @@ const M = { top: 16, right: 40, bottom: 30, left: 40 };
   styles: `
     :host { display: block; width: 100%; }
     svg { display: block; width: 100%; }
-    .grid { stroke: rgb(255 255 255 / 6%); stroke-dasharray: 2 6; }
+    .grid { stroke: color-mix(in srgb, var(--w-fg) 6%, transparent); stroke-dasharray: 2 6; }
     .tick { fill: var(--w-dim); font: 500 10px var(--w-num); }
     .tick.rate { fill: var(--w-sesh); }
-    .break { fill: rgb(255 180 84 / 9%); }
+    .break { fill: color-mix(in srgb, var(--w-avb) 9%, transparent); }
     .g { fill: none; stroke: var(--w-stash); stroke-width: 2.2; }
     .r { fill: none; stroke: var(--w-sesh); stroke-width: 2.4; stroke-linecap: round; }
-    .cursor { stroke: rgb(255 255 255 / 25%); }
-    .tip { fill: rgb(16 20 28 / 95%); stroke: rgb(255 255 255 / 12%); }
-    .tip-d { fill: var(--w-dim); font: 600 11px 'Inter Variable', sans-serif; }
-    .tip-g { fill: #fff; font: 600 12px var(--w-num); }
+    .cursor { stroke: color-mix(in srgb, var(--w-fg) 25%, transparent); }
+    .tip { fill: color-mix(in srgb, var(--w-ink) 95%, transparent); stroke: color-mix(in srgb, var(--w-fg) 12%, transparent); }
+    .tip-d { fill: var(--w-dim); font: 600 11px var(--w-font); }
+    .tip-g { fill: var(--w-hi); font: 600 12px var(--w-num); }
     .tipg { pointer-events: none; }
     .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--w-dim); margin-top: 6px; }
     .sw { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
     .g-sw { background: var(--w-stash); }
     .r-sw { background: var(--w-sesh); }
-    .b-sw { background: rgb(255 180 84 / 45%); height: 10px; }
+    .b-sw { background: color-mix(in srgb, var(--w-avb) 45%, transparent); height: 10px; }
   `,
 })
 export class ToleranceCurve {

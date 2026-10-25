@@ -47,7 +47,7 @@ const ROW = 38;
       transition: transform .45s cubic-bezier(.2,.8,.2,1); }
     .rank { color: var(--w-dim); text-align: right; font-size: 13px; }
     .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-    .track { height: 12px; border-radius: 99px; background: rgb(255 255 255 / 5%); overflow: hidden; }
+    .track { height: 12px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 5%, transparent); overflow: hidden; }
     .fill { height: 100%; border-radius: 99px; transition: width .45s cubic-bezier(.2,.8,.2,1); }
     .v { text-align: right; font-weight: 600; }
     .note { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

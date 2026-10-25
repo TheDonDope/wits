@@ -3,10 +3,10 @@
     <svg viewBox="0 0 64 64" aria-hidden="true">
       <defs>
         <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#7cf5c4" /><stop offset="1" stop-color="#8b7bff" />
+          <stop offset="0" stop-color="var(--w-accent)" /><stop offset="1" stop-color="var(--w-primary)" />
         </linearGradient>
       </defs>
-      <circle cx="32" cy="32" r="24" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8" />
+      <circle cx="32" cy="32" r="24" fill="none" stroke="color-mix(in srgb, var(--w-fg) 8%, transparent)" stroke-width="8" />
       <circle class="spin" cx="32" cy="32" r="24" fill="none" stroke="url(#brand)" stroke-width="8"
         stroke-linecap="round" stroke-dasharray="110 200" />
       <circle cx="32" cy="32" r="8" fill="url(#brand)" />
@@ -28,6 +28,18 @@
         <i></i>{{ o.chain_ok ? 'verified' : 'changed' }}
       </span>
     }
+    <button mat-icon-button class="theme" [matMenuTriggerFor]="themes" [matTooltip]="'Theme: ' + theme.info().label + ' (t)'"
+      aria-label="Choose a theme">
+      <mat-icon>palette</mat-icon>
+    </button>
+    <mat-menu #themes="matMenu" class="theme-menu" xPosition="before">
+      @for (t of themeList; track t.id) {
+        <button mat-menu-item (click)="theme.set(t.id)" [class.on]="t.id === theme.current()" [attr.aria-current]="t.id === theme.current()">
+          <span class="swatch" [attr.data-theme]="t.id" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="name">{{ t.label }}<small>{{ t.note }}</small></span>
+        </button>
+      }
+    </mat-menu>
     <span class="clock num">{{ now() | date: 'EEE d MMM · HH:mm:ss' }}</span>
   </div>
 </header>

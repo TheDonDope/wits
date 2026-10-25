@@ -113,29 +113,29 @@ import { Confirm, ConfirmDialog } from './confirm';
     :host { display: grid; gap: 20px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
-    h1 .dim { font: 400 15px 'Inter Variable', sans-serif; }
+    h1 .dim { font: 400 15px var(--w-font); }
     .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .clear { background: linear-gradient(120deg, #ff7a8a, #ffb454) !important; color: #0b0e14 !important; }
-    .clear:disabled { background: rgb(255 255 255 / 6%) !important; color: var(--w-dim) !important; }
-    .count { margin-left: 6px; padding: 0 7px; border-radius: 99px; background: rgb(11 14 20 / 25%); font-size: 12px; }
+    .clear { background: linear-gradient(120deg, var(--w-warn), var(--w-avb)) !important; color: var(--w-on-accent) !important; }
+    .clear:disabled { background: color-mix(in srgb, var(--w-fg) 6%, transparent) !important; color: var(--w-dim) !important; }
+    .count { margin-left: 6px; padding: 0 7px; border-radius: 99px; background: color-mix(in srgb, var(--w-ink) 25%, transparent); font-size: 12px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
     .card { position: relative; display: grid; grid-template-columns: 96px 1fr; gap: 16px; padding: 18px; opacity: 0;
       animation: rise .6s cubic-bezier(.2,.8,.2,1) forwards; transition: transform .25s, border-color .25s, box-shadow .25s;
       cursor: pointer; outline: none; }
-    .card:hover { transform: translateY(-3px); border-color: rgb(139 123 255 / 35%); }
-    .card.focus { border-color: rgb(139 123 255 / 70%); }
-    .card.picked { border-color: rgb(255 122 138 / 70%); box-shadow: 0 0 0 1px rgb(255 122 138 / 40%), 0 0 36px -10px rgb(255 122 138 / 60%); }
+    .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--w-primary) 35%, transparent); }
+    .card.focus { border-color: color-mix(in srgb, var(--w-primary) 70%, transparent); }
+    .card.picked { border-color: color-mix(in srgb, var(--w-warn) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--w-warn) 40%, transparent), 0 0 36px -10px color-mix(in srgb, var(--w-warn) 60%, transparent); }
     .tick { position: absolute; top: 6px; right: 6px; }
     w-jar { width: 96px; height: 134px; }
     .body { display: grid; gap: 8px; align-content: start; min-width: 0; padding-right: 28px; }
-    h3 { margin: 0; font: 600 15px/1.3 'Inter Variable', sans-serif; }
+    h3 { margin: 0; font: 600 15px/1.3 var(--w-font); }
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip { font: 600 10px/1.8 'Inter Variable', sans-serif; padding: 0 8px; border-radius: 99px; background: rgb(255 255 255 / 6%); color: var(--w-dim); }
-    .chip.thc { background: rgb(124 245 196 / 12%); color: var(--w-mint); }
-    .chip.cbd { background: rgb(110 168 255 / 14%); color: var(--w-storage); }
+    .chip { font: 600 10px/1.8 var(--w-font); padding: 0 8px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); color: var(--w-dim); }
+    .chip.thc { background: color-mix(in srgb, var(--w-accent) 12%, transparent); color: var(--w-accent); }
+    .chip.cbd { background: color-mix(in srgb, var(--w-storage) 14%, transparent); color: var(--w-storage); }
     dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin: 4px 0 0; }
     dl div { display: grid; gap: 1px; min-width: 0; }
-    dt { font: 600 9px 'Inter Variable', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--w-dim); }
+    dt { font: 600 9px var(--w-font); letter-spacing: .1em; text-transform: uppercase; color: var(--w-dim); }
     dd { margin: 0; font-size: 15px; font-weight: 600; }
     .seen { display: flex; gap: 4px; align-items: center; font-size: 12px; }
     .seen mat-icon { font-size: 14px; width: 14px; height: 14px; }

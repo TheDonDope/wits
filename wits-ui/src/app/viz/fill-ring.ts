@@ -29,8 +29,8 @@ interface Segment {
           <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <radialGradient id="ring-core">
-          <stop offset="0" stop-color="rgba(139,123,255,0.22)" />
-          <stop offset="1" stop-color="rgba(139,123,255,0)" />
+          <stop offset="0" stop-color="color-mix(in srgb, var(--w-primary) 22%, transparent)" />
+          <stop offset="1" stop-color="color-mix(in srgb, var(--w-primary) 0%, transparent)" />
         </radialGradient>
       </defs>
       <circle r="96" fill="url(#ring-core)" />
@@ -60,18 +60,18 @@ interface Segment {
   styles: `
     :host { position: relative; display: block; aspect-ratio: 1; width: 100%; max-width: 340px; }
     svg { width: 100%; height: 100%; overflow: visible; }
-    .track { fill: rgba(255, 255, 255, 0.05); }
+    .track { fill: color-mix(in srgb, var(--w-fg) 5%, transparent); }
     /* The viewBox is centred on the ring, so its origin is the ring's centre. */
     .seg { opacity: 0; transform-box: view-box; transform-origin: 0 0;
       animation: grow 1.1s cubic-bezier(.2,.8,.2,1) forwards; }
-    .halo-track { fill: rgba(255, 255, 255, 0.04); }
-    .halo { fill: var(--w-violet); opacity: 0.75; }
+    .halo-track { fill: color-mix(in srgb, var(--w-fg) 4%, transparent); }
+    .halo { fill: var(--w-primary); opacity: 0.75; }
     @keyframes grow { from { opacity: 0; transform: rotate(-30deg) scale(.92); } to { opacity: 1; transform: none; } }
     .centre {
       position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2px;
     }
     .big { font: 600 clamp(36px, 7vw, 54px)/1 var(--w-num); letter-spacing: -0.04em;
-      background: linear-gradient(120deg, #fff, #c9c2ff 60%, var(--w-mint));
+      background: linear-gradient(120deg, var(--w-hi), color-mix(in srgb, var(--w-primary) 45%, var(--w-hi)) 60%, var(--w-accent));
       -webkit-background-clip: text; background-clip: text; color: transparent; }
     .unit { font-size: 0.45em; margin-left: 4px; color: var(--w-dim); -webkit-text-fill-color: var(--w-dim); }
     .of { font-size: 13px; }

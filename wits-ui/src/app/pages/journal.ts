@@ -98,16 +98,16 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
     :host { display: grid; gap: 20px; grid-template-rows: auto 1fr; height: calc(100vh - 150px); }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
-    h1 .dim { font: 400 15px 'Inter Variable'; }
+    h1 .dim { font: 400 15px var(--w-font); }
     .search { width: 220px; }
     .list { height: 100%; }
     .row { height: 56px; box-sizing: border-box; padding: 0 18px; }
     .day { height: 100%; display: flex; align-items: flex-end; gap: 10px; padding-bottom: 8px;
-      font: 600 12px 'Inter Variable'; letter-spacing: .08em; text-transform: uppercase; color: var(--w-violet); }
+      font: 600 12px var(--w-font); letter-spacing: .08em; text-transform: uppercase; color: var(--w-primary); }
     .entry { height: 100%; display: grid; grid-template-columns: 36px 120px 84px 90px 1fr auto 40px; gap: 14px; align-items: center;
       border-radius: 14px; padding: 0 8px; transition: background .2s; }
-    .entry:hover { background: rgba(255,255,255,0.04); }
-    .row.cur .entry { background: rgb(139 123 255 / 14%); box-shadow: inset 3px 0 0 var(--w-violet); }
+    .entry:hover { background: color-mix(in srgb, var(--w-fg) 4%, transparent); }
+    .row.cur .entry { background: color-mix(in srgb, var(--w-primary) 14%, transparent); box-shadow: inset 3px 0 0 var(--w-primary); }
     .entry.corrected .g, .entry.corrected .what { text-decoration: line-through; opacity: .5; }
     .entry.fix { opacity: .7; }
     .rail { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
@@ -116,7 +116,7 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
     .verb { font-weight: 600; }
     .g { font-size: 17px; font-weight: 600; text-align: right; }
     .g small { color: var(--w-dim); font-size: 11px; }
-    .amount { height: 6px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+    .amount { height: 6px; background: color-mix(in srgb, var(--w-fg) 5%, transparent); border-radius: 99px; overflow: hidden; }
     .amount i { display: block; height: 100%; border-radius: 99px; opacity: .85; }
     .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .hash { font: 500 11px var(--w-mono); }

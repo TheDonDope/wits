@@ -32,7 +32,7 @@ import { scoreColor } from './effect-matrix';
     .cols { display: flex; gap: 14px; align-items: flex-end; min-height: 200px; overflow-x: auto; padding-top: 8px; }
     .col { display: grid; justify-items: center; gap: 6px; min-width: 54px; }
     .v { font-weight: 600; }
-    .track { width: 30px; height: 140px; border-radius: 10px; background: rgb(255 255 255 / 5%);
+    .track { width: 30px; height: 140px; border-radius: 10px; background: color-mix(in srgb, var(--w-fg) 5%, transparent);
       display: flex; align-items: flex-end; overflow: hidden; }
     .fill { width: 100%; border-radius: 10px; transition: height .6s cubic-bezier(.2,.8,.2,1); min-height: 4px; }
     .l { font: 500 11px var(--w-num); color: var(--mat-sys-on-surface); white-space: nowrap; }
