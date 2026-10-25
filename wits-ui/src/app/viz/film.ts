@@ -43,7 +43,7 @@ export function drawFrame(ctx: CanvasRenderingContext2D, f: FilmFrame, names: Ma
   const slot = (W - 112) / Math.max(jars.length, 5);
   jars.forEach((j, i) => {
     const x = 56 + i * slot + slot * 0.2;
-    jar(ctx, pal, x, 190, slot * 0.6, 400, j.storage, j.stash, capacity.get(j.slug) ?? 1);
+    jar(ctx, pal, { x, y: 190, w: slot * 0.6, h: 400 }, j.storage, j.stash, capacity.get(j.slug) ?? 1);
     ctx.fillStyle = pal.ink;
     ctx.font = '500 15px system-ui, sans-serif';
     wrap(ctx, names.get(j.slug) ?? j.slug, x - slot * 0.15, 620, slot * 0.9);
@@ -53,8 +53,8 @@ export function drawFrame(ctx: CanvasRenderingContext2D, f: FilmFrame, names: Ma
 }
 
 /** One jar: glass, then its sealed grams, then its ground ones above them. */
-function jar(ctx: CanvasRenderingContext2D, pal: ReturnType<typeof colours>, x: number, y: number, w: number,
-  h: number, storage: number, stash: number, cap: number): void {
+function jar(ctx: CanvasRenderingContext2D, pal: ReturnType<typeof colours>,
+  { x, y, w, h }: { x: number; y: number; w: number; h: number }, storage: number, stash: number, cap: number): void {
   ctx.fillStyle = pal.ink;
   ctx.strokeStyle = pal.ink;
   ctx.lineWidth = 2;
