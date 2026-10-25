@@ -2,8 +2,24 @@
 ## [Unreleased]
 
 
+<a name="v0.81.0"></a>
+## [v0.81.0] - 2026-10-25
+### Chore
+- what the second review found, cleared
+
+### Docs
+- **diary:** twenty-one looks, a thumb's reach, and the paperwork
+
+### Fix
+- **record:** a refused fill leaves no product behind, and a purchase is a fill of one
+- **wits-ui:** the Repository page is a tab, where it can be found
+
+
 <a name="v0.80.0"></a>
 ## [v0.80.0] - 2026-10-25
+### Docs
+- update changelog for v0.80.0
+
 ### Fix
 - **wits-ui:** the record dialog's five tabs, all in a phone's width
 
@@ -1015,7 +1031,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.80.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.81.0...HEAD
+[v0.81.0]: https://github.com/TheDonDope/wits/compare/v0.80.0...v0.81.0
 [v0.80.0]: https://github.com/TheDonDope/wits/compare/v0.79.0...v0.80.0
 [v0.79.0]: https://github.com/TheDonDope/wits/compare/v0.78.0...v0.79.0
 [v0.78.0]: https://github.com/TheDonDope/wits/compare/v0.77.0...v0.78.0
