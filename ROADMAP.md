@@ -1099,6 +1099,45 @@ AVB tracking needed no format change, since the bundle already carried both
 entry types, so the two did not land together as planned. They are two
 releases: AVB in v0.60.0, prices with the one format change in v0.61.0.
 
+
+The browser breaks the costs down (`prices.Insight`, `pkg/prices/insights.go`;
+`/api/costs` gives them beside the totals):
+
+- every priced purchase, oldest first;
+- the purchases grouped by strain, producer, pharmacy and year, each group
+  with what it cost, its price a gram over all its grams, and the cheapest,
+  dearest, first and last purchase's.
+
+A strain is the cultivar keyed alike under the names it is sold by
+(`StrainOf`). The words are lowercased and made singular, and the producer's
+words and the short codes pharmacies add (`CA`, `DNK`, `T01`) are left out,
+unless the name is codes alone. A number after a short name stays with it,
+so MAC 1 and MAC 3 stay apart, and a strength in a name is dropped. A product
+with no cultivar is keyed by its name, less the words of every producer known
+(`Producers`). On the workbook's 53 products that makes 40 strains. They
+include MAC1 under five names from two producers, Hindu Kush from IMC (twice)
+and Canopy, and the two Mac Doughnut jars, one of whose names ends in its
+strength.
+
+A price now says which pharmacy it was paid to (`Price.Seller`, `omitempty`
+like `Unknown`). The invoice reader takes the pharmacy's name from the first
+short cell with "Apotheke" in it that starts as a name does, its owner's
+"e.K. …" cut off. All 37 kept invoices name theirs: 15, 6 and 16 for the
+three pharmacies. The fill form, the pickup card and the batch pass it on, and
+a price typed in has none.
+
+**Insights → Costs** draws it. `PricePlot` (`viz/price-plot.ts`) is one dot
+per purchase over time, or against THC, with a pharmacy by its theme colour
+and by its shape (circle, square, diamond), a trend line, a tooltip, and a
+click that opens the dot's strain. `CostStrains` is a sortable strain table
+with sparklines, opening to a strain's every purchase. Beside them are the
+pharmacies compared, strength bands, years with the change on the year before,
+and fills that open to their purchases. The figures the page works out (a
+gram lately, a month at this rate, the bands, the fill trend) are in
+`data/costs.ts` with tests. Priced from all 37 invoices, the workbook comes to
+10,156.01 € for 1,244 g, and the years add up to it: 10.73, 9.75, 6.96 and
+6.25 € a gram from 2023 to 2026. Every page measures 375 px on the phone, and
+the colours were checked in a dark theme and in Paper.
 ### The effect log — `wits rate`
 
 What a session did, rated afterwards from 1 to 5 on any of overall, pain,

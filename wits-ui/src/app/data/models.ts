@@ -196,6 +196,50 @@ export interface Costs {
   helped_unpriced: number;
   fills: { number: number; start: string; dispensed: number; priced: number; cents: number; per_gram: number; unpriced: number }[];
   months: { month: string; cents: number; grams: number }[];
+  /** Every purchase with a price, oldest first. */
+  bought: Bought[];
+  /** The purchases by strain (cultivar), producer, pharmacy and year: most spent first, years in order. */
+  strains: CostGroup[];
+  makers: CostGroup[];
+  sellers: CostGroup[];
+  years: CostGroup[];
+}
+
+/** One purchase with its price, in cents. */
+export interface Bought {
+  hash: string;
+  at: string;
+  fill: number;
+  product: string;
+  name: string;
+  maker: string;
+  /** The cultivar, keyed alike under the names it is sold by. */
+  strain: string;
+  strain_name: string;
+  thc: number;
+  cbd: number;
+  grams: number;
+  cents: number;
+  per_gram: number;
+  /** The pharmacy, as its invoice names it; empty when typed in. */
+  seller: string;
+}
+
+/** Purchases taken together, with the price a gram (cents) of the cheapest, dearest, first and last. */
+export interface CostGroup {
+  key: string;
+  name: string;
+  products: string[];
+  purchases: number;
+  grams: number;
+  cents: number;
+  per_gram: number;
+  min: number;
+  max: number;
+  first: number;
+  last: number;
+  first_at: string;
+  last_at: string;
 }
 
 /** One product on the map of the strains: placed by profile, coloured by effect. */
@@ -247,6 +291,8 @@ export interface Verdict {
 
 /** What a pharmacy's invoice says, each line named as the jar it already is where it is one. Cents throughout. */
 export interface InvoiceReading {
+  /** The pharmacy, as the invoice names it. */
+  seller?: string;
   date?: string;
   number?: string;
   lines: { name: string; slug?: string; printed: string; grams: number; per_gram_cents: number; total_cents: number }[];

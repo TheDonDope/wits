@@ -10,6 +10,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/prices"
 )
 
 // FillLine is one product of a fill: its name as the label or the invoice
@@ -17,11 +18,12 @@ import (
 // dispensed, what they cost in cents — zero when the price is not known — and
 // a note for the price, the invoice it is from, when it is not the fill's.
 type FillLine struct {
-	Name  string
-	Slug  string
-	Grams float64
-	Cents int64
-	Note  string
+	Name   string
+	Slug   string
+	Grams  float64
+	Cents  int64
+	Note   string
+	Seller string // the pharmacy, as its invoice names it
 }
 
 // Filled is one purchase a fill recorded: the entry, its product, whether the
@@ -32,6 +34,7 @@ type Filled struct {
 	Added   bool
 	Cents   int64
 	Note    string
+	Seller  string
 }
 
 // ErrEmptyFill is why a fill that names no product is refused.
@@ -109,7 +112,8 @@ func (r *Recorder) resolve(lines []FillLine) ([]Filled, error) {
 	filled := make([]Filled, len(lines))
 	missing := false
 	for i, l := range lines {
-		filled[i] = Filled{Product: r.products.Exact(strings.TrimSpace(l.Name)), Cents: l.Cents, Note: strings.TrimSpace(l.Note)}
+		filled[i] = Filled{Product: r.products.Exact(strings.TrimSpace(l.Name)), Cents: l.Cents,
+			Note: strings.TrimSpace(l.Note), Seller: strings.TrimSpace(l.Seller)}
 		missing = missing || filled[i].Product == nil
 	}
 	if !missing {
@@ -147,7 +151,7 @@ func (r *Recorder) fillPrices(filled []Filled, note string) error {
 		if n == "" {
 			n = note
 		}
-		if _, err := r.Price(f.Event.Hash, f.Cents, n, time.Now()); err != nil {
+		if _, err := r.PriceAll([]prices.Price{{Purchase: f.Event.Hash, Cents: f.Cents, Note: n, Seller: f.Seller}}, time.Now()); err != nil {
 			return fmt.Errorf("%w: %s, %w", ErrUnpriced, f.Product.Name, err)
 		}
 	}

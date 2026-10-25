@@ -174,3 +174,11 @@ func TestReadsAProductPricedOnItsDosageRow(t *testing.T) {
 	assert.Equal(t, int64(34071), inv.Gross)
 	assert.Equal(t, inv.Gross, inv.Sum()+inv.LeftOut())
 }
+
+func TestNamesThePharmacy(t *testing.T) {
+	assert.Equal(t, "Versandapotheke", Read(shipped).Seller, "The first short cell with Apotheke in it")
+	assert.Equal(t, "Apotheke am Beispielplatz", Read(sample).Seller)
+	assert.Equal(t, "Musterapotheke im Center", Read("Musterapotheke im Center e.K. Erika Mustermann – Weg 1 – 12345 Stadt\nAusstellungsdatum: 06.05.2024").Seller,
+		"The owner's name cut off")
+	assert.Empty(t, Read("Ihre Anfrage wird innerhalb der Öffnungszeiten der Apotheke bearbeitet").Seller, "A sentence names no pharmacy")
+}

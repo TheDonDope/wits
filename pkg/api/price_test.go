@@ -217,3 +217,34 @@ func TestAnInvoiceTwoWeeksBeforeItsPickupIsStillItsFill(t *testing.T) {
 	assert.Equal(t, 13, m.Days)
 	assert.Equal(t, []string{"420-evolution-ca-mac-mac1-221", "avaay-scg-super-citra-g-271", "pedanios-dnk-ghost-train-haze-221"}, got)
 }
+
+func TestCostsBreakDownByStrainAndPharmacy(t *testing.T) {
+	s, _ := workbook(t)
+	fills := map[int][]unpricedEntry{}
+	for _, e := range decodeInto[[]unpricedEntry](t, call(t, s, "GET", "/api/unpriced", "")) {
+		fills[e.Fill] = append(fills[e.Fill], e)
+	}
+	price := func(fill int, seller string, perGram string) {
+		t.Helper()
+		var lines []string
+		for _, e := range fills[fill] {
+			lines = append(lines, `{"purchase": "`+e.Hash+`", "per_gram": "`+perGram+`"}`)
+		}
+		w := call(t, s, "POST", "/api/price/fill", `{"seller": "`+seller+`", "lines": [`+strings.Join(lines, ",")+`]}`)
+		require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	}
+	price(29, "Cannabis Apotheke Nordostbahnhof", "7,00")
+	price(30, "Cannabis Apotheke Nordostbahnhof", "5,80")
+
+	c := decodeInto[costs](t, call(t, s, "GET", "/api/costs", ""))
+
+	assert.Len(t, c.Bought, 5, "Fill 29 still in storage holds two purchases, fill 30 three")
+	require.Len(t, c.Sellers, 1)
+	assert.Equal(t, "Cannabis Apotheke Nordostbahnhof", c.Sellers[0].Name)
+	assert.Equal(t, 5, c.Sellers[0].Purchases)
+	assert.InDelta(t, 700, c.Bought[0].PerGram, 1e-9, "Oldest first: fill 29 at 7 € a gram")
+	require.Len(t, c.Years, 1)
+	assert.Equal(t, "2026", c.Years[0].Key)
+	assert.Equal(t, c.Cents, c.Years[0].Cents, "The years add up to what was paid")
+	assert.Len(t, c.Strains, 5)
+}

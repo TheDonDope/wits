@@ -110,14 +110,18 @@ func (s *Server) priceFill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		Lines []priceLine `json:"lines"`
-		VAT   bool        `json:"vat"`
+		Lines  []priceLine `json:"lines"`
+		VAT    bool        `json:"vat"`
+		Seller string      `json:"seller"`
 	}
 	if err := decode(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err)
 		return
 	}
 	paid, grams, err := fillPrices(ws, req.Lines, req.VAT)
+	for i := range paid {
+		paid[i].Seller = req.Seller
+	}
 	if err != nil {
 		fail(w, http.StatusBadRequest, err)
 		return

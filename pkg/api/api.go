@@ -360,6 +360,7 @@ type costs struct {
 	Fills       []costFill `json:"fills"`
 	Months      []month    `json:"months"`
 	HelpedNoPay int        `json:"helped_unpriced"`
+	insights
 }
 
 type costFill struct {
@@ -389,6 +390,7 @@ func costsOf(ws *workspace.Workspace) any {
 	for _, m := range c.Months {
 		out.Months = append(out.Months, month(m))
 	}
+	out.insights = insightsOf(ws)
 	return out
 }
 

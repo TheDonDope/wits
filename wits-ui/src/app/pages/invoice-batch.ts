@@ -215,7 +215,7 @@ export class InvoiceBatch {
         continue;
       }
       try {
-        await this.wits.priceFill(invoiceLines(reading), false);
+        await this.wits.priceFill(invoiceLines(reading), false, reading.seller ?? '');
         ok.add(r);
         done++;
       } catch (e) {
