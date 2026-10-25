@@ -142,9 +142,17 @@ type invoiceReading struct {
 	Rate   int           `json:"rate"`
 	Gross  int64         `json:"gross_cents"`
 	Sum    int64         `json:"sum_cents"`
+	// Other is what the invoice charged for besides flower by the gram — a
+	// vape by the piece, shipping — left out of the fill and said.
+	Other []invoiceOther `json:"other"`
 	// Match is the fill already recorded that the invoice is for, if any:
 	// pricing that one, not recording its purchases again.
 	Match *invoiceMatch `json:"match,omitempty"`
+}
+
+type invoiceOther struct {
+	Name  string `json:"name"`
+	Total int64  `json:"total_cents"`
 }
 
 type invoiceLine struct {
@@ -180,7 +188,10 @@ func (s *Server) readInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	out := invoiceReading{Number: inv.Number, Lines: make([]invoiceLine, len(inv.Lines)),
-		Net: inv.Net, VAT: inv.VAT, Rate: inv.Rate, Gross: inv.Gross, Sum: inv.Sum()}
+		Net: inv.Net, VAT: inv.VAT, Rate: inv.Rate, Gross: inv.Gross, Sum: inv.Sum(), Other: []invoiceOther{}}
+	for _, o := range inv.Other {
+		out.Other = append(out.Other, invoiceOther{Name: o.Name, Total: o.Total})
+	}
 	if !inv.Date.IsZero() {
 		out.Date = inv.Date.Format("2006-01-02")
 	}

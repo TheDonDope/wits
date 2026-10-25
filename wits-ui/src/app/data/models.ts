@@ -255,6 +255,8 @@ export interface InvoiceReading {
   rate: number;
   gross_cents: number;
   sum_cents: number;
+  /** What it charged for besides flower by the gram — a vape by the piece, shipping — left out of the fill. */
+  other: { name: string; total_cents: number }[];
   /** The fill already recorded that the invoice is for, if one is: priced from it, not recorded again. */
   match?: InvoiceMatch;
 }

@@ -766,6 +766,44 @@ lines. Matched on the same day, the Fill tab does not add the strains again but
 offers to price that fill from the invoice's totals; a few days off, it asks
 first; matched to nothing, the strains go on a new fill as before.
 
+Two pharmacies' invoices are read (`pkg/invoice`). The first pharmacy has
+used three header layouts: the date and number under their headings, or
+beside their labels on one row (`Reservierungs ID: … Reservierungsdatum: …`,
+`Rechnung Nr. … Rechnungsdatum …`). The second ships, and spreads a product
+over rows under its PZN (`block.go`): the name, a row of grams and prices, and
+a description giving the strength (THC and CBD) and the strain, which fill in
+what the name lacks. Its prices use a decimal point and its dates
+`dd/mm/yyyy`. A priced row in the table that is not flower by the gram (a vape
+cartridge by the piece, shipping) is `Other`, left out and named, so the
+strains and what was left out add up to the gross total. A NUL byte in one
+invoice's text is passed over.
+
+The match compares each line with the products of every fill within seven
+calendar days (`likeness`). The same jar is certain. Otherwise the strain
+words they share count, singular and lowercased, more when the strength (25:01
+is 25/1) and the grams agree, and a strength both print differently rules the
+pair out. Lines are paired best first, one purchase each. Run against all 21
+invoices kept (6 shipped, December 2024 to February 2025; 15 picked up, May
+2025 to September 2026) on a fresh import of the workbook:
+
+- **20 matched fills 12 to 30.** The invoices are 0 to 7 days before the
+  pickup, and every line went to the purchase with its grams, past breeder
+  against distributor names ("Peace Naturals … Sonic Lemon Fuel" is
+  Cansativa's), names cut short ("… DK 28/1 Ghost") and 25:01.
+- **Two invoices for one fill:** an order of 4 December 2024 re-issued on the
+  6th both match fill 13. The first one's 14/1 White Widow matches nothing
+  there, the fill holding the 16/1.
+- **Priced at the invoices' totals**, they came to 5,028.50 € for 750 g. The
+  journal's checksum is unchanged (1,429 entries, none new), and `wits fsck`
+  verifies the chain.
+- **One matched nothing:** the last invoice (Frozen Lemon Haze and a vape
+  cartridge, 29 September 2026) is for a pickup the workbook does not hold.
+- **Still without a price:** fills 1 to 11, with no invoice kept, and fill
+  18's Ghost Train Haze, which its invoice does not list.
+
+The invoices name their patient and stay out of the repository; the tests use
+their rows without the person.
+
 ### Reading the pharmacy label — Record's Fill tab
 
 **Read the label** on the Fill tab takes a photograph, the camera's on a phone,
