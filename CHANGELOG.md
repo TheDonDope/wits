@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.94.0"></a>
+## [v0.94.0] - 2026-10-26
+### Fix
+- **research:** the phone looks terpenes up through a reader, since its page may read no other site
+
+### Test
+- **research:** the stand-in reader answers from the stand-in sites, asking nothing itself
+
+
 <a name="v0.93.0"></a>
 ## [v0.93.0] - 2026-10-26
+### Docs
+- update changelog for v0.93.0
+
 ### Feat
 - **wits-ui:** every open fill on the dashboard, every jar opens in full, and its terpenes looked up
 
@@ -1151,7 +1163,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.93.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.94.0...HEAD
+[v0.94.0]: https://github.com/TheDonDope/wits/compare/v0.93.0...v0.94.0
 [v0.93.0]: https://github.com/TheDonDope/wits/compare/v0.92.0...v0.93.0
 [v0.92.0]: https://github.com/TheDonDope/wits/compare/v0.91.0...v0.92.0
 [v0.91.0]: https://github.com/TheDonDope/wits/compare/v0.90.0...v0.91.0
