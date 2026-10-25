@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.72.0"></a>
+## [v0.72.0] - 2026-10-25
+### Refactor
+- **chain:** one chained log for ratings and prices, put back in one write
+
+### Test
+- **chain:** date the record a test compares, so the zone cannot differ
+
+
 <a name="v0.71.0"></a>
 ## [v0.71.0] - 2026-10-25
+### Docs
+- update changelog for v0.71.0
+
 ### Fix
 - **seal:** one key, however many ask for it first
 
@@ -911,7 +923,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.71.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.72.0...HEAD
+[v0.72.0]: https://github.com/TheDonDope/wits/compare/v0.71.0...v0.72.0
 [v0.71.0]: https://github.com/TheDonDope/wits/compare/v0.70.0...v0.71.0
 [v0.70.0]: https://github.com/TheDonDope/wits/compare/v0.69.0...v0.70.0
 [v0.69.0]: https://github.com/TheDonDope/wits/compare/v0.68.0...v0.69.0
