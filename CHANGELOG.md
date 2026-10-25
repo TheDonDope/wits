@@ -2,11 +2,27 @@
 ## [Unreleased]
 
 
+<a name="v0.75.0"></a>
+## [v0.75.0] - 2026-10-25
+### Docs
+- **diary:** the label, the undo, and a house in order
+
+### Feat
+- **wits-ui:** twenty-one ways to look at the same grams
+
+### Fix
+- **wits-ui:** the film's jar takes its box by name
+- **wits-ui:** the film's jar takes its box as one
+
+
 <a name="v0.74.0"></a>
 ## [v0.74.0] - 2026-10-25
 ### Chore
 - what the review left behind, cleared
 - **wits-ui:** its go.mod names no Go version
+
+### Docs
+- update changelog for v0.74.0
 
 
 <a name="v0.73.0"></a>
@@ -950,7 +966,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.74.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.75.0...HEAD
+[v0.75.0]: https://github.com/TheDonDope/wits/compare/v0.74.0...v0.75.0
 [v0.74.0]: https://github.com/TheDonDope/wits/compare/v0.73.0...v0.74.0
 [v0.73.0]: https://github.com/TheDonDope/wits/compare/v0.72.0...v0.73.0
 [v0.72.0]: https://github.com/TheDonDope/wits/compare/v0.71.0...v0.72.0
