@@ -47,7 +47,7 @@ const opened = keyFile ? new Uint8Array(await readFile(join(share, 'wits.age')))
 const first = await engine.sync(opened, key);
 out.pulled = first.pulled;
 if (!keyFile) {
-  out.bought = (await call('POST', '/api/buy', JSON.stringify({ name: 'Enua 22/1 Wedding Cake', grams: 20 }))).status;
+  out.bought = (await call('POST', '/api/fill', JSON.stringify({ lines: [{ name: 'Enua 22/1 Wedding Cake', grams: 20 }] }))).status;
 }
 const jars = (await call('GET', '/api/jars')).body;
 const jar = jars.find((j) => j.storage > 1);

@@ -92,3 +92,9 @@ func TestAFillTypedInAddsVAT(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), "line 2")
 }
+
+func TestLineCentsMatchesTheForm(t *testing.T) {
+	cents, err := lineCents(fillLine{Grams: 30, PerGram: "2,05"}, true)
+	require.NoError(t, err)
+	assert.Equal(t, int64(7319), cents, "The figure fill-form.spec.ts pins the form to")
+}

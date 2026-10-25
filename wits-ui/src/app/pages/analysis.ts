@@ -119,13 +119,14 @@ const SCOPES = [
     }
   `,
   styles: `
+    @use 'breakpoints' as bp;
     :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
     h1 .dim { font: 400 14px var(--w-font); margin-left: 8px; }
     .short { display: none; }
     /* A phone has room for the five scopes only by their short names: all of them, the width of the card. */
-    @media (width <= 640px) {
+    @include bp.phone {
       .head { padding: 16px; }
       .head > div { width: 100%; }
       mat-button-toggle-group { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; }

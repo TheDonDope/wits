@@ -111,6 +111,7 @@ import { Confirm, ConfirmDialog } from './confirm';
     </section>
   `,
   styles: `
+    @use 'breakpoints' as bp;
     :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
@@ -147,7 +148,7 @@ import { Confirm, ConfirmDialog } from './confirm';
      * was last used beside them, the four figures in a line — and the buttons
      * a tidy grid of two by two under the shelf/finished switch.
      */
-    @media (width <= 640px) {
+    @include bp.phone {
       .head { padding: 16px; gap: 14px; }
       .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
       .actions mat-button-toggle-group { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: 1fr 1fr; }

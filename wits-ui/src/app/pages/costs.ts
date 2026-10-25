@@ -103,6 +103,7 @@ import { Wits } from '../data/wits';
     }
   `,
   styles: `
+    @use 'breakpoints' as bp;
     :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; }
     .stat { padding: 18px 22px; display: grid; gap: 4px; }
@@ -119,7 +120,7 @@ import { Wits } from '../data/wits';
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th { text-align: left; font-weight: 500; color: var(--w-dim); padding: 6px 8px; }
     td { padding: 6px 8px; border-top: 1px solid var(--w-glass-edge); }
-    @media (width <= 640px) { th, td { padding: 6px 4px; } .pad { padding: 18px 16px; } }
+    @include bp.phone { th, td { padding: 6px 4px; } .pad { padding: 18px 16px; } }
     .r { text-align: right; }
     .months { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 14px; align-items: center; }
     .bar { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); overflow: hidden; }

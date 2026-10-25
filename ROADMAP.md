@@ -524,7 +524,7 @@ range is checked when it is typed rather than later when a session is refused.
 
 `cmd/wits-server` serves `pkg/api`: a JSON API another caller of
 `pkg/workspace`, nothing more. Every request answers from the repository as
-it stands, read again whenever one of its files changed (below), and every write — buy, grind, sesh, weigh, undo — goes through the recorder under
+it stands, read again whenever one of its files changed (below), and every write — fill, grind, sesh, weigh, undo — goes through the recorder under
 the journal's lock, so the browser, the terminal and the commands refuse the
 same things in the same words. The figures keep their scopes in their names:
 the fill's `dispensed` and `remaining`, the shelf's projection

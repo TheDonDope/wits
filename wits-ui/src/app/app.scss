@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
   min-height: 100vh;
@@ -314,7 +316,7 @@ kbd {
 // for: no tabs to page through, but a dock under the thumb — the pages used
 // most, Record raised between them, the rest under More — and the bars clear
 // of the notch and the home indicator.
-@media (width <= 640px) {
+@include bp.phone {
   :host {
     --w-dock: 64px;
     --w-chrome: calc(56px + var(--w-dock) + 32px + env(safe-area-inset-top) + env(safe-area-inset-bottom));

@@ -1,0 +1,12 @@
+// Where the layout changes, named once. $phone is a phone held upright: the
+// dock instead of the tabs, a card a row. An iPhone 11 Pro (375 px) is the
+// narrowest width laid out for, and every page is checked there; 640 leaves
+// the small tablets their tabs.
+$phone: 640px;
+
+// The rules for a phone held upright.
+@mixin phone {
+  @media (width <= $phone) {
+    @content;
+  }
+}

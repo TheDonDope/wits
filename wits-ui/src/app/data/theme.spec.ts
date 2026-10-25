@@ -30,3 +30,13 @@ describe('Theme', () => {
     expect(THEMES.length).toBe(21);
   });
 });
+
+describe('the themes', () => {
+  it('are the ones themes.scss defines, in its order', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const scss = await readFile('src/themes.scss', 'utf8');
+    const block = scss.slice(scss.indexOf('$themes: ('), scss.indexOf('@function w-pick'));
+    const defined = [...block.matchAll(/^ {2}([a-z-]+): \(/gm)].map((m) => m[1]);
+    expect(THEMES.map((t) => t.id)).toEqual(defined);
+  });
+});

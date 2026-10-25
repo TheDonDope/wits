@@ -235,12 +235,32 @@ Angular client (signals, zoneless, standalone components, `httpResource`).
   (the `pages` configuration swaps in `mode.pages.ts`). Anything the server
   does, the phone does by the same code — so a new endpoint needs nothing
   phone-side, but a new `os` call Go makes may need MemFS to answer it, and
-  `make wasm-check` is what finds out.
+  `make wasm-check` is what finds out. What only a computer's server does —
+  opening another repository, browsing folders, importing a workbook — lives in
+  `pkg/api/desk.go` behind `//go:build !js`, its test file too, so the phone's
+  engine never carries the spreadsheet reader; `desk_js.go` is its empty twin.
+- **Colours are the theme's.** A theme is data in `src/themes.scss`, listed for
+  the picker in `data/theme.ts` (the two must agree, id for id). Components
+  read `var(--w-…)` or `color-mix` one — never a literal, or one theme in
+  twenty-one looks wrong; a canvas reads the variables off the page.
+- **A phone is 375 px upright** (iPhone 11 Pro), the narrowest width laid out
+  for. Its rules go under `@include bp.phone` (`src/_breakpoints.scss`, with
+  `@use 'breakpoints' as bp;`), never a written-out width. Every page is checked
+  there: no page wider than the screen (`scrollWidth`), nothing paged or cut off.
+- A figure the form shows and the server writes is worked out the same way on
+  both sides, step for step and rounded once (`rowCents` in `fill-form.ts`,
+  `lineCents` in `pkg/api/fill.go`), with a test on each pinning one case.
 - **Verify by looking**: `make serve` on a copy of the workbook, then a headless
   Chromium screenshot (`~/.cache/rod/browser/*/chrome --headless=new
   --force-prefers-reduced-motion --screenshot=… --window-size=1440,1700 <url>`,
   with `./doctor.sh env` for its libraries) and read the PNG.
-  `?record=grind|session|fill|weigh` opens the form, for photographing it.
+  `?record=grind|session|fill|weigh|avb` opens the form, `?theme=<id>` wears a
+  theme, for photographing them. A phone is emulated through the DevTools
+  protocol (`Emulation.setDeviceMetricsOverride`, `mobile: true`), not by
+  `--window-size`, which headless widens past 375. That Chromium is old — no
+  `Promise.try`, no WebCrypto Ed25519 — so a library that needs either needs
+  its legacy build or a fallback. Start each run with a fresh `--user-data-dir`:
+  a reused one keeps the app's service worker, which serves yesterday's chunks.
 
 ## Process
 

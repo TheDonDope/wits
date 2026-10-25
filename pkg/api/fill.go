@@ -59,7 +59,7 @@ func recordFill(ws *workspace.Workspace, r *http.Request) ([]journal.Event, stri
 		lines[i] = record.FillLine{Name: l.Name, Slug: l.Slug, Grams: l.Grams, Cents: cents, Note: l.Note}
 	}
 	filled, err := ws.Recorder.Fill(lines, at, req.Note)
-	if len(filled) == 0 || filled[0].Event.Hash == "" {
+	if err != nil && !errors.Is(err, record.ErrUnpriced) {
 		return nil, "", err
 	}
 	events := make([]journal.Event, len(filled))

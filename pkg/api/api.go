@@ -78,7 +78,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/days", s.read(daysOf))
 	mux.HandleFunc("GET /api/effects", s.read(effectsOf))
 	mux.HandleFunc("POST /api/rate", s.rate)
-	mux.HandleFunc("POST /api/buy", s.write(buy))
 	mux.HandleFunc("POST /api/label", s.label)
 	mux.HandleFunc("POST /api/invoice", s.readInvoice)
 	mux.HandleFunc("POST /api/fill", s.batch(recordFill))
@@ -1089,33 +1088,6 @@ func when(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, fmt.Errorf("%q is not a date, expected YYYY-MM-DD", s)
-}
-
-type buyRequest struct {
-	Name  string  `json:"name"`
-	Slug  string  `json:"slug"`
-	Grams float64 `json:"grams"`
-	Date  string  `json:"date"`
-}
-
-func buy(ws *workspace.Workspace, r *http.Request) (journal.Event, string, error) {
-	var req buyRequest
-	if err := decode(r, &req); err != nil {
-		return journal.Event{}, "", err
-	}
-	at, err := when(req.Date)
-	if err != nil {
-		return journal.Event{}, "", err
-	}
-	e, p, added, err := ws.Recorder.Buy(strings.TrimSpace(req.Name), strings.TrimSpace(req.Slug), req.Grams, at)
-	if err != nil {
-		return e, "", err
-	}
-	msg := fmt.Sprintf("picked up %.2f g of %s", e.Grams, p.Name)
-	if added {
-		msg = fmt.Sprintf("new product %s, as %s — picked up %.2f g", p.Name, p.Slug, e.Grams)
-	}
-	return e, msg, nil
 }
 
 type grindRequest struct {
