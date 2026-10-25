@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -70,7 +71,17 @@ func New(r *repo.Repo, ui string) *Server {
 	// The journal is created on first use; creating it here, before any
 	// request, keeps two first requests from racing to create it.
 	r.Journal()
-	return &Server{repo: r, ui: ui, sites: research.Web, client: &http.Client{Timeout: researchTimeout}}
+	return &Server{repo: r, ui: ui, sites: sitesFor(runtime.GOOS), client: &http.Client{Timeout: researchTimeout}}
+}
+
+// sitesFor is where a terpene lookup asks: the web itself from a computer,
+// and through a reader from the phone's engine, whose requests go out as the
+// page's own and may read only sites that allow it.
+func sitesFor(goos string) research.Sites {
+	if goos == "js" {
+		return research.Phone
+	}
+	return research.Web
 }
 
 // Handler routes the API, and the interface when there is one.

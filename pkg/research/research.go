@@ -63,10 +63,16 @@ type Engine struct {
 // Sites are where a lookup asks: the web searches, tried in turn until one
 // answers with results, and Leafly's strain search and strain pages. Tests
 // point them at a stand-in.
+//
+// Relay, when set, is a reader every page is fetched through, its address
+// put before the page's: a browser lets a page read another site only when
+// that site allows it, and no search does, nor Leafly, so the phone's engine
+// asks a reader that allows it and hands the page back.
 type Sites struct {
 	Engines     []Engine
 	LeaflyAPI   string
 	LeaflyPages string
+	Relay       string
 }
 
 // Web is the sites themselves. Each search turns a client away now and then
@@ -85,6 +91,16 @@ var Web = Sites{
 	LeaflyPages: "https://www.leafly.com/strains/",
 }
 
+// Phone is the sites as the phone's engine reaches them, through Jina's
+// Reader, which lets any page read what it fetches. Brave's results do not
+// come through it, so the phone searches DuckDuckGo.
+var Phone = Sites{
+	Engines:     Web.Engines[1:],
+	LeaflyAPI:   Web.LeaflyAPI,
+	LeaflyPages: Web.LeaflyPages,
+	Relay:       "https://r.jina.ai/",
+}
+
 // ErrUnreachable is a lookup that reached no site at all.
 var ErrUnreachable = errors.New("the web could not be reached to look the terpenes up")
 
@@ -97,10 +113,11 @@ const most = 5
 // neither site answered at all is it an error.
 func Look(ctx context.Context, client *http.Client, sites Sites, q Query) (Findings, error) {
 	out := Findings{Sources: []Source{}, Suggested: []string{}}
-	found, searched, errSearch := searchAll(ctx, client, sites.Engines, terms(q))
+	f := fetcher{client: client, relay: sites.Relay}
+	found, searched, errSearch := searchAll(ctx, f, sites.Engines, terms(q))
 	out.Search = searched
 	out.Sources = append(out.Sources, found...)
-	strain, errLeafly := leafly(ctx, client, sites, q.Strain)
+	strain, errLeafly := leafly(ctx, f, sites, q.Strain)
 	if strain != nil {
 		out.Sources = append(out.Sources, *strain)
 	}
@@ -127,13 +144,13 @@ var errNoResults = errors.New("the search answered with no results")
 
 // searchAll asks each search in turn, until one answers with results, and
 // says which address it asked last.
-func searchAll(ctx context.Context, client *http.Client, engines []Engine, terms string) ([]Source, string, error) {
+func searchAll(ctx context.Context, f fetcher, engines []Engine, terms string) ([]Source, string, error) {
 	err := errNoResults
 	asked := ""
 	for _, e := range engines {
 		asked = e.URL + "?" + url.Values{"q": {terms}}.Encode()
 		var found []Source
-		if found, err = search(ctx, client, e, asked); err == nil {
+		if found, err = search(ctx, f, e, asked); err == nil {
 			return found, asked, nil
 		}
 	}
@@ -182,15 +199,34 @@ func Rank(sources []Source) []string {
 	return out
 }
 
-// get fetches a page, refusing anything but a 200.
-func get(ctx context.Context, client *http.Client, u string) ([]byte, error) {
+// fetcher fetches pages, directly or through a relay.
+type fetcher struct {
+	client *http.Client
+	relay  string
+}
+
+// get fetches a page, refusing anything but a 200. Through a relay, it asks
+// for the page as HTML — or, for an API's JSON, as the text it is — rather
+// than the reader's own rendering of it.
+func (f fetcher) get(ctx context.Context, u string, asText bool) ([]byte, error) {
+	if f.relay != "" {
+		u = f.relay + u
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}
-	// The search answers a browser; a client that names itself gets nothing.
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) wits")
-	resp, err := client.Do(req)
+	if f.relay != "" {
+		format := "html"
+		if asText {
+			format = "text"
+		}
+		req.Header.Set("X-Return-Format", format)
+	} else {
+		// The search answers a browser; a client that names itself gets nothing.
+		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) wits")
+	}
+	resp, err := f.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -210,8 +246,8 @@ var (
 // search reads the terpenes each result of a web search names, anywhere in
 // its title or snippet; results that name none are left out. A page with no
 // results at all is errNoResults.
-func search(ctx context.Context, client *http.Client, e Engine, u string) ([]Source, error) {
-	page, err := get(ctx, client, u)
+func search(ctx context.Context, f fetcher, e Engine, u string) ([]Source, error) {
+	page, err := f.get(ctx, u, false)
 	if err != nil {
 		return nil, err
 	}
@@ -315,13 +351,13 @@ func Named(s string) []string {
 
 // leafly finds the strain on Leafly and reads its terpene profile; nil
 // when there is no strain to ask about or Leafly does not know it.
-func leafly(ctx context.Context, client *http.Client, sites Sites, strain string) (*Source, error) {
+func leafly(ctx context.Context, f fetcher, sites Sites, strain string) (*Source, error) {
 	if strings.TrimSpace(strain) == "" {
 		return nil, nil
 	}
 	// The search finds "Mac 1" by "MAC 1", not by "MAC1".
 	asked := numbered.ReplaceAllString(strain, "$1 $2")
-	body, err := get(ctx, client, sites.LeaflyAPI+"?"+url.Values{"q": {asked}}.Encode())
+	body, err := f.get(ctx, sites.LeaflyAPI+"?"+url.Values{"q": {asked}}.Encode(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +365,7 @@ func leafly(ctx context.Context, client *http.Client, sites Sites, strain string
 	if slug == "" {
 		return nil, nil
 	}
-	page, err := get(ctx, client, sites.LeaflyPages+url.PathEscape(slug))
+	page, err := f.get(ctx, sites.LeaflyPages+url.PathEscape(slug), false)
 	if err != nil {
 		return nil, err
 	}

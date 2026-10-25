@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
+import { ENGINE } from '../data/mode';
 import { Jar } from '../data/models';
 import { Wits } from '../data/wits';
 
@@ -20,8 +21,15 @@ interface Look {
 /** How many jars are listed before the rest are folded away. */
 const FOLDED = 10;
 
-/** How long to wait between lookups, so the searches are not asked too fast. */
-const PAUSE_MS = 1500;
+/**
+ * How long to wait between lookups, so the searches are not asked too fast.
+ * The phone asks through a reader that takes twenty requests a minute, and a
+ * jar is up to three: one every nine seconds stays under it.
+ */
+const PAUSE_MS = ENGINE ? 9000 : 1500;
+
+/** How long to wait before asking once more when the reader says too many. */
+const BUSY_MS = 30_000;
 
 /**
  * The jars with no terpene profile written down, each looked up on the web
@@ -129,11 +137,17 @@ export class TerpeneQueue {
     this.looks.update((all) => ({ ...all, [slug]: look }));
   }
 
-  /** Looks one jar up. */
+  /** Looks one jar up, once more after a pause when the reader says too many. */
   protected async one(j: Jar): Promise<void> {
     this.set(j.slug, { state: 'looking', terpenes: [], pages: 0 });
     try {
-      const f = await this.wits.research(j.slug);
+      const f = await this.wits.research(j.slug).catch(async (e: unknown) => {
+        if (!(e instanceof Error) || !e.message.includes('429') || this.stopped()) {
+          throw e;
+        }
+        await new Promise((go) => setTimeout(go, BUSY_MS));
+        return this.wits.research(j.slug);
+      });
       this.set(j.slug, f.suggested.length
         ? { state: 'found', terpenes: f.suggested, pages: f.sources.length }
         : { state: 'none', terpenes: [], pages: 0 });

@@ -966,8 +966,14 @@ repository, the recorder and the API that `wits-server` runs, compiled to
 WebAssembly. The phone keeps its own copy of the journal in the browser and
 refuses the same things in the same words as the terminal. It works offline
 once it has loaded, and a home-screen shortcut opens the grind form directly.
-Everything above is there, except looking terpenes up: the phone's browser
-cannot ask other sites, so on the phone a profile is typed in.
+Everything above is there, terpene lookups included. A page in a browser may
+read another site only when that site allows it, and neither search does, nor
+Leafly, so the phone asks through [Jina's Reader](https://jina.ai/reader/),
+which fetches a page and lets any page read it: the reader sees the names of
+the product and its strain, and nothing else. It takes twenty requests a
+minute, so **Research all** on the phone takes a jar every nine seconds and,
+when told it asked too fast, waits half a minute and asks once more. Brave's
+results do not come through the reader, so the phone searches DuckDuckGo.
 
 ![Every open fill, on the phone](./assets/wits-phone-dashboard.png)
 
