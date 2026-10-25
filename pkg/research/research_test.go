@@ -2,7 +2,6 @@ package research
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -40,6 +39,14 @@ var ddg = Engine{Name: "test", Result: regexp.MustCompile(`class="result__a"`), 
 // second answers, and Leafly knows MAC 1.
 func web(t *testing.T) Sites {
 	t.Helper()
+	sites, _ := webAnd(t)
+	return sites
+}
+
+// webAnd is web, with the handler that answers for the sites, for a stand-in
+// relay to answer from without a request of its own.
+func webAnd(t *testing.T) (Sites, http.Handler) {
+	t.Helper()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/captcha", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(captcha)) })
 	mux.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +65,7 @@ func web(t *testing.T) Sites {
 	t.Cleanup(srv.Close)
 	first, second := ddg, ddg
 	first.URL, second.URL = srv.URL+"/captcha", srv.URL+"/search"
-	return Sites{Engines: []Engine{first, second}, LeaflyAPI: srv.URL + "/leafly/search", LeaflyPages: srv.URL + "/leafly/strains/"}
+	return Sites{Engines: []Engine{first, second}, LeaflyAPI: srv.URL + "/leafly/search", LeaflyPages: srv.URL + "/leafly/strains/"}, mux
 }
 
 // TestLookSearchesOnPastACaptcha: a search that turns the client away is
@@ -129,17 +136,15 @@ func TestRank(t *testing.T) {
 // text — with no User-Agent of its own, which a browser would have to clear
 // with the relay first.
 func TestLookThroughRelay(t *testing.T) {
-	sites := web(t)
+	sites, answer := webAnd(t)
 	formats := map[string]string{}
+	// The stand-in reader answers from the stand-in sites in this process:
+	// the page asked for is the path after its host.
 	relay := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotContains(t, r.Header.Get("User-Agent"), "wits")
-		inner := strings.TrimPrefix(r.RequestURI, "/")
-		formats[strings.SplitN(strings.TrimPrefix(inner, "http://"), "/", 2)[1]] = r.Header.Get("X-Return-Format")
-		resp, err := http.Get(inner)
-		require.NoError(t, err)
-		defer func() { _ = resp.Body.Close() }()
-		w.WriteHeader(resp.StatusCode)
-		_, _ = io.Copy(w, resp.Body)
+		page := strings.SplitN(strings.TrimPrefix(r.RequestURI, "/http://"), "/", 2)[1]
+		formats[page] = r.Header.Get("X-Return-Format")
+		answer.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/"+page, nil))
 	}))
 	defer relay.Close()
 	sites.Relay = relay.URL + "/"
