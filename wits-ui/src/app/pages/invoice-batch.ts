@@ -96,7 +96,7 @@ export function newestFirst(a: Read, b: Read): number {
                   @if (twice().has(m.fill)) { · one of {{ twice().get(m.fill) }} invoices for it }
                 </span>
               } @else {
-                <span class="dim">No fill within a week holds its strains</span>
+                <span class="dim">No fill within two weeks holds its strains</span>
               }
             </div>
             <div class="sum">

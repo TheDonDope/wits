@@ -579,24 +579,29 @@ in a folder. Each is read in the browser and listed newest first, with the fill
 it is for and how many days apart they are. The ones that matched a fill not
 yet priced are ticked, and **Price N fills** prices them all at the invoices'
 totals. The eye opens one on its pickup's card, its first page beside it. All
-21 invoices kept from both pharmacies read in 2 seconds: 20 ticked for fills 12
-to 30, and the September one listed as matching no fill. A pickup with no
+37 invoices kept from three pharmacies read in 3.3 seconds. 32 were ticked
+for all 30 fills, and five matched no fill: four from before the workbook
+begins, and the September one. A pickup with no
 price to be had, no invoice kept, is ticked **No price to be had — stop
 asking**. It is written down and asked about no more, still counted as without
 a price, and a price given later supersedes it.
 
-Invoices from two pharmacies are read: one prints a product on one row, the
-other ships, spreads a product over three rows under its PZN, and dates the
-invoice day first with slashes. What an invoice charges besides flower by the
+Invoices from three pharmacies are read. One prints a product on one row.
+One ships, spreads a product over three rows under its PZN, and dates the
+invoice day first with slashes. One names a product on a row and prices it on
+the dosage row below, with delivery and the narcotics fee in the same shape. What an invoice charges besides flower by the
 gram, such as a vape cartridge by the piece or shipping, is left out of the
 fill and named, so the invoice still adds up to its total. An invoice's line is
 matched to the fill's own products, not only by name. A strain the invoice
 names under its breeder, or cuts short, still finds its jar: "Cookies 22/1
 Hawaiian Rain" is the workbook's "Cansativa 22/1 Hawaiian Rain". A strength
 printed differently, such as 14/1 against 16/1, is another product. Checked
-against all 21 invoices kept from both pharmacies: the 20 for fills in the
-workbook priced fills 12 to 30 to the cent and recorded nothing new. The one
-for a pickup the workbook does not hold matched no fill.
+against all 37 invoices kept from the three pharmacies, on a fresh import of
+the workbook. The 32 for fills in it priced every one of the 30 fills,
+10,156.01 € for 1,244 g, the same to the cent as their lines added up apart.
+Nothing new was recorded. The five for pickups the workbook does not hold
+matched no fill. The one purchase left without a price is a 10 g jar its
+fill's invoice does not list.
 
 ## AVB
 
@@ -707,7 +712,7 @@ which already include VAT, so none is added to them — and the fill dated the
 day ordered. The PDF is read in the browser by pdf.js, and only its text is
 sent, so the invoice, which names you, goes nowhere either. An invoice for a
 fill already recorded is not recorded again: on the same day, the form says so
-and offers to price that fill from it. Within a week, it asks whether it is
+and offers to price that fill from it. Within two weeks, it asks whether it is
 that fill. Only an invoice that matches no fill adds its strains as a new one.
 
 On a phone the tabs give way to a dock under the thumb: Dashboard, Forgot, a

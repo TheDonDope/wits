@@ -135,3 +135,42 @@ func TestLeavesOutWhatIsNotFlowerByTheGram(t *testing.T) {
 	assert.Equal(t, []Other{{Name: "Curaleaf WPT Lösung in Curaleaf Vape Kartusche (1,0 ml)", Total: 19680}}, inv.Other)
 	assert.Equal(t, inv.Gross, inv.Sum()+inv.LeftOut())
 }
+
+// dosed is the third pharmacy's invoice as pdf.js gives its text: a product
+// named on one row and priced on its dosage row below, price before
+// quantity, and fees in the same shape with no dosage. The person is made up;
+// the products and prices are as printed.
+const dosed = `Versandapotheke e.K. – Beispielweg 1 – 12345 Musterstadt
+Erika Mustermann
+Fälligkeitsdatum: 12.05.2024
+Ausstellungsdatum: 06.05.2024
+Rechnung Nr.: 2347871
+Produkt/Dienstleistung	Preis	Anzahl	Gesamtpreis
+IMC Cannabisblüten THC 20 T01: Hindu Kush
+Dosierung: täglich 2x0,25 Gramm zur Verdampfung und	10,49	€	15	157,35	€
+Inhalation
+Pedanios 22/1: Ghost Train Haze
+Dosierung: täglich 2x0,25 Gramm zur Verdampfung und	10,99	€	15	164,85	€
+Inhalation
+GO! Versand
+Dosierung:	1	9,99	€
+BtM Gebühr
+Dosierung:	4,26	€	2	8,52	€
+MwSt. (19%)	54,05	€
+Rechnungsbetrag	340,71	€`
+
+func TestReadsAProductPricedOnItsDosageRow(t *testing.T) {
+	inv := Read(dosed)
+
+	assert.Equal(t, time.Date(2024, 5, 6, 0, 0, 0, 0, time.Local), inv.Date, "Issued, not due")
+	assert.Equal(t, "2347871", inv.Number)
+	require.Len(t, inv.Lines, 2)
+	assert.Equal(t, Line{Name: "IMC Cannabisblüten THC 20 T01: Hindu Kush", Grams: 15, PerGram: 1049, Total: 15735}, inv.Lines[0],
+		"The name from the row above, the price before the grams")
+	assert.Equal(t, []Other{{Name: "GO! Versand", Total: 999}, {Name: "BtM Gebühr", Total: 852}}, inv.Other,
+		"Fees have no dosage, with a unit price or without")
+	assert.Equal(t, 19, inv.Rate)
+	assert.Equal(t, int64(5405), inv.VAT)
+	assert.Equal(t, int64(34071), inv.Gross)
+	assert.Equal(t, inv.Gross, inv.Sum()+inv.LeftOut())
+}

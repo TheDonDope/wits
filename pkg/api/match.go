@@ -18,9 +18,11 @@ import (
 
 // invoiceDays is how many days apart an invoice's date and a pickup's may be
 // and still be one fill. The invoice is dated the day it was ordered, the
-// fill the day it was picked up: the same day or a few apart, and up to a
-// week when the pharmacy ships.
-const invoiceDays = 7
+// fill the day it was picked up: the same day or a few apart, a week when the
+// pharmacy ships, and once, of 37 invoices, 13 days. A fill must hold the
+// invoice's strains to match, and of fills that match alike the nearer wins,
+// so the next fill along, a month off, does not take it.
+const invoiceDays = 14
 
 // invoiceMatch is a recorded fill that holds an invoice's strains near its
 // date. Days is how many days apart they are, 0 the same day; Lines is, for

@@ -7,8 +7,9 @@
 // read on the device and only its text sent. The text is a line per row of the
 // invoice, its cells apart by whitespace. The words looked for are a German
 // pharmacy's (Menge, Gesamtbetrag, USt), since those are the invoices there are.
-// Two pharmacies' layouts are read: a product on one row, as most print it,
-// and a product over several rows under its PZN (block.go).
+// Three pharmacies' layouts are read: a product on one row, as most print it;
+// a product over several rows under its PZN (block.go); and a product named
+// on one row and priced on its dosage row below.
 package invoice
 
 import (
@@ -78,18 +79,24 @@ var (
 	// A row priced but not by the gram: "Curaleaf … 4 St. 49,20 € 196,80 €".
 	priced = regexp.MustCompile(`^(.+?)\s+(?:\d+(?:[.,]\d+)?\s*(?:St\.?|Stk\.?|x)?\s+)?(?:` + euro + `\s+)?` + euro + `\s*$`)
 	net    = regexp.MustCompile(`(?i)(?:exkl|ohne|netto|zwischensumme).*?\s` + euro + `\s*$`)
-	gross  = regexp.MustCompile(`(?i)(?:inkl|brutto).*?\s` + euro + `\s*$`)
-	vat    = regexp.MustCompile(`(?i)^(?:USt|MwSt)\.?\s*(\d{1,2})\s*%\s+` + euro + `\s*$`)
-	day    = regexp.MustCompile(`^(\d{2})[./](\d{2})[./](\d{4})$`)
+	gross  = regexp.MustCompile(`(?i)(?:inkl|brutto|rechnungsbetrag).*?\s` + euro + `\s*$`)
+	vat    = regexp.MustCompile(`(?i)^(?:USt|MwSt)\.?\s*\(?(\d{1,2})\s*%\)?\s+` + euro + `\s*$`)
+	// A product named on the row before, its dosage, price, grams and total
+	// on this one: "Dosierung: täglich 2x 0,2 Gramm … 9,99 € 12 119,88 €". A
+	// fee — delivery, the narcotics charge — has the row with no dosage.
+	dosage = regexp.MustCompile(`^Dosierung:\s*(.*?)\s*` + euro + `\s+(\d+(?:[.,]\d+)?)\s+` + euro + `\s*$`)
+	// A fee printed with its count and total only: "Dosierung: 1 9,99 €".
+	fee = regexp.MustCompile(`^Dosierung:\s*\d+\s+` + euro + `\s*$`)
+	day = regexp.MustCompile(`^(\d{2})[./](\d{2})[./](\d{4})$`)
 	// The date and the number stand on the line under their heading, or
 	// after it on the same row: "Reservierungsdatum: 09.06.2025",
 	// "Rechnung Nr. 2606-MNB-1637". A birth date (Geb.-Datum) is neither.
 	dateHead     = regexp.MustCompile(`(?i)^(?:bestell|rechnungs|liefer)?datum$`)
 	numberHead   = regexp.MustCompile(`(?i)^(?:bestell|rechnungs|auftrags)-?\s*(?:nr|nummer)\.?$`)
-	dateInline   = regexp.MustCompile(`(?i)(?:bestell|rechnungs|reservierungs|liefer)datum:?\s+(\d{2})[./](\d{2})[./](\d{4})`)
+	dateInline   = regexp.MustCompile(`(?i)(?:bestell|rechnungs|reservierungs|liefer|ausstellungs)datum:?\s+(\d{2})[./](\d{2})[./](\d{4})`)
 	numberInline = regexp.MustCompile(`(?i)(?:rechnung|bestell|reservierungs|auftrags)[ -]?(?:nr\.?|nummer|id):?\s+([A-Z0-9][A-Z0-9-]{3,})`)
 	// The table of products starts at its heading: "Name Menge Preis", "Produkt Anzahl (g)".
-	tableHead = regexp.MustCompile(`(?i)^(?:produkt|name|artikel)\s.*(?:menge|anzahl)`)
+	tableHead = regexp.MustCompile(`(?i)^(?:produkt|name|artikel)\b.*(?:menge|anzahl)`)
 	// Rows in the table that are sums, not things bought.
 	sumWords = regexp.MustCompile(`(?i)betrag|bezahlt|summe|gesamt`)
 )
@@ -107,8 +114,15 @@ func Read(text string) Invoice {
 			continue
 		}
 		inv.head(line, prev)
+		above := prev
 		prev = line
 		switch {
+		case dosage.MatchString(line):
+			inv.close(b)
+			b = nil
+			inv.dose(above, dosage.FindStringSubmatch(line))
+		case fee.MatchString(line):
+			inv.dose(above, []string{line, "", "", "", fee.FindStringSubmatch(line)[1]})
 		case pzn.MatchString(line):
 			inv.close(b)
 			b = &block{head: pzn.FindStringSubmatch(line)[1]}
@@ -170,6 +184,18 @@ func (inv *Invoice) body(line string, table bool) bool {
 		}
 	}
 	return table
+}
+
+// dose takes a product named on the row above its dosage row; a row with
+// no dosage is a fee, left out.
+func (inv *Invoice) dose(name string, m []string) {
+	if strings.TrimSpace(m[1]) == "" {
+		if total := cents(m[4]); total > 0 {
+			inv.Other = append(inv.Other, Other{Name: name, Total: total})
+		}
+		return
+	}
+	inv.add(name, m[3], m[2], m[4])
 }
 
 // add takes a product line as printed: its name, grams, price a gram and total.
