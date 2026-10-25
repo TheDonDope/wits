@@ -95,7 +95,7 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
     </cdk-virtual-scroll-viewport>
   `,
   styles: `
-    :host { display: grid; gap: 20px; grid-template-rows: auto 1fr; height: calc(100vh - 150px); }
+    :host { display: grid; gap: 20px; grid-template-rows: auto 1fr; height: calc(100dvh - var(--w-chrome)); }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
     h1 .dim { font: 400 15px var(--w-font); }

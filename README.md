@@ -635,6 +635,12 @@ already have when it is one. The text is read in the browser, by Tesseract
 compiled to WebAssembly and served by wits itself, so the photograph goes
 nowhere — check what it read, then record.
 
+On a phone the tabs give way to a dock under the thumb: Dashboard, Journal, a
+raised **Record**, Jars, and **More** for the other pages. The top bar names
+the page you are on, and the bars keep clear of the notch and the home
+indicator. It is laid out for an iPhone 11 Pro held upright (375 px) and
+nothing narrower; no page scrolls sideways.
+
 The palette in the header picks one of 21 themes, and `t` steps through them
 (`T` back): wits' own Aurora, then Nord, Dracula, Gruvbox, Solarized, Tokyo
 Night, Mocha, Rosé Pine, Phosphor, Synthwave, Void, Forest, Ember and Abyss in

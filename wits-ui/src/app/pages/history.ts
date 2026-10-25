@@ -81,7 +81,7 @@ import { Heatmap } from '../viz/heatmap';
     }
   `,
   styles: `
-    :host { display: grid; gap: 20px; }
+    :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px; }
     .stat { padding: 18px 22px; display: grid; gap: 6px; }
     /* Room under the line: text clipped to a gradient loses its descenders otherwise. */

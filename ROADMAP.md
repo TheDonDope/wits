@@ -552,6 +552,20 @@ stashes cleared together through `Recorder.Flush` — one batch, all or none.
 Every key is declared once in `Keys`, page layers over the shell's, and the
 footer is drawn from the same list, so it can only show keys that answer.
 
+### A phone's navigation — the dock
+
+At 375 px, an iPhone 11 Pro upright and the narrowest the interface is laid
+out for, the top tabs showed one icon at a time between paging arrows, Record
+floated over whatever was under it, and Analysis and Costs were wider than the
+screen. Under 640 px the tabs now give way to a dock: Dashboard, Journal and
+Jars, Record raised between them, and More, a sheet with the rest (Analysis,
+Effects, History, Costs, and Sync on the phone build). The top bar names the
+page in place of the tabs, the help line and the floating button go, and both
+bars take the safe-area insets (`viewport-fit=cover`). Every page's grid caps
+its column at the screen (`minmax(0, 1fr)`): a grid column grows to its widest
+child, and Analysis's five scopes had pushed it to 503 px; they scroll on their
+own now. Measured with the scroll width of each page at 375 px: none wider.
+
 ### Themes in the browser — the palette, `t`
 
 Twenty-one themes for `wits-ui`, chosen from the header or stepped with `t`
