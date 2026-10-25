@@ -653,3 +653,13 @@ func TestTheJournalKeepsTheSelectionInView(t *testing.T) {
 	assert.Regexp(t, `(?m)^ +│`, list,
 		"The selected row should be in the window; it used to fall below it, a line further for every day")
 }
+
+// entryInFront, deviceInFront and pickerInFront return the form in front when
+// it is of that kind, or nil. Only the tests ask.
+func (a *App) entryInFront() *entryForm   { f, _ := a.front.(*entryForm); return f }
+func (a *App) deviceInFront() *deviceForm { f, _ := a.front.(*deviceForm); return f }
+
+func (a *App) pickerInFront() *themePicker {
+	p, _ := a.front.(*themePicker)
+	return p
+}
