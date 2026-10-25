@@ -112,6 +112,21 @@ inside `$(…)` mangle backticks.
 gh release create vX.Y.0 --title "vX.Y.0 — …" --notes-file <file>
 ```
 
+Publishing it starts the release workflow, which builds the AppImage for the
+tag, checks it by running it, and attaches it and its `SHA256SUMS` to the
+release. Wait for it and say in the report that it is there:
+
+```sh
+gh run watch "$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')" --exit-status
+gh release view vX.Y.0 --json assets --jq '.assets[].name'
+```
+
+If it failed, the release stands without it. Fix it on a branch, and once the
+fix is on main, run it again for the tag:
+`gh workflow run release.yml -f tag=vX.Y.0`. That builds the tag as it was,
+so a fix to the build itself has to be in the tag, which means the next
+release.
+
 ## 6. Afterwards
 
 - Dependency fixes: GitHub re-scans a minute or more after the push. Confirm the

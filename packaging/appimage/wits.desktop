@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=wits
+GenericName=Medical cannabis ledger
+Comment=Track a prescription from pharmacy to jar to vaporizer, in the browser
+Exec=wits
+Icon=wits
+Terminal=true
+Categories=Utility;
+Keywords=cannabis;prescription;ledger;journal;

@@ -1,0 +1,55 @@
+name: Release
+
+# The AppImage, built for a release and attached to it: the server, the
+# command line and the interface in one file. It runs when a release is
+# published — the last step of shipping — and can be run again for a tag
+# already released, to attach it there.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The release to build for and attach to, e.g. v0.90.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Checkout the release
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          # git describe and the version stamped in need the tags.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: wits-ui/package-lock.json
+
+      - name: Build the AppImage
+        run: VERSION="$TAG" ./appimage.sh
+
+      # Run as a person would: it makes its repository, serves the interface,
+      # finds itself running, and answers as the command line.
+      - name: Check the AppImage
+        run: VERSION="$TAG" ./appimage.sh check
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" dist/wits-"$TAG"-x86_64.AppImage dist/SHA256SUMS --clobber

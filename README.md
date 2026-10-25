@@ -48,6 +48,26 @@ the last of it is ground.
 
 ## Getting started
 
+On Linux, the simplest is the AppImage attached to every
+[release](https://github.com/TheDonDope/wits/releases): one file holding
+the server, the command line and the browser interface.
+
+```sh
+chmod +x wits-*-x86_64.AppImage
+./wits-*-x86_64.AppImage              # serves ~/.local/share/wits, opens the browser
+./wits-*-x86_64.AppImage ~/wits       # or that repository, made there if new
+./wits-*-x86_64.AppImage cli status   # the command line
+```
+
+The first launch makes its repository, and the Repository page opens another,
+makes one, or imports the workbook. Launched again while it runs, it opens the
+browser on the one running. It runs in a terminal window, and closing the
+window stops it. `WITS_ADDR` changes where it listens (127.0.0.1:7341, this
+machine only), and `WITS_NO_BROWSER=1` keeps it from opening a browser. Each
+release lists its `SHA256SUMS`.
+
+Or with Go:
+
 ```sh
 go install github.com/TheDonDope/wits/cmd/wits@latest
 ```
