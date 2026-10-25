@@ -13,7 +13,6 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
-	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/report"
 	"github.com/TheDonDope/wits/pkg/version"
 	"github.com/spf13/cobra"
@@ -194,7 +193,7 @@ func ending(c ledger.Cycle) string {
 // writeCycle is one cycle's figures, products and entries, its sections
 // headed at the given level.
 func writeCycle(out io.Writer, c ledger.Cycle, products *catalog.Catalog, state *ledger.State, level string) {
-	stats := ledger.Summarise(c.Events)
+	stats := ledger.Summarise(c.Standing)
 	fmt.Fprintln(out, "| | |")
 	fmt.Fprintln(out, "| --- | --- |")
 	fmt.Fprintf(out, "| Purchased | %.2f g |\n", c.Purchased)
@@ -223,7 +222,7 @@ func writeCycle(out io.Writer, c ledger.Cycle, products *catalog.Catalog, state 
 // writeEntries is the table of entries, an undone one and its correction
 // marked so.
 func writeEntries(out io.Writer, events []journal.Event, products *catalog.Catalog) {
-	undone := record.Reverted(events)
+	undone := ledger.Undone(events)
 	fmt.Fprintln(out, "| Date | Event | Amount | Product | Device | Note |")
 	fmt.Fprintln(out, "| --- | --- | ---: | --- | --- | --- |")
 	for _, e := range events {
@@ -247,19 +246,6 @@ func nameOf(products *catalog.Catalog, slug string) string {
 // cell keeps text from breaking a Markdown table.
 func cell(s string) string { return strings.ReplaceAll(s, "|", "\\|") }
 
-// standing is the entries that stand: an undone entry and the correction that
-// undid it cancel out, and neither belongs in a total.
-func standing(events []journal.Event) []journal.Event {
-	undone := record.Reverted(events)
-	var out []journal.Event
-	for _, e := range events {
-		if !undone[e.Hash] && e.Reverts == "" {
-			out = append(out, e)
-		}
-	}
-	return out
-}
-
 // writeRange is one document for a range of days: what was dispensed, ground
 // and used in it, by product, what the sessions in it were rated, and every
 // entry. Every figure is the range's own — it says so — so none of it reads
@@ -277,7 +263,14 @@ func writeRange(out io.Writer, w window, s *session) {
 		fmt.Fprintln(out, "\nNothing recorded in this range.")
 		return
 	}
-	kept := standing(events)
+	// What stands is settled over the whole journal: an entry in the range
+	// can be undone after it ends.
+	var kept []journal.Event
+	for _, e := range s.State.Standing {
+		if w.holds(e.OccurredAt) {
+			kept = append(kept, e)
+		}
+	}
 	writeRangeSummary(out, w, kept)
 	writeByProduct(out, kept, s.Products)
 	writeRatings(out, kept, s)
@@ -425,7 +418,7 @@ func writeIndex(out io.Writer, cycles []ledger.Cycle, page func(ledger.Cycle) st
 	var events []journal.Event
 	for i := len(cycles) - 1; i >= 0; i-- {
 		c := cycles[i]
-		stats := ledger.Summarise(c.Events)
+		stats := ledger.Summarise(c.Standing)
 		state := "open"
 		if !c.Open() {
 			state = "emptied " + c.End.Format(time.DateOnly)
@@ -436,7 +429,7 @@ func writeIndex(out io.Writer, cycles []ledger.Cycle, page func(ledger.Cycle) st
 	for _, c := range cycles {
 		events = append(events, c.Events...)
 	}
-	stats := ledger.Summarise(standing(events))
+	stats := ledger.Summarise(ledger.Standing(events))
 	fmt.Fprintf(out, "\nAcross them: %.2f g ground on %s, %.2f g a day with grinding.\n",
 		stats.Ground, plural(stats.ActiveDays, "day"), stats.PerActiveDay)
 }

@@ -247,22 +247,6 @@ func TestAmendRefusesBeforeReverting(t *testing.T) {
 	assert.Len(t, rec.State().Events, 2, "Should write nothing for a zero amount either")
 }
 
-func TestReverted(t *testing.T) {
-	rec := recorder(t)
-	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
-	require.NoError(t, err)
-	grind, err := rec.Grind("wedding", 2, time.Now())
-	require.NoError(t, err)
-	fix, err := rec.Revert(grind.Hash, "")
-	require.NoError(t, err)
-
-	hidden := Reverted(rec.State().Events)
-
-	assert.True(t, hidden[grind.Hash], "The corrected entry should be hideable")
-	assert.True(t, hidden[fix.Hash], "and so should the correction itself")
-	assert.Len(t, hidden, 2, "but nothing else")
-}
-
 // stocked returns a recorder holding 20 g of one product, 2 g of it ground.
 func stocked(t *testing.T) *Recorder {
 	t.Helper()
@@ -829,4 +813,20 @@ func TestPrice(t *testing.T) {
 	unpriced, err = rec.Unpriced(true)
 	require.NoError(t, err)
 	assert.Empty(t, unpriced, "Should leave nothing to price")
+}
+
+func TestUndoneNamesBothHalvesOfAnUndo(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
+	require.NoError(t, err)
+	grind, err := rec.Grind("wedding", 2, time.Now())
+	require.NoError(t, err)
+	fix, err := rec.Revert(grind.Hash, "")
+	require.NoError(t, err)
+
+	hidden := ledger.Undone(rec.State().Events)
+
+	assert.True(t, hidden[grind.Hash], "The corrected entry should be hideable")
+	assert.True(t, hidden[fix.Hash], "and so should the correction itself")
+	assert.Len(t, hidden, 2, "but nothing else")
 }

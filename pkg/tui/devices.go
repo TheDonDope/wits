@@ -182,7 +182,7 @@ func (a *App) deviceList() []*catalog.Device {
 // measure of whether it is worth keeping in the list.
 func (a *App) sessionsWith(slug string) int {
 	n := 0
-	for _, e := range a.data.State.Events {
+	for _, e := range a.data.State.Standing {
 		if e.Type == journal.Sesh && e.Device == slug {
 			n++
 		}

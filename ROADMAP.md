@@ -426,6 +426,19 @@ The log shows what currently stands; `v` reveals the corrections behind it. They
 are hidden rather than removed — that is the difference between a record that can
 be audited and one that cannot.
 
+An undone entry and its undo count in no total. The fold settles which entries
+stand once, over the whole journal (`ledger.Undone`, `State.Standing`,
+`Cycle.Standing`), since an undo is dated when it was made and can fall outside
+the fill or the range the entry it undoes is in. Only the export and the report
+used to leave them out: the jar was right, but the rate, the shelf, the refill
+date, the calendars, the analysis and the jars' lifetimes counted the undone
+grams, in the terminal, the commands and the browser alike. Buying 20 g,
+grinding 2 g on two days, and undoing a 5 g grind read 3.00 g a day and "11.00
+g on the shelf … order by Mon 26 October"; it reads 2.00 g a day, 16.00 g, and
+Fri 30 October. The shelf's projection is one function now (`ledger.Project`),
+which the terminal and the browser both draw and whose empty day is the refill
+planner's — there were three, and they rounded the day differently.
+
 ### Products and reconciliation
 
 A storage screen in two tables: what still holds something — storage, stash,

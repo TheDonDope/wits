@@ -248,7 +248,9 @@ func (v storageView) tables(a *App) (shelf, history []productRow) {
 		return r
 	}
 
-	for _, e := range events {
+	// What was bought and ground counts what stands; the balances above
+	// fold everything, undos included.
+	for _, e := range ledger.Standing(events) {
 		r := get(e.Product)
 		if e.OccurredAt.After(r.LastSeen) {
 			r.LastSeen = e.OccurredAt

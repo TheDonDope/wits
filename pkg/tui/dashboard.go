@@ -139,7 +139,7 @@ func (d dashboard) quickActions(a *App, width int) string {
 // long it lasts.
 func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 	t := a.theme
-	stats := ledger.Summarise(c.Events)
+	stats := ledger.Summarise(c.Standing)
 
 	// The card is the fill's: the headline sums the cycle's own shares of
 	// the jars the rows below draw, over what this fill dispensed. What
@@ -375,43 +375,26 @@ func emptyDate(emptyAt time.Time, now time.Time) string {
 	return emptyAt.Format("02 Jan")
 }
 
-// storageProjection builds the two series the projection card draws: the
-// remaining grams per day so far, and the projected decline from today to
-// empty. The history is padded with zeroes under the projection's tail, which
-// the area chart reads as absence, so the future is line and no fill.
+// storageProjection builds the two series the projection card draws from the
+// ledger's projection — the one the browser draws and the refill planner
+// dates. The history is padded with zeroes under the projection's tail, which
+// the area chart reads as absence, so the future is line and no fill; for the
+// same reason the line stops a hair above zero.
 func storageProjection(a *App, c *ledger.Cycle) (hist, proj []float64, emptyAt time.Time) {
-	// The projection is the shelf's: it starts from everything standing when
-	// the fill arrived, and takes away every grind since, from whichever jar.
-	perDay := map[string]journal.Centigrams{}
-	for _, e := range c.Events {
-		if e.Type == journal.Grind {
-			perDay[e.OccurredAt.Format(time.DateOnly)] += journal.CG(e.Grams)
-		}
+	p := ledger.Project(c, a.data.Now)
+	for _, l := range p.History {
+		hist = append(hist, float64(l.Shelf))
 	}
-	shelf := journal.CG(float64(c.Held()))
-	for d := c.Start; !d.After(a.data.Now); d = d.AddDate(0, 0, 1) {
-		shelf -= perDay[d.Format(time.DateOnly)]
-		hist = append(hist, math.Max(shelf.Grams(), 0))
-	}
-
-	rate := ledger.Summarise(c.Events).PerActiveDay
-	remaining := shelf.Grams()
-	if rate <= 0 || remaining <= 0 {
+	if len(p.Projected) == 0 || len(hist) == 0 {
 		return hist, nil, time.Time{}
 	}
-	days := min(int(math.Ceil(remaining/rate)), 90)
-	proj = make([]float64, len(hist)+days)
-	// Zeroes under the history keep the line out of the past; the area chart
-	// draws no dot at zero.
-	copy(proj, make([]float64, len(hist)-1))
-	level := remaining
-	proj[len(hist)-1] = level
-	for i := 0; i < days; i++ {
-		level = math.Max(level-rate, 0.01)
-		proj[len(hist)+i] = level
+	proj = make([]float64, len(hist)-1, len(hist)+len(p.Projected))
+	proj = append(proj, hist[len(hist)-1])
+	for _, l := range p.Projected {
+		proj = append(proj, math.Max(float64(l.Shelf), 0.01))
 	}
-	hist = append(hist, make([]float64, days)...)
-	return hist, proj, a.data.Now.AddDate(0, 0, days)
+	hist = append(hist, make([]float64, len(p.Projected))...)
+	return hist, proj, p.EmptyOn
 }
 
 // rhythmCard is a small calendar of the last twelve weeks of one event type,
@@ -420,7 +403,7 @@ func rhythmCard(a *App, typ journal.Type, w int) string {
 	t := a.theme
 	perDay := map[string]float64{}
 	logged := false
-	for _, e := range a.data.State.Events {
+	for _, e := range a.data.State.Standing {
 		if e.Type == typ {
 			perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
 			logged = true
