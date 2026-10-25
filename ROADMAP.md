@@ -279,6 +279,15 @@ A restore is one batch through `AppendWith` — one write, all or nothing, the
 emptiness check under the lock — and verifies what it wrote. An entry at a time
 took 13.04 s on disk for the workbook's bundle; the batch takes 0.07 s.
 
+The effect log and the price log were still put back a record at a time, each
+append reading the whole log and flushing it: the workbook's bundle with 1500
+ratings and 200 prices took 21.2 s to restore. Both logs are one chained log
+now (`pkg/chain`, generic over the record; a rating and a price say only how to
+reach their chain fields), and each goes back as one batch (`AppendAll`): 0.10
+s, the files byte for byte what the old restore wrote. The ratings and prices
+are chained in memory before anything is written, so a bundle whose logs do
+not hold together is refused before it leaves a journal behind.
+
 ### Sync — `wits remote` / `wits push` / `wits pull`
 
 One repository on several devices through a folder: Syncthing, a USB stick,

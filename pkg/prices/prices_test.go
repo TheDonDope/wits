@@ -67,10 +67,11 @@ func TestRebase(t *testing.T) {
 	theirs, err := phone.All()
 	require.NoError(t, err)
 
-	fetched, err := deck.Rebase(theirs, map[string]string{"old": "new"})
+	fetched, rechained, err := deck.Rebase(theirs, map[string]string{"old": "new"})
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, fetched)
+	assert.Equal(t, 1, rechained, "Should chain its own again")
 	require.NoError(t, deck.Verify())
 	ours, err := deck.All()
 	require.NoError(t, err)

@@ -11,21 +11,15 @@
 package prices
 
 import (
-	"bufio"
-	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/chain"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
@@ -61,50 +55,6 @@ func (p Price) Validate() error {
 	return nil
 }
 
-// sum is the price's hash chained onto prev, taken with the hash blank.
-func (p Price) sum(prev string) (string, error) {
-	p.Prev, p.Hash = prev, ""
-	payload, err := json.Marshal(p)
-	if err != nil {
-		return "", err
-	}
-	h := sha256.Sum256(append([]byte(prev), payload...))
-	return hex.EncodeToString(h[:]), nil
-}
-
-// seal makes a price what the log stores after the ones before it: dated,
-// checked, numbered and chained.
-func seal(p Price, before []Price) (Price, error) {
-	if p.At.IsZero() {
-		p.At = time.Now()
-	}
-	p.At = p.At.Truncate(time.Second)
-	if err := p.Validate(); err != nil {
-		return p, err
-	}
-	p.Seq, p.Prev = len(before)+1, ""
-	if n := len(before); n > 0 {
-		p.Prev = before[n-1].Hash
-	}
-	var err error
-	p.Hash, err = p.sum(p.Prev)
-	return p, err
-}
-
-// Chain seals prices one onto the next from the start of a log, as appending
-// them to an empty one would: what a bundle's prices hash to once restored.
-func Chain(prices []Price) ([]Price, error) {
-	out := make([]Price, 0, len(prices))
-	for _, p := range prices {
-		sealed, err := seal(p, out)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, sealed)
-	}
-	return out, nil
-}
-
 // ParseEuros reads an amount of euros as typed — "120.50", "120,50 €",
 // "€120" — into cents.
 func ParseEuros(s string) (int64, error) {
@@ -126,178 +76,31 @@ func Format(cents int64) string {
 	return fmt.Sprintf("%.2f €", float64(cents)/100)
 }
 
-// Log is the price log stored at a path.
-type Log struct {
-	mu   sync.Mutex
-	path string
+// Log is the price log: a chain of prices (pkg/chain).
+type Log = chain.Log[Price, *Price]
+
+// Open returns the price log at path; it is created on the first append.
+func Open(path string) *Log {
+	return chain.Open[Price](path, "price log", "price", ErrBrokenChain)
 }
 
-// Open returns the log at path; it is created on the first append.
-func Open(path string) *Log { return &Log{path: path} }
+// Chain seals prices one onto the next from the start of a log, as appending
+// them to an empty one would: what a bundle's prices hash to once restored.
+func Chain(prices []Price) ([]Price, error) { return chain.Chain[Price](prices) }
 
-// Path returns the file the log is stored in.
-func (l *Log) Path() string { return l.path }
-
-// Append checks a price, chains it onto the log's tip and writes it, under the
-// lock the journal takes. The stored price is returned.
-func (l *Log) Append(p Price) (Price, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	release, err := journal.Lock(l.path)
-	if err != nil {
-		return Price{}, err
-	}
-	defer release()
-	prices, _, err := l.read()
-	if err != nil {
-		return Price{}, err
-	}
-	if p, err = seal(p, prices); err != nil {
-		return Price{}, err
-	}
-	line, err := json.Marshal(p)
-	if err != nil {
-		return Price{}, err
-	}
-	f, err := os.OpenFile(l.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return Price{}, err
-	}
-	defer f.Close()
-	if _, err := f.Write(append(line, '\n')); err != nil {
-		return Price{}, err
-	}
-	return p, f.Sync()
+// Link is the price's place in the log.
+func (p *Price) Link() chain.Link {
+	return chain.Link{Seq: p.Seq, At: p.At, Prev: p.Prev, Hash: p.Hash}
 }
 
-// All returns every price, oldest first, superseded ones included.
-func (l *Log) All() ([]Price, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	prices, _, err := l.read()
-	return prices, err
-}
+// SetLink places the price in the log.
+func (p *Price) SetLink(l chain.Link) { p.Seq, p.At, p.Prev, p.Hash = l.Seq, l.At, l.Prev, l.Hash }
 
-// Verify walks the chain over the lines as stored, the way the journal's
-// Verify does: the hash is the last field, so blanking it gives back the bytes
-// that were hashed.
-func (l *Log) Verify() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	_, lines, err := l.read()
-	if err != nil {
-		return err
-	}
-	prev := ""
-	for n, line := range lines {
-		var p Price
-		if err := json.Unmarshal(line, &p); err != nil {
-			return fmt.Errorf("price log line %d is not valid JSON: %w", n+1, err)
-		}
-		stored := []byte(`,"hash":"` + p.Hash + `"}`)
-		if p.Prev != prev || !bytes.HasSuffix(line, stored) {
-			return fmt.Errorf("%w at price %d", ErrBrokenChain, p.Seq)
-		}
-		payload := append(bytes.Clone(line[:len(line)-len(stored)]), `,"hash":""}`...)
-		sum := sha256.Sum256(append([]byte(prev), payload...))
-		if hex.EncodeToString(sum[:]) != p.Hash {
-			return fmt.Errorf("%w at price %d", ErrBrokenChain, p.Seq)
-		}
-		prev = p.Hash
-	}
-	return nil
-}
+// Names is the purchase the price was paid for.
+func (p *Price) Names() string { return p.Purchase }
 
-// Rebase brings in another device's copy of the log the way the journal's
-// Rebase does: shared prices kept, the other's taken as they are, and this
-// log's own chained again on top, each pointed at the new hash of a purchase
-// that moved. It returns how many of the other's it lacked.
-func (l *Log) Rebase(onto []Price, moved map[string]string) (int, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	release, err := journal.Lock(l.path)
-	if err != nil {
-		return 0, err
-	}
-	defer release()
-	if err := whole(onto); err != nil {
-		return 0, err
-	}
-	local, _, err := l.read()
-	if err != nil {
-		return 0, err
-	}
-	k := 0
-	for k < len(local) && k < len(onto) && local[k].Hash == onto[k].Hash {
-		k++
-	}
-	tail := local[k:]
-	if len(onto) == k && !slices.ContainsFunc(tail, func(p Price) bool { _, ok := moved[p.Purchase]; return ok }) {
-		return 0, nil
-	}
-	merged := slices.Clone(onto)
-	for _, p := range tail {
-		if to, ok := moved[p.Purchase]; ok {
-			p.Purchase = to
-		}
-		if p, err = seal(p, merged); err != nil {
-			return 0, err
-		}
-		merged = append(merged, p)
-	}
-	var buf bytes.Buffer
-	for _, p := range merged {
-		line, _ := json.Marshal(p) // a Price always encodes
-		buf.Write(append(line, '\n'))
-	}
-	return len(onto) - k, journal.WriteFile(l.path, buf.Bytes())
-}
-
-// whole reports whether prices form a whole chain from the start.
-func whole(prices []Price) error {
-	prev := ""
-	for i, p := range prices {
-		sum, err := p.sum(prev)
-		if err != nil {
-			return err
-		}
-		if p.Seq != i+1 || p.Prev != prev || p.Hash != sum {
-			return fmt.Errorf("%w at price %d of the other copy", ErrBrokenChain, i+1)
-		}
-		prev = p.Hash
-	}
-	return nil
-}
-
-// read loads the complete lines and the prices they hold; a line cut off
-// before its newline is a write that never finished, and is left out.
-func (l *Log) read() ([]Price, [][]byte, error) {
-	data, err := os.ReadFile(l.path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil, nil
-		}
-		return nil, nil, err
-	}
-	data = data[:bytes.LastIndexByte(data, '\n')+1]
-	var prices []Price
-	var lines [][]byte
-	sc := bufio.NewScanner(bytes.NewReader(data))
-	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	for sc.Scan() {
-		line := bytes.Clone(sc.Bytes())
-		if len(line) == 0 {
-			continue
-		}
-		var p Price
-		if err := json.Unmarshal(line, &p); err != nil {
-			return nil, nil, fmt.Errorf("price log line %d is not valid JSON: %w", len(lines)+1, err)
-		}
-		prices = append(prices, p)
-		lines = append(lines, line)
-	}
-	return prices, lines, sc.Err()
-}
+// Rename names the purchase by a new hash.
+func (p *Price) Rename(hash string) { p.Purchase = hash }
 
 // Latest returns each purchase's newest price: a purchase priced again costs
 // what it was priced at last.
