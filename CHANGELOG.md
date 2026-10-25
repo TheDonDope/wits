@@ -2,8 +2,25 @@
 ## [Unreleased]
 
 
+<a name="v0.89.0"></a>
+## [v0.89.0] - 2026-10-25
+### Docs
+- **diary:** and the test a slow runner dropped
+- **diary:** thirty-seven receipts, and four doors
+- **roadmap:** one blank line between paragraphs
+
+### Feat
+- **wits-ui:** what a gram cost, by strain, pharmacy, strength and year
+
+### Test
+- **tui:** a reload is read at once in the tests, so a slow runner cannot drop it
+
+
 <a name="v0.88.0"></a>
 ## [v0.88.0] - 2026-10-25
+### Docs
+- update changelog for v0.88.0
+
 ### Feat
 - **invoice:** a third pharmacy's invoices, and a fill two weeks after its order
 - **wits-ui:** every invoice at once, and a pickup with no price asked about no more
@@ -1096,7 +1113,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.88.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.89.0...HEAD
+[v0.89.0]: https://github.com/TheDonDope/wits/compare/v0.88.0...v0.89.0
 [v0.88.0]: https://github.com/TheDonDope/wits/compare/v0.87.0...v0.88.0
 [v0.87.0]: https://github.com/TheDonDope/wits/compare/v0.86.0...v0.87.0
 [v0.86.0]: https://github.com/TheDonDope/wits/compare/v0.85.0...v0.86.0
