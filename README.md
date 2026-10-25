@@ -655,6 +655,7 @@ the repository: an entry made with the command line shows within a few seconds.
 There are four tabs. **Dashboard** is what is happening now. **I forgot to** is
 everything left undone that the ledger can show, each section there only
 while there is some, and the tab counts them:
+
 - sessions of the last week waiting for a rating;
 - pickups still to be priced;
 - stashes left behind, where a jar has nothing sealed left but its stash
