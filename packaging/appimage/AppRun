@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+#
+# What the wits AppImage runs: the server, with the interface bundled beside
+# it, on a repository — and the browser, pointed at it.
+#
+#   wits.AppImage                 the repository in ~/.local/share/wits, made
+#                                 the first time; the interface opens in the browser
+#   wits.AppImage ~/somewhere     that repository, or one made there
+#   wits.AppImage cli status      the command line: wits status
+#
+# The interface's Repository page opens any other repository, makes one, or
+# imports a workbook, so the one it starts on is only where it starts.
+#
+#   WITS_REPO        the repository to start on, instead of ~/.local/share/wits
+#   WITS_ADDR        where to listen (default 127.0.0.1:7341); this machine only
+#   WITS_NO_BROWSER  set, and no browser is opened
+#
+# Launched again while it runs, it opens the browser on the one running.
+
+set -euo pipefail
+
+here="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
+bin="$here/usr/bin"
+ui="$here/usr/share/wits/ui"
+
+# The command line, by name — a symlink called wits — or by asking for it.
+if [ "$(basename "${ARGV0:-$0}")" = wits ]; then
+	exec "$bin/wits" "$@"
+fi
+if [ "${1:-}" = cli ]; then
+	shift
+	exec "$bin/wits" "$@"
+fi
+if [ "${1:-}" = --help ] || [ "${1:-}" = -h ]; then
+	sed -n '3,19p' "$0" | sed 's/^# \{0,1\}//'
+	exit 0
+fi
+
+addr="${WITS_ADDR:-127.0.0.1:7341}"
+url="http://$addr"
+repo="${1:-${WITS_REPO:-${XDG_DATA_HOME:-$HOME/.local/share}/wits}}"
+
+# answers says whether a wits server answers at the address already. In a
+# subshell: a redirection that fails ends the shell that tried it.
+answers() {
+	local host="${addr%:*}" port="${addr##*:}"
+	[ "$host" = localhost ] && host=127.0.0.1
+	(
+		exec 3<>"/dev/tcp/$host/$port" || exit 1
+		printf 'GET /api/overview HTTP/1.0\r\nHost: %s\r\n\r\n' "$addr" >&3
+		IFS= read -r status <&3 || exit 1
+		[[ "$status" == *" 200 "* ]]
+	) 2>/dev/null
+}
+
+browse() {
+	[ -n "${WITS_NO_BROWSER:-}" ] && return 0
+	if command -v xdg-open >/dev/null 2>&1; then
+		xdg-open "$url" >/dev/null 2>&1 &
+	else
+		echo "wits: open $url in a browser"
+	fi
+}
+
+if answers; then
+	echo "wits: already running on $url"
+	browse
+	exit 0
+fi
+
+# A repository to start on: the one given or found above it, else a new one.
+if ! (cd "$repo" 2>/dev/null && "$bin/wits" status >/dev/null 2>&1); then
+	if [ ! -d "$repo" ] || [ -z "$(ls -A "$repo" 2>/dev/null)" ] || [ "$#" -eq 0 ]; then
+		mkdir -p "$repo"
+		"$bin/wits" init "$repo" >/dev/null 2>&1 || true
+	fi
+fi
+
+"$bin/wits-server" --repo "$repo" --addr "$addr" --ui "$ui" &
+server=$!
+trap 'kill "$server" 2>/dev/null' INT TERM EXIT
+
+for _ in $(seq 1 50); do
+	answers && break
+	kill -0 "$server" 2>/dev/null || exit 1
+	sleep 0.2
+done
+browse
+wait "$server"

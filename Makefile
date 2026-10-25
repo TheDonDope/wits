@@ -12,7 +12,7 @@ UI_DEFINE = --define "WITS_VERSION='$(shell git describe --tags --always --dirty
 
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release server ui ui-test serve \
-	wasm wasm-check pages
+	wasm wasm-check pages appimage
 
 .DEFAULT_GOAL := build
 
@@ -133,6 +133,13 @@ pages: wasm
 # The repository in the working directory, in a browser at http://127.0.0.1:7341
 serve: server ui
 	./bin/wits-server --ui wits-ui/dist/wits-ui/browser
+
+# wits as an AppImage: the server, the command line and the interface in one
+# file, dist/wits-<version>-x86_64.AppImage, checked by running it. The
+# release workflow builds the same for every release and attaches it.
+appimage:
+	VERSION=$(shell git describe --tags --always --dirty) ./appimage.sh
+	VERSION=$(shell git describe --tags --always --dirty) ./appimage.sh check
 
 # The guard checks where VERSION came from, not whether it is empty: it always
 # has a value here, because it defaults to the previous tag — and releasing

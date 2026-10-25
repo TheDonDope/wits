@@ -677,6 +677,33 @@ for every gram. Every page measures 375 px on the phone. On a computer, the
 clock goes below 1100 px and the tab labels below 780; measured every 20 px
 from 641 to 1920, no tab bar pages and no page scrolls sideways.
 
+### The AppImage — every release, one file
+
+`appimage.sh` builds wits as an AppImage, `dist/wits-<version>-x86_64.AppImage`
+(21 MB). Inside are `wits` and `wits-server`, static (`CGO_ENABLED=0`) and
+stamped with the version, and the interface the server serves, without the
+phone's engine. The launcher (`packaging/appimage/AppRun`) serves the
+repository in `~/.local/share/wits`, made on the first launch, or the one it
+is given, on 127.0.0.1:7341, and opens the browser. Launched again while it
+runs, it only opens the browser. `cli …` runs the command line. It runs in a
+terminal window (`Terminal=true`), and closing the window stops the server
+with it. `appimagetool` 1.9.1 and the type-2 runtime 20251108 are pinned to
+their SHA-256s, and the runtime is handed in, so the build fetches nothing
+unpinned.
+
+`./appimage.sh check` (and `make appimage` after building) runs the image in
+a throwaway home, in a session of its own, since the runtime passes no signal
+on. It checks four things: a first launch makes its repository and serves the
+API and the interface, a second finds it running, and `cli --version` names
+the version. The release workflow (`.github/workflows/release.yml`) does the
+same for every release when it is published. It builds the tag, checks the
+image, and attaches it with its `SHA256SUMS`, and it can be run again for a
+tag.
+
+On this machine, the first build took 16 seconds. Served by the AppImage, the
+imported workbook shows its dashboard (fill 30, day 58, 36.73 g left) and its
+costs (10,156 € priced from the invoices). The footer names `wits-ui v0.89.0`.
+
 ### Themes in the browser — the palette, `t`
 
 Forty-one themes for `wits-ui`, chosen from the header or stepped with `t`

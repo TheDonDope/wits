@@ -24,3 +24,5 @@ vendor/
 # System files
 .DS_Store
 Thumbs.db
+# The AppImage's AppDir, assembled by appimage.sh
+/build
