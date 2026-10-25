@@ -456,9 +456,19 @@ func seshed(t *testing.T) *App {
 	return app
 }
 
-// day10 is a stable timestamp n days from now, at ten in the morning.
+// day10 is a stable timestamp n days from now, at ten in the morning — or
+// now, for a today that has not reached ten yet, since the recorder refuses an
+// entry dated after now and these tests failed every morning.
 func day10(n int) time.Time {
-	return time.Now().AddDate(0, 0, n).Truncate(24 * time.Hour).Add(10 * time.Hour)
+	now := time.Now()
+	return minTime(now.AddDate(0, 0, n).Truncate(24*time.Hour).Add(10*time.Hour), now)
+}
+
+func minTime(a, b time.Time) time.Time {
+	if a.After(b) {
+		return b
+	}
+	return a
 }
 
 func TestStashHistory(t *testing.T) {
