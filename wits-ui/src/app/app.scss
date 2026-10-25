@@ -71,39 +71,6 @@
   gap: 18px;
 }
 
-.repo-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 200px;
-  padding: 4px 12px 4px 8px;
-  border: 1px solid var(--w-glass-edge);
-  border-radius: 999px;
-  color: var(--mat-sys-on-surface);
-  font: 500 13px var(--w-font);
-  text-decoration: none;
-
-  mat-icon {
-    flex: none;
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    color: var(--w-primary);
-  }
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &:hover,
-  &.on {
-    border-color: color-mix(in srgb, var(--w-primary) 50%, transparent);
-    background: color-mix(in srgb, var(--w-primary) 10%, transparent);
-  }
-}
-
 .clock {
   color: var(--w-dim);
   font-size: 13px;
@@ -255,17 +222,19 @@ kbd {
   }
 }
 
-// The tabs want the width: below 1400 px the clock goes, and the chain says
-// itself by its dot alone, its words in the tooltip.
-@media (width <= 1400px) {
+// The tabs want the width — eight of them, labelled, take 963 px. Below
+// 1500 px the clock goes, and the chain says itself by its dot alone, its
+// words in the tooltip; below 1260 the tabs go by their icons. Measured: the
+// bar pages at no width from 660 px up.
+@media (width <= 1500px) {
   .clock,
   .chain .word {
     display: none;
   }
 }
 
-// Below 1100 px the tabs go by their icons, which name themselves to a reader.
-@media (width <= 1100px) {
+// The tabs by their icons, which name themselves to a reader.
+@media (width <= 1260px) {
   .label {
     display: none;
   }
@@ -279,14 +248,6 @@ kbd {
 @media (width <= 900px) {
   .nav a {
     padding: 0 12px;
-  }
-
-  .repo-chip {
-    padding: 6px;
-
-    span {
-      display: none;
-    }
   }
 }
 
@@ -331,7 +292,6 @@ kbd {
   .nav,
   .fab,
   .keys,
-  .repo-chip,
   .brand .word,
   .chain .word {
     display: none;

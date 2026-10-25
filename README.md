@@ -629,12 +629,14 @@ grinds, records a session, a fill or a weighing — through the same recorder as
 the commands, with the same refusals in the same words. The interface follows
 the repository: an entry made with the command line shows within a few seconds.
 
-The folder chip in the header opens the **Repository** page. Browse this
-computer's folders to open another repository, those that are one marked
-*wits*, or make one in an empty folder; the server serves it from then on, and
-every page reads it. There, too, a tracking workbook can be **imported** from the
-browser: it is read and reported first, as `wits import` reports it, and
-written only when you import, into an empty journal only.
+The **Repository** tab (under More on a phone) is where the server is pointed.
+Browse this computer's folders to open another repository, those that are one
+marked *wits*, or make one in an empty folder; the server serves it from then
+on, and every page reads it. There, too, a tracking workbook can be
+**imported** from the browser: it is read and reported first, as `wits import`
+reports it, and written only when you import, into an empty journal only. It
+belongs to `wits-server`: the phone's own copy, on GitHub Pages, has the one
+repository and no tab for it.
 
 A fill can be read off the pharmacy label: **Read the label** on the Fill tab
 takes a photograph and fills in the product and the grams, matched to a jar you
