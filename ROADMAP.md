@@ -600,9 +600,12 @@ dry run writing nothing and a second import refused.
 
 None of this is built for the phone (`desk.go` is `!js`): it has the one
 repository, and the spreadsheet reader would have weighed on its engine. The
-header's folder chip, not an eighth tab, opens the page on a computer, and More
-does on a phone; making room for it, the clock goes below 1400 px and the tab
-labels below 1100, so the tabs no longer page anywhere from 660 px up.
+page is a tab of its own on a computer, the eighth, and under More on a phone.
+It was first a folder chip in the header instead, to spare the tabs a width,
+and was not found there; the name of the repository served is in the
+verified dot's tooltip now. Eight labelled tabs take 963 px, so the clock goes
+below 1500 px and the labels below 1260: measured every 10 px from 641 to
+1920, the bar pages at none, 48 px spare at the tightest.
 
 ### Themes in the browser — the palette, `t`
 
