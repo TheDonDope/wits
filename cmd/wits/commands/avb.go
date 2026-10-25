@@ -1,5 +1,4 @@
-// Package commands: `wits avb`, what comes out of the vaporizer, weighed, and used.
-
+// Package commands holds `wits avb` here: what comes out of the vaporizer, weighed, and used.
 package commands
 
 import (

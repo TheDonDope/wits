@@ -1,6 +1,6 @@
-// Package report: the map of the strains — every product placed by how alike
-// their names, cannabinoids and terpenes are, and rated by the effect log.
-
+// Package report holds the map of the strains here: every product placed by
+// how alike their names, cannabinoids and terpenes are, and rated by the
+// effect log.
 package report
 
 import (

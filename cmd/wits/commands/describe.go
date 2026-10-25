@@ -1,5 +1,4 @@
-// Package commands: `wits describe`, a product shown, or its terpenes written down.
-
+// Package commands holds `wits describe` here: a product shown, or its terpenes written down.
 package commands
 
 import (

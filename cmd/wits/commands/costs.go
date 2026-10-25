@@ -1,5 +1,4 @@
-// Package commands: `wits costs`, what the prescriptions cost.
-
+// Package commands holds `wits costs` here: what the prescriptions cost.
 package commands
 
 import (

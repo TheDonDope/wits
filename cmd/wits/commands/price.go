@@ -1,5 +1,4 @@
-// Package commands: `wits price`, what a purchase cost.
-
+// Package commands holds `wits price` here: what a purchase cost.
 package commands
 
 import (

@@ -1,5 +1,4 @@
-// Package commands: `wits refill`, when to order the next prescription.
-
+// Package commands holds `wits refill` here: when to order the next prescription.
 package commands
 
 import (

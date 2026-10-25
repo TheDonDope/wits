@@ -1,5 +1,5 @@
-// Package report: what is held today, for a signed statement of it (wits carry), and its QR code.
-
+// Package report holds what is held today here, for a signed statement of it
+// (wits carry), and its QR code.
 package report
 
 import (
