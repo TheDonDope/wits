@@ -32,7 +32,7 @@ describe('a fill priced together', () => {
 
   it('takes an invoice’s lines by the match, at its totals, with no VAT added', () => {
     const reading: InvoiceReading = {
-      date: '2026-08-28', number: '2608', net_cents: 0, vat_cents: 0, rate: 19, gross_cents: 35180, sum_cents: 35180,
+      date: '2026-08-28', number: '2608', net_cents: 0, vat_cents: 0, rate: 19, gross_cents: 35180, sum_cents: 35180, other: [],
       lines: [
         { name: 'All Nations 29/1 Mac Doughnut', slug: doughnut.product, printed: 'All Nations GM 29/1 Mac Doughnut', grams: 20, per_gram_cents: 584, total_cents: 11680 },
         { name: 'NICE 32/1 Morning Sun', slug: sun.product, printed: 'NICE 32/1 MOS Morning Sun', grams: 20, per_gram_cents: 580, total_cents: 11600 },

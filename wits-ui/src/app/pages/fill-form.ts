@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
-import { readInvoice } from '../data/invoice';
+import { addsUp, readInvoice } from '../data/invoice';
 import { readLabel } from '../data/label';
 import { FillLine, InvoiceReading, LabelReading } from '../data/models';
 import { Wits } from '../data/wits';
@@ -109,20 +109,23 @@ export function rowCents(r: Row, vat: boolean): number {
     </div>
     @for (inv of invoices(); track $index) {
       <div class="read">
-        <mat-icon>{{ inv.reading.gross_cents && inv.reading.sum_cents !== inv.reading.gross_cents ? 'error' : 'receipt_long' }}</mat-icon>
+        <mat-icon>{{ addsUp(inv.reading) ? 'receipt_long' : 'error' }}</mat-icon>
         <div>
           <p><b>{{ inv.file }}</b>{{ inv.reading.number ? ' · ' + inv.reading.number : '' }}{{ inv.reading.date ? ' · ' + inv.reading.date : '' }}</p>
           <p class="dim">
             {{ inv.reading.lines.length }} {{ inv.reading.lines.length === 1 ? 'strain' : 'strains' }},
             {{ euros(inv.reading.sum_cents) }}
             @if (inv.reading.gross_cents) {
-              @if (inv.reading.sum_cents === inv.reading.gross_cents) {
-                — the invoice's total with {{ inv.reading.rate || 19 }}% VAT, to the cent.
+              @if (addsUp(inv.reading)) {
+                — {{ inv.reading.other.length ? 'with what was left out, ' : '' }}the invoice's total with {{ inv.reading.rate || 19 }}% VAT, to the cent.
               } @else {
                 — but the invoice says {{ euros(inv.reading.gross_cents) }} with VAT. Check the lines.
               }
             }
           </p>
+          @for (o of inv.reading.other; track $index) {
+            <p class="dim">Left out, not flower by the gram: {{ o.name }}, {{ euros(o.total_cents) }}.</p>
+          }
           @if (inv.reading.match; as m) {
             @switch (inv.state) {
               @case ('matched') {
@@ -383,6 +386,8 @@ export class FillForm {
     }));
     this.rows.update((rs) => [...rs.filter(started), ...read]);
   }
+
+  protected readonly addsUp = addsUp;
 
   protected day(iso: string): string {
     return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });

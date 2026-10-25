@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { pictureOf, readInvoice } from '../data/invoice';
+import { addsUp, pictureOf, readInvoice } from '../data/invoice';
 import { InvoiceReading, PriceLine, UnpricedEntry } from '../data/models';
 import { Wits } from '../data/wits';
 import { Row, VAT, rowCents } from './fill-form';
@@ -236,9 +236,12 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
           </a>
           <figcaption class="dim">
             {{ s.file }}{{ s.reading.date ? ' · ' + (s.reading.date | date: 'd MMM y') : '' }} ·
-            {{ s.reading.sum_cents / 100 | currency: 'EUR' }}
-            @if (s.reading.gross_cents && s.reading.gross_cents !== s.reading.sum_cents) {
+            {{ s.reading.sum_cents / 100 | currency: 'EUR' }} of flower
+            @if (!addsUp(s.reading)) {
               — but it says {{ s.reading.gross_cents / 100 | currency: 'EUR' }} in all. Check the lines.
+            }
+            @for (o of s.reading.other; track $index) {
+              <br />Left out, not flower by the gram: {{ o.name }}, {{ o.total_cents / 100 | currency: 'EUR' }}.
             }
           </figcaption>
         </figure>
@@ -297,6 +300,7 @@ export class PickupCard implements OnInit, OnDestroy {
   private readonly wits = inject(Wits);
   private readonly snack = inject(MatSnackBar);
   protected readonly vatRate = VAT;
+  protected readonly addsUp = addsUp;
 
   readonly pickup = input.required<Pickup>();
   /** Where the walk is, as "1 of 2". */

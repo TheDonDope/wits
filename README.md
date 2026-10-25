@@ -572,6 +572,19 @@ check against. If the invoice is dated a few days off the pickup (ordered one
 day, picked up the next), it asks first. If it belongs to another fill, it says
 which one and offers to go there.
 
+Invoices from two pharmacies are read: one prints a product on one row, the
+other ships, spreads a product over three rows under its PZN, and dates the
+invoice day first with slashes. What an invoice charges besides flower by the
+gram, such as a vape cartridge by the piece or shipping, is left out of the
+fill and named, so the invoice still adds up to its total. An invoice's line is
+matched to the fill's own products, not only by name. A strain the invoice
+names under its breeder, or cuts short, still finds its jar: "Cookies 22/1
+Hawaiian Rain" is the workbook's "Cansativa 22/1 Hawaiian Rain". A strength
+printed differently, such as 14/1 against 16/1, is another product. Checked
+against all 21 invoices kept from both pharmacies: the 20 for fills in the
+workbook priced fills 12 to 30 to the cent and recorded nothing new. The one
+for a pickup the workbook does not hold matched no fill.
+
 ## AVB
 
 Already vaped bud is what is left of a session once it has been through a

@@ -6,6 +6,8 @@
  * and `/api/invoice` makes a fill of it, as `/api/label` does of a label.
  */
 
+import { InvoiceReading } from './models';
+
 /** Text items closer than this, up or down, are one row of the invoice. */
 const ROW = 2;
 
@@ -84,4 +86,14 @@ export async function pictureOf(file: Blob, width = 1200): Promise<string> {
   } finally {
     await task.destroy();
   }
+}
+
+/** What an invoice charged for besides the flower, in cents: left out of the fill. */
+export function leftOut(r: InvoiceReading): number {
+  return r.other.reduce((sum, o) => sum + o.total_cents, 0);
+}
+
+/** Whether the strains read, and what was left out, come to the invoice's own total. */
+export function addsUp(r: InvoiceReading): boolean {
+  return !r.gross_cents || r.sum_cents + leftOut(r) === r.gross_cents;
 }
