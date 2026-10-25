@@ -2,9 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.88.0"></a>
+## [v0.88.0] - 2026-10-25
+### Feat
+- **invoice:** a third pharmacy's invoices, and a fill two weeks after its order
+- **wits-ui:** every invoice at once, and a pickup with no price asked about no more
+
+
 <a name="v0.87.0"></a>
 ## [v0.87.0] - 2026-10-25
 ### Docs
+- update changelog for v0.87.0
 - a list stands off the paragraph before it
 
 ### Feat
@@ -1088,7 +1096,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.87.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.88.0...HEAD
+[v0.88.0]: https://github.com/TheDonDope/wits/compare/v0.87.0...v0.88.0
 [v0.87.0]: https://github.com/TheDonDope/wits/compare/v0.86.0...v0.87.0
 [v0.86.0]: https://github.com/TheDonDope/wits/compare/v0.85.0...v0.86.0
 [v0.85.0]: https://github.com/TheDonDope/wits/compare/v0.84.0...v0.85.0
