@@ -978,8 +978,119 @@ plainly.
   still holds its entries and rebases them on its next pull, but the remote
   does not say it lost.
 
+### 6 · The effect log, put to work
+
+The ratings are what the tolerance curve, the costs per session that helped
+and the colours of the strain map wait on, and the workbook holds none. So
+filling the log comes first, and reading it second.
+
+#### 🔹 A nudge to rate
+
+- **Status**: Planned
+- The phone asks about a session once it has had time to work, ninety minutes
+  after it by default, as a notification that opens `/effects` on that session.
+  The service worker that already serves the phone's build can show it. A
+  session rated already is never asked about, and the nudge is off until it is
+  switched on, since it is the first thing wits would say unprompted.
+
+#### 🔹 Did the break work?
+
+- **Status**: Planned
+- Breaks are already found (a week or more with nothing ground and no
+  session). For each one, put the fortnight before it beside the fortnight
+  after: grams a day with grinding, and the effect log's means, each with the
+  count it stands on. Whether a week off resets anything is then a question
+  the record answers, not a belief, and a break with too few ratings either
+  side says so instead of drawing a line.
+
+#### 🔹 What to ask for next
+
+- **Status**: Planned
+- Paste or photograph a pharmacy's list of what it has (the label reader's
+  parsing, pointed at a list), and rank it by distance on the strain map to the
+  products rated best. A cultivar with nothing rated near it is marked unknown,
+  not placed by guesswork, and every rank names the products it stands on.
+
+### 7 · The ledger's own tricks
+
+Anything can be rebuilt from any prefix of the journal, and every entry carries
+two timestamps. Three things only a ledger like this one can do.
+
+#### 🔹 Then, and what was known then — `--as-of`, `--as-known`
+
+- **Status**: Planned
+- `wits status --as-of 2025-03-01` folds the entries that had occurred by that
+  day: the shelf as it stood. `--as-known 2025-03-01` folds the entries that had
+  been recorded by then: what the journal said that day, before the backdated
+  entries arrived. The two differ by exactly what was written down late, which
+  is a figure of its own, and the replay transport could scrub either axis.
+  Every command that reads the fold could take them; none may write with them.
+
+#### 🔹 Two days side by side — `wits diff`
+
+- **Status**: Planned
+- `wits diff <then> <now>` folds twice and names the difference: jars that
+  appeared and emptied, what each account moved, the cycles that opened and
+  closed between. `git diff` for the shelf, which is a part of git's vocabulary
+  with a real referent. Each line speaks one scope and says which.
+
+#### 🔹 A report with entries withheld
+
+- **Status**: Planned
+- A prescriber gets the report and the entries it rests on, with the ones not
+  theirs to read withheld: each replaced by its hash, so the chain still
+  verifies to the sealed head and nothing can have been removed or changed
+  unnoticed. `wits verify` checks it, and says how many entries were withheld
+  and where in the chain they stand.
+
+### 8 · The physical record, measured
+
+#### 🔹 The pharmacy's scale against mine
+
+- **Status**: Planned
+- Weigh a jar sealed at pickup, against the grams its label states (Record's
+  Fill tab reads them already). Over the record, each pharmacy and each
+  producer gets the mean and spread of what they dispensed against what they
+  said, beside what a gram cost there. A weighing is a reading, not a transfer:
+  it belongs beside the journal, like the price log, unless it finds grams to
+  adjust.
+
+#### 🔹 What the air took
+
+- **Status**: Planned
+- Flower dries, and a jar weighed later holds less than was put in. Today that
+  shortfall is an `adjust` with a reason typed in. Naming it — drying, its own
+  reason, and in the end a way out of the jar of its own, beside the vapour
+  and the AVB — keeps the mass balance saying what happened, and gives each
+  strain a drying rate per week sealed, and a jar a hint when it is drying
+  faster than its kind.
+
+#### 🔹 What the AVB still holds
+
+- **Status**: Planned
+- Every session records its device and temperature, and the vaporizer item
+  below already reasons from boiling points. Together they put a range on what
+  is left in the AVB jar — THC by each product's share of it, less what its
+  sessions' temperatures will have released — so an `avb use` is offered an
+  estimate in milligrams, as a range, with its assumptions on screen and never
+  in a total.
 
 ### Later · hardware and delight
+
+#### 🔹 The year, on one card
+
+- **Status**: Planned
+- Once a year, one page or a short film from the same replay as Film on the
+  Jars page: the grams, the strains, the longest break, the temperature rated
+  best, the dearest gram and the cheapest. Every figure is one the report or
+  `wits costs` already computes, labelled with its scope.
+
+#### 🔹 Packing for a trip — `wits pack`
+
+- **Status**: Planned
+- `wits pack --days 10` is the grams to take at the rate the refill planner
+  runs on, with a margin, drawn from the jars oldest first, and a `wits carry`
+  statement for exactly those grams rather than the whole shelf.
 
 #### 🔹 The scale over USB or Bluetooth
 
