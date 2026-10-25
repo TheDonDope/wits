@@ -45,6 +45,10 @@ $base: (
   good: null,
   on: null,
   panel: null,
+  // The colour of a backdrop's drawn lines (fg when unset), and of a hard
+  // shadow (fg when unset).
+  line: null,
+  cast: null,
 );
 $themes: (
   aurora: (
@@ -117,6 +121,57 @@ $themes: (
     storage: #3aa0ff, stash: #8de06a, avb: #f6b65c, sesh: #a68cff, warn: #ff6f86,
     glass: 0.45, blur: 28px, glow: 1.2,
   ),
+  bauhaus-dark: (
+    ink: #141414, fg: #f2ece0, dim: #9a958a, primary: #e63322, accent: #f5c518,
+    storage: #3d6fe0, stash: #2fa35a, avb: #f5c518, sesh: #9b6be0, warn: #ff4a3d, good: #2fa35a, panel: #1f1e1a,
+    shape: square, glass: 1, blur: 0, edge: 85%, border: 2px, backdrop: shapes, shadow: hard, cast: #e63322,
+    num: grotesk, head: grotesk,
+  ),
+  blueprint: (
+    ink: #0f3a6b, fg: #eaf3ff, dim: #9dbbe0, primary: #fff, accent: #ffd76a, line: #dbe9ff,
+    storage: #8fd0ff, stash: #9cf0b4, avb: #ffd76a, sesh: #cdb6ff, warn: #ff9a8a, good: #9cf0b4, panel: #12457d,
+    shape: square, glass: 0.6, blur: 0, edge: 45%, backdrop: blueprint, shadow: none,
+    font: mono, num: mono, head: grotesk,
+  ),
+  deco: (
+    ink: #0d0f14, fg: #f1e6cf, dim: #9b8f78, primary: #d4af37, accent: #4fb3a9,
+    storage: #6c9be0, stash: #4fb3a9, avb: #e8b04a, sesh: #b48ad6, warn: #e0645a, good: #4fb3a9, panel: #171a21,
+    shape: sharp, glass: 0.9, blur: 4px, edge: 30%, backdrop: fan, shadow: glow, glow: 0.6,
+    num: serif, head: serif,
+  ),
+  hazard: (
+    ink: #121212, fg: #f2f2f2, dim: #8f8f8f, primary: #fc0, accent: #ff6a00,
+    storage: #3fa7ff, stash: #4cd964, avb: #fc0, sesh: #b98cff, warn: #ff3b30, good: #4cd964,
+    shape: square, glass: 1, blur: 0, edge: 18%, border: 2px, backdrop: hazard, shadow: none,
+    num: mono, head: grotesk,
+  ),
+  amber: (
+    ink: #0d0700, fg: #ffcc80, dim: #a3753a, primary: #ffb000, accent: #ffd27a,
+    storage: #7fc8ff, stash: #c6e86a, avb: #ffb000, sesh: #e0a3ff, warn: #ff5a3c,
+    shape: square, glass: 0.92, blur: 0, edge: 22%, backdrop: scan, shadow: glow, glow: 0.7,
+    font: mono, num: mono, head: mono,
+  ),
+  noir: (
+    ink: #0a0a0a, fg: #ededed, dim: #8a8a8a, primary: #f5f5f5, accent: #c1121f,
+    storage: #8fb3d9, stash: #9ccf9c, avb: #d9b26a, sesh: #b39ddb, warn: #e5383b, good: #9ccf9c,
+    shape: sharp, glass: 0.86, blur: 4px, edge: 12%, backdrop: blinds,
+    num: serif, head: serif,
+  ),
+  starfield: (
+    ink: #05060f, fg: #e6e9ff, dim: #7d84ad, primary: #9d8cff, accent: #5ee7ff,
+    storage: #5ea8ff, stash: #5ef0a0, avb: #ffc46b, sesh: #d08cff, warn: #ff6b8b, good: #5ef0a0,
+    shape: soft, glass: 0.55, blur: 14px, backdrop: stars,
+  ),
+  topo: (
+    ink: #1d2420, fg: #e8eadf, dim: #8d978a, primary: #e8a33d, accent: #8fc0a9, line: #cfe3c8,
+    storage: #6fa9d6, stash: #8ccf7e, avb: #e8a33d, sesh: #b79ad6, warn: #e5675a, good: #8ccf7e,
+    shape: soft, glass: 0.9, blur: 0, edge: 10%, backdrop: contours, num: mono,
+  ),
+  contrast: (
+    ink: #000, fg: #fff, dim: #c8c8c8, primary: #ffe600, accent: #00e5ff,
+    storage: #4da3ff, stash: #3dff7a, avb: #ffb000, sesh: #d68cff, warn: #ff5c5c, good: #3dff7a,
+    shape: sharp, glass: 1, blur: 0, edge: 100%, border: 2px, backdrop: flat, shadow: none, num: mono, head: inter,
+  ),
   paper: (
     scheme: light,
     ink: #f4efe4, fg: #2a241c, dim: #7c7264, primary: #9c3d1f, accent: #2f6f5e,
@@ -160,6 +215,80 @@ $themes: (
     ink: #efe3cf, fg: #3b2a1c, dim: #8a735b, primary: #c2562b, accent: #3d7f7a,
     storage: #3f6fa0, stash: #5d8a3a, avb: #a8670f, sesh: #8a5a9e, warn: #b23a2e, good: #5d8a3a,
     glass: 0.55, glow: 1.1, num: serif, head: grotesk,
+  ),
+  drafting: (
+    scheme: light,
+    ink: #f1f2ec, fg: #1f2d3d, dim: #66727f, primary: #c8102e, accent: #1d5fa8, line: #3f7cc0,
+    storage: #1d5fa8, stash: #2c7a4b, avb: #a86800, sesh: #6d4aa8, warn: #c8102e, good: #2c7a4b,
+    shape: square, glass: 0.72, blur: 0, edge: 30%, backdrop: blueprint, shadow: none, glow: 0.75,
+    num: mono, head: grotesk,
+  ),
+  greenbar: (
+    scheme: light,
+    ink: #f7faf3, fg: #1e2a1f, dim: #66746a, primary: #2f7a46, accent: #1f5f8b, line: #8fc79a,
+    storage: #1f5f8b, stash: #2f7a46, avb: #a06500, sesh: #6c4a9a, warn: #b3261e,
+    shape: square, glass: 0.92, blur: 0, edge: 25%, backdrop: bars, shadow: none,
+    font: mono, num: mono, head: mono,
+  ),
+  risograph: (
+    scheme: light,
+    ink: #f6f1e7, fg: #1c1a33, dim: #66627a, primary: #ff48b0, accent: #0078bf, on: #1c1a33,
+    storage: #0078bf, stash: #00a95c, avb: #d08600, sesh: #765ba7, warn: #e5273a, good: #00a95c,
+    shape: sharp, glass: 1, blur: 0, edge: 100%, border: 2px, backdrop: dots, shadow: hard, cast: #0078bf,
+    font: grotesk, num: grotesk, head: grotesk,
+  ),
+  swiss: (
+    scheme: light,
+    ink: #fafafa, fg: #0a0a0a, dim: #666, primary: #e30613, accent: #0a0a0a,
+    storage: #0057b8, stash: #1a7f37, avb: #b87400, sesh: #6e3fb0, warn: #e30613, good: #1a7f37,
+    shape: square, glass: 1, blur: 0, edge: 100%, backdrop: columns, shadow: none, num: inter, head: inter,
+  ),
+  chicago: (
+    scheme: light,
+    ink: #c0c0c0, fg: #000, dim: #4a4a4a, primary: #000080, accent: #008080, panel: #c0c0c0,
+    storage: #1c4fb0, stash: #007a00, avb: #955a00, sesh: #800080, warn: #c00000, good: #007a00,
+    shape: square, glass: 1, blur: 0, edge: 40%, border: 0, backdrop: desktop, shadow: bevel,
+    num: mono, head: inter,
+  ),
+  sumi: (
+    scheme: light,
+    ink: #f4efe6, fg: #1a1a1a, dim: #716b60, primary: #c73e1d, accent: #3b5e58,
+    storage: #34568b, stash: #4a7a46, avb: #a8731a, sesh: #6f4f8f, warn: #c73e1d, good: #4a7a46,
+    shape: sharp, glass: 0.85, blur: 0, edge: 14%, backdrop: wash, shadow: none,
+    num: serif, head: serif,
+  ),
+  kraft: (
+    scheme: light,
+    ink: #c9a77c, fg: #2b1d10, dim: #614a30, primary: #a3271f, accent: #2b4a6f, panel: #dcc19a,
+    storage: #2b4a6f, stash: #3d6b2e, avb: #824d00, sesh: #5e3d6e, warn: #a3271f, good: #3d6b2e,
+    shape: sharp, glass: 0.95, blur: 0, edge: 30%, backdrop: fibre,
+    font: mono, num: mono, head: serif,
+  ),
+  dot-matrix: (
+    scheme: light,
+    ink: #9bbc0f, fg: #0f380f, dim: #2f5a20, primary: #0f380f, accent: #306230, on: #9bbc0f, panel: #8bac0f,
+    storage: #1d4a5a, stash: #2a5a1a, avb: #5f4a00, sesh: #4a2f5a, warn: #7a1010, good: #2a5a1a,
+    shape: square, glass: 1, blur: 0, edge: 60%, border: 2px, backdrop: pixels, shadow: hard, cast: #306230,
+    font: mono, num: mono, head: mono,
+  ),
+  eink: (
+    scheme: light,
+    ink: #ecebe6, fg: #111, dim: #5e5e5e, primary: #111, accent: #444,
+    storage: #3a4a5c, stash: #3d5a40, avb: #6b5520, sesh: #54456a, warn: #8a1c1c, good: #3d5a40,
+    shape: soft, glass: 1, blur: 0, edge: 35%, backdrop: flat, shadow: none, num: mono, head: inter,
+  ),
+  glacier: (
+    scheme: light,
+    ink: #eaf4f8, fg: #10303d, dim: #587884, primary: #1e88b4, accent: #3fb0b6,
+    storage: #2b7fd4, stash: #2f9e7a, avb: #b87d12, sesh: #7a6bd1, warn: #d1495b, good: #2f9e7a,
+    glass: 0.5, blur: 24px, glow: 1.4, num: grotesk,
+  ),
+  memphis: (
+    scheme: light,
+    ink: #fdf6ec, fg: #1a1a1a, dim: #666, primary: #ff5e7e, accent: #00b3b8, on: #1a1a1a,
+    storage: #3d7bff, stash: #00a676, avb: #e09c00, sesh: #9b5de5, warn: #e63946, good: #00a676,
+    shape: soft, glass: 1, blur: 0, edge: 100%, border: 2px, backdrop: memphis, shadow: hard,
+    font: rounded, num: grotesk, head: rounded,
   ),
 );
 
@@ -222,6 +351,171 @@ $themes: (
     );
   }
 
+  @return w-drawn($kind, $t, $glow);
+}
+
+// The backdrops drawn as a picture rather than a wash: paper, plans, patterns.
+@function w-drawn($kind, $t, $glow) {
+  $ink: map.get($t, ink);
+  $p: map.get($t, primary);
+  $a: map.get($t, accent);
+  $s: map.get($t, storage);
+  $fg: map.get($t, fg);
+  $l: map.get($t, line) or $fg;
+
+  // Drafting film: a fine grid, a minor one every five, a major every twenty-five.
+  @if $kind == blueprint {
+    @return (
+      linear-gradient(w-alpha($l, 0.26 * $glow) 1px, transparent 1px) -1px -1px / 200px 200px,
+      linear-gradient(90deg, w-alpha($l, 0.26 * $glow) 1px, transparent 1px) -1px -1px / 200px 200px,
+      linear-gradient(w-alpha($l, 0.13 * $glow) 1px, transparent 1px) -1px -1px / 40px 40px,
+      linear-gradient(90deg, w-alpha($l, 0.13 * $glow) 1px, transparent 1px) -1px -1px / 40px 40px,
+      linear-gradient(w-alpha($l, 0.05 * $glow) 1px, transparent 1px) -1px -1px / 8px 8px,
+      linear-gradient(90deg, w-alpha($l, 0.05 * $glow) 1px, transparent 1px) -1px -1px / 8px 8px,
+      radial-gradient(1400px 900px at 50% 30%, w-alpha(#fff, 0.07), transparent 70%),
+      $ink
+    );
+  }
+
+  // A circle, a quarter disc, a bar and a diagonal, in the three primaries.
+  @if $kind == shapes {
+    @return (
+      linear-gradient(135deg, transparent calc(50% - 1px), w-alpha($fg, 0.16) 50%, transparent calc(50% + 1px)),
+      radial-gradient(circle at 92% 8%, w-alpha($a, 0.55) 0 240px, transparent 241px),
+      radial-gradient(circle at 0% 100%, w-alpha($p, 0.5) 0 300px, transparent 301px),
+      linear-gradient(90deg, transparent 6%, w-alpha($s, 0.5) 6% calc(6% + 28px), transparent calc(6% + 28px)),
+      $ink
+    );
+  }
+
+  // Continuous stationery: green bands, and the tractor holes down each side.
+  @if $kind == bars {
+    @return (
+      radial-gradient(circle, w-alpha($fg, 0.13) 5px, transparent 5.5px) 2px 0 / 24px 24px repeat-y,
+      radial-gradient(circle, w-alpha($fg, 0.13) 5px, transparent 5.5px) calc(100% - 2px) 0 / 24px 24px repeat-y,
+      linear-gradient(90deg, transparent 30px, w-alpha($fg, 0.12) 30px 31px, transparent 31px),
+      linear-gradient(270deg, transparent 30px, w-alpha($fg, 0.12) 30px 31px, transparent 31px),
+      repeating-linear-gradient(180deg, w-alpha($l, 0.3) 0 48px, transparent 48px 96px),
+      $ink
+    );
+  }
+
+  // Two halftone screens, a little out of register.
+  @if $kind == dots {
+    @return (
+      radial-gradient(w-alpha($p, 0.3) 1.3px, transparent 1.8px) 0 0 / 11px 11px,
+      radial-gradient(w-alpha($a, 0.22) 1.3px, transparent 1.8px) 4px 6px / 11px 11px,
+      radial-gradient(900px 600px at 0% 0%, w-alpha($p, 0.16), transparent 70%),
+      radial-gradient(900px 600px at 100% 100%, w-alpha($a, 0.14), transparent 70%),
+      $ink
+    );
+  }
+
+  // A sunburst rising from below the page, in gold.
+  @if $kind == fan {
+    @return (
+      repeating-conic-gradient(from -90deg at 50% 115%, w-alpha($p, 0.09) 0 0.6deg, transparent 0.6deg 7.5deg),
+      repeating-radial-gradient(circle at 50% 115%, transparent 0 46px, w-alpha($p, 0.1) 46px 47px),
+      radial-gradient(1200px 800px at 50% 110%, w-alpha($p, 0.12), transparent 70%),
+      $ink
+    );
+  }
+
+  // The desktop behind the windows.
+  @if $kind == desktop {
+    @return $a;
+  }
+
+  // Warning tape along the top and bottom, faint stripes between.
+  @if $kind == hazard {
+    @return (
+      repeating-linear-gradient(-45deg, $p 0 16px, $ink 16px 32px) 0 0 / 100% 10px no-repeat,
+      repeating-linear-gradient(-45deg, $p 0 16px, $ink 16px 32px) 0 100% / 100% 10px no-repeat,
+      repeating-linear-gradient(-45deg, w-alpha($p, 0.035) 0 60px, transparent 60px 120px),
+      $ink
+    );
+  }
+
+  // Stars on tiles of prime sizes, so they never line up, and two nebulae.
+  @if $kind == stars {
+    @return (
+      radial-gradient(circle at 23px 41px, $fg 0 1px, transparent 1.6px) 0 0 / 89px 89px,
+      radial-gradient(circle at 61px 13px, w-alpha($fg, 0.55) 0 0.7px, transparent 1.2px) 0 0 / 67px 67px,
+      radial-gradient(circle at 97px 131px, w-alpha($fg, 0.8) 0 1px, transparent 1.6px) 0 0 / 173px 173px,
+      radial-gradient(circle at 151px 67px, $a 0 1.4px, transparent 2px) 0 0 / 241px 241px,
+      radial-gradient(circle at 41px 211px, w-alpha($fg, 0.7) 0 0.8px, transparent 1.4px) 0 0 / 131px 131px,
+      radial-gradient(circle at 300px 19px, $p 0 1.5px, transparent 2.2px) 0 0 / 307px 307px,
+      radial-gradient(circle at 200px 300px, map.get($t, avb) 0 1.2px, transparent 1.8px) 0 0 / 389px 389px,
+      radial-gradient(1000px 600px at 85% 15%, w-alpha($p, 0.18 * $glow), transparent 70%),
+      radial-gradient(800px 500px at 10% 90%, w-alpha(map.get($t, sesh), 0.12 * $glow), transparent 70%),
+      $ink
+    );
+  }
+
+  // Contour lines round two summits.
+  @if $kind == contours {
+    @return (
+      repeating-radial-gradient(ellipse 130% 90% at 22% 28%, transparent 0 26px, w-alpha($l, 0.12) 26px 27px),
+      repeating-radial-gradient(ellipse 90% 120% at 78% 76%, transparent 0 34px, w-alpha($l, 0.1) 34px 35px),
+      radial-gradient(900px 700px at 22% 28%, w-alpha($p, 0.08), transparent 70%),
+      $ink
+    );
+  }
+
+  // Light through venetian blinds.
+  @if $kind == blinds {
+    @return (
+      repeating-linear-gradient(-14deg, transparent 0 46px, rgb(0 0 0 / 55%) 46px 74px),
+      radial-gradient(1100px 900px at 75% 0%, w-alpha($fg, 0.14), transparent 70%),
+      $ink
+    );
+  }
+
+  // Twelve columns, and nothing else.
+  @if $kind == columns {
+    @return (linear-gradient(90deg, w-alpha($fg, 0.06) 1px, transparent 1px) 0 0 / calc(100% / 12) 100%, $ink);
+  }
+
+  // An ink wash, and the seal.
+  @if $kind == wash {
+    @return (
+      radial-gradient(circle at calc(100% - 40px) 132px, w-alpha($p, 0.6) 0 22px, transparent 23px),
+      radial-gradient(ellipse 900px 420px at 88% 6%, w-alpha($fg, 0.09), transparent 70%),
+      radial-gradient(ellipse 700px 300px at 4% 70%, w-alpha($fg, 0.06), transparent 70%),
+      $ink
+    );
+  }
+
+  // Paper fibre, crossed.
+  @if $kind == fibre {
+    @return (
+      repeating-linear-gradient(17deg, w-alpha($fg, 0.03) 0 1px, transparent 1px 7px),
+      repeating-linear-gradient(-71deg, w-alpha(#fff, 0.05) 0 1px, transparent 1px 11px),
+      radial-gradient(1200px 800px at 50% 40%, w-alpha(#fff, 0.12), transparent 70%),
+      $ink
+    );
+  }
+
+  // The gaps between an LCD's pixels.
+  @if $kind == pixels {
+    @return (
+      linear-gradient(w-alpha($fg, 0.07) 1px, transparent 1px) 0 0 / 4px 4px,
+      linear-gradient(90deg, w-alpha($fg, 0.07) 1px, transparent 1px) 0 0 / 4px 4px,
+      $ink
+    );
+  }
+
+  // Confetti from 1982: a hatched patch, scattered dots, a ring.
+  @if $kind == memphis {
+    @return (
+      repeating-linear-gradient(45deg, w-alpha($p, 0.6) 0 3px, transparent 3px 12px) 12px 140px / 52px 220px no-repeat,
+      radial-gradient(circle at calc(100% - 40px) 210px, transparent 18px, w-alpha(map.get($t, avb), 0.75) 19px 27px, transparent 28px),
+      linear-gradient(w-alpha(map.get($t, storage), 0.6), w-alpha(map.get($t, storage), 0.6)) calc(100% - 28px) 70% / 24px 24px no-repeat,
+      radial-gradient(w-alpha($a, 0.35) 2.5px, transparent 3px) 0 0 / 44px 44px,
+      $ink
+    );
+  }
+
   @return $ink;
 }
 
@@ -230,7 +524,12 @@ $themes: (
   $p: map.get($t, primary);
 
   @if $kind == hard {
-    @return 6px 6px 0 $fg;
+    @return 6px 6px 0 (map.get($t, cast) or $fg);
+  }
+
+  // A window of 1995: light above and left, shade below and right.
+  @if $kind == bevel {
+    @return (inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #fff, inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf);
   }
 
   @if $kind == glow {

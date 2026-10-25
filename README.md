@@ -659,11 +659,15 @@ indicator. It is laid out for an iPhone 11 Pro held upright (375 px) and
 nothing narrower; no page scrolls sideways. There, Analysis's scopes go by
 short names (Fill, 30 d, 90 d, 12 mo, All) and the jars are a compact list.
 
-The palette in the header picks one of 21 themes, and `t` steps through them
+The palette in the header picks one of 41 themes, and `t` steps through them
 (`T` back): wits' own Aurora, then Nord, Dracula, Gruvbox, Solarized, Tokyo
-Night, Mocha, Rosé Pine, Phosphor, Synthwave, Void, Forest, Ember and Abyss in
-the dark, and Paper, Solarized Light, Latte, Sakura, Bauhaus, Daylight and Dune
-in the light. They differ in more than colour — Paper is cream and serif with
+Night, Mocha, Rosé Pine, Phosphor, Synthwave, Void, Forest, Ember, Abyss,
+Bauhaus Dark, Blueprint, Deco, Hazard, Amber, Noir, Starfield, Topo and
+Contrast in the dark, and Paper, Solarized Light, Latte, Sakura, Bauhaus,
+Daylight, Dune, Drafting, Greenbar, Risograph, Swiss, Chicago, Sumi, Kraft, Dot
+Matrix, E-Ink, Glacier and Memphis in the light. Some draw their paper:
+Blueprint a cyanotype grid in three line weights, Greenbar tractor-feed bands,
+Deco a gold sunburst, Noir light through the blinds, Topo contour lines. They differ in more than colour — Paper is cream and serif with
 square corners, Phosphor a green CRT in monospace with scanlines, Bauhaus hard
 black edges and offset shadows on a grid, Mocha and Latte rounded and pastel.
 Each keeps the account colours' meaning — storage blue, stash green, AVB amber —
