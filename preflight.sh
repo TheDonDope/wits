@@ -18,6 +18,26 @@ repo="TheDonDope/wits"
 say() { printf '%s\n' "$*"; }
 fail=0
 
+# package_comment says whether a Go file has a package comment revive will
+# accept on the file alone: revive's own verdict when it is installed,
+# otherwise whether the line above the package clause is a comment and the
+# comment says "Package <name> ".
+package_comment() {
+	local gobin
+	gobin="$(go env GOPATH)/bin"
+	if command -v revive >/dev/null 2>&1 || [ -x "$gobin/revive" ]; then
+		local conf
+		conf="$(mktemp)"
+		printf '[rule.package-comments]\n' >"$conf"
+		local out
+		out="$(PATH="$PATH:$gobin" revive -config "$conf" "$1" 2>&1)"
+		rm -f "$conf"
+		[ -z "$out" ]
+		return
+	fi
+	awk '/^package /{ok = (prev ~ /^\/\//) && seen; exit} /^\/\/ Package [A-Za-z0-9_]+ /{seen=1} {prev=$0} END{exit !ok}' "$1"
+}
+
 # base resolves the commit the changes are measured against.
 base() {
 	if [ -n "${BASE:-}" ]; then
@@ -125,20 +145,23 @@ check() {
 	fi
 
 	# Codacy runs revive one file at a time, so a brand-new .go file cannot
-	# see the package comment in doc.go: it needs one of its own, and with
-	# one it passes (pkg/chain/chain.go did).
+	# see the package comment in doc.go: it needs one of its own, attached to
+	# the package clause and of the form "// Package <name> ...". A comment
+	# with a blank line before the clause, or "Package name:", is not one —
+	# fourteen files of #133 learned that. revive itself says, when it is
+	# installed; otherwise the line above the clause is read.
 	fresh="$( (git diff --name-only --diff-filter=A "$b"...HEAD -- '*.go' 2>/dev/null; \
 	           git ls-files --others --exclude-standard -- '*.go') | sort -u | grep -v '_test\.go$' || true)"
 	bare=""
 	while IFS= read -r f; do
-		if [ -n "$f" ] && [ -f "$f" ] && ! grep -q '^// Package ' "$f"; then
+		if [ -n "$f" ] && [ -f "$f" ] && ! package_comment "$f"; then
 			bare="$bare$f"$'\n'
 		fi
 	done <<<"$fresh"
 	if [ -n "$bare" ]; then
-		say "✗ new .go files without a package comment of their own — Codacy's revive will flag them:"
+		say "✗ new .go files without a package comment revive can see — Codacy will flag them:"
 		while IFS= read -r f; do [ -n "$f" ] && say "    $f"; done <<<"$bare"
-		say "  start each with \"// Package <name> ...\""
+		say "  put \"// Package <name> ...\" directly above the package clause"
 		fail=1
 	elif [ -n "$fresh" ]; then
 		say "✓ new .go files carry their own package comment"

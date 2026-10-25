@@ -4,7 +4,7 @@
 # installed, user-locally, when asked.
 #
 # Building and testing need only Go. The rest is the loop around it: the
-# release (gh, git-chglog), the gate (shellcheck, lizard), and the tapes (vhs,
+# release (gh, git-chglog), the gate (shellcheck, lizard, revive), and the tapes (vhs,
 # gum, ttyd, ffmpeg, the Hack font, and a Chromium that can start). Each was
 # found missing at the moment it was needed; this finds them first.
 #
@@ -62,7 +62,7 @@ check() {
 	else
 		no gh "needed for pull requests and releases"
 	fi
-	for t in git-chglog vhs gum ttyd ffmpeg shellcheck; do
+	for t in git-chglog revive vhs gum ttyd ffmpeg shellcheck; do
 		if has "$t"; then ok "$t"; else no "$t" "./doctor.sh install"; fi
 	done
 	if venv_ready; then
@@ -93,6 +93,7 @@ install_tools() {
 	trap 'rm -rf "$scratch"' EXIT
 
 	has git-chglog || go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
+	has revive || go install github.com/mgechev/revive@latest
 	has vhs || go install github.com/charmbracelet/vhs@latest
 	has gum || go install github.com/charmbracelet/gum@latest
 
