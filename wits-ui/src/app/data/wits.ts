@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ENGINE } from './mode';
 
 import {
-  Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, Jar, LabelReading, Listing, Overview, Place, Verdict, Written,
+  Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, Verdict, Written,
 } from './models';
 
 /**
@@ -81,6 +81,16 @@ export class Wits {
   /** What a label's text says about a fill. It records nothing. */
   label(text: string): Promise<LabelReading> {
     return this.post<LabelReading>('label', { text });
+  }
+
+  /** A fill of one product or several, each with its price; VAT is added to the prices a gram when asked. */
+  fill(body: { lines: FillLine[]; vat: boolean; date?: string; note?: string }) {
+    return this.write<{ message: string }>('fill', body);
+  }
+
+  /** What an invoice's text says about a fill. It records nothing. */
+  invoice(text: string): Promise<InvoiceReading> {
+    return this.post<InvoiceReading>('invoice', { text });
   }
 
   weigh(body: { product: string; account: string; weighed: number }) {

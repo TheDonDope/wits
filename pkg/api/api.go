@@ -80,6 +80,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/rate", s.rate)
 	mux.HandleFunc("POST /api/buy", s.write(buy))
 	mux.HandleFunc("POST /api/label", s.label)
+	mux.HandleFunc("POST /api/invoice", s.readInvoice)
+	mux.HandleFunc("POST /api/fill", s.batch(recordFill))
 	mux.HandleFunc("POST /api/grind", s.write(grind))
 	mux.HandleFunc("POST /api/sesh", s.write(sesh))
 	mux.HandleFunc("POST /api/weigh", s.write(weigh))

@@ -37,6 +37,11 @@
                 "input": "public"
               },
               {
+                "glob": "pdf.worker.min.mjs",
+                "input": "node_modules/pdfjs-dist/legacy/build",
+                "output": "pdf"
+              },
+              {
                 "glob": "worker.min.js",
                 "input": "node_modules/tesseract.js/dist",
                 "output": "ocr"

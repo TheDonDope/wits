@@ -703,6 +703,31 @@ that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
 verified in place, outside the repository and after a restore, and the sealed
 report's footer read.
 
+### A fill of several strains, and invoices — Record's Fill tab
+
+A fill was one product. It is any number now, recorded as one batch
+(`Recorder.Fill`, `POST /api/fill`): a purchase for each, all or none, checked
+line by line before the catalog is touched so a refused fill leaves no new
+product behind, and then each one's price to the price log. A strain's price
+is a price a gram, or a line's total; 19% VAT — Germany's, which medical
+cannabis pays in full — is added to prices a gram when the fill says so, and
+the form's switch for it is on by default.
+
+Invoices are read too: one or more of the pharmacy's PDFs, on the device, by
+pdf.js (its legacy build, as the modern one needs `Promise.try`, which Safari has
+only from iOS 18.2). Only the text is sent, a row of the invoice a line, and
+`pkg/invoice` reads each product with its grams, its price a gram and its
+total, the date ordered and the order's number, and the totals with and
+without VAT; `POST /api/invoice` names each product as the jar it already is.
+An invoice's line prices include VAT — its lines add up to its gross total, to
+the cent on the one example — so a strain from one keeps the invoice's total
+and VAT is never added to it, even with its grams changed; the price is noted
+with the invoice's number. On the example, against the imported workbook: three
+strains, each matched to its jar past the invoice's extra words (GM, MOS, PAB)
+and past a jar of the same name at another strength, 351.80 € with VAT. The
+example stays out of the repository, as it names its patient; the tests use its
+rows without them.
+
 ### Reading the pharmacy label — Record's Fill tab
 
 **Read the label** on the Fill tab takes a photograph, the camera's on a phone,
