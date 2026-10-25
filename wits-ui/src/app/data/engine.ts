@@ -31,7 +31,12 @@ export interface Synced {
 }
 
 interface GoEngine {
-  request(method: string, url: string, body: string): Promise<{ status: number; type: string; body: string; bytes?: Uint8Array }>;
+  request(
+    method: string,
+    url: string,
+    body: string | Uint8Array,
+    type?: string,
+  ): Promise<{ status: number; type: string; body: string; bytes?: Uint8Array }>;
   sync(file: Uint8Array | null, key: string): Promise<Synced>;
   key(): Promise<string>;
 }
@@ -110,9 +115,13 @@ function request<T>(r: IDBRequest<T>): Promise<T> {
   });
 }
 
-/** Only the repository is kept: the stand-in folder and temporary files are not, nor the empty locks. */
+/**
+ * Every repository is kept, wherever the Repository page made it, and which
+ * one was open: the stand-in folder and temporary files are not, nor the
+ * empty locks.
+ */
 export function kept(path: string): boolean {
-  return path.startsWith('/wits/') && !path.endsWith('.lock');
+  return !path.startsWith('/.remote/') && !path.startsWith('/.tmp/') && !path.endsWith('.lock');
 }
 
 function script(src: string): Promise<void> {
@@ -171,7 +180,7 @@ async function start(): Promise<GoEngine> {
     }
   };
   return {
-    request: (method, url, body) => flush(inner.request(method, url, body)),
+    request: (method, url, body, type) => flush(inner.request(method, url, body, type)),
     sync: (file, key) => flush(inner.sync(file, key)),
     key: () => inner.key(),
   };
@@ -188,8 +197,11 @@ export function engine(): Promise<GoEngine> {
 /** Answers one API call from the engine, the way wits-server would. */
 async function answer(req: HttpRequest<unknown>): Promise<HttpResponse<unknown> | HttpErrorResponse> {
   const e = await engine();
-  const body = req.body === null ? '' : JSON.stringify(req.body);
-  const res = await e.request(req.method, req.urlWithParams, body);
+  // A workbook goes across as its bytes, in its own type; anything else is JSON.
+  const res =
+    req.body instanceof Blob
+      ? await e.request(req.method, req.urlWithParams, new Uint8Array(await req.body.arrayBuffer()), req.body.type)
+      : await e.request(req.method, req.urlWithParams, req.body === null ? '' : JSON.stringify(req.body));
   if (res.bytes) {
     // The report: bytes, not JSON, handed over as the blob that was asked for.
     return new HttpResponse({ status: res.status, body: new Blob([res.bytes.slice()], { type: res.type }), url: req.url });

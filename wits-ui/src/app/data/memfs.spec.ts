@@ -126,10 +126,12 @@ describe('MemFS', () => {
 });
 
 describe('kept', () => {
-  it('keeps the repository and nothing else', () => {
+  it('keeps the repositories and which was open, and nothing else', () => {
     expect(kept('/wits/.wits/journal.ndjson')).toBe(true);
+    expect(kept('/2025/.wits/journal.ndjson')).toBe(true);
+    expect(kept('/.opened')).toBe(true);
     expect(kept('/wits/.wits/journal.ndjson.lock')).toBe(false);
-    expect(kept('/remote/wits.age')).toBe(false);
-    expect(kept('/tmp/remote.key')).toBe(false);
+    expect(kept('/.remote/wits.age')).toBe(false);
+    expect(kept('/.tmp/remote.key')).toBe(false);
   });
 });

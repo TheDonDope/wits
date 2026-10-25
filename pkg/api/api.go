@@ -151,6 +151,10 @@ func (s *Server) current() *repo.Repo {
 	return s.repo
 }
 
+// Repo is the repository being served: the phone's engine syncs the one the
+// page has open, and remembers it for the next time the page loads.
+func (s *Server) Repo() *repo.Repo { return s.current() }
+
 // serve makes r the repository being served, and forgets the last one's
 // snapshot. A request already under way finishes with the one it began on.
 func (s *Server) serve(r *repo.Repo) {

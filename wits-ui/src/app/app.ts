@@ -38,7 +38,7 @@ const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
     RouterLinkActive,
     RouterOutlet,
   ],
-  host: { '(window:keydown)': 'keys.handle($event)' },
+  host: { '(window:keydown)': 'keys.handle($event)', '[class.ninth]': 'links.length > 8' },
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,11 +60,10 @@ export class App {
     { path: '/jars', label: 'Jars', icon: 'inventory_2' },
     { path: '/history', label: 'History', icon: 'insights' },
     { path: '/costs', label: 'Costs', icon: 'euro' },
-    // The phone keeps its own copy and syncs it by hand; a computer's server
-    // opens whichever repository is wanted, and imports into it.
-    ...(ENGINE
-      ? [{ path: '/sync', label: 'Sync', icon: 'sync' }]
-      : [{ path: '/repository', label: 'Repository', icon: 'folder_open' }]),
+    // Both open whichever repository is wanted, and import into it; the
+    // phone keeps its own copies, and syncs them by hand.
+    { path: '/repository', label: 'Repository', icon: 'folder_open' },
+    ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
   ];
   /** A phone's dock and its More sheet: the same links, split for a thumb. */
   protected readonly dock = this.links.filter((l) => DOCK.includes(l.path));

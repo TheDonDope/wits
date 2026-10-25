@@ -1,15 +1,14 @@
-//go:build !js
-
-// Package api serves a repository over HTTP; this is its desk, what only a
-// computer's server does — open another repository, browse the folders to find
-// one, and import a workbook sent from the browser. The phone has one repository and no workbooks to read, and the
-// spreadsheet reader would weigh on its engine, so none of this is built for
-// it (desk_js.go).
+// Package api serves a repository over HTTP; this is its desk — open another
+// repository, browse the folders to find one, and import a workbook sent from
+// the browser. The phone has it too, on the folders of its own file system:
+// the spreadsheet reader costs its engine 450 KB to download, gzipped, and
+// spares a phone the computer it would otherwise need to start from a workbook.
 package api
 
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -78,6 +77,12 @@ func (s *Server) open(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err)
 		return
 	}
+	if req.Create {
+		if err := made(req.Path); err != nil {
+			fail(w, http.StatusBadRequest, err)
+			return
+		}
+	}
 	dir, err := folder(req.Path)
 	if err != nil {
 		fail(w, http.StatusBadRequest, err)
@@ -101,6 +106,19 @@ func openOrInit(dir string, create bool) (*repo.Repo, error) {
 		return nil, fmt.Errorf("no repository in %s: create one there, or pick a folder marked wits", dir)
 	}
 	return repo.Discover(dir)
+}
+
+// made makes the folder a new repository is asked for in, when it is not
+// there yet and the one above it is: a repository in a new folder is one step,
+// not two. Anything else is left for folder to judge.
+func made(path string) error {
+	if !filepath.IsAbs(path) {
+		return nil
+	}
+	if _, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	return os.Mkdir(filepath.Clean(path), 0o700)
 }
 
 // folder checks that a path names a directory, and gives it absolute and

@@ -2,7 +2,9 @@
 # The phone's engine against the CLI, through a shared folder, both ways:
 # the engine starts the folder and records; wits pull takes it, records, and
 # pushes; the engine pulls that in. Every journal must verify, and the two must
-# end the same. Run by `make wasm-check`, after `make build wasm`.
+# end the same. Then the phone imports the workbook into a repository of its
+# own, and must hold what wits import makes of it. Run by `make wasm-check`,
+# after `make build wasm`.
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -26,7 +28,8 @@ cd "$work/deck"
 "$wits" fsck | tail -1
 
 echo "· the phone pulls the deck's grind"
-check "$work/share/phone.key" >"$work/second.json"  # the same phone, its files kept
+book="$here/assets/Tracking.2022.cleaned.xlsx"
+WITS_WORKBOOK="$book" check "$work/share/phone.key" >"$work/second.json"  # the same phone, its files kept
 "$wits" pull
 "$wits" fsck | tail -1
 fetched=$(node -p "require('$work/second.json').pulled.fetched")
@@ -37,4 +40,13 @@ echo "phone pulled $fetched, holds $total; deck holds $deck"
 pdf=$(node -p "const r = require('$work/second.json').report; r.type + ' ' + r.head + ' ' + r.tail")
 echo "the phone's report: $pdf"
 [ "$pdf" = "application/pdf %PDF- %%EOF" ] || { echo "✗ the report did not come across as a PDF"; exit 1; }
+
+echo "· the phone imports the workbook into a new repository"
+mkdir "$work/book" && cd "$work/book"
+"$wits" init . >/dev/null
+"$wits" import "$book" --commit >/dev/null 2>&1
+cli=$("$wits" log --oneline | wc -l)
+phone=$(node -p "const b = require('$work/second.json').book; [b.made, b.committed, b.entries, b.listed.join(','), b.back].join(' ')")
+echo "the phone: $phone; wits import: $cli entries"
+[ "$phone" = "200 true $cli book,wits /wits" ] || { echo "✗ the phone's import differs"; exit 1; }
 echo "✓ the phone and the deck agree"

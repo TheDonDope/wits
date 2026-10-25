@@ -631,12 +631,11 @@ the repository: an entry made with the command line shows within a few seconds.
 
 The **Repository** tab (under More on a phone) is where the server is pointed.
 Browse this computer's folders to open another repository, those that are one
-marked *wits*, or make one in an empty folder; the server serves it from then
+marked *wits*, or make one in an empty folder or a new one; the server serves it from then
 on, and every page reads it. There, too, a tracking workbook can be
 **imported** from the browser: it is read and reported first, as `wits import`
-reports it, and written only when you import, into an empty journal only. It
-belongs to `wits-server`: the phone's own copy, on GitHub Pages, has the one
-repository and no tab for it.
+reports it, and written only when you import, into an empty journal only. The
+phone has the tab too, on its own storage: see below.
 
 A fill can be read off the pharmacy label: **Read the label** on the Fill tab
 takes a photograph and fills in the product and the grams, matched to a jar you
@@ -777,8 +776,11 @@ save it over the folder's copy yourself. The key and the journal never leave
 the phone except inside that encrypted file. `make pages` builds what Pages
 serves, and `make wasm-check` syncs the engine with the command line both ways.
 
-The phone has **Sync** where a computer has **Repository**: it holds the one
-journal it keeps, so there is no other to open and no workbook to import. The
+The phone has the **Repository** tab too, beside **Sync**, on its own storage
+in the browser: the first repository is `/wits`, others can be made in new
+folders beside it and opened in turn, and a tracking workbook can be imported
+into an empty one, with no computer involved. The phone reopens whichever was
+open last, and Sync syncs that one, each repository with its own key. The
 build a page is, `git describe` when it was made (`wits-ui v0.82.0`, or
 `v0.82.0-3-gabc1234` between releases), is at the end of the help line and at
 the foot of a phone's More sheet. The phone's page is cached for offline use,

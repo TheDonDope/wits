@@ -1,5 +1,3 @@
-//go:build !js
-
 package api
 
 import (
@@ -50,6 +48,13 @@ func TestOpenRefusesWhatIsNotARepository(t *testing.T) {
 	assert.DirExists(t, filepath.Join(bare, repo.Dir), "Asked to, it makes one")
 	assert.Equal(t, http.StatusConflict, call(t, s, "POST", "/api/repo", `{"path": "`+bare+`", "create": true}`).Code,
 		"but never over one")
+
+	w = call(t, s, "POST", "/api/repo", `{"path": "`+bare+`/new", "create": true}`)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.DirExists(t, filepath.Join(bare, "new", repo.Dir), "A new folder is made for it")
+	assert.Equal(t, http.StatusBadRequest,
+		call(t, s, "POST", "/api/repo", `{"path": "`+bare+`/no/such", "create": true}`).Code,
+		"but only in a folder that is there")
 }
 
 func TestDirs(t *testing.T) {

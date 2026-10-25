@@ -235,10 +235,13 @@ Angular client (signals, zoneless, standalone components, `httpResource`).
   (the `pages` configuration swaps in `mode.pages.ts`). Anything the server
   does, the phone does by the same code — so a new endpoint needs nothing
   phone-side, but a new `os` call Go makes may need MemFS to answer it, and
-  `make wasm-check` is what finds out. What only a computer's server does —
-  opening another repository, browsing folders, importing a workbook — lives in
-  `pkg/api/desk.go` behind `//go:build !js`, its test file too, so the phone's
-  engine never carries the spreadsheet reader; `desk_js.go` is its empty twin.
+  `make wasm-check` is what finds out. The phone has the desk too
+  (`pkg/api/desk.go`: opening another repository, browsing folders, importing
+  a workbook) on its own file system, home `/`, the first repository at
+  `/wits`; the spreadsheet reader costs its engine 450 KB gzipped. Its
+  scratch folders are hidden (`/.remote`, `/.tmp`) so the Repository page
+  lists only repositories, and `kept` in `data/engine.ts` keeps everything
+  else in IndexedDB — a new scratch path must be added to both.
 - **Colours are the theme's.** A theme is data in `src/themes.scss`, listed for
   the picker in `data/theme.ts` (the two must agree, id for id). Components
   read `var(--w-…)` or `color-mix` one — never a literal, or one theme in

@@ -2,7 +2,9 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
@@ -25,14 +27,15 @@ function recalled(): string[] {
 }
 
 /**
- * Which repository the server serves, and what goes into it: open another
- * from the folders on this computer, or make one in an empty folder; and
+ * Which repository is open, and what goes into it: open another from the
+ * folders on this computer — or on the phone's own file system, where they
+ * are kept in the browser — or make one, in a folder or a new one; and
  * import a tracking workbook, read first and reported as wits import reports
  * it, written only when asked and only into an empty journal.
  */
 @Component({
   selector: 'w-repository',
-  imports: [DecimalPipe, MatButtonModule, MatIconModule, MatTooltipModule, RouterLink],
+  imports: [DecimalPipe, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTooltipModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="glass pad">
@@ -94,6 +97,15 @@ function recalled(): string[] {
               <mat-icon>create_new_folder</mat-icon>Make a repository here
             </button>
           }
+        </div>
+        <div class="row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="new">
+            <mat-label>A new folder</mat-label>
+            <input matInput [value]="fresh()" (input)="fresh.set(text($event))" (keydown.enter)="make(l.path)" />
+          </mat-form-field>
+          <button mat-stroked-button (click)="make(l.path)" [disabled]="busy() || !freshPath(l.path)">
+            <mat-icon>create_new_folder</mat-icon>Make a repository in it
+          </button>
         </div>
       }
       @if (browseError(); as e) { <p class="bad">{{ e }}</p> }
@@ -182,6 +194,7 @@ function recalled(): string[] {
     .go:hover { background: color-mix(in srgb, var(--w-fg) 5%, transparent); }
     .go mat-icon { color: var(--w-dim); }
     .repo .go mat-icon { color: var(--w-primary); }
+    .new { flex: 1 1 200px; max-width: 320px; }
     .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; }
     .figures div { display: grid; gap: 2px; }
@@ -204,6 +217,8 @@ export class Repository {
   protected readonly recent = signal(recalled());
   protected readonly busy = signal(false);
   protected readonly browseError = signal('');
+  /** The name of a folder to make a repository in, inside the one browsed. */
+  protected readonly fresh = signal('');
   protected readonly file = signal<File | null>(null);
   protected readonly verdict = signal<Verdict | null>(null);
   protected readonly importError = signal('');
@@ -258,12 +273,36 @@ export class Repository {
     const ref = this.dialog.open<ConfirmDialog, Confirm, boolean>(ConfirmDialog, {
       data: {
         title: 'Make a repository here?',
-        body: `A .wits folder goes into ${path}, with an empty journal, and the server serves it from then on.`,
+        body: `A .wits folder goes into ${path}, with an empty journal, and every page reads it from then on.`,
         yes: 'Make it',
         no: 'Cancel',
       },
     });
     return firstValueFrom(ref.afterClosed());
+  }
+
+  protected text(ev: Event): string {
+    return (ev.target as HTMLInputElement).value;
+  }
+
+  /** Where a repository in the new folder would go: a name, not a path. */
+  protected freshPath(parent: string): string {
+    const name = this.fresh().trim();
+    if (!name || name.includes('/') || name === '.' || name === '..') {
+      return '';
+    }
+    return `${parent.replace(/\/+$/, '')}/${name}`;
+  }
+
+  protected async make(parent: string): Promise<void> {
+    const path = this.freshPath(parent);
+    if (!path || this.busy()) {
+      return;
+    }
+    await this.open(path, true);
+    if (!this.browseError()) {
+      this.fresh.set('');
+    }
   }
 
   protected async choose(ev: Event): Promise<void> {

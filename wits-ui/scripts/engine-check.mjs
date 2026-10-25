@@ -10,6 +10,10 @@
 // With a key, the share's wits.age is pulled first; without one, the engine
 // is the first device. Either way it grinds once and pushes, leaving the
 // share's file for the CLI to pull, and prints what it saw as JSON.
+//
+// With WITS_WORKBOOK naming a workbook, it then makes a second repository in a
+// new folder, imports the workbook into it as the Repository page does, and
+// opens the first again.
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
@@ -61,14 +65,33 @@ const second = await engine.sync(null, '');
 out.pushed = second.pushed;
 out.overview = (await call('GET', '/api/journal?limit=1')).body.total;
 await writeFile(join(share, 'wits.age'), second.file);
+if (process.env.WITS_WORKBOOK) {
+  out.book = await book(process.env.WITS_WORKBOOK);
+}
 if (!keyFile) {
   await writeFile(join(share, 'phone.key'), (await engine.key()) + '\n', { mode: 0o600 });
 }
 out.files = memfs.paths().sort();
 const kept = {};
-for (const path of out.files.filter((p) => p.startsWith('/wits/') && !p.endsWith('.lock'))) {
+// data/engine.ts's kept: what the page keeps in IndexedDB.
+const keep = (p) => !p.startsWith('/.remote/') && !p.startsWith('/.tmp/') && !p.endsWith('.lock');
+for (const path of out.files.filter(keep)) {
   kept[path] = Buffer.from(memfs.get(path)).toString('base64');
 }
 await writeFile(state, JSON.stringify(kept), { mode: 0o600 });
 console.log(JSON.stringify(out, null, 1));
 process.exit(0);
+
+/** A repository in a new folder, the workbook read and imported into it, and the first opened again. */
+async function book(path) {
+  const xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const data = new Uint8Array(await readFile(path));
+  const made = await call('POST', '/api/repo', JSON.stringify({ path: '/book', create: true }));
+  const read = await engine.request('POST', '/api/import', data, xlsx);
+  const imported = await engine.request('POST', '/api/import?commit=1', data, xlsx);
+  const place = (await call('GET', '/api/repo')).body;
+  const listed = (await call('GET', '/api/dirs')).body.dirs.map((d) => d.name);
+  const back = (await call('POST', '/api/repo', JSON.stringify({ path: '/wits' }))).body;
+  return { made: made.status, read: JSON.parse(read.body).entries, committed: JSON.parse(imported.body).committed,
+    entries: place.entries, listed, back: back.path };
+}
