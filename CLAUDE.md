@@ -66,8 +66,11 @@ The gate refuses any **new** issue. `./preflight.sh` mirrors it:
   `pkg/tui` are the house pattern.
 - **A new non-test `.go` file needs its own package comment.** Revive runs one
   file at a time and can't see `doc.go`, so a file without one is flagged; a
-  file with one passes (`pkg/chain/chain.go`, a new package, went through with
-  no new issue in #131). Put code in the file it belongs in, not the nearest
+  file with one passes (`pkg/chain/chain.go` in #131, the files split out in
+  #133). It must sit directly on the package clause, no blank line between,
+  and read `// Package <name> ...` — `Package name:` is not the form. Preflight
+  runs revive on each new file (`./doctor.sh install` fetches it). Put code in
+  the file it belongs in, not the nearest
   existing one: commands filed under other commands' names (`carry` in
   `status.go`) and four concerns in `report.go` came of avoiding new files.
 - **Shell scripts** go through shellcheck — skill helpers in `.claude/` too.
