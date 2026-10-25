@@ -37,6 +37,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/record"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/report"
+	"github.com/TheDonDope/wits/pkg/research"
 	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/version"
 	"github.com/TheDonDope/wits/pkg/workspace"
@@ -55,6 +56,11 @@ type Server struct {
 	repo   *repo.Repo
 	cached *workspace.Workspace
 	stamp  string
+
+	// Where a terpene lookup asks, and what asks: the web, unless a test
+	// stands in for it.
+	sites  research.Sites
+	client *http.Client
 }
 
 // New returns a server for the repository, serving the built interface from
@@ -64,7 +70,7 @@ func New(r *repo.Repo, ui string) *Server {
 	// The journal is created on first use; creating it here, before any
 	// request, keeps two first requests from racing to create it.
 	r.Journal()
-	return &Server{repo: r, ui: ui}
+	return &Server{repo: r, ui: ui, sites: research.Web, client: &http.Client{Timeout: researchTimeout}}
 }
 
 // Handler routes the API, and the interface when there is one.
@@ -73,6 +79,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/overview", s.read(overviewOf))
 	mux.HandleFunc("GET /api/journal", s.journal)
 	mux.HandleFunc("GET /api/jars", s.read(jarsOf))
+	mux.HandleFunc("GET /api/jars/{slug}", s.jarAt)
+	mux.HandleFunc("GET /api/jars/{slug}/research", s.research)
+	mux.HandleFunc("PUT /api/jars/{slug}/terpenes", s.terpenes)
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
 	mux.HandleFunc("POST /api/devices", s.addDevice)
@@ -684,7 +693,11 @@ type overview struct {
 	Now     time.Time `json:"now"`
 	ChainOK bool      `json:"chain_ok"`
 	Fill    *fill     `json:"fill"`
-	Shelf   shelf     `json:"shelf"`
+	// Fills is every fill still holding grams of its own, newest first: the
+	// fill in progress, then each older one not yet emptied. Each speaks for
+	// itself — its own grams, its own rate.
+	Fills []*fill `json:"fills"`
+	Shelf shelf   `json:"shelf"`
 }
 
 // fill is the cycle in progress, in the fill's scope: its own grams.
@@ -757,7 +770,16 @@ type shelf struct {
 }
 
 func overviewOf(ws *workspace.Workspace) any {
-	out := overview{Now: ws.OpenedAt, ChainOK: ws.Chain == nil, Fill: fillOf(ws)}
+	out := overview{Now: ws.OpenedAt, ChainOK: ws.Chain == nil, Fill: fillOf(ws), Fills: []*fill{}}
+	if out.Fill != nil {
+		out.Fills = append(out.Fills, out.Fill)
+		current := ws.Cycle()
+		for i := len(ws.State.Cycles) - 1; i >= 0; i-- {
+			if c := &ws.State.Cycles[i]; c.Seq != current.Seq && c.Open() && !c.Start.After(ws.OpenedAt) {
+				out.Fills = append(out.Fills, cycleFill(ws, c))
+			}
+		}
+	}
 	var storage, stash, avb journal.Centigrams
 	for _, b := range ws.State.Balances {
 		storage += journal.CG(b.Storage)
@@ -776,6 +798,19 @@ func fillOf(ws *workspace.Workspace) *fill {
 	if c == nil {
 		return nil
 	}
+	f := cycleFill(ws, c)
+	f.ShelfProjection = projectionOf(c, ws.OpenedAt)
+	if plan, ok := ledger.PlanRefill(c, ws.OpenedAt, ws.Repo.Config.Lead()); ok {
+		f.Refill = &refill{OrderBy: plan.OrderBy.Format(time.DateOnly), EmptyOn: plan.EmptyOn.Format(time.DateOnly),
+			LeadDays: plan.Lead, Overdue: plan.Overdue(ws.OpenedAt)}
+	}
+	return f
+}
+
+// cycleFill is one fill in its own scope: its grams, its rate, its jars.
+// The shelf's projection and the refill belong to the fill in progress, and
+// fillOf adds them.
+func cycleFill(ws *workspace.Workspace, c *ledger.Cycle) *fill {
 	stats := ledger.Summarise(c.Standing)
 	remaining := ws.State.FillOnShelf(c)
 	f := &fill{
@@ -787,14 +822,12 @@ func fillOf(ws *workspace.Workspace) *fill {
 		PerActiveDay: stats.PerActiveDay,
 		DaysWorth:    stats.DaysWorth(float64(remaining)),
 		Products:     []fillProduct{},
+		// Every fill answers a projection, empty for all but the one in
+		// progress, so a client reads one shape.
+		ShelfProjection: projection{History: []point{}, Projected: []point{}},
 	}
 	if c.Purchased > 0 {
 		f.RemainingPct = float64(remaining / c.Purchased)
-	}
-	f.ShelfProjection = projectionOf(c, ws.OpenedAt)
-	if plan, ok := ledger.PlanRefill(c, ws.OpenedAt, ws.Repo.Config.Lead()); ok {
-		f.Refill = &refill{OrderBy: plan.OrderBy.Format(time.DateOnly), EmptyOn: plan.EmptyOn.Format(time.DateOnly),
-			LeadDays: plan.Lead, Overdue: plan.Overdue(ws.OpenedAt)}
 	}
 	grams, jars, cycles := ws.State.CarriedOnShelf(c)
 	f.Carried = carried{Grams: float64(grams), Jars: jars, Cycles: cycles}
@@ -929,6 +962,7 @@ type jar struct {
 	Cultivar     string    `json:"cultivar,omitempty"`
 	THC          float64   `json:"thc,omitempty"`
 	CBD          float64   `json:"cbd,omitempty"`
+	Terpenes     []string  `json:"terpenes"`
 	Storage      float64   `json:"storage"`
 	Stash        float64   `json:"stash"`
 	AVB          float64   `json:"avb"`
@@ -960,7 +994,8 @@ func jarsOf(ws *workspace.Workspace) any {
 		}
 		b := ws.State.Balances[slug]
 		j := jar{Slug: slug, Name: ws.ProductName(slug), Storage: b.Storage, Stash: b.Stash, AVB: b.AVB,
-			Bought: bought[slug].Grams(), Ground: ground[slug].Grams(), Fills: fills[slug], LastSeen: seen[slug]}
+			Bought: bought[slug].Grams(), Ground: ground[slug].Grams(), Fills: fills[slug], LastSeen: seen[slug],
+			Terpenes: []string{}}
 		describe(&j, ws.Products, slug)
 		out = append(out, j)
 	}
@@ -972,6 +1007,7 @@ func jarsOf(ws *workspace.Workspace) any {
 func describe(j *jar, products *catalog.Catalog, slug string) {
 	if p := products.Exact(slug); p != nil {
 		j.Manufacturer, j.Cultivar, j.THC, j.CBD = p.Manufacturer, p.Cultivar, p.THC, p.CBD
+		j.Terpenes = append(j.Terpenes, p.Terpenes...)
 	}
 }
 

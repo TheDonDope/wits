@@ -10,15 +10,17 @@ import { PriceWalk } from './price-walk';
 import { RateQueue } from './rate-queue';
 import { openRecord } from './record';
 import { StashClear } from './stash-clear';
+import { TerpeneQueue } from './terpene-queue';
 
 /**
  * Everything left undone, in one place: sessions to rate, pickups to price,
  * stashes to clear, AVB to collect — each shown only while there is some,
- * and counted on the tab — and the jars still sealed, to weigh now and then.
+ * and counted on the tab — and the jars still sealed, to weigh now and then,
+ * and those with no terpene profile, to look up.
  */
 @Component({
   selector: 'w-forgot',
-  imports: [DecimalPipe, MatButtonModule, MatIconModule, PriceWalk, RateQueue, StashClear],
+  imports: [DecimalPipe, MatButtonModule, MatIconModule, PriceWalk, RateQueue, StashClear, TerpeneQueue],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="glass head">
@@ -82,6 +84,15 @@ import { StashClear } from './stash-clear';
       </section>
     }
 
+    @if (todo.terpenes().length) {
+      <section class="glass pad">
+        <header><span class="eyebrow">terpene profile</span><span class="chip num">{{ todo.terpenes().length }}</span></header>
+        <p class="dim note">Jars with no terpenes written down. Each is looked up on the web — a search for the product as the
+          pharmacy sells it, and its strain on Leafly — and what is found waits here to be kept. Offered, never counted.</p>
+        <w-terpene-queue [jars]="todo.terpenes()" />
+      </section>
+    }
+
     @if (done().length) {
       <p class="dim done"><mat-icon>check_circle</mat-icon> {{ done().join(' · ') }}</p>
     }
@@ -127,6 +138,7 @@ export class Forgot {
     ...(this.unpricedAtAll() ? [] : ['every purchase priced']),
     ...(this.todo.stashes().length ? [] : ['no stash left behind']),
     ...(this.todo.avb().length ? [] : ['no AVB waiting']),
+    ...(this.todo.terpenes().length ? [] : ['every terpene profile written down']),
   ]);
 
   /** A device's name, or what a session that named none is called. */

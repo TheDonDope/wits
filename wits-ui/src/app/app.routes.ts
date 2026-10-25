@@ -16,6 +16,8 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'jars' },
       { path: 'jars', loadComponent: () => import('./pages/jars').then((m) => m.Jars), title: 'wits · jars' },
+      // One jar in full, off a card on the shelf or a jar on the dashboard.
+      { path: 'jars/:slug', loadComponent: () => import('./pages/jar').then((m) => m.JarPage), title: 'wits · jar' },
       { path: 'journal', loadComponent: () => import('./pages/journal').then((m) => m.Journal), title: 'wits · journal' },
       { path: 'devices', loadComponent: () => import('./pages/devices').then((m) => m.Devices), title: 'wits · devices' },
     ],
