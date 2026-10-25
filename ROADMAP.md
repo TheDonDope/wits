@@ -1099,7 +1099,6 @@ AVB tracking needed no format change, since the bundle already carried both
 entry types, so the two did not land together as planned. They are two
 releases: AVB in v0.60.0, prices with the one format change in v0.61.0.
 
-
 The browser breaks the costs down (`prices.Insight`, `pkg/prices/insights.go`;
 `/api/costs` gives them beside the totals):
 
