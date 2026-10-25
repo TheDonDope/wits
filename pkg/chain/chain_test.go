@@ -55,22 +55,26 @@ func TestAppend(t *testing.T) {
 
 	first, err := l.Append(note{About: "a", At: at.Add(time.Millisecond), Text: "one"})
 	require.NoError(t, err)
-	second, err := l.Append(note{About: "b", Text: "two"})
+	second, err := l.Append(note{About: "b", At: at, Text: "two"})
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, first.Seq)
 	assert.Equal(t, at, first.At, "Should keep the time to the second")
 	assert.Equal(t, 2, second.Seq)
 	assert.Equal(t, first.Hash, second.Prev, "Should chain each onto the one before")
-	assert.False(t, second.At.IsZero(), "Should date an undated record now")
 	require.NoError(t, l.Verify())
 	all, err := l.All()
 	require.NoError(t, err)
 	assert.Equal(t, []note{first, second}, all)
 
+	before := time.Now().Truncate(time.Second)
+	undated, err := l.Append(note{About: "b", Text: "three"})
+	require.NoError(t, err)
+	assert.False(t, undated.At.Before(before), "Should date an undated record now")
+
 	_, err = l.Append(note{About: "c"})
 	assert.Error(t, err, "Should refuse a record that is not well formed")
-	assert.Equal(t, 2, lines(t, l), "and write nothing for it")
+	assert.Equal(t, 3, lines(t, l), "and write nothing for it")
 }
 
 func TestAppendAll(t *testing.T) {
