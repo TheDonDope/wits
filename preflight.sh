@@ -4,7 +4,7 @@
 #
 # The gate refuses any new issue, and its rules are learned the hard way one
 # push at a time: a function past 50 lines or complexity 15, a new .go file
-# flagged for a package comment revive cannot see in doc.go. This runs the
+# without a package comment of its own (revive cannot see doc.go). This runs the
 # same checks against what changed, before the round trip.
 #
 #   ./preflight.sh             check the working tree against main
@@ -125,14 +125,23 @@ check() {
 	fi
 
 	# Codacy runs revive one file at a time, so a brand-new .go file cannot
-	# see the package comment in doc.go and gets flagged for lacking one.
-	# Code that can live in an existing file dodges the whole conversation.
+	# see the package comment in doc.go: it needs one of its own, and with
+	# one it passes (pkg/chain/chain.go did).
 	fresh="$( (git diff --name-only --diff-filter=A "$b"...HEAD -- '*.go' 2>/dev/null; \
 	           git ls-files --others --exclude-standard -- '*.go') | sort -u | grep -v '_test\.go$' || true)"
-	if [ -n "$fresh" ]; then
-		say "! new non-test .go files — Codacy's revive will ask each for a package comment:"
-		while IFS= read -r f; do say "    $f"; done <<<"$fresh"
-		say "  prefer growing an existing file, or expect the flag"
+	bare=""
+	while IFS= read -r f; do
+		if [ -n "$f" ] && [ -f "$f" ] && ! grep -q '^// Package ' "$f"; then
+			bare="$bare$f"$'\n'
+		fi
+	done <<<"$fresh"
+	if [ -n "$bare" ]; then
+		say "✗ new .go files without a package comment of their own — Codacy's revive will flag them:"
+		while IFS= read -r f; do [ -n "$f" ] && say "    $f"; done <<<"$bare"
+		say "  start each with \"// Package <name> ...\""
+		fail=1
+	elif [ -n "$fresh" ]; then
+		say "✓ new .go files carry their own package comment"
 	fi
 
 	# The browser client is linted with its types, which Codacy cannot see —
