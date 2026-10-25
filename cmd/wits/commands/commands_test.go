@@ -2,7 +2,6 @@ package commands
 
 import (
 	"bytes"
-	"github.com/TheDonDope/wits/pkg/repo"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/TheDonDope/wits/pkg/repo"
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/seal"
