@@ -466,3 +466,258 @@ func TerpeneKey(name string) string {
 	}
 	return strings.TrimSuffix(strings.TrimSpace(k), "e")
 }
+
+// Label is what a pharmacy label says about a fill, as far as it can be read
+// from the text an OCR made of a photograph of it. Anything not found is left
+// empty; the form it fills is checked by a person before it is recorded.
+type Label struct {
+	// Name is the product line, the way a purchase names a product.
+	Name string
+	// THC and CBD are the ratio: off the product line, or off the label's
+	// percentages when no line carries one.
+	THC, CBD float64
+	// Grams is what was dispensed, zero when no amount was found.
+	Grams journal.Centigrams
+}
+
+var (
+	// percentage is a THC or CBD content as a label prints it: "THC: 22 %",
+	// "CBD < 1,0 %".
+	percentage = regexp.MustCompile(`(?i)\b(thc|cbd)\b[^0-9<%]{0,12}(<\s*)?(\d+(?:[.,]\d+)?)\s*%`)
+	// amount is a weight in grams — "10 mg" does not match, since the unit
+	// follows the digits — or the number a column headed "(g)" gives.
+	amount = regexp.MustCompile(`(?i)(\d+(?:[.,]\d+)?)\s*(?:g|gr|gramm)\b|\(g\)[\s:]*(\d+(?:[.,]\d+)?)`)
+	// bareAmount is a number standing alone, for the line that names the
+	// quantity without its unit: "Liefermenge (g): 10".
+	bareAmount = regexp.MustCompile(`(?:^|[^/\d.,])(\d+(?:[.,]\d+)?)\s*$`)
+	// quantityWords mark the line that says how much was dispensed.
+	quantityWords = regexp.MustCompile(`(?i)menge|inhalt|quantity|netto|gewicht|packungsgr`)
+	// labelNoise is what a label prints on the product line that is not the
+	// product: what kind of thing it is, and how much of it there is.
+	labelNoise = regexp.MustCompile(`(?i)^(?:liefermenge|quantity delivered|quantity)\b[\s:]*|\b(?:medizinal-?cannabisblüten|cannabisblüten|cannabis flos|blüten|unzerkleinert)\b,?|\s*\(g\)[\s:]*(?:\d+(?:[.,]\d+)?)?|\b\d+(?:[.,]\d+)?\s*(?:g|gr|gramm)\b|\b(?:thc|cbd)\b[^0-9<%]{0,12}(?:<\s*)?\d+(?:[.,]\d+)?\s*%`)
+	// addressWords mark a line of the pharmacy's address, whose house number
+	// can look like a ratio: "Hauptstr. 12/1".
+	addressWords = regexp.MustCompile(`(?i)stra(?:ß|ss)e|str\.|platz\b|\btel\b|telefon|\bfax\b`)
+)
+
+// Most a prescription holds, and the strongest ratio a flower is sold at; an
+// amount or a ratio past them is something else that matched — a date, a
+// batch number.
+const (
+	mostGrams = 100
+	mostTHC   = 45
+	mostCBD   = 30
+)
+
+// ReadLabel reads the product line and the grams off a label's text. The
+// product line is the first that carries a THC/CBD ratio; the grams are the
+// amount on the line that names the quantity, else on the product line, else
+// the first plausible amount anywhere.
+func ReadLabel(text string) Label {
+	lines := labelLines(text)
+	var l Label
+	at := -1
+	for i, line := range lines {
+		if thc, cbd, ok := ratioIn(line); ok {
+			l.THC, l.CBD, at = thc, cbd, i
+			l.Name = productLine(lines, i)
+			break
+		}
+	}
+	if at < 0 {
+		l.THC, l.CBD = percentages(lines)
+	}
+	l.Grams = labelGrams(lines, at)
+	return l
+}
+
+// labelLines splits a label's text into its lines, each with its runs of
+// whitespace made one space, dropping the empty ones.
+func labelLines(text string) []string {
+	var out []string
+	for line := range strings.SplitSeq(text, "\n") {
+		if line = strings.Join(strings.Fields(line), " "); line != "" {
+			out = append(out, line)
+		}
+	}
+	return out
+}
+
+// ratioIn reads a THC/CBD ratio off a line, refusing one that is part of a
+// date or out of the range a flower is sold at.
+func ratioIn(line string) (thc, cbd float64, ok bool) {
+	loc := ratio.FindStringSubmatchIndex(line)
+	if loc == nil || addressWords.MatchString(line) {
+		return 0, 0, false
+	}
+	// 03/2027, 12/10/2026: a date goes on, or came from, another separator.
+	if strings.ContainsAny(after(line, loc[1]), "/.") || strings.ContainsAny(before(line, loc[0]), "/.") {
+		return 0, 0, false
+	}
+	thc, cbd = parseFloat(line[loc[2]:loc[3]]), parseFloat(line[loc[4]:loc[5]])
+	return thc, cbd, thc > 0 && thc <= mostTHC && cbd <= mostCBD
+}
+
+// after is the character following position i in s, if it is a separator
+// followed by a digit; before is the same for the character preceding it.
+func after(s string, i int) string {
+	if i+1 < len(s) && s[i+1] >= '0' && s[i+1] <= '9' {
+		return s[i : i+1]
+	}
+	return ""
+}
+
+func before(s string, i int) string {
+	if i >= 2 && s[i-2] >= '0' && s[i-2] <= '9' {
+		return s[i-1 : i]
+	}
+	return ""
+}
+
+// productLine is the product a label's line i names, without the words around
+// it that say it is cannabis and how much. A line that is nothing but the
+// ratio is the end of the line above it.
+func productLine(lines []string, i int) string {
+	name := strings.TrimSpace(labelNoise.ReplaceAllString(lines[i], " "))
+	name = strings.Join(strings.Fields(strings.Trim(name, " :,-")), " ")
+	if ratio.ReplaceAllString(name, "") == "" && i > 0 {
+		name = strings.TrimSpace(labelNoise.ReplaceAllString(lines[i-1], " ")) + " " + name
+	}
+	return unshout(name)
+}
+
+// unshout gives a line printed all in capitals the case a name is kept in:
+// words of four letters or more are capitalised, shorter ones — CA, DNK,
+// MAC — are codes and stay as they are.
+func unshout(name string) string {
+	if strings.ToUpper(name) != name || strings.ToLower(name) == name {
+		return name
+	}
+	words := strings.Fields(name)
+	for i, w := range words {
+		if r := []rune(w); len(r) >= 4 && strings.IndexFunc(w, func(c rune) bool { return c >= '0' && c <= '9' }) < 0 {
+			words[i] = string(r[0]) + strings.ToLower(string(r[1:]))
+		}
+	}
+	return strings.Join(words, " ")
+}
+
+// percentages reads the ratio off a label's THC and CBD contents, the way a
+// product is named for them: "CBD < 1 %" is the 1 in 22/1.
+func percentages(lines []string) (thc, cbd float64) {
+	for _, line := range lines {
+		for _, m := range percentage.FindAllStringSubmatch(line, -1) {
+			v := parseFloat(m[3])
+			switch {
+			case strings.EqualFold(m[1], "thc") && thc == 0 && v <= mostTHC:
+				thc = v
+			case strings.EqualFold(m[1], "cbd") && cbd == 0 && v <= mostCBD:
+				cbd = max(v, 1)
+			}
+		}
+	}
+	return thc, cbd
+}
+
+// labelGrams is the amount dispensed: on the line naming the quantity, then on
+// the product line at, then the first plausible amount anywhere.
+func labelGrams(lines []string, at int) journal.Centigrams {
+	for i, line := range lines {
+		// The product line's heading can be a quantity's — "Quantity ...
+		// Gorilla Glue #4" — and the number ending it is not grams.
+		if !quantityWords.MatchString(line) {
+			continue
+		}
+		if g := gramsIn(line, i != at); g > 0 {
+			return g
+		}
+	}
+	if at >= 0 {
+		if g := gramsIn(lines[at], false); g > 0 {
+			return g
+		}
+	}
+	for _, line := range lines {
+		if g := gramsIn(line, false); g > 0 {
+			return g
+		}
+	}
+	return 0
+}
+
+// gramsIn is the first plausible weight on a line, or a number ending a line
+// that names the quantity without a unit.
+func gramsIn(line string, quantity bool) journal.Centigrams {
+	var found []string
+	for _, m := range amount.FindAllStringSubmatch(line, -1) {
+		found = append(found, m[1]+m[2])
+	}
+	if m := bareAmount.FindStringSubmatch(line); quantity && m != nil {
+		found = append(found, m[1])
+	}
+	for _, s := range found {
+		if g := parseFloat(s); g > 0 && g <= mostGrams {
+			return journal.CG(g)
+		}
+	}
+	return 0
+}
+
+// Matching is the product already in the catalog that a label's product line
+// names, or nil: by its name or slug, by its name with the ratio written
+// elsewhere or a column heading in front, or — at the same ratio and from the
+// same manufacturer — by every word of its name but one, when no other product
+// comes as close.
+func (c *Catalog) Matching(name string) *Product {
+	if name == "" {
+		return nil
+	}
+	if p := c.Exact(name); p != nil {
+		return p
+	}
+	slug := Slugify(name)
+	for _, p := range c.Products {
+		if Slugify(p.Name) == slug {
+			return p
+		}
+	}
+	return c.closest(Parse(name), handleWords(slug))
+}
+
+// closest is the one product at the label's ratio whose name shares its first
+// word — the manufacturer — and every other word but one with the label's.
+// The words are a slug's, so a column heading in front counts for nothing and
+// the ratio counts as one of them.
+func (c *Catalog) closest(label *Product, words []string) *Product {
+	have := make(map[string]bool, len(words))
+	for _, w := range words {
+		have[w] = true
+	}
+	var best *Product
+	bestShared, tied := 0, false
+	for _, p := range c.Products {
+		own := handleWords(Slugify(p.Name))
+		if p.THC != label.THC || p.CBD != label.CBD || len(own) == 0 || !have[own[0]] {
+			continue
+		}
+		shared := 0
+		for _, w := range own {
+			if have[w] {
+				shared++
+			}
+		}
+		if shared < 3 || shared < len(own)-1 {
+			continue
+		}
+		switch {
+		case shared > bestShared:
+			best, bestShared, tied = p, shared, false
+		case shared == bestShared:
+			tied = true
+		}
+	}
+	if tied {
+		return nil
+	}
+	return best
+}

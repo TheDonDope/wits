@@ -25,11 +25,13 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/space-grotesk": "^5.2.10",
+    "@tesseract.js-data/deu": "^1.0.0",
     "d3-array": "^3.2.4",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
     "material-symbols": "^0.44.11",
     "rxjs": "~7.8.0",
+    "tesseract.js": "^7.0.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

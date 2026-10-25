@@ -16,6 +16,14 @@
       "resources": {
         "files": ["/icons/**", "/media/**", "/**/*.(svg|woff|woff2|ttf|png)"]
       }
+    },
+    {
+      "name": "ocr",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": ["/ocr/**"]
+      }
     }
   ]
 }

@@ -76,6 +76,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/effects", s.read(effectsOf))
 	mux.HandleFunc("POST /api/rate", s.rate)
 	mux.HandleFunc("POST /api/buy", s.write(buy))
+	mux.HandleFunc("POST /api/label", s.label)
 	mux.HandleFunc("POST /api/grind", s.write(grind))
 	mux.HandleFunc("POST /api/sesh", s.write(sesh))
 	mux.HandleFunc("POST /api/weigh", s.write(weigh))
@@ -174,17 +175,26 @@ func (s *Server) read(view func(*workspace.Workspace) any) http.HandlerFunc {
 // writable opens a fresh workspace for a write, refusing anything but a
 // JSON body of a sensible size; it answers the refusal itself.
 func (s *Server) writable(w http.ResponseWriter, r *http.Request) (*workspace.Workspace, bool) {
-	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-		fail(w, http.StatusUnsupportedMediaType, errors.New("send JSON"))
+	if !jsonBody(w, r) {
 		return nil, false
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 	ws, err := workspace.Read(s.repo)
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return nil, false
 	}
 	return ws, true
+}
+
+// jsonBody refuses a request whose body is not JSON of a sensible size, and
+// answers the refusal itself.
+func jsonBody(w http.ResponseWriter, r *http.Request) bool {
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		fail(w, http.StatusUnsupportedMediaType, errors.New("send JSON"))
+		return false
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+	return true
 }
 
 // write decodes a JSON body and records it through a fresh workspace's
@@ -404,6 +414,45 @@ func (s *Server) price(w http.ResponseWriter, r *http.Request) {
 	e, _ := ws.Recorder.Find(p.Purchase)
 	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g of %s",
 		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
+}
+
+// reading is what a pharmacy label says about a fill, as the buy form is
+// filled from it: the product line, or the name of the product it already is.
+type reading struct {
+	Name  string  `json:"name"`
+	THC   float64 `json:"thc,omitempty"`
+	CBD   float64 `json:"cbd,omitempty"`
+	Grams float64 `json:"grams,omitempty"`
+	// Slug is the product already in the catalog the label names; Name is
+	// then that product's, so the fill adds nothing.
+	Slug string `json:"slug,omitempty"`
+}
+
+// label reads the text of a photographed label — the OCR ran on the device
+// that took the photograph — into the product and grams of a fill. It records
+// nothing: the form it fills is checked first.
+func (s *Server) label(w http.ResponseWriter, r *http.Request) {
+	if !jsonBody(w, r) {
+		return
+	}
+	var req struct {
+		Text string `json:"text"`
+	}
+	if err := decode(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	ws, err := s.snapshot()
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	l := catalog.ReadLabel(req.Text)
+	out := reading{Name: l.Name, THC: l.THC, CBD: l.CBD, Grams: l.Grams.Grams()}
+	if p := ws.Products.Matching(l.Name); p != nil {
+		out.Name, out.Slug = p.Name, p.Slug
+	}
+	reply(w, http.StatusOK, out)
 }
 
 // strain is one product on the map of the strains, as a client reads it.

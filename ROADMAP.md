@@ -597,6 +597,42 @@ that its proof is of it. On the workbook: 1429 entries sealed and timestamped,
 verified in place, outside the repository and after a restore, and the sealed
 report's footer read.
 
+### Reading the pharmacy label — Record's Fill tab
+
+**Read the label** on the Fill tab takes a photograph, the camera's on a phone,
+and fills the product and the grams from it. The OCR runs in the page:
+Tesseract 7 compiled to WebAssembly, its LSTM engine and its German served by
+wits itself under `ocr/` (`data/label.ts`), so the photograph of a prescription
+goes nowhere. The library is a lazy chunk of 17 kB; the worker (111 kB), one of
+three engine builds (3.9 MB, picked for the browser's SIMD) and the German
+(1.3 MB) are fetched the first time a label is read, and the phone's service
+worker keeps them. The photograph is turned upright and read at 2400 px at
+most; the engine is let go after each reading.
+
+What it reads is text, and `POST /api/label` makes a fill of it
+(`catalog.ReadLabel`), recording nothing. The product line is the first
+carrying a THC/CBD ratio, without the words around it that say it is cannabis
+or how much; a ratio that is part of a date (`03/2027`) or of the pharmacy's
+house number (`Hauptstr. 12/1`) is passed over, and a line printed in capitals
+is given the case names are kept in, codes like DNK left alone. The grams are
+on the line naming the quantity (`Inhalt`, `Menge`, `Liefermenge (g)`), never
+milligrams, never past 100 g. With no product line, the ratio is read off the
+percentages and the name left to be typed. The catalog then says which product
+it already is (`Catalog.Matching`): by name, by slug — the ratio anywhere, a
+column heading in front — or, at the same ratio and from the same
+manufacturer, by every word of its name but one. The form is filled with that
+product's own name, so the fill adds none, and says whether the product is
+known or new and what the photograph read, to check before recording.
+
+Checked: every one of the workbook's 53 names was copied off a label, and each,
+as written and in capitals, reads back to its own product
+(`TestLabelsOfTheRealWorkbook`). In headless Chromium, photographs of two
+labels read in 1.0 s: "PEDANIOS 22/1 GHOST TRAIN HAZE" filled the workbook's
+Pedanios 22/1 DNK Ghost Train Haze and 10 g, past the address and the batch;
+an Aurora 20/1 Pink Kush filled as new, 15 g. Every request, the worker's
+included, went to the machine serving the page — the `pages` build too, under
+`/wits/`, in 2.5 s.
+
 ### Read once, while nothing changes — the server's snapshot
 
 A cached fold was planned: the replayed state kept in `.wits/index/` so an open
@@ -825,13 +861,6 @@ plainly.
   their own web app drives them that way. wits-ui could log a session as it
   happens, with the temperature curve it really ran, and say which terpenes and
   cannabinoids each step released from the boiling points wits already knows.
-
-#### 🔹 Reading the pharmacy label
-
-- **Status**: Planned
-- Photograph the label and fill the buy form from it: name, ratio, grams. The
-  OCR runs on the device (Tesseract compiled to WebAssembly) — a photograph of
-  a prescription leaves the machine for nothing.
 
 ## 🩺 Findings in the imported records
 

@@ -629,6 +629,12 @@ grinds, records a session, a fill or a weighing — through the same recorder as
 the commands, with the same refusals in the same words. The interface follows
 the repository: an entry made with the command line shows within a few seconds.
 
+A fill can be read off the pharmacy label: **Read the label** on the Fill tab
+takes a photograph and fills in the product and the grams, matched to a jar you
+already have when it is one. The text is read in the browser, by Tesseract
+compiled to WebAssembly and served by wits itself, so the photograph goes
+nowhere — check what it read, then record.
+
 ![The dashboard](./assets/wits-ui-dashboard.png)
 
 ![Every day, and every fill](./assets/wits-ui-history.png)
