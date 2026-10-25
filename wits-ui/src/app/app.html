@@ -56,6 +56,7 @@
   @for (b of keys.footer(); track b.help) {
     <span class="k"><kbd>{{ b.label ?? show(b.keys[0]) }}</kbd>{{ b.help }}</span>
   }
+  <span class="ver">wits-ui {{ version }}</span>
 </footer>
 
 @if (keys.showAll()) {
@@ -104,6 +105,7 @@
         <mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span>
       </a>
     }
+    <p class="ver">wits-ui {{ version }}</p>
   </section>
 }
 

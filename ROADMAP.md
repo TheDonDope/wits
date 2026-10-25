@@ -566,6 +566,14 @@ its column at the screen (`minmax(0, 1fr)`): a grid column grows to its widest
 child, and Analysis's five scopes had pushed it to 503 px; they scroll on their
 own now. Measured with the scroll width of each page at 375 px: none wider.
 
+The page names its build: `git describe --tags --always --dirty`, stamped by
+`make ui` and `make pages` through `ng build --define` (`data/version.ts`;
+"unstamped" from `ng serve` and the tests), at the end of the help line and,
+since a phone has no help line, at the foot of More. The phone's build is
+cached by its service worker, so a page can be older than the one deployed,
+and nothing on it said which it was. Pages checks out the whole history so
+the tags are there to describe.
+
 Two pages were then fitted to it. Analysis's scopes go by short names on a
 phone (Fill, 30 d, 90 d, 12 mo, All), five equal segments the width of the
 card, no check mark beside the chosen one, so all five show in every theme,

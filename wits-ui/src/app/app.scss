@@ -135,6 +135,14 @@ main {
   }
 }
 
+// Which build this is, beside the keys: a page cached by the service worker
+// can be older than the one deployed, and this is how to tell.
+.ver {
+  color: var(--w-dim);
+  font: 400 11px var(--w-num);
+  opacity: 0.8;
+}
+
 .k {
   display: inline-flex;
   align-items: center;
@@ -420,6 +428,13 @@ kbd {
     a.on {
       background: color-mix(in srgb, var(--w-primary) 16%, transparent);
       color: var(--w-primary);
+    }
+
+    // The phone has no footer, so its build is named here.
+    .ver {
+      grid-column: 1 / -1;
+      margin: 0;
+      text-align: center;
     }
   }
 }

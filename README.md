@@ -777,6 +777,14 @@ save it over the folder's copy yourself. The key and the journal never leave
 the phone except inside that encrypted file. `make pages` builds what Pages
 serves, and `make wasm-check` syncs the engine with the command line both ways.
 
+The phone has **Sync** where a computer has **Repository**: it holds the one
+journal it keeps, so there is no other to open and no workbook to import. The
+build a page is, `git describe` when it was made (`wits-ui v0.82.0`, or
+`v0.82.0-3-gabc1234` between releases), is at the end of the help line and at
+the foot of a phone's More sheet. The phone's page is cached for offline use,
+so if it names an older build than the latest release, close and reopen it to
+take the new one.
+
 ## Layout
 
 One Go module, several commands, and a web interface beside them. Not a
