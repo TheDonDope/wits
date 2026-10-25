@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.79.0"></a>
+## [v0.79.0] - 2026-10-25
+### Feat
+- **record:** a fill of many strains, priced, and read off the invoices
+
+
 <a name="v0.78.0"></a>
 ## [v0.78.0] - 2026-10-25
+### Docs
+- update changelog for v0.78.0
+
 ### Feat
 - **api:** the browser picks the repository, and brings the workbook
 
@@ -997,7 +1006,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.78.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.79.0...HEAD
+[v0.79.0]: https://github.com/TheDonDope/wits/compare/v0.78.0...v0.79.0
 [v0.78.0]: https://github.com/TheDonDope/wits/compare/v0.77.0...v0.78.0
 [v0.77.0]: https://github.com/TheDonDope/wits/compare/v0.76.0...v0.77.0
 [v0.76.0]: https://github.com/TheDonDope/wits/compare/v0.75.0...v0.76.0
