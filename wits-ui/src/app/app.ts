@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, inject
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -10,6 +11,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 
 import { Binding, Keys } from './data/keys';
 import { ENGINE } from './data/mode';
+import { THEMES, Theme } from './data/theme';
 import { Wits } from './data/wits';
 import { RecordDialog } from './pages/record';
 
@@ -22,6 +24,7 @@ const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
     DatePipe,
     MatButtonModule,
     MatIconModule,
+    MatMenuModule,
     MatSnackBarModule,
     MatTabsModule,
     MatTooltipModule,
@@ -37,6 +40,8 @@ const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
 export class App {
   protected readonly wits = inject(Wits);
   protected readonly keys = inject(Keys);
+  protected readonly theme = inject(Theme);
+  protected readonly themeList = THEMES;
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   protected readonly now = signal(new Date());
@@ -90,6 +95,12 @@ export class App {
       ...this.links.map((l, i) => ({ keys: [String(i + 1)], label: String(i + 1), help: l.label.toLowerCase(), run: go(i), quiet: true })),
       { keys: ['l'], label: 'h/l', help: 'pages', run: step(1) },
       { keys: ['h'], help: 'previous page', run: step(-1), quiet: true },
+      { keys: ['t'], label: 't/T', help: 'theme', run: () => {
+        this.theme.step(1);
+      }, quiet: true },
+      { keys: ['T'], help: 'previous theme', run: () => {
+        this.theme.step(-1);
+      }, quiet: true },
       { keys: ['?'], help: 'all keys', run: () => {
         this.keys.showAll.update((v) => !v);
       } },

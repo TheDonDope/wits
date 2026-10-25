@@ -3,8 +3,18 @@ import { FilmFrame } from '../data/film';
 /** A film's size and pace: 720p, thirty frames a second. */
 export const FILM = { width: 1280, height: 720, fps: 30 };
 
-const COLOURS = { bg: '#0b0e14', glass: 'rgba(255,255,255,0.07)', edge: 'rgba(255,255,255,0.22)',
-  storage: '#6ea8ff', stash: '#34d39a', ink: '#e6e9ef', dim: '#7d879c', mint: '#7cf5c4' };
+/**
+ * The theme's colours, read off the page: a canvas cannot resolve a CSS
+ * variable, so the film is painted in the theme that was showing when it was
+ * made. Glass and its edge are the text colour at low alpha, as on the page.
+ */
+function colours() {
+  const css = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  const ink = v('--w-fg', '#e6e9ef');
+  return { bg: v('--w-ink', '#0b0e14'), ink, dim: v('--w-dim', '#7d879c'), mint: v('--w-accent', '#7cf5c4'),
+    storage: v('--w-storage', '#6ea8ff'), stash: v('--w-stash', '#34d39a') };
+}
 
 /**
  * Draws one frame on a canvas: the day, the shelf's grams, and every jar on
@@ -15,15 +25,16 @@ const COLOURS = { bg: '#0b0e14', glass: 'rgba(255,255,255,0.07)', edge: 'rgba(25
 export function drawFrame(ctx: CanvasRenderingContext2D, f: FilmFrame, names: Map<string, string>,
   capacity: Map<string, number>): void {
   const { width: W, height: H } = FILM;
-  ctx.fillStyle = COLOURS.bg;
+  const pal = colours();
+  ctx.fillStyle = pal.bg;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = COLOURS.dim;
+  ctx.fillStyle = pal.dim;
   ctx.font = '600 22px system-ui, sans-serif';
   ctx.fillText('wits · the shelf', 56, 64);
-  ctx.fillStyle = COLOURS.ink;
+  ctx.fillStyle = pal.ink;
   ctx.font = '700 56px system-ui, sans-serif';
   ctx.fillText(new Date(`${f.day}T12:00`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }), 56, 128);
-  ctx.fillStyle = COLOURS.mint;
+  ctx.fillStyle = pal.mint;
   ctx.font = '600 30px system-ui, sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText(`${f.shelf.toFixed(2)} g sealed`, W - 56, 120);
@@ -32,30 +43,33 @@ export function drawFrame(ctx: CanvasRenderingContext2D, f: FilmFrame, names: Ma
   const slot = (W - 112) / Math.max(jars.length, 5);
   jars.forEach((j, i) => {
     const x = 56 + i * slot + slot * 0.2;
-    jar(ctx, x, 190, slot * 0.6, 400, j.storage, j.stash, capacity.get(j.slug) ?? 1);
-    ctx.fillStyle = COLOURS.ink;
+    jar(ctx, pal, x, 190, slot * 0.6, 400, j.storage, j.stash, capacity.get(j.slug) ?? 1);
+    ctx.fillStyle = pal.ink;
     ctx.font = '500 15px system-ui, sans-serif';
     wrap(ctx, names.get(j.slug) ?? j.slug, x - slot * 0.15, 620, slot * 0.9);
-    ctx.fillStyle = COLOURS.dim;
+    ctx.fillStyle = pal.dim;
     ctx.fillText(`${j.storage.toFixed(1)} g`, x, 600);
   });
 }
 
 /** One jar: glass, then its sealed grams, then its ground ones above them. */
-function jar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-  storage: number, stash: number, cap: number): void {
-  ctx.fillStyle = COLOURS.glass;
-  ctx.strokeStyle = COLOURS.edge;
+function jar(ctx: CanvasRenderingContext2D, pal: ReturnType<typeof colours>, x: number, y: number, w: number,
+  h: number, storage: number, stash: number, cap: number): void {
+  ctx.fillStyle = pal.ink;
+  ctx.strokeStyle = pal.ink;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 14);
+  ctx.globalAlpha = 0.07;
   ctx.fill();
+  ctx.globalAlpha = 0.22;
   ctx.stroke();
+  ctx.globalAlpha = 1;
   const s = (Math.min(storage, cap) / cap) * (h - 8);
   const g = (Math.min(stash, Math.max(cap - storage, 0)) / cap) * (h - 8);
-  ctx.fillStyle = COLOURS.storage;
+  ctx.fillStyle = pal.storage;
   ctx.fillRect(x + 4, y + h - 4 - s, w - 8, s);
-  ctx.fillStyle = COLOURS.stash;
+  ctx.fillStyle = pal.stash;
   ctx.fillRect(x + 4, y + h - 4 - s - g, w - 8, g);
 }
 

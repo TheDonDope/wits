@@ -552,6 +552,32 @@ stashes cleared together through `Recorder.Flush` — one batch, all or none.
 Every key is declared once in `Keys`, page layers over the shell's, and the
 footer is drawn from the same list, so it can only show keys that answer.
 
+### Themes in the browser — the palette, `t`
+
+Twenty-one themes for `wits-ui`, chosen from the header or stepped with `t`
+and `T`, as the terminal's `t` picks among its own. A theme is data in
+`src/themes.scss`: a background, text, a primary and an accent, the four
+account colours in its own shades, and a style — corners (square to pill, down
+to Material's own corner scale), glass (opacity and blur), a backdrop (aurora,
+vignette, grid, scanlines, a synthwave horizon or none), a shadow (soft, glow,
+a hard offset, none) and typefaces (Inter, Space Grotesk, JetBrains Mono, and
+Fraunces and Nunito added for the serif and rounded ones, bundled like the
+rest). Each sets custom properties under `[data-theme]`, and Material is built
+for both schemes (`theme-type: color-scheme`) with the theme's colours laid
+over it, so the light themes are light down to the dialogs and fields.
+
+Every colour the components wrote out — about seventy, `#fff` and white at
+five per cent the most of them — now reads a theme variable or mixes one with
+`color-mix`. The effect scores run from the theme's warning colour through its
+AVB amber to its `good` colour, mixed by the browser. The film's canvas cannot
+read a CSS variable, so it reads the theme off the page when it records, and
+is painted in the theme that was showing. The picker's swatches wear their own
+themes, so the menu shows each one's colours without a second copy of them.
+The choice is per browser, in local storage — a look, not a fact about the
+ledger, so it travels with no repository — and goes on before Angular starts,
+so the page never flashes the default. `?theme=` overrides it without saving,
+for a link or a screenshot. Aurora is the interface as it was.
+
 ### On the phone — `wits-wasm`
 
 The phone keeps its own copy of the journal, so the server keeps answering

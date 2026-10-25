@@ -24,7 +24,7 @@ const OUTER = 128;
       @for (w of wedges(); track w.part) {
         <path class="track" [attr.d]="w.track" />
         @if (w.d) {
-          <path class="wedge" [attr.d]="w.d" [attr.fill]="w.color" [style.filter]="'drop-shadow(0 0 10px ' + w.color + ')'">
+          <path class="wedge" [attr.d]="w.d" [style.fill]="w.color" [style.filter]="'drop-shadow(0 0 10px ' + w.color + ')'">
             <title>{{ w.part }}: {{ w.mean?.toFixed(2) }} over {{ w.n }}</title>
           </path>
         }
@@ -40,13 +40,13 @@ const OUTER = 128;
   styles: `
     :host { display: block; max-width: 320px; margin: auto; }
     svg { width: 100%; overflow: visible; }
-    .ring { fill: none; stroke: rgb(255 255 255 / 6%); stroke-dasharray: 2 5; }
-    .track { fill: rgb(255 255 255 / 3%); }
+    .ring { fill: none; stroke: color-mix(in srgb, var(--w-fg) 6%, transparent); stroke-dasharray: 2 5; }
+    .track { fill: color-mix(in srgb, var(--w-fg) 3%, transparent); }
     .wedge { opacity: .9; transition: d .6s; }
-    .part { fill: var(--w-dim); font: 600 10px 'Inter Variable', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-    .mean { fill: #fff; font-size: 13px; font-weight: 600; }
-    .hub { fill: rgb(11 14 20 / 90%); stroke: rgb(255 255 255 / 10%); }
-    .hub-t { fill: var(--w-violet); font: 600 10px 'Inter Variable', sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+    .part { fill: var(--w-dim); font: 600 10px var(--w-font); letter-spacing: .08em; text-transform: uppercase; }
+    .mean { fill: var(--w-hi); font-size: 13px; font-weight: 600; }
+    .hub { fill: color-mix(in srgb, var(--w-ink) 90%, transparent); stroke: color-mix(in srgb, var(--w-fg) 10%, transparent); }
+    .hub-t { fill: var(--w-primary); font: 600 10px var(--w-font); text-transform: uppercase; letter-spacing: .06em; }
   `,
 })
 export class DayWheel {

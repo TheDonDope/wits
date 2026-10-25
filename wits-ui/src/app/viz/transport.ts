@@ -82,10 +82,10 @@ import { KINDS } from '../pages/journal';
     :host { display: grid; gap: 12px; position: sticky; top: 80px; z-index: 5; }
     .bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px;
       transition: box-shadow .4s, border-color .4s; }
-    .bar.on { border-color: rgb(139 123 255 / 40%); box-shadow: 0 0 40px -12px rgb(139 123 255 / 70%); }
+    .bar.on { border-color: color-mix(in srgb, var(--w-primary) 40%, transparent); box-shadow: 0 0 40px -12px color-mix(in srgb, var(--w-primary) 70%, transparent); }
     .play { width: 48px; height: 48px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
-      color: #0b0e14; background: linear-gradient(120deg, var(--w-violet), var(--w-mint));
-      box-shadow: 0 6px 24px -6px rgb(139 123 255 / 80%); transition: transform .15s; }
+      color: var(--w-on-accent); background: linear-gradient(120deg, var(--w-primary), var(--w-accent));
+      box-shadow: 0 6px 24px -6px color-mix(in srgb, var(--w-primary) 80%, transparent); transition: transform .15s; }
     .play:hover { transform: scale(1.06); }
     .play mat-icon { font-size: 28px; width: 28px; height: 28px; }
     .scrub { flex: 1; display: grid; min-width: 140px; }

@@ -80,7 +80,7 @@ interface Plotted {
   styles: `
     :host { display: block; width: 100%; }
     svg { display: block; width: 100%; touch-action: none; }
-    .grid { stroke: rgba(255,255,255,0.06); stroke-dasharray: 2 6; }
+    .grid { stroke: color-mix(in srgb, var(--w-fg) 6%, transparent); stroke-dasharray: 2 6; }
     .tick { fill: var(--w-dim); font: 500 11px var(--w-num); }
     .past-area { fill: url(#proj-past); }
     .past-line { fill: none; stroke: var(--w-storage); stroke-width: 2.4; stroke-linecap: round;
@@ -89,19 +89,19 @@ interface Plotted {
     .ahead-area { fill: url(#proj-ahead); }
     .ahead-line { fill: none; stroke: url(#proj-ahead-line); stroke-width: 2; stroke-dasharray: 6 6;
       animation: march 1.2s linear infinite; }
-    .today { stroke: rgba(255,255,255,0.18); stroke-dasharray: 2 4; }
-    .dot { fill: #fff; }
+    .today { stroke: color-mix(in srgb, var(--w-fg) 18%, transparent); stroke-dasharray: 2 4; }
+    .dot { fill: var(--w-hi); }
     .pulse { fill: var(--w-storage); opacity: 0.3; transform-box: fill-box; transform-origin: center;
       animation: pulse 2.2s ease-out infinite; }
     .end { fill: var(--w-warn); }
-    .label { fill: var(--w-dim); font: 600 11px 'Inter Variable'; letter-spacing: .06em; }
+    .label { fill: var(--w-dim); font: 600 11px var(--w-font); letter-spacing: .06em; }
     .label.warn { fill: var(--w-warn); }
-    .cross { stroke: rgba(255,255,255,0.25); }
-    .probe { fill: var(--w-storage); stroke: #fff; stroke-width: 2; }
+    .cross { stroke: color-mix(in srgb, var(--w-fg) 25%, transparent); }
+    .probe { fill: var(--w-storage); stroke: var(--w-hi); stroke-width: 2; }
     .probe.ahead { fill: var(--w-avb); }
-    .tip { fill: rgba(16,20,28,0.92); stroke: rgba(255,255,255,0.1); }
-    .tip-date { fill: var(--w-dim); font: 600 11px 'Inter Variable'; }
-    .tip-g { fill: #fff; font: 600 13px var(--w-num); }
+    .tip { fill: color-mix(in srgb, var(--w-ink) 92%, transparent); stroke: color-mix(in srgb, var(--w-fg) 10%, transparent); }
+    .tip-date { fill: var(--w-dim); font: 600 11px var(--w-font); }
+    .tip-g { fill: var(--w-hi); font: 600 13px var(--w-num); }
     @keyframes draw { to { stroke-dashoffset: 0; } }
     @keyframes march { to { stroke-dashoffset: -12; } }
     @keyframes pulse { from { transform: scale(.5); opacity: .5; } to { transform: scale(2.2); opacity: 0; } }

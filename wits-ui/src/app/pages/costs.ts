@@ -121,8 +121,8 @@ import { Wits } from '../data/wits';
     td { padding: 6px 8px; border-top: 1px solid var(--w-glass-edge); }
     .r { text-align: right; }
     .months { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 14px; align-items: center; }
-    .bar { height: 8px; border-radius: 99px; background: rgb(255 255 255 / 6%); overflow: hidden; }
-    .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--w-violet), var(--w-mint)); border-radius: 99px; }
+    .bar { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); overflow: hidden; }
+    .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--w-primary), var(--w-accent)); border-radius: 99px; }
   `,
 })
 export class Costs {

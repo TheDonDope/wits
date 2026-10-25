@@ -1,6 +1,7 @@
-// The look: deep ink surfaces, a violet-to-mint accent, and the account
-// colours the terminal has always used — storage blue, stash green, AVB amber,
-// sessions violet — so a colour means the same thing on every screen.
+// The look comes from a theme (themes.scss): surfaces, an accent, and the
+// account colours the terminal has always used — storage blue, stash green, AVB
+// amber, sessions violet — so a colour means the same thing on every screen,
+// in whatever shade the theme speaks it.
 // Every font and icon ships with the app. wits makes no network calls, and an
 // interface that fetched its type from a font service would make one on every
 // load.
@@ -8,70 +9,42 @@
 @use '@fontsource-variable/inter';
 @use '@fontsource-variable/space-grotesk';
 @use '@fontsource-variable/jetbrains-mono';
+@use '@fontsource-variable/fraunces';
+@use '@fontsource-variable/nunito';
 @use 'material-symbols/rounded.css';
+@use 'themes';
 
 html {
   height: 100%;
-  color-scheme: dark;
 
+  // Built for both schemes; the theme's color-scheme picks one, and its
+  // overrides then put its own colours over Material's.
   @include mat.theme(
     (
       color: (
         primary: mat.$violet-palette,
         tertiary: mat.$green-palette,
-        theme-type: dark,
+        theme-type: color-scheme,
       ),
       typography: (
-        plain-family: 'Inter Variable',
-        brand-family: 'Space Grotesk Variable',
+        plain-family: var(--w-font),
+        brand-family: var(--w-head),
       ),
       density: 0,
     )
   );
-  @include mat.theme-overrides(
-    (
-      surface: #0b0e14,
-      surface-container-lowest: #080a0f,
-      surface-container-low: #10141c,
-      surface-container: #131824,
-      surface-container-high: #181e2c,
-      surface-container-highest: #1e2536,
-      on-surface: #e7ebf3,
-      on-surface-variant: #9aa4b8,
-      outline-variant: #262e40,
-    )
-  );
-}
-
-:root {
-  --w-storage: #6ea8ff;
-  --w-stash: #34d39a;
-  --w-avb: #ffb454;
-  --w-sesh: #b48cff;
-  --w-warn: #ff7a8a;
-  --w-mint: #7cf5c4;
-  --w-violet: #8b7bff;
-  --w-ink: #0b0e14;
-  --w-glass: rgb(24 30 44 / 62%);
-  --w-glass-edge: rgb(255 255 255 / 7%);
-  --w-dim: #7d879c;
-  --w-num: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
-  --w-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
 
 body {
   margin: 0;
   min-height: 100%;
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgb(139 123 255 / 16%), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgb(124 245 196 / 10%), transparent 60%),
-    radial-gradient(800px 800px at 50% 120%, rgb(110 168 255 / 8%), transparent 60%),
-    var(--w-ink);
+  background: var(--w-bg);
   background-attachment: fixed;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
-  font-family: 'Inter Variable', sans-serif;
+  font-family: var(--w-font);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .material-symbols-rounded {
@@ -81,12 +54,10 @@ body {
 // A card of frosted glass: the surface every panel sits on.
 .glass {
   background: var(--w-glass);
-  border: 1px solid var(--w-glass-edge);
-  border-radius: 24px;
-  backdrop-filter: blur(18px) saturate(1.2);
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 4%) inset,
-    0 24px 48px -24px rgb(0 0 0 / 60%);
+  border: var(--w-border) solid var(--w-glass-edge);
+  border-radius: var(--w-radius);
+  backdrop-filter: blur(var(--w-blur)) saturate(1.2);
+  box-shadow: var(--w-shadow);
 }
 
 .num {
@@ -100,7 +71,7 @@ body {
 }
 
 .eyebrow {
-  font: 600 11px/1.2 'Inter Variable', sans-serif;
+  font: 600 11px/1.2 var(--w-font);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--w-dim);
@@ -112,7 +83,7 @@ body {
   gap: 4px;
   padding: 2px 8px;
   border-radius: 999px;
-  font: 600 10px/1.6 'Inter Variable', sans-serif;
+  font: 600 10px/1.6 var(--w-font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border: 1px solid var(--w-glass-edge);
@@ -138,18 +109,18 @@ body {
 
 // Dialogs float over a blurred page, on the same glass as the cards.
 .cdk-overlay-dark-backdrop {
-  background: rgb(5 7 12 / 55%);
+  background: color-mix(in srgb, var(--w-ink) 55%, transparent);
   backdrop-filter: blur(8px);
 }
 
 .mat-mdc-dialog-surface {
-  background: rgb(20 25 37 / 94%) !important;
-  border: 1px solid var(--w-glass-edge);
-  border-radius: 28px !important;
+  background: var(--w-dialog) !important;
+  border: var(--w-border) solid var(--w-glass-edge);
+  border-radius: var(--w-radius-dialog) !important;
   box-shadow:
-    0 0 0 1px rgb(139 123 255 / 8%),
-    0 40px 80px -24px rgb(0 0 0 / 80%),
-    0 0 120px -40px rgb(139 123 255 / 45%) !important;
+    0 0 0 1px color-mix(in srgb, var(--w-primary) 8%, transparent),
+    0 40px 80px -24px rgb(0 0 0 / 50%),
+    0 0 120px -40px color-mix(in srgb, var(--w-primary) 45%, transparent) !important;
 }
 
 // Material sizes a field's input box at 180 px, so two side by side in the
@@ -158,4 +129,55 @@ body {
 .record-panel .mat-mdc-form-field-infix {
   width: auto;
   min-width: 0;
+}
+
+// The theme picker. Its menu sits in an overlay, outside the component's
+// styles; each swatch wears its own theme, so it shows that theme's colours.
+.theme-menu {
+  max-height: min(70vh, 640px) !important;
+
+  .mat-mdc-menu-item.on {
+    background: color-mix(in srgb, var(--w-primary) 14%, transparent);
+    box-shadow: inset 3px 0 0 var(--w-primary);
+  }
+
+  .mat-mdc-menu-item-text {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .swatch {
+    display: inline-grid;
+    grid-template-columns: repeat(4, 9px);
+    gap: 3px;
+    padding: 6px 7px;
+    border: 1px solid var(--w-glass-edge);
+    border-radius: var(--w-radius-dialog);
+    background: var(--w-bg);
+
+    i {
+      width: 9px;
+      height: 18px;
+      border-radius: 2px;
+    }
+
+    i:nth-child(1) { background: var(--w-primary); }
+    i:nth-child(2) { background: var(--w-accent); }
+    i:nth-child(3) { background: var(--w-storage); }
+    i:nth-child(4) { background: var(--w-avb); }
+  }
+
+  .name {
+    display: grid;
+    flex: 1;
+    font: 500 14px var(--w-font);
+
+    small {
+      font-size: 11px;
+      color: var(--w-dim);
+    }
+  }
+
 }

@@ -2,19 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { Dimension, EffectGroup } from '../data/models';
 
-/** A mean score's colour: rose for little help, amber in the middle, mint for a lot. */
+/**
+ * A mean score's colour: the theme's warning colour for little help, its AVB
+ * amber in the middle, its good colour for a lot — mixed by the browser, so it
+ * follows the theme.
+ */
 export function scoreColor(mean: number): string {
   const t = Math.min(Math.max((mean - 1) / 4, 0), 1);
-  const stops = [
-    [255, 122, 138],
-    [255, 180, 84],
-    [124, 245, 196],
-  ];
-  const seg = t < 0.5 ? 0 : 1;
-  const local = t < 0.5 ? t * 2 : (t - 0.5) * 2;
-  const [a, b] = [stops[seg], stops[seg + 1]];
-  const mix = a.map((v, i) => Math.round(v + (b[i] - v) * local));
-  return `rgb(${mix.join(' ')})`;
+  const [from, to, local] = t < 0.5 ? ['--w-warn', '--w-avb', t * 2] : ['--w-avb', '--w-good', (t - 0.5) * 2];
+  return `color-mix(in oklab, var(${to}) ${String(Math.round(local * 100))}%, var(${from}))`;
 }
 
 /**
@@ -48,7 +44,7 @@ export function scoreColor(mean: number): string {
   `,
   styles: `
     .grid { display: grid; gap: 6px; align-items: center; }
-    .col { font: 600 10px 'Inter Variable', sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    .col { font: 600 10px var(--w-font); letter-spacing: .1em; text-transform: uppercase;
       color: var(--w-dim); text-align: center; }
     .row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
     .row small { color: var(--w-dim); font-weight: 400; }
@@ -58,9 +54,9 @@ export function scoreColor(mean: number): string {
     .cell:hover { transform: scale(1.06); }
     .cell b { color: var(--c); font-size: 15px; }
     .cell i { position: absolute; right: 5px; bottom: 2px; font: 500 9px var(--w-num); color: var(--w-dim); font-style: normal; }
-    .cell.thin { background-image: repeating-linear-gradient(45deg, transparent 0 5px, rgb(255 255 255 / 5%) 5px 10px);
+    .cell.thin { background-image: repeating-linear-gradient(45deg, transparent 0 5px, color-mix(in srgb, var(--w-fg) 5%, transparent) 5px 10px);
       box-shadow: none; opacity: .75; }
-    .cell.none { background: rgb(255 255 255 / 3%); border: 1px dashed rgb(255 255 255 / 6%); }
+    .cell.none { background: color-mix(in srgb, var(--w-fg) 3%, transparent); border: 1px dashed color-mix(in srgb, var(--w-fg) 6%, transparent); }
   `,
 })
 export class EffectMatrix {

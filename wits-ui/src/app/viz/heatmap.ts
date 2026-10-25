@@ -71,7 +71,7 @@ const RIGHT = 70;
     <div class="legend">
       <span class="dim">less</span>
       @for (o of opacity; track $index) {
-        <i [style.background]="$index ? tone() : 'rgba(255,255,255,0.05)'" [style.opacity]="$index ? o : 1"></i>
+        <i [style.background]="$index ? tone() : 'color-mix(in srgb, var(--w-fg) 5%, transparent)'" [style.opacity]="$index ? o : 1"></i>
       }
       <span class="dim">more</span>
     </div>
@@ -79,13 +79,13 @@ const RIGHT = 70;
   styles: `
     :host { display: block; width: 100%; }
     svg { display: block; width: 100%; overflow: visible; }
-    .cell { fill: rgba(255,255,255,0.05); opacity: 0; animation: in .5s ease-out forwards; }
-    .cell:hover { stroke: #fff; stroke-width: 1.2; }
+    .cell { fill: color-mix(in srgb, var(--w-fg) 5%, transparent); opacity: 0; animation: in .5s ease-out forwards; }
+    .cell:hover { stroke: var(--w-hi); stroke-width: 1.2; }
     .glow { opacity: .8; }
     .year, .total { fill: var(--w-dim); font: 600 12px var(--w-num); }
-    .month { fill: var(--w-dim); font: 500 10px 'Inter Variable'; }
-    .tip { fill: rgba(16,20,28,0.94); stroke: rgba(255,255,255,0.12); }
-    .tip-t { fill: #fff; font: 600 12px var(--w-num); }
+    .month { fill: var(--w-dim); font: 500 10px var(--w-font); }
+    .tip { fill: color-mix(in srgb, var(--w-ink) 94%, transparent); stroke: color-mix(in srgb, var(--w-fg) 12%, transparent); }
+    .tip-t { fill: var(--w-hi); font: 600 12px var(--w-num); }
     .tipg { pointer-events: none; }
     .legend { display: flex; gap: 4px; align-items: center; justify-content: flex-end; margin-top: 8px; font-size: 11px; }
     .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
@@ -98,7 +98,7 @@ export class Heatmap {
   readonly metric = input<'ground' | 'seshed'>('ground');
   /** Only the last weeks, as one row; all years when not given. */
   readonly weeks = input<number | null>(null);
-  readonly tone = input('var(--w-mint)');
+  readonly tone = input('var(--w-accent)');
 
   protected readonly width = hostWidth();
   protected readonly glowId = `heat-glow-${Math.random().toString(36).slice(2, 8)}`;

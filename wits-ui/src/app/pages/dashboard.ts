@@ -57,7 +57,7 @@ import { ProjectionChart } from '../viz/projection-chart';
               <span><i style="background: var(--w-stash)"></i>ground</span>
               <span><i style="background: var(--w-avb)"></i>AVB</span>
               @if (f.carried.grams > 0) {
-                <span><i style="background: var(--w-violet)"></i>older jars</span>
+                <span><i style="background: var(--w-primary)"></i>older jars</span>
               }
             </div>
             @if (f.carried.grams > 0) {
@@ -175,7 +175,7 @@ import { ProjectionChart } from '../viz/projection-chart';
     .hero { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 32px; padding: 28px 32px; align-items: center; }
     @media (max-width: 760px) { .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
     h1 { font: 600 34px/1.1 var(--w-num); margin: 8px 0 18px; letter-spacing: -0.03em; }
-    h1 .dim { font: 400 16px 'Inter Variable'; margin-left: 10px; letter-spacing: 0; }
+    h1 .dim { font: 400 16px var(--w-font); margin-left: 10px; letter-spacing: 0; }
     h2 { font: 600 22px var(--w-num); margin: 6px 0 0; }
     .warn { color: var(--w-warn); }
     .stats { display: flex; gap: 36px; flex-wrap: wrap; }
@@ -183,17 +183,17 @@ import { ProjectionChart } from '../viz/projection-chart';
     .stat .v { font-size: 40px; font-weight: 600; line-height: 1.05; }
     .legend { display: flex; gap: 16px; margin-top: 22px; flex-wrap: wrap; font-size: 12px; color: var(--w-dim); }
     .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; }
-    .carried { display: flex; gap: 8px; align-items: center; color: var(--w-violet); margin: 16px 0 0; font-size: 13px; }
+    .carried { display: flex; gap: 8px; align-items: center; color: var(--w-primary); margin: 16px 0 0; font-size: 13px; }
     .shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .tile { padding: 18px 22px; display: grid; gap: 6px; }
     .tile-v { font-size: 30px; font-weight: 600; color: var(--tone); }
     .tile-v small { font-size: 14px; color: var(--w-dim); }
-    .bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .bar { height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); overflow: hidden; }
     .bar div { height: 100%; background: var(--tone); border-radius: 99px; box-shadow: 0 0 12px var(--tone);
       transition: width 1s cubic-bezier(.2,.8,.2,1); }
     .jars, .projection { padding: 22px 26px; }
     .refill { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; color: var(--mat-sys-on-surface); }
-    .refill mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--w-mint); }
+    .refill mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--w-accent); }
     .refill .dim { color: var(--w-dim); }
     .yield { display: block; margin-top: 8px; font-size: 12px; color: var(--w-dim); }
     header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
@@ -206,7 +206,7 @@ import { ProjectionChart } from '../viz/projection-chart';
     .chain { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--w-stash); margin-top: auto; }
     .chain.bad { color: var(--w-warn); }
     .empty { padding: 48px; display: grid; justify-items: center; text-align: center; }
-    .empty mat-icon { font-size: 48px; width: 48px; height: 48px; color: var(--w-violet); }
+    .empty mat-icon { font-size: 48px; width: 48px; height: 48px; color: var(--w-primary); }
     .loading { display: grid; place-items: center; height: 50vh; }
   `,
 })

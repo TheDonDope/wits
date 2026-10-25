@@ -32,11 +32,11 @@ interface Bar {
       aria-label="Every fill on one timeline">
       <defs>
         <linearGradient id="river-open" x1="0" x2="1">
-          <stop offset="0" stop-color="var(--w-violet)" stop-opacity=".25" />
-          <stop offset="1" stop-color="var(--w-mint)" stop-opacity=".9" />
+          <stop offset="0" stop-color="var(--w-primary)" stop-opacity=".25" />
+          <stop offset="1" stop-color="var(--w-accent)" stop-opacity=".9" />
         </linearGradient>
         <pattern id="river-sheen" width="24" height="12" patternUnits="userSpaceOnUse" patternTransform="skewX(-30)">
-          <rect width="10" height="12" fill="rgba(255,255,255,0.12)" />
+          <rect width="10" height="12" fill="color-mix(in srgb, var(--w-fg) 12%, transparent)" />
         </pattern>
       </defs>
       @for (t of ticks(); track t.label) {
@@ -73,16 +73,16 @@ interface Bar {
   styles: `
     :host { display: block; width: 100%; }
     svg { display: block; width: 100%; overflow: visible; }
-    .grid { stroke: rgba(255,255,255,0.05); }
+    .grid { stroke: color-mix(in srgb, var(--w-fg) 5%, transparent); }
     .tick { fill: var(--w-dim); font: 600 11px var(--w-num); }
     .num-l { fill: var(--w-dim); font: 500 10px var(--w-num); }
     .lane { opacity: 0; animation: slide .7s cubic-bezier(.2,.8,.2,1) forwards; cursor: default; }
     .lane:hover rect:first-of-type { filter: brightness(1.4); }
     .sheen { animation: sheen 2.4s linear infinite; mix-blend-mode: screen; }
-    .left { fill: #fff; opacity: .85; filter: drop-shadow(0 0 6px var(--w-mint)); }
-    .tip { fill: rgba(16,20,28,0.95); stroke: rgba(255,255,255,0.12); }
-    .tip-h { fill: #fff; font: 600 12px 'Inter Variable'; }
-    .tip-t { fill: var(--w-dim); font: 500 11px 'Inter Variable'; }
+    .left { fill: var(--w-hi); opacity: .85; filter: drop-shadow(0 0 6px var(--w-accent)); }
+    .tip { fill: color-mix(in srgb, var(--w-ink) 95%, transparent); stroke: color-mix(in srgb, var(--w-fg) 12%, transparent); }
+    .tip-h { fill: var(--w-hi); font: 600 12px var(--w-font); }
+    .tip-t { fill: var(--w-dim); font: 500 11px var(--w-font); }
     .tipg { pointer-events: none; }
     @keyframes slide { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
     @keyframes sheen { to { transform: translateX(24px); } }

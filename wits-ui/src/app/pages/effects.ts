@@ -78,7 +78,7 @@ const ASKS: Record<Dimension, string> = {
                   @for (d of log.dimensions; track d) {
                     <span class="ask" [class.lead]="d === 'overall'">{{ asks[d] }}</span>
                     <w-score-dots [label]="asks[d]" [value]="draft(s.hash)[d] ?? null" (valueChange)="set(s.hash, d, $event)"
-                      [style.--tone]="d === 'overall' ? 'var(--w-mint)' : 'var(--w-violet)'" />
+                      [style.--tone]="d === 'overall' ? 'var(--w-accent)' : 'var(--w-primary)'" />
                   }
                 </div>
                 <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -173,7 +173,7 @@ const ASKS: Record<Dimension, string> = {
     .mapnote { margin: 6px 0 0; font-size: 13px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
-    h1 .dim { font: 400 15px 'Inter Variable', sans-serif; }
+    h1 .dim { font: 400 15px var(--w-font); }
     .lede { max-width: 460px; margin: 0; font-size: 13px; }
     .queue { display: grid; gap: 12px; }
     .more { justify-self: center; }
@@ -188,9 +188,9 @@ const ASKS: Record<Dimension, string> = {
     .small { font-size: 12px; }
     .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
     .empty { padding: 36px; display: grid; justify-items: center; text-align: center; gap: 6px; }
-    .empty mat-icon { font-size: 42px; width: 42px; height: 42px; color: var(--w-violet); }
+    .empty mat-icon { font-size: 42px; width: 42px; height: 42px; color: var(--w-primary); }
     .rated { display: grid; grid-template-columns: 56px minmax(160px, 1fr) auto; gap: 4px 14px; align-items: center;
-      padding: 8px 0; border-bottom: 1px solid rgb(255 255 255 / 5%); }
+      padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--w-fg) 5%, transparent); }
     .pills { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .pill { font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
       background: color-mix(in srgb, var(--c) 14%, transparent); }
