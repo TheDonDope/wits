@@ -64,9 +64,12 @@ The gate refuses any **new** issue. `./preflight.sh` mirrors it:
 - **Functions over 50 lines of code or cyclomatic complexity 15** (lizard).
   Extract a named helper — `folder` in `pkg/ledger`, `grindTotals` in
   `pkg/tui` are the house pattern.
-- **A new non-test `.go` file** gets flagged for a missing package comment,
-  because revive runs per file and can't see `doc.go`. Grow an existing file
-  where it fits.
+- **A new non-test `.go` file needs its own package comment.** Revive runs one
+  file at a time and can't see `doc.go`, so a file without one is flagged; a
+  file with one passes (`pkg/chain/chain.go`, a new package, went through with
+  no new issue in #131). Put code in the file it belongs in, not the nearest
+  existing one: commands filed under other commands' names (`carry` in
+  `status.go`) and four concerns in `report.go` came of avoiding new files.
 - **Shell scripts** go through shellcheck — skill helpers in `.claude/` too.
 - **Python** (the workbook helper) goes through pydocstyle with both D212 and
   D213 on — they contradict each other, so any multi-line docstring is flagged.
