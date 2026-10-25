@@ -2,12 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.82.0"></a>
+## [v0.82.0] - 2026-10-25
+### Docs
+- **roadmap:** eleven things the record could still say
+
+### Feat
+- **wits-ui:** the page says which build it is
+
+
 <a name="v0.81.0"></a>
 ## [v0.81.0] - 2026-10-25
 ### Chore
 - what the second review found, cleared
 
 ### Docs
+- update changelog for v0.81.0
 - **diary:** twenty-one looks, a thumb's reach, and the paperwork
 
 ### Fix
@@ -1031,7 +1041,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.81.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.82.0...HEAD
+[v0.82.0]: https://github.com/TheDonDope/wits/compare/v0.81.0...v0.82.0
 [v0.81.0]: https://github.com/TheDonDope/wits/compare/v0.80.0...v0.81.0
 [v0.80.0]: https://github.com/TheDonDope/wits/compare/v0.79.0...v0.80.0
 [v0.79.0]: https://github.com/TheDonDope/wits/compare/v0.78.0...v0.79.0
