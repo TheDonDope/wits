@@ -12,9 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TheDonDope/wits/pkg/repo"
-
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
