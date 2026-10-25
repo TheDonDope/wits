@@ -132,3 +132,24 @@ func completeEntry(_ *cobra.Command, args []string, prefix string) ([]string, co
 	}
 	return out, cobra.ShellCompDirectiveNoFileComp
 }
+
+// entries counts entries, which plural would spell "entrys".
+func entries(n int) string {
+	if n == 1 {
+		return "1 entry"
+	}
+	return fmt.Sprintf("%d entries", n)
+}
+
+// percent formats a share as a percentage, or a dash when there is nothing to
+// compare against.
+//
+// Both sides are of one scope — a fill's remaining over the same fill's
+// dispensed — and the type parameter holds them to it: a fill's grams over
+// the shelf's does not compile.
+func percent[T ~float64](have, of T) string {
+	if of <= 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.0f%%", have/of*100)
+}
