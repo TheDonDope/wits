@@ -52,9 +52,13 @@ export function drawFrame(ctx: CanvasRenderingContext2D, f: FilmFrame, names: Ma
   });
 }
 
+/** Where a jar stands on the frame, and its size. */
+interface Box { x: number; y: number; w: number; h: number }
+
 /** One jar: glass, then its sealed grams, then its ground ones above them. */
-function jar(ctx: CanvasRenderingContext2D, pal: ReturnType<typeof colours>,
-  { x, y, w, h }: { x: number; y: number; w: number; h: number }, storage: number, stash: number, cap: number): void {
+function jar(ctx: CanvasRenderingContext2D, pal: ReturnType<typeof colours>, box: Box,
+  storage: number, stash: number, cap: number): void {
+  const { x, y, w, h } = box;
   ctx.fillStyle = pal.ink;
   ctx.strokeStyle = pal.ink;
   ctx.lineWidth = 2;
