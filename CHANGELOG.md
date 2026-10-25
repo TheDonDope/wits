@@ -2,8 +2,23 @@
 ## [Unreleased]
 
 
+<a name="v0.69.0"></a>
+## [v0.69.0] - 2026-10-25
+### Docs
+- **diary:** trust, a map, a film, and a cache that was not
+
+### Feat
+- **label:** photograph the pharmacy label, and the fill fills itself
+
+### Test
+- **tui:** today's fixture is dated no later than now
+
+
 <a name="v0.68.0"></a>
 ## [v0.68.0] - 2026-10-25
+### Docs
+- update changelog for v0.68.0
+
 ### Perf
 - **server:** read the repository once, while nothing changes
 
@@ -880,7 +895,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.68.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.69.0...HEAD
+[v0.69.0]: https://github.com/TheDonDope/wits/compare/v0.68.0...v0.69.0
 [v0.68.0]: https://github.com/TheDonDope/wits/compare/v0.67.0...v0.68.0
 [v0.67.0]: https://github.com/TheDonDope/wits/compare/v0.66.0...v0.67.0
 [v0.66.0]: https://github.com/TheDonDope/wits/compare/v0.65.0...v0.66.0
