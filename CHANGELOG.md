@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.85.0"></a>
+## [v0.85.0] - 2026-10-25
+### Feat
+- **wits-ui:** a fill is priced as it was picked up, from its invoice if you have it
+
+
 <a name="v0.84.0"></a>
 ## [v0.84.0] - 2026-10-25
+### Docs
+- update changelog for v0.84.0
+
 ### Feat
 - **wits-ui:** twenty more themes, some of them drawn on paper
 
@@ -1057,7 +1066,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.84.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.85.0...HEAD
+[v0.85.0]: https://github.com/TheDonDope/wits/compare/v0.84.0...v0.85.0
 [v0.84.0]: https://github.com/TheDonDope/wits/compare/v0.83.0...v0.84.0
 [v0.83.0]: https://github.com/TheDonDope/wits/compare/v0.82.0...v0.83.0
 [v0.82.0]: https://github.com/TheDonDope/wits/compare/v0.81.0...v0.82.0
