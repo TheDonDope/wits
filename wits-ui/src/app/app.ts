@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,16 +13,20 @@ import { filter, map } from 'rxjs';
 
 import { Binding, Keys } from './data/keys';
 import { ENGINE } from './data/mode';
+import { PAGES, TABS } from './data/pages';
 import { THEMES, Theme } from './data/theme';
+import { Todo } from './data/todo';
 import { VERSION } from './data/version';
 import { Wits } from './data/wits';
-import { RecordDialog } from './pages/record';
+import { RECORD_TABS, openRecord } from './pages/record';
 
-/** The pages a phone's dock holds; the rest are under More. */
-const DOCK = ['/', '/journal', '/jars'];
-
-/** The record dialog's tabs, in order, as a link names them. */
-const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
+/** The pages off the header's menu: rarely wanted, so no tab of their own. */
+const ASIDE = [
+  // Both open whichever repository is wanted, and import into it; the
+  // phone keeps its own copies, and syncs them by hand.
+  { path: '/repository', label: 'Repository', icon: 'folder_open' },
+  ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
+];
 
 @Component({
   selector: 'app-root',
@@ -38,7 +42,7 @@ const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
     RouterLinkActive,
     RouterOutlet,
   ],
-  host: { '(window:keydown)': 'keys.handle($event)', '[class.ninth]': 'links.length > 8' },
+  host: { '(window:keydown)': 'keys.handle($event)' },
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,28 +51,15 @@ export class App {
   protected readonly wits = inject(Wits);
   protected readonly keys = inject(Keys);
   protected readonly theme = inject(Theme);
+  protected readonly todo = inject(Todo);
   protected readonly themeList = THEMES;
   protected readonly version = VERSION;
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   protected readonly now = signal(new Date());
-  protected readonly links = [
-    { path: '/', label: 'Dashboard', icon: 'space_dashboard' },
-    { path: '/journal', label: 'Journal', icon: 'receipt_long' },
-    { path: '/analysis', label: 'Analysis', icon: 'monitoring' },
-    { path: '/effects', label: 'Effects', icon: 'psychology' },
-    { path: '/jars', label: 'Jars', icon: 'inventory_2' },
-    { path: '/history', label: 'History', icon: 'insights' },
-    { path: '/costs', label: 'Costs', icon: 'euro' },
-    // Both open whichever repository is wanted, and import into it; the
-    // phone keeps its own copies, and syncs them by hand.
-    { path: '/repository', label: 'Repository', icon: 'folder_open' },
-    ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
-  ];
-  /** A phone's dock and its More sheet: the same links, split for a thumb. */
-  protected readonly dock = this.links.filter((l) => DOCK.includes(l.path));
-  protected readonly more = this.links.filter((l) => !DOCK.includes(l.path));
-  protected readonly moreOpen = signal(false);
+  /** The four tabs; a phone's dock holds the same four, Record raised between them. */
+  protected readonly links = TABS;
+  protected readonly aside = ASIDE;
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd),
@@ -79,16 +70,10 @@ export class App {
   /** The page showing, which a phone names in its top bar for want of tabs. */
   protected readonly here = computed(() => {
     const path = this.url().split('?')[0].split('#')[0];
-    return this.links.find((l) => l.path !== '/' && path.startsWith(l.path)) ?? this.links[0];
+    return [...PAGES, ...ASIDE].find((l) => l.path !== '/' && path.startsWith(l.path)) ?? PAGES[0];
   });
-  protected readonly inMore = computed(() => this.more.includes(this.here()));
 
   constructor() {
-    // Any way of arriving at a page — a tap, h/l, a number — puts More away.
-    effect(() => {
-      this.here();
-      this.moreOpen.set(false);
-    });
     const tick = setInterval(() => {
       this.now.set(new Date());
     }, 1000);
@@ -108,12 +93,13 @@ export class App {
 
   /** The keys every page answers — the terminal's, where a browser allows. */
   private global(): Binding[] {
-    const go = (i: number) => () => {
-      void this.router.navigateByUrl(this.links[i].path);
+    const go = (path: string) => () => {
+      void this.router.navigateByUrl(path);
     };
-    const here = () => Math.max(this.links.findIndex((l) => l.path !== '/' && this.router.url.startsWith(l.path)), 0);
+    // h and l step through every page, a tab's own pages in turn.
+    const here = () => Math.max(PAGES.findIndex((l) => l.path !== '/' && this.router.url.startsWith(l.path)), 0);
     const step = (d: number) => () => {
-      go((here() + d + this.links.length) % this.links.length)();
+      go(PAGES[(here() + d + PAGES.length) % PAGES.length].path)();
     };
     const open = (tab: number) => () => {
       this.record(tab);
@@ -124,7 +110,7 @@ export class App {
       { keys: ['b'], help: 'fill', run: open(2) },
       { keys: ['r'], help: 'weigh', run: open(3) },
       { keys: ['v'], help: 'AVB', run: open(4) },
-      ...this.links.map((l, i) => ({ keys: [String(i + 1)], label: String(i + 1), help: l.label.toLowerCase(), run: go(i), quiet: true })),
+      ...this.links.map((l, i) => ({ keys: [String(i + 1)], label: String(i + 1), help: l.label.toLowerCase(), run: go(l.path), quiet: true })),
       { keys: ['l'], label: 'h/l', help: 'pages', run: step(1) },
       { keys: ['h'], help: 'previous page', run: step(-1), quiet: true },
       { keys: ['t'], label: 't/T', help: 'theme', run: () => {
@@ -132,9 +118,6 @@ export class App {
       }, quiet: true },
       { keys: ['T'], help: 'previous theme', run: () => {
         this.theme.step(-1);
-      }, quiet: true },
-      { keys: ['Escape'], help: 'close', run: () => {
-        this.moreOpen.set(false);
       }, quiet: true },
       { keys: ['?'], help: 'all keys', run: () => {
         this.keys.showAll.update((v) => !v);
@@ -148,13 +131,6 @@ export class App {
   }
 
   protected record(tab = 0): void {
-    this.moreOpen.set(false);
-    this.dialog.open(RecordDialog, {
-      autoFocus: 'first-tabbable',
-      panelClass: 'record-panel',
-      // Five tabs want more than Material's 560 px; a phone still gets the screen less a margin.
-      maxWidth: 'min(660px, 94vw)',
-      data: { tab: Math.max(tab, 0) },
-    });
+    openRecord(this.dialog, { tab });
   }
 }

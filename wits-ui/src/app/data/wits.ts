@@ -28,6 +28,8 @@ export class Wits {
   readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
   readonly avb = httpResource<Avb>(() => `/api/avb?v=${this.version()}`);
   readonly costs = httpResource<Costs>(() => `/api/costs?v=${this.version()}`);
+  /** The purchases without a price whose jars are still in storage: what is still to be priced. */
+  readonly toPrice = httpResource<UnpricedEntry[]>(() => `/api/unpriced?v=${this.version()}`, { defaultValue: [] });
   /** The repository open: the server's, or the phone's, on its own file system. */
   readonly place = httpResource<Place>(() => `/api/repo?v=${this.version()}`);
   readonly strains = httpResource<Strain[]>(() => `/api/strains?v=${this.version()}`, { defaultValue: [] });

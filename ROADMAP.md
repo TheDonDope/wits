@@ -632,6 +632,51 @@ phone's build has nine tabs, so there the clock goes below 1600 px and the
 labels below 1380: measured every 10 px from 641 to 1920, the bar pages at
 none.
 
+### Four tabs, and what was forgotten
+
+The browser had grown to eight tabs, nine on the phone, the dock leaving five
+of them under More. There are four now (`data/pages.ts`, read by the routes,
+the tab bar, the dock, the keys and the phone's top bar):
+
+- **Dashboard.**
+- **I forgot to** (`Forgot`), what the ledger can show was left undone,
+  counted on the tab (`Todo`).
+- **Shelf**: Jars and Journal.
+- **Insights**: Analysis, Effects, History and Costs.
+
+A tab that holds several pages is one component (`Section`) with its pages as
+child routes and a row of its own to pick among them. Repository, and Sync on
+the phone, moved to the header's menu (⋮), with the build and the theme's name
+at its foot for the phone, which has no help line. The help line names the
+theme beside the build. `1`–`4` go to the tabs, and `h`/`l` step through all
+eight pages in turn. The old addresses redirect.
+
+**I forgot to** gathers what was spread over three pages and a dialog, each
+section shown only while there is something in it:
+
+- **Sessions to rate**, from the last 7 days (`RATE_DAYS`): a rating is asked
+  for while the session is remembered. The queue (`RateQueue`) moved from
+  Effects, which now links to it.
+- **Pickups to price** (`PriceWalk`, moved from Costs): counted by the fills
+  still in storage with a purchase unpriced, shown while any purchase lacks a
+  price.
+- **Stashes left behind** (`StashClear`): a jar with nothing sealed left whose
+  stash still holds grams, the sessions never logged. All are ticked, then
+  cleared together through `/api/flush`, as the Jars page clears them.
+- **AVB waiting** in a device, with **Collect** opening Record's AVB tab on
+  that device (`openRecord`).
+- **The jars still sealed**, with **Weigh** opening Record's Weigh tab on that
+  jar. These are offered, never counted: a weighing that agrees with the
+  ledger writes nothing (`record.ErrNothingToReconcile`), so wits cannot tell
+  a jar was checked. Counting them would be a reminder that never clears.
+
+On the imported workbook it counts 50: fills 29 and 30 to price, and 48 stashes
+left behind holding 1,154.00 g, since the workbook logs no sessions. Clearing
+them wrote 48 adjustments, the count went to 2, and `wits fsck` still accounts
+for every gram. Every page measures 375 px on the phone. On a computer, the
+clock goes below 1100 px and the tab labels below 780; measured every 20 px
+from 641 to 1920, no tab bar pages and no page scrolls sideways.
+
 ### Themes in the browser — the palette, `t`
 
 Forty-one themes for `wits-ui`, chosen from the header or stepped with `t`
@@ -989,7 +1034,7 @@ sitting by **reconcile purchases** (`Recorder.Unpriced`): every purchase still
 in storage without one, or every purchase with `--all`, a question each, a blank
 one skipped, nothing written until the end. It is the same walk in all three
 interfaces: `wits reconcile purchases`, `$` in the terminal, and the browser's
-**Costs** page. A buy whose price fails still stands, and says how to price it.
+**I forgot to** (`PriceWalk`). A buy whose price fails still stands, and says how to price it.
 
 The browser walks it a fill at a time (`PickupCard`): `/api/unpriced` names
 each purchase's fill, and a fill is priced together (`POST /api/price/fill`,

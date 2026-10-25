@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -16,6 +16,27 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { Written } from '../data/models';
 import { Wits } from '../data/wits';
 import { FillForm } from './fill-form';
+
+/** What the dialog opens on: a tab, and the jar or the device already picked. */
+export interface RecordData {
+  tab?: number;
+  product?: string;
+  device?: string;
+}
+
+/** The record dialog's tabs, in order, as a link names them. */
+export const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
+
+/** Opens the record dialog: on the shell's Record, a key, a link, or a thing forgotten. */
+export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
+  dialog.open(RecordDialog, {
+    autoFocus: 'first-tabbable',
+    panelClass: 'record-panel',
+    // Five tabs want more than Material's 560 px; a phone still gets the screen less a margin.
+    maxWidth: 'min(660px, 94vw)',
+    data: { ...data, tab: Math.max(data.tab ?? 0, 0) },
+  });
+}
 
 /**
  * Records an entry: a grind, a session, a fill, a weighing, or AVB collected or used. Every check is
@@ -203,11 +224,12 @@ export class RecordDialog {
   private readonly ref = inject(MatDialogRef<RecordDialog>);
   private readonly snack = inject(MatSnackBar);
 
-  protected readonly tab = signal(inject<{ tab?: number } | null>(MAT_DIALOG_DATA, { optional: true })?.tab ?? 0);
-  protected readonly product = signal('');
+  private readonly data = inject<RecordData | null>(MAT_DIALOG_DATA, { optional: true });
+  protected readonly tab = signal(this.data?.tab ?? 0);
+  protected readonly product = signal(this.data?.product ?? '');
   protected readonly grams = signal<number | null>(null);
   protected readonly date = signal<Date | null>(null);
-  protected readonly device = signal('');
+  protected readonly device = signal(this.data?.device ?? '');
   protected readonly temp = signal(185);
   protected readonly note = signal('');
   protected readonly account = signal('storage');

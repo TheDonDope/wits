@@ -1,20 +1,19 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 
+import { Todo } from '../data/todo';
 import { Wits } from '../data/wits';
-import { Pickup, PickupCard, Scan, byFill } from './pickup';
 
 /**
- * What the prescriptions cost, and the purchases still to be priced, walked
- * a fill at a time — reconcile purchases, grouped as they were picked up, a
- * price a gram for each strain and VAT on top when it is due, or its invoice
- * scanned (PickupCard). A price goes beside the journal: the purchase is never
- * edited.
+ * What the prescriptions cost: paid in all, per gram, per session that
+ * helped, by fill and by month. The purchases still to be priced are walked
+ * under "I forgot to" (PriceWalk).
  */
 @Component({
   selector: 'w-costs',
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, MatSlideToggleModule, PickupCard],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, MatIconModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (wits.costs.value(); as c) {
@@ -34,21 +33,13 @@ import { Pickup, PickupCard, Scan, byFill } from './pickup';
       </section>
     }
 
-    <section class="glass pad">
-      <header>
-        <div>
-          <span class="eyebrow">reconcile purchases</span>
-          <p class="dim">A fill at a time, as the prescription was picked up: what each strain cost a gram, or scan its invoice. A strain left blank keeps no price, and nothing is ever edited.</p>
-        </div>
-        <mat-slide-toggle [checked]="all()" (change)="setAll($event.checked)">every purchase, not only those in storage</mat-slide-toggle>
-      </header>
-      @for (f of shown(); track f.fill) {
-        <w-pickup [pickup]="f" [position]="index() + 1 + ' of ' + pickups().length" [fills]="numbers()"
-          [handed]="handed()?.fill === f.fill ? handed()!.scan : null" (saved)="next()" (skipped)="next()" (jump)="jump($event)" />
-      } @empty {
-        <p class="dim">{{ pickups().length ? 'All of them walked.' : 'Every purchase here has its price.' }}</p>
-      }
-    </section>
+    @if (todo.pickups()) {
+      <a class="glass waiting" routerLink="/forgot">
+        <mat-icon>euro</mat-icon>
+        <span>{{ todo.pickups() }} {{ todo.pickups() === 1 ? 'pickup waits' : 'pickups wait' }} for a price, under <b>I forgot to</b>.</span>
+        <mat-icon>chevron_right</mat-icon>
+      </a>
+    }
 
     @if (wits.costs.value(); as c) {
       <section class="glass pad">
@@ -89,10 +80,10 @@ import { Pickup, PickupCard, Scan, byFill } from './pickup';
     .stat { padding: 18px 22px; display: grid; gap: 4px; }
     .v { font-size: 28px; font-weight: 600; line-height: 1.3; }
     .pad { padding: 22px 26px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-    header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-    header p { margin: 6px 0 0; font-size: 13px; }
     .dim { color: var(--w-dim); }
-    .bad { color: var(--w-warn); margin: 0; }
+    .waiting { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: inherit; text-decoration: none; }
+    .waiting span { flex: 1; }
+    .waiting mat-icon:first-child { color: var(--w-primary); }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th { text-align: left; font-weight: 500; color: var(--w-dim); padding: 6px 8px; }
     td { padding: 6px 8px; border-top: 1px solid var(--w-glass-edge); }
@@ -105,43 +96,8 @@ import { Pickup, PickupCard, Scan, byFill } from './pickup';
 })
 export class Costs {
   protected readonly wits = inject(Wits);
-  protected readonly all = signal(false);
-  protected readonly pickups = signal<Pickup[]>([]);
-  protected readonly index = signal(0);
-  /** An invoice read on one fill's card that is another's, on its way there. */
-  protected readonly handed = signal<{ fill: number; scan: Scan } | null>(null);
-
-  /** The fill being priced, as a list of one: a new card for each fill, so none keeps another's figures. */
-  protected readonly shown = computed(() => this.pickups().slice(this.index(), this.index() + 1));
-  protected readonly numbers = computed(() => this.pickups().map((p) => p.fill));
+  protected readonly todo = inject(Todo);
   protected readonly fills = computed(() => [...(this.wits.costs.value()?.fills ?? [])].reverse());
   protected readonly months = computed(() => [...(this.wits.costs.value()?.months ?? [])].reverse().slice(0, 12));
   protected readonly peak = computed(() => Math.max(1, ...this.months().map((m) => m.cents)));
-
-  constructor() {
-    void this.load();
-  }
-
-  protected setAll(all: boolean): void {
-    this.all.set(all);
-    void this.load();
-  }
-
-  private async load(): Promise<void> {
-    this.pickups.set(byFill(await this.wits.unpriced(this.all())));
-    this.index.set(0);
-  }
-
-  protected next(): void {
-    this.handed.set(null);
-    this.index.update((i) => i + 1);
-  }
-
-  protected jump(to: { fill: number; scan: Scan }): void {
-    const i = this.pickups().findIndex((p) => p.fill === to.fill);
-    if (i >= 0) {
-      this.handed.set(to);
-      this.index.set(i);
-    }
-  }
 }
