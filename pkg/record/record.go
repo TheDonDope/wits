@@ -37,69 +37,44 @@ func New(r *repo.Repo, products *catalog.Catalog, devices *catalog.Devices, stat
 	return &Recorder{repo: r, products: products, devices: devices, state: state}
 }
 
-// Buy records a prescription fill, adding the product to the catalog if it is
-// not known yet. The product is returned along with whether it was new.
+// Buy records a prescription fill of one product, adding it to the catalog if
+// it is not known yet: a fill of one line (Fill), without a price. The product
+// is returned along with whether it was new.
 //
 // A slug may be given for a new product; left empty, a short one is made up
 // that is not already taken. It is the name every later entry refers to, so it
 // is settled once, when the product first appears, and never afterwards.
 func (r *Recorder) Buy(name, slug string, grams float64, at time.Time) (journal.Event, *catalog.Product, bool, error) {
-	// Before the catalog is touched: a refused fill must not leave a product
-	// behind.
-	if err := notAhead(journal.Event{Type: journal.Purchase, OccurredAt: at}, time.Now()); err != nil {
+	filled, err := r.Fill([]FillLine{{Name: name, Slug: slug, Grams: grams}}, at, "")
+	if err != nil {
 		return journal.Event{}, nil, false, err
 	}
-	product := r.products.Exact(name)
-	added := false
-	if product == nil {
-		var err error
-		if product, added, err = r.addProduct(name, slug); err != nil {
-			return journal.Event{}, nil, false, err
-		}
-	}
-	e, err := r.one(func() (journal.Event, error) {
-		return journal.Event{
-			Type:       journal.Purchase,
-			Product:    product.Slug,
-			Grams:      grams,
-			OccurredAt: at,
-		}, nil
-	})
-	return e, product, added, err
+	return filled[0].Event, filled[0].Product, filled[0].Added, nil
 }
 
 // ErrPartialName is returned when a purchase names only part of a product.
 var ErrPartialName = errors.New("not a product's full name or slug")
 
-// addProduct adds the product a purchase names, under the catalog's lock and
-// against the catalog as it stands, which may have gained it since this
-// recorder's copy was read — then it is used, not added twice.
-func (r *Recorder) addProduct(name, slug string) (*catalog.Product, bool, error) {
-	var product *catalog.Product
-	added := false
-	err := r.changeProducts(func(c *catalog.Catalog) error {
-		if product = c.Exact(name); product != nil {
-			return nil
+// newProduct makes the product a purchase names, with the slug asked for or
+// one made up, and adds it to the catalog — the one being changed, under its
+// lock, so a name another process added meanwhile is found, not added twice.
+func newProduct(c *catalog.Catalog, name, slug string) (*catalog.Product, error) {
+	if err := partial(c, name, slug); err != nil {
+		return nil, err
+	}
+	product := catalog.Parse(name)
+	if slug != "" {
+		if err := catalog.CheckSlug(slug); err != nil {
+			return nil, err
 		}
-		if err := partial(c, name, slug); err != nil {
-			return err
+		if c.Taken(slug) {
+			return nil, fmt.Errorf("the slug %q is already in use", slug)
 		}
-		product = catalog.Parse(name)
-		if slug != "" {
-			if err := catalog.CheckSlug(slug); err != nil {
-				return err
-			}
-			if c.Taken(slug) {
-				return fmt.Errorf("the slug %q is already in use", slug)
-			}
-			product.Slug = slug
-		} else {
-			product.Slug = catalog.NewHandle(product, c.Handles())
-		}
-		added = true
-		return c.Add(product)
-	})
-	return product, added, err
+		product.Slug = slug
+	} else {
+		product.Slug = catalog.NewHandle(product, c.Handles())
+	}
+	return product, c.Add(product)
 }
 
 // changeProducts applies change to the product catalog as it stands on disk,

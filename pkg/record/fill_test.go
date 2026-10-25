@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/prices"
 )
@@ -56,4 +57,31 @@ func TestFillIsAllOrNothing(t *testing.T) {
 	assert.ErrorIs(t, err, ErrEmptyFill)
 	_, err = rec.Fill([]FillLine{{Name: "X 22/1 Y", Grams: 1}}, time.Now().Add(time.Hour), "")
 	assert.ErrorIs(t, err, ErrAhead)
+}
+
+func TestFillRefusedLeavesNoNewProduct(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 5, time.Now().AddDate(0, 0, -3))
+	require.NoError(t, err)
+
+	_, err = rec.Fill([]FillLine{
+		{Name: "NICE 32/1 Morning Sun", Grams: 20},
+		{Name: "Wedding", Grams: 10},
+	}, time.Now(), "")
+
+	require.ErrorIs(t, err, ErrPartialName)
+	assert.Contains(t, err.Error(), "line 2")
+	require.Len(t, rec.products.Products, 1, "Line 1's new product went with the fill it was in")
+	reread, err := rec.repo.UpdateProducts(func(*catalog.Catalog) error { return nil })
+	require.NoError(t, err)
+	assert.Len(t, reread.Products, 1, "on disk too")
+}
+
+func TestFillOfOneSaysNoLine(t *testing.T) {
+	rec := recorder(t)
+
+	_, _, _, err := rec.Buy("NICE 32/1 Morning Sun", "", 0, time.Now())
+
+	require.Error(t, err)
+	assert.Equal(t, "the grams dispensed must be more than none", err.Error(), "A purchase of one is not a line of anything")
 }
