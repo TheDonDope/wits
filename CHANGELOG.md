@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.91.0"></a>
+## [v0.91.0] - 2026-10-25
+### Docs
+- **diary:** what a gram cost, and one file to run it
+
+### Fix
+- **bundle:** a price's pharmacy and its none-to-be-had travel, in format 7
+
+
 <a name="v0.90.0"></a>
 ## [v0.90.0] - 2026-10-25
+### Docs
+- update changelog for v0.90.0
+
 ### Feat
 - **release:** wits as an AppImage, built and attached to every release
 
@@ -1120,7 +1132,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.90.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.91.0...HEAD
+[v0.91.0]: https://github.com/TheDonDope/wits/compare/v0.90.0...v0.91.0
 [v0.90.0]: https://github.com/TheDonDope/wits/compare/v0.89.0...v0.90.0
 [v0.89.0]: https://github.com/TheDonDope/wits/compare/v0.88.0...v0.89.0
 [v0.88.0]: https://github.com/TheDonDope/wits/compare/v0.87.0...v0.88.0
