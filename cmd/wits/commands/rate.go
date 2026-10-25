@@ -33,7 +33,7 @@ var Rate = &cobra.Command{
 		}
 		session := args[0]
 		if session == "last" {
-			if session = lastSession(s.State.Events); session == "" {
+			if session = lastSession(s.State.Standing); session == "" {
 				return fmt.Errorf("no session to rate yet")
 			}
 		}
@@ -55,17 +55,12 @@ func init() {
 	Rate.Flags().StringVar(&rateNote, "note", "", "a line about how it went")
 }
 
-// lastSession is the newest session that stands, by when it happened.
-func lastSession(events []journal.Event) string {
-	undone := map[string]bool{}
-	for _, e := range events {
-		if e.Reverts != "" {
-			undone[e.Reverts] = true
-		}
-	}
-	for i := len(events) - 1; i >= 0; i-- {
-		if e := events[i]; e.Type == journal.Sesh && !undone[e.Hash] {
-			return e.Hash
+// lastSession is the newest session that stands, by when it happened: the
+// last session among the fold's standing entries.
+func lastSession(standing []journal.Event) string {
+	for i := len(standing) - 1; i >= 0; i-- {
+		if standing[i].Type == journal.Sesh {
+			return standing[i].Hash
 		}
 	}
 	return ""
