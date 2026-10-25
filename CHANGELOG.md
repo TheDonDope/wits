@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.84.0"></a>
+## [v0.84.0] - 2026-10-25
+### Feat
+- **wits-ui:** twenty more themes, some of them drawn on paper
+
+
 <a name="v0.83.0"></a>
 ## [v0.83.0] - 2026-10-25
+### Docs
+- update changelog for v0.83.0
+
 ### Feat
 - **wits-ui:** the phone has a Repository tab, and its own repositories
 
@@ -1048,7 +1057,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.83.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.84.0...HEAD
+[v0.84.0]: https://github.com/TheDonDope/wits/compare/v0.83.0...v0.84.0
 [v0.83.0]: https://github.com/TheDonDope/wits/compare/v0.82.0...v0.83.0
 [v0.82.0]: https://github.com/TheDonDope/wits/compare/v0.81.0...v0.82.0
 [v0.81.0]: https://github.com/TheDonDope/wits/compare/v0.80.0...v0.81.0
