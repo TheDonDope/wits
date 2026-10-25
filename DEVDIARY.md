@@ -2,6 +2,24 @@
 
 ## 2026-10-25
 
+### Forty-one coats, and three strains to a receipt
+
+The evening finished what the afternoon left half done, then went back to the paperwork. A second review cleared what the first missed. The fill form had worked a total in euros while the server worked cents, so in 33 of 21,015 cases the price shown was not the one written: 30 g at 2.05 € with VAT showed 73.18 € and wrote 73.19 €. Both sides now work it the same way, with a test on each. A refused fill no longer leaves a product behind in the catalog. Repository became a tab, since nobody found it as a chip in the header. The page now names its build, so a phone's service worker serving an old copy shows it. The phone got a Repository tab of its own and its own repositories, importing the workbook as 1,429 entries, the same as `wits import`; the spreadsheet reader costs its engine 450 KB gzipped. Then twenty more themes, forty-one in all, several drawing their own paper in CSS: Blueprint's grid in three line weights, greenbar ledger paper with tractor holes, a gold sunburst, light through venetian blinds, and a Bauhaus Dark that casts red shadows. Every one was photographed at 1440 px and at 375 px, where none is wider than the screen. Last, Costs prices a prescription as it was picked up: 88 unpriced purchases in 30 fills, a price a gram per strain with 19% VAT on top, or the pharmacy's invoice scanned on the device with its first page shown beside the prices it filled. An invoice is matched to the pickup within a week that holds its strains, so it is never recorded twice. The real one is dated 28 August, fill 30 was picked up on the 29th, and it asks before pricing it at 351.80 €, the invoice's own total to the cent. Shipped as v0.81.0 through v0.85.0.
+
+- `56a7952` fix(record): a refused fill leaves no product behind, and a purchase is a fill of one
+- `9de3871` chore: what the second review found, cleared
+- `c67d317` fix(wits-ui): the Repository page is a tab, where it can be found
+- `be43c5f` docs: update changelog for v0.81.0
+- `40e367f` docs(roadmap): eleven things the record could still say
+- `eb94b35` feat(wits-ui): the page says which build it is
+- `b8752f4` docs: update changelog for v0.82.0
+- `4dcf20f` feat(wits-ui): the phone has a Repository tab, and its own repositories
+- `66065ba` docs: update changelog for v0.83.0
+- `641bd8e` feat(wits-ui): twenty more themes, some of them drawn on paper
+- `c745512` docs: update changelog for v0.84.0
+- `329d767` feat(wits-ui): a fill is priced as it was picked up, from its invoice if you have it
+- `4d623bd` docs: update changelog for v0.85.0
+
 ### Twenty-one looks, a thumb's reach, and the paperwork
 
 The afternoon was the browser's. It got twenty-one themes, Aurora as it was and twenty more, differing in corners, glass, backdrop, shadow and type as much as colour. That meant routing some seventy colours written into the components through theme variables first; the film's canvas reads the theme off the page, and Aurora was checked against main's screenshot. Then a review round on an iPhone 11 Pro held upright, 375 px, now the narrowest the interface is laid out for. The tabs there showed one icon at a time between paging arrows, so phones got a dock with Record raised in it and the rest under More. Analysis measured 503 px and Costs 404 at that width, and every page measures 375 now. Analysis's five scopes go by short names, the Jars page went from 12,900 px to 6,800 as a compact list, and the Record dialog's five tabs now fit side by side.
@@ -68,6 +86,8 @@ From "Later" came the map of the strains and the replay as a film. The workbook 
 - `5d7a4b1` docs: update changelog for v0.68.0
 
 ### Notes for 2026-10-25
+
+The invoice tests in the browser ran on the real invoice, which names its patient. It is still kept out of git by `.git/info/exclude`, and the screenshots showing it stayed in the session's scratch folder. Driving the pages took a small Node script talking to Chromium's DevTools directly: `DOM.setFileInputFiles` puts a PDF in a file input, and `Emulation.setDeviceMetricsOverride` gives a 375 px phone. It lives outside the repository. A `pkill -f` matching its own command line killed the shell a third time; stopping a background server by its task works. Codacy would have flagged `matchInvoice` (complexity 19) and `priceFill` (54 lines), so each got a named helper (`fillMatch`, `fillPrices`) before the push. Left open: the week an invoice may lie from its pickup is a guess, set from one invoice a day off. The command line and the terminal still reconcile purchases one at a time, so the browser's walk by fill is no longer the same walk in all three. The theme menu now scrolls through forty-one, which works but is long.
 
 The example invoice names its patient, so it stays out of the repository, kept off commits by `.git/info/exclude` on this machine; the tests use its rows without the person. Its line prices include VAT: they add up to its gross total, not its net. A strain read off an invoice is never taxed again, but whether the prices typed in by hand are quoted before VAT, as the switch assumes, is the maintainer's to confirm. pdf.js 6 needs `Promise.try`, which the Chromium here lacks and Safari has only from iOS 18.2, so it runs as its legacy build. A headless profile reused between runs kept the app's service worker, which served the old chunks and hid the fix for a while; the profile is wiped before each run now. Codacy flagged two things that were not what it took them for: lizard read the regex literal `/[?#]/` as the start of a 62-line function, and a security rule took `filepath.Clean` on a browsed path for a traversal guard. That guard is absent by design: the folder browser may look anywhere its user could, on a server that answers this machine only. Left open: the phone layouts were measured in Chromium's emulation, never on the iPhone itself, so the notch and home-bar insets are untested. The dashboard is 345 px wide at 320 px, below the width the layout is held to.
 
