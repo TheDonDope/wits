@@ -802,7 +802,7 @@ example stays out of the repository, as it names its patient; the tests use its
 rows without them.
 
 An invoice is matched against the fills already recorded (`matchInvoice`,
-`pkg/api/match.go`): of the pickups within a week of its date, the one holding
+`pkg/api/match.go`): of the pickups within two weeks of its date, the one holding
 most of its strains, with how many days apart and which purchase each line is.
 An invoice is dated the day it was ordered and a fill the day it was picked
 up, so they are often a day apart: the example is dated 28 August and the
@@ -823,8 +823,18 @@ cartridge by the piece, shipping) is `Other`, left out and named, so the
 strains and what was left out add up to the gross total. A NUL byte in one
 invoice's text is passed over.
 
-The match compares each line with the products of every fill within seven
-calendar days (`likeness`). The same jar is certain. Otherwise the strain
+A third pharmacy (Grünhorn's, April 2023 to August 2024) names a product on
+one row and prices it on its dosage row below: `Dosierung: … 9,99 € 20 199,80 €`,
+price before quantity, no unit. A fee, delivery or the narcotics charge, has
+the same shape with no dosage, or only a count and a total
+(`Dosierung: 1 9,99 €`). Its date is `Ausstellungsdatum`, not the
+`Fälligkeitsdatum` above it. Its gross is `Rechnungsbetrag`, and its VAT
+`MwSt. (19%)`.
+
+The match compares each line with the products of every fill within 14
+calendar days (`likeness`). It was seven, until an invoice of 2 July 2024
+turned out to be fill 10's, with all three strains at their grams, picked up
+on 15 July. The same jar is certain. Otherwise the strain
 words they share count, singular and lowercased, more when the strength (25:01
 is 25/1) and the grams agree, and a strength both print differently rules the
 pair out. Lines are paired best first, one purchase each. Run against all 21
@@ -1055,10 +1065,12 @@ every PDF in it) read a batch on the device (`InvoiceBatch`), one after the
 other, newest first. A row is ticked when it matched a fill with at least one
 purchase not yet priced. The days apart are shown, and so are the invoices
 that share a fill. Pricing goes oldest first, so a later invoice for one fill
-stands over an earlier. All 21 kept invoices read in 2 seconds in headless
-Chromium. 20 were ticked for 19 fills, the September one listed as matching
-none, and pricing them left 12 pickups: fills 1 to 11 and fill 18's Ghost
-Train Haze. DevTools cannot fill a folder input the way a folder pick does,
+stands over an earlier. All 37 kept invoices, from three pharmacies, read in
+3.3 seconds in headless Chromium. 32 were ticked for all 30 fills, and five
+matched none: four from April to September 2023, before the workbook's first
+fill, and the September 2026 one. Pricing them left one pickup, fill 18's Ghost
+Train Haze. Wits then reports 10,156.01 € for 1,244 g, the same as the matched
+lines added up apart, with the journal's checksum unchanged. DevTools cannot fill a folder input the way a folder pick does,
 so the run went through **Add invoices**. **Pick a folder** hands its files
 to the same reader, and has not yet been tried with a real folder.
 

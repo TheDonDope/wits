@@ -179,7 +179,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
             @case ('none') {
               <div class="ask" role="status">
                 <mat-icon>help</mat-icon>
-                <p>No fill within a week of {{ s.reading.date ? (s.reading.date | date: 'd MMMM y') : 'the invoice' }} holds its strains.</p>
+                <p>No fill within two weeks of {{ s.reading.date ? (s.reading.date | date: 'd MMMM y') : 'the invoice' }} holds its strains.</p>
                 <div class="choose">
                   <button mat-button type="button" (click)="apply(false)">Use it here anyway</button>
                   <button mat-button type="button" (click)="dismiss()">Dismiss</button>

@@ -111,7 +111,7 @@ func TestAnInvoiceFindsTheFillItIsFor(t *testing.T) {
 
 	far := strings.Replace(invoiceText, "28.08.2026", "28.08.2019", 1)
 	assert.Nil(t, decodeInto[invoiceReading](t, call(t, s, "POST", "/api/invoice", `{"text": "`+far+`"}`)).Match,
-		"No fill within a week of it: a new one")
+		"No fill within two weeks of it: a new one")
 }
 
 // matched reads an invoice's text and names, for each of its lines, the
@@ -201,4 +201,19 @@ func TestAPickupWithNoPriceToBeHadIsAskedAboutNoMore(t *testing.T) {
 	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
 	assert.Equal(t, 1, decodeInto[costs](t, call(t, s, "GET", "/api/costs", "")).Fills[29].Unpriced)
 	require.NoError(t, r.Prices().Verify(), "The log's chain holds")
+}
+
+func TestAnInvoiceTwoWeeksBeforeItsPickupIsStillItsFill(t *testing.T) {
+	s, _ := workbook(t)
+
+	m, got := matched(t, s, "Ausstellungsdatum: 02.07.2024\nRechnung Nr.: 2376626\nProdukt/Dienstleistung\tPreis\tAnzahl\tGesamtpreis\n"+
+		"420 Evolution 22/1 CA MAC: MAC 1\nDosierung: täglich 2x0,25 Gramm\t8,99 €\t15\t134,85 €\nInhalation\n"+
+		"Avaay 27/1 SCG: Super Citra G.\nDosierung: täglich 2x0,25 Gramm\t10,99 €\t15\t164,85 €\nInhalation\n"+
+		"Pedanios 22/1: Ghost Train Haze\nDosierung: täglich 2x0,25 Gramm\t10,99 €\t15\t164,85 €\nInhalation\n"+
+		"GO! Versand\nDosierung:\t1\t9,99 €\nRechnungsbetrag\t474,54 €")
+
+	require.NotNil(t, m, "Ordered on the 2nd, picked up on the 15th")
+	assert.Equal(t, 10, m.Fill)
+	assert.Equal(t, 13, m.Days)
+	assert.Equal(t, []string{"420-evolution-ca-mac-mac1-221", "avaay-scg-super-citra-g-271", "pedanios-dnk-ghost-train-haze-221"}, got)
 }
