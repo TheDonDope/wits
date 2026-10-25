@@ -6,6 +6,10 @@ COMMIT_DATE = $(shell git --no-pager log -1 --pretty='format:%cd' --date='format
 PKG = github.com/TheDonDope/wits/pkg/version
 LDFLAGS = -X $(PKG).Version=$(VERSION) -X $(PKG).CommitSHA=$(COMMIT_SHA) -X $(PKG).CommitDate=$(COMMIT_DATE)
 
+# The client is stamped too, with the commits since the tag and the working
+# tree's state, since a page can be built from anywhere between releases.
+UI_DEFINE = --define "WITS_VERSION='$(shell git describe --tags --always --dirty)'"
+
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release server ui ui-test serve \
 	wasm wasm-check pages
@@ -103,7 +107,7 @@ server:
 	go build -ldflags "$(LDFLAGS)" -o ./bin/wits-server ./cmd/wits-server
 
 ui:
-	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng build
+	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng build $(UI_DEFINE)
 
 ui-test:
 	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng test --watch=false
@@ -123,7 +127,7 @@ wasm-check: build wasm
 # The phone's build, as GitHub Pages serves it under /wits/. 404.html is the
 # app again, so a link into a page opens it rather than GitHub's 404.
 pages: wasm
-	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng build --configuration pages
+	cd wits-ui && { [ -d node_modules ] || npm ci; } && npx ng build --configuration pages $(UI_DEFINE)
 	cp wits-ui/dist/wits-ui/browser/index.html wits-ui/dist/wits-ui/browser/404.html
 
 # The repository in the working directory, in a browser at http://127.0.0.1:7341

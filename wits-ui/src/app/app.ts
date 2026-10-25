@@ -14,6 +14,7 @@ import { filter, map } from 'rxjs';
 import { Binding, Keys } from './data/keys';
 import { ENGINE } from './data/mode';
 import { THEMES, Theme } from './data/theme';
+import { VERSION } from './data/version';
 import { Wits } from './data/wits';
 import { RecordDialog } from './pages/record';
 
@@ -47,6 +48,7 @@ export class App {
   protected readonly keys = inject(Keys);
   protected readonly theme = inject(Theme);
   protected readonly themeList = THEMES;
+  protected readonly version = VERSION;
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   protected readonly now = signal(new Date());
