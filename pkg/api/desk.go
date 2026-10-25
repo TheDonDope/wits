@@ -10,7 +10,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -21,6 +20,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/importer"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
 // xlsx is the type a workbook upload must be sent as. A page on another
@@ -47,21 +47,20 @@ type place struct {
 }
 
 func (s *Server) where(w http.ResponseWriter, _ *http.Request) {
-	p, err := placeOf(s.current())
+	ws, err := s.snapshot()
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err)
 		return
 	}
-	reply(w, http.StatusOK, p)
+	reply(w, http.StatusOK, placeOf(ws))
 }
 
-func placeOf(r *repo.Repo) (place, error) {
-	events, err := r.Journal().Events()
-	if err != nil {
-		return place{}, err
-	}
+// placeOf is a snapshot's repository, as every other GET reads its figures:
+// from the snapshot, not from the journal read again.
+func placeOf(ws *workspace.Workspace) place {
 	home, _ := os.UserHomeDir()
-	return place{Path: r.WorkTree(), Name: filepath.Base(r.WorkTree()), Entries: len(events), Home: home}, nil
+	tree := ws.Repo.WorkTree()
+	return place{Path: tree, Name: filepath.Base(tree), Entries: len(ws.State.Events), Home: home}
 }
 
 // open serves another repository: the one in the folder named, or a new one
@@ -211,7 +210,7 @@ func (s *Server) importBook(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusUnsupportedMediaType, errors.New("send the workbook as "+xlsx))
 		return
 	}
-	result, err := importer.ReadFrom(io.LimitReader(http.MaxBytesReader(w, r.Body, maxWorkbook), maxWorkbook))
+	result, err := importer.ReadFrom(http.MaxBytesReader(w, r.Body, maxWorkbook))
 	if err != nil {
 		fail(w, http.StatusBadRequest, fmt.Errorf("not a workbook wits can read: %w", err))
 		return

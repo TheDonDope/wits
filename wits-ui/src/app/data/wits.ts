@@ -74,10 +74,6 @@ export class Wits {
     return this.write('sesh', body);
   }
 
-  buy(body: { name: string; grams: number; slug?: string; date?: string }) {
-    return this.write('buy', body);
-  }
-
   /** What a label's text says about a fill. It records nothing. */
   label(text: string): Promise<LabelReading> {
     return this.post<LabelReading>('label', { text });
@@ -134,11 +130,6 @@ export class Wits {
   /** Records the named stashes as consumed, as one batch. */
   async flush(products: string[]): Promise<{ message: string }> {
     return this.write<{ message: string }>('flush', { products });
-  }
-
-  /** The repository being served. */
-  where(): Promise<Place> {
-    return this.get<Place>('/api/repo');
   }
 
   /** The folders in a folder, the home folder when none is named. */

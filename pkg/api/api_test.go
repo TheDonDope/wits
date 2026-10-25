@@ -132,9 +132,9 @@ func TestWrites(t *testing.T) {
 	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
 	assert.Equal(t, "undid the grind of 1.25 g of Enua 22/1 Wedding Cake", decodeInto[written](t, w).Message)
 
-	w = call(t, s, "POST", "/api/buy", `{"name":"Cannamedical 28/1 Lemon Cookie","grams":10,"date":"2026-01-02"}`)
+	w = call(t, s, "POST", "/api/fill", `{"date":"2026-01-02","lines":[{"name":"Cannamedical 28/1 Lemon Cookie","grams":10}]}`)
 	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
-	assert.Contains(t, decodeInto[written](t, w).Message, "new product")
+	assert.Contains(t, decodeInto[flushed](t, w).Message, "a new product")
 
 	w = call(t, s, "POST", "/api/sesh", `{"product":"wcake","grams":0.3,"device":"volcano"}`)
 	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
@@ -153,7 +153,7 @@ func TestWritesAreRefusedWhereTheCommandsRefuseThem(t *testing.T) {
 		"Finer":        {"/api/grind", `{"product":"wcake","grams":0.333}`, "finer than a centigram"},
 		"BadDate":      {"/api/grind", `{"product":"wcake","grams":1,"date":"soon"}`, "not a date"},
 		"UnknownField": {"/api/grind", `{"product":"wcake","grams":1,"gramz":2}`, "unknown field"},
-		"PartialBuy":   {"/api/buy", `{"name":"Wedding","grams":1}`, "not a product's full name"},
+		"PartialBuy":   {"/api/fill", `{"lines":[{"name":"Wedding","grams":1}]}`, "not a product's full name"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			w := call(t, s, "POST", c.path, c.body)

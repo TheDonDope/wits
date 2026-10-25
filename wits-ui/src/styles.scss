@@ -13,6 +13,7 @@
 @use '@fontsource-variable/nunito';
 @use 'material-symbols/rounded.css';
 @use 'themes';
+@use 'breakpoints' as bp;
 
 html {
   height: 100%;
@@ -184,7 +185,7 @@ body {
 
 // Analysis's five scopes on a phone: Material pads each label by 12 px, more
 // than five segments in 343 px can spare once a theme's type runs wide.
-@media (width <= 640px) {
+@include bp.phone {
   w-analysis .mat-button-toggle-label-content {
     padding: 0 4px;
   }
@@ -193,7 +194,7 @@ body {
 // The record dialog's five tabs on a phone: Material gives each 90 px and 24 px
 // of padding, five of which do not fit the dialog, and pages them two at a
 // time. There each takes a fifth, its icon over its name (record.ts).
-@media (width <= 640px) {
+@include bp.phone {
   .record-panel {
     .mat-mdc-tab {
       flex: 1 1 0;

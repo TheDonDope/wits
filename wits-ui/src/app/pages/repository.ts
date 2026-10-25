@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -147,7 +147,7 @@ function recalled(): string[] {
             <a routerLink="/">See the dashboard</a></p>
         } @else {
           <div class="row">
-            <button mat-flat-button (click)="commit()" [disabled]="busy() || !empty()">
+            <button mat-flat-button (click)="read(true)" [disabled]="busy() || !empty()">
               <mat-icon>download_done</mat-icon>Import {{ v.entries | number }} entries
             </button>
             @if (!empty()) {
@@ -161,6 +161,7 @@ function recalled(): string[] {
     </section>
   `,
   styles: `
+    @use 'breakpoints' as bp;
     :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .pad { padding: 20px 24px; display: grid; gap: 12px; }
     h1 { font: 600 28px var(--w-num); margin: 0; }
@@ -190,14 +191,15 @@ function recalled(): string[] {
     .bad { color: var(--w-warn); }
     .good { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--w-good); }
     .good a { color: var(--w-primary); }
-    @media (width <= 640px) { .pad { padding: 16px; } h1 { font-size: 24px; } }
+    @include bp.phone { .pad { padding: 16px; } h1 { font-size: 24px; } }
   `,
 })
 export class Repository {
   private readonly wits = inject(Wits);
   private readonly snack = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
-  protected readonly place = signal<Place | null>(null);
+  /** The repository being served: the service's, which the header's chip reads too. */
+  protected readonly place = computed<Place | null>(() => this.wits.place.value() ?? null);
   protected readonly listing = signal<Listing | null>(null);
   protected readonly recent = signal(recalled());
   protected readonly busy = signal(false);
@@ -208,19 +210,20 @@ export class Repository {
   protected readonly empty = computed(() => this.place()?.entries === 0);
 
   constructor() {
-    void this.load();
-  }
-
-  private async load(): Promise<void> {
-    try {
-      const p = await this.wits.where();
-      this.place.set(p);
-      this.remember(p.path);
-      // Browse from beside the repository, where another is likeliest to be.
-      await this.browse(p.path.slice(0, Math.max(p.path.lastIndexOf('/'), 1)));
-    } catch (err) {
-      this.browseError.set((err as Error).message);
-    }
+    // Each repository served goes first among the recent ones; the first one
+    // seen is browsed from beside, where another is likeliest to be.
+    effect(() => {
+      const p = this.place();
+      if (!p) {
+        return;
+      }
+      untracked(() => {
+        this.remember(p.path);
+        if (!this.listing()) {
+          void this.browse(p.path.slice(0, Math.max(p.path.lastIndexOf('/'), 1)));
+        }
+      });
+    });
   }
 
   protected async browse(path?: string): Promise<void> {
@@ -240,8 +243,6 @@ export class Repository {
     this.browseError.set('');
     try {
       const p = await this.wits.open(path, create);
-      this.place.set(p);
-      this.remember(p.path);
       this.verdict.update((v) => (v?.committed ? null : v));
       this.snack.open(`${create ? 'Made and opened' : 'Opened'} ${p.name}`, undefined, { duration: 3000 });
       await this.browse(p.path);
@@ -277,15 +278,8 @@ export class Repository {
     await this.read(false);
   }
 
-  protected async commit(): Promise<void> {
-    await this.read(true);
-    if (this.verdict()?.committed) {
-      this.place.set(await this.wits.where());
-    }
-  }
-
   /** Sends the chosen workbook: a dry run, or the import itself. */
-  private async read(commit: boolean): Promise<void> {
+  protected async read(commit: boolean): Promise<void> {
     const f = this.file();
     if (!f) {
       return;
