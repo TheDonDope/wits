@@ -563,7 +563,9 @@ same walk is `$` in the terminal interface and **I forgot to** in the
 browser.
 
 **I forgot to** walks it a fill at a time, as the prescription was picked
-up: on the workbook, 88 purchases in 30 fills, three strains to most of them.
+up, newest first and every purchase without a price unless switched to only
+those in storage: on the workbook, 88 purchases in 30 fills, three strains to
+most of them.
 Type each strain's price a gram, and **Add 19% VAT (Germany)**, on unless
 switched off, puts the tax on top; the fill's total is worked out as the server
 writes it. Or **Scan invoice**: the pharmacy's PDF is read in the browser and
@@ -571,6 +573,17 @@ its prices fill the strains, the invoice's first page shown beside them to
 check against. If the invoice is dated a few days off the pickup (ordered one
 day, picked up the next), it asks first. If it belongs to another fill, it says
 which one and offers to go there.
+
+**Add invoices** takes many PDFs at once, and **Pick a folder** takes every PDF
+in a folder. Each is read in the browser and listed newest first, with the fill
+it is for and how many days apart they are. The ones that matched a fill not
+yet priced are ticked, and **Price N fills** prices them all at the invoices'
+totals. The eye opens one on its pickup's card, its first page beside it. All
+21 invoices kept from both pharmacies read in 2 seconds: 20 ticked for fills 12
+to 30, and the September one listed as matching no fill. A pickup with no
+price to be had, no invoice kept, is ticked **No price to be had — stop
+asking**. It is written down and asked about no more, still counted as without
+a price, and a price given later supersedes it.
 
 Invoices from two pharmacies are read: one prints a product on one row, the
 other ships, spreads a product over three rows under its PZN, and dates the

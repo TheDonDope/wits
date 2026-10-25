@@ -2,6 +2,7 @@ import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -38,7 +39,7 @@ export interface Scan {
   reading: InvoiceReading;
 }
 
-/** Groups the purchases without a price by the fill they came in, oldest fill first. */
+/** Groups the purchases without a price by the fill they came in, newest fill first. */
 export function byFill(entries: UnpricedEntry[]): Pickup[] {
   const out = new Map<number, Pickup>();
   for (const e of entries) {
@@ -47,7 +48,7 @@ export function byFill(entries: UnpricedEntry[]): Pickup[] {
     p.grams = Math.round((p.grams + e.grams) * 100) / 100;
     out.set(e.fill, p);
   }
-  return [...out.values()].sort((a, b) => a.fill - b.fill);
+  return [...out.values()].sort((a, b) => b.fill - a.fill);
 }
 
 function row(l: UnpricedEntry, p: Priced | undefined): Row {
@@ -77,14 +78,21 @@ export function fillCents(lines: UnpricedEntry[], priced: Partial<Record<string,
   return out;
 }
 
-/** The fill as the API takes it: an invoice's line by its total, one typed by its price a gram. */
-export function priceLines(lines: UnpricedEntry[], priced: Partial<Record<string, Priced>>, vat: boolean): PriceLine[] {
+/**
+ * The fill as the API takes it: an invoice's line by its total, one typed by
+ * its price a gram, and — when the fill has no price to be had — every line
+ * left without one marked so, to be asked about no more.
+ */
+export function priceLines(lines: UnpricedEntry[], priced: Partial<Record<string, Priced>>, vat: boolean, giveUp = false): PriceLine[] {
   return lines.map((l) => {
     const p = priced[l.hash];
     if (p?.inclVAT && p.perGram) {
       return { purchase: l.hash, total: (rowCents(row(l, p), vat) / 100).toFixed(2), note: p.note };
     }
-    return { purchase: l.hash, per_gram: p?.perGram ? String(p.perGram) : '' };
+    if (p?.perGram) {
+      return { purchase: l.hash, per_gram: String(p.perGram) };
+    }
+    return giveUp ? { purchase: l.hash, unknown: true } : { purchase: l.hash, per_gram: '' };
   });
 }
 
@@ -121,7 +129,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
  */
 @Component({
   selector: 'w-pickup',
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule,
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, FormsModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule,
     MatInputModule, MatSlideToggleModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -224,7 +232,12 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
           <p class="bad">{{ error() }}</p>
         }
         <div class="actions">
-          <button mat-flat-button type="button" [disabled]="busy() || !sums().total" (click)="save()">Save the fill</button>
+          <mat-checkbox class="give-up" [checked]="giveUp()" (change)="giveUp.set($event.checked)">
+            No price to be had{{ sums().total ? ' for the rest' : '' }} — stop asking
+          </mat-checkbox>
+          <button mat-flat-button type="button" [disabled]="busy() || (!sums().total && !giveUp())" (click)="save()">
+            {{ giveUp() && !sums().total ? 'Mark as unpriced' : 'Save the fill' }}
+          </button>
           <button mat-button type="button" (click)="skipped.emit()">Skip</button>
         </div>
       </div>
@@ -281,7 +294,8 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
     .sum { font-weight: 600; font-size: 16px; }
     .sum dt { color: inherit; }
     .bad { color: var(--w-warn); margin: 0; }
-    .actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center; }
+    .give-up { margin-right: auto; }
     .invoice { margin: 0; display: grid; gap: 8px; align-content: start; }
     .invoice img { display: block; width: 100%; border-radius: var(--w-radius-dialog); border: 1px solid var(--w-glass-edge);
       background: #fff; }
@@ -324,6 +338,8 @@ export class PickupCard implements OnInit, OnDestroy {
   protected readonly ask = signal<'confirm' | 'other' | 'none' | null>(null);
   protected readonly applied = signal(false);
   protected readonly notes = signal<string[]>([]);
+  /** Whether what is left without a price has none to be had, and is asked about no more. */
+  protected readonly giveUp = signal(false);
   protected readonly sums = computed(() => fillCents(this.pickup().lines, this.priced(), this.vat()));
   private handedOver = false;
 
@@ -408,13 +424,13 @@ export class PickupCard implements OnInit, OnDestroy {
   }
 
   protected async save(): Promise<void> {
-    if (this.busy() || !this.sums().total) {
+    if (this.busy() || (!this.sums().total && !this.giveUp())) {
       return;
     }
     this.busy.set(true);
     this.error.set('');
     try {
-      const out = await this.wits.priceFill(priceLines(this.pickup().lines, this.priced(), this.vat()), this.vat());
+      const out = await this.wits.priceFill(priceLines(this.pickup().lines, this.priced(), this.vat(), this.giveUp()), this.vat());
       this.snack.open(out.message, undefined, { duration: 3000 });
       this.saved.emit();
     } catch (e) {

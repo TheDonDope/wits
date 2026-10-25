@@ -15,9 +15,9 @@ const doughnut = bought('b', 30, 'all-nations-mac-doughnut-291');
 const papaya = bought('c', 30, 'sumo-papaya-bomb-251');
 
 describe('a fill priced together', () => {
-  it('groups purchases by the fill they came in, oldest first', () => {
+  it('groups purchases by the fill they came in, newest first', () => {
     const fills = byFill([sun, bought('x', 29, 'enua'), doughnut, papaya]);
-    expect(fills.map((f) => [f.fill, f.lines.length, f.grams])).toEqual([[29, 1, 20], [30, 3, 60]]);
+    expect(fills.map((f) => [f.fill, f.lines.length, f.grams])).toEqual([[30, 3, 60], [29, 1, 20]]);
   });
 
   it('works out the prices as the server does: 20 g at 5,80 € with VAT is 138,04 €', () => {
@@ -47,5 +47,13 @@ describe('a fill priced together', () => {
     expect(sums.invoice).toBe(23280);
     expect(sums.vat).toBe(0);
     expect(priceLines([doughnut], priced, true)).toEqual([{ purchase: 'b', total: '116.80', note: 'invoice 2608' }]);
+  });
+});
+
+describe('a pickup with no price to be had', () => {
+  it('marks what is left without a price, and keeps what was given', () => {
+    expect(priceLines([sun, doughnut], { a: { perGram: 5.8 } }, true, true)).toEqual([
+      { purchase: 'a', per_gram: '5.8' }, { purchase: 'b', unknown: true }]);
+    expect(priceLines([doughnut], {}, true, false)).toEqual([{ purchase: 'b', per_gram: '' }]);
   });
 });

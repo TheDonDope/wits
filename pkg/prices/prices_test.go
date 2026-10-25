@@ -1,6 +1,7 @@
 package prices
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -107,4 +108,14 @@ func TestAnalyse(t *testing.T) {
 	assert.Equal(t, []Month{{Month: "2026-08", Cents: 17000, Grams: 20}}, c.Months)
 	assert.Equal(t, 1, c.Helped)
 	assert.InDelta(t, 425, c.PerHelped(), 1e-9, "0.5 g at 8.50 € a gram")
+}
+
+func TestAPriceNotToBeHad(t *testing.T) {
+	assert.NoError(t, Price{Purchase: "abc", Unknown: true}.Validate())
+	assert.Error(t, Price{Purchase: "abc", Unknown: true, Cents: 100}.Validate(), "None to be had, so no amount")
+	assert.Error(t, Price{Purchase: "abc"}.Validate(), "A price is still more than nothing")
+
+	b, err := json.Marshal(Price{Purchase: "abc", Cents: 100})
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), "unknown", "A price written before it encodes, and so hashes, as it did")
 }

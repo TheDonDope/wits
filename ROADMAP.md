@@ -1049,6 +1049,29 @@ it is and hands it over. On the workbook, 88 purchases fall in 30 fills (28 of
 three strains, 2 of two). The example invoice prices fill 30 at 351.80 €, its
 own total to the cent; 20 g at 5,80 € with VAT is 138,04 € on both sides.
 
+The walk shows the newest fill first and every purchase without a price by
+default. **Add invoices** (several PDFs) and **Pick a folder** (`webkitdirectory`,
+every PDF in it) read a batch on the device (`InvoiceBatch`), one after the
+other, newest first. A row is ticked when it matched a fill with at least one
+purchase not yet priced. The days apart are shown, and so are the invoices
+that share a fill. Pricing goes oldest first, so a later invoice for one fill
+stands over an earlier. All 21 kept invoices read in 2 seconds in headless
+Chromium. 20 were ticked for 19 fills, the September one listed as matching
+none, and pricing them left 12 pickups: fills 1 to 11 and fill 18's Ghost
+Train Haze. DevTools cannot fill a folder input the way a folder pick does,
+so the run went through **Add invoices**. **Pick a folder** hands its files
+to the same reader, and has not yet been tried with a real folder.
+
+A price not to be had is written down (`Price.Unknown`, no amount,
+`omitempty` so the records before it hash as they did). `Recorder.Unpriced`
+asks about the purchase no more. `prices.Analyse` still counts it as without
+a price, costing nothing, and a price given later supersedes it. A card's
+**No price to be had — stop asking** marks every line left without one. On
+fill 18 it wrote one such record. The costs stayed at 750.00 g with a price
+and 34 purchases without, and the walk moved on to fill 11. A build from
+before this reads such a record as a price of nothing, so an older page, such
+as a phone's cached one, should be reloaded.
+
 `wits costs` and `/api/costs` (`prices.Analyse`) give what was paid in all and
 per gram, by fill and by month, and per session that helped: rated 4 or more
 overall, at its product's price per gram. An undone purchase cost nothing, and

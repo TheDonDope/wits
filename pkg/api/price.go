@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/journal"
@@ -83,23 +84,26 @@ func (s *Server) price(w http.ResponseWriter, r *http.Request) {
 		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
 }
 
-// errNothingPriced is a fill sent with no price a gram on any of its lines.
+// errNothingPriced is a fill sent with no price on any of its lines.
 var errNothingPriced = errors.New("no price given; nothing to write down")
 
 // priceLine is one purchase of a fill being priced: a price a gram, or its
-// invoice's line total; neither, and it keeps no price.
+// invoice's line total, or none to be had (Unknown); neither, and it keeps
+// no price.
 type priceLine struct {
 	Purchase string `json:"purchase"`
 	PerGram  string `json:"per_gram"`
 	Total    string `json:"total"`
+	Unknown  bool   `json:"unknown"`
 	Note     string `json:"note"`
 }
 
 // priceFill writes down a fill's prices: for each of its purchases a price a
 // gram, VAT added when asked for, or the line's total off its invoice, which
 // includes VAT — worked out by lineCents, as a fill recorded with its prices
-// is, on the grams the journal holds. A line left blank keeps no price; any
-// bad line refuses the fill.
+// is, on the grams the journal holds — or that none is to be had, so it is
+// asked about no more. A line left blank keeps no price; any bad line
+// refuses the fill.
 func (s *Server) priceFill(w http.ResponseWriter, r *http.Request) {
 	ws, ok := s.writable(w, r)
 	if !ok {
@@ -122,16 +126,37 @@ func (s *Server) priceFill(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err)
 		return
 	}
+	reply(w, http.StatusCreated, map[string]string{"message": pricedMessage(paid, grams)})
+}
+
+// pricedMessage says what a fill's pricing wrote: what the priced ones cost,
+// and how many have none to be had.
+func pricedMessage(paid []prices.Price, grams float64) string {
 	var cents int64
+	priced, unknown := 0, 0
 	for _, p := range paid {
+		if p.Unknown {
+			unknown++
+			continue
+		}
 		cents += p.Cents
+		priced++
 	}
-	noun := "purchases"
-	if len(paid) == 1 {
-		noun = "purchase"
+	var parts []string
+	if priced > 0 {
+		parts = append(parts, fmt.Sprintf("%s for %.2f g, %s", prices.Format(cents), grams, count(priced, "purchase")))
 	}
-	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g, %d %s",
-		prices.Format(cents), grams, len(paid), noun)})
+	if unknown > 0 {
+		parts = append(parts, count(unknown, "purchase")+" with no price to be had, asked about no more")
+	}
+	return strings.Join(parts, "; ")
+}
+
+func count(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }
 
 // fillPrices is what each line of a fill cost, on the grams the journal
@@ -143,6 +168,10 @@ func fillPrices(ws *workspace.Workspace, lines []priceLine, vat bool) ([]prices.
 		e, err := ws.Recorder.Find(l.Purchase)
 		if err != nil {
 			return nil, 0, err
+		}
+		if l.Unknown {
+			paid = append(paid, prices.Price{Purchase: e.Hash, Unknown: true, Note: l.Note})
+			continue
 		}
 		c, err := lineCents(fillLine{Grams: e.Grams, PerGram: l.PerGram, Total: l.Total}, vat)
 		if err != nil {

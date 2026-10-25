@@ -171,3 +171,34 @@ func TestAnInvoiceMatchesItsFillByWhatItShares(t *testing.T) {
 		"Pedanios 25/1 FLH-CA Frozen Lemon Haze\t20 g\t5,80 €\t116,00 €")
 	assert.Nil(t, m, "A pickup the workbook does not hold is a new fill")
 }
+
+func TestAPickupWithNoPriceToBeHadIsAskedAboutNoMore(t *testing.T) {
+	s, r := workbook(t)
+	var last []unpricedEntry
+	for _, e := range decodeInto[[]unpricedEntry](t, call(t, s, "GET", "/api/unpriced", "")) {
+		if e.Fill == 30 {
+			last = append(last, e)
+		}
+	}
+	require.Len(t, last, 3)
+
+	w := call(t, s, "POST", "/api/price/fill", `{"lines": [
+		{"purchase": "`+last[0].Hash+`", "per_gram": "5,80"},
+		{"purchase": "`+last[1].Hash+`", "unknown": true},
+		{"purchase": "`+last[2].Hash+`", "unknown": true}], "vat": true}`)
+
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "138.04 € for 20.00 g, 1 purchase; 2 purchases with no price to be had")
+	for _, e := range decodeInto[[]unpricedEntry](t, call(t, s, "GET", "/api/unpriced?all=1", "")) {
+		assert.NotEqual(t, 30, e.Fill, "Fill 30 is priced or given up on, every purchase of it")
+	}
+	c := decodeInto[costs](t, call(t, s, "GET", "/api/costs", ""))
+	assert.Equal(t, int64(13804), c.Cents, "No price to be had costs nothing")
+	assert.Equal(t, 2, c.Fills[29].Unpriced, "and is still without a price, counted")
+
+	// An invoice found later prices it after all.
+	w = call(t, s, "POST", "/api/price/fill", `{"lines": [{"purchase": "`+last[1].Hash+`", "total": "116,80"}]}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Equal(t, 1, decodeInto[costs](t, call(t, s, "GET", "/api/costs", "")).Fills[29].Unpriced)
+	require.NoError(t, r.Prices().Verify(), "The log's chain holds")
+}

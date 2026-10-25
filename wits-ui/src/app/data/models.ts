@@ -278,6 +278,8 @@ export interface PriceLine {
   purchase: string;
   per_gram?: string;
   total?: string;
+  /** None to be had: written down so the purchase is asked about no more. */
+  unknown?: boolean;
   note?: string;
 }
 

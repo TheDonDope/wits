@@ -60,7 +60,7 @@ func matchInvoice(ws *workspace.Workspace, date time.Time, lines []invoiceLine) 
 	}
 	latest := prices.Latest(ws.Prices)
 	for _, h := range best.Lines {
-		if _, ok := latest[h]; ok && h != "" {
+		if p, ok := latest[h]; ok && h != "" && !p.Unknown {
 			best.Priced++
 		}
 	}
