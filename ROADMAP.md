@@ -606,14 +606,31 @@ as a path now (`importer.ReadFrom`). Tested against the committed workbook,
 through a repository made by the endpoint: 53 products and 1,429 entries, the
 dry run writing nothing and a second import refused.
 
-None of this is built for the phone (`desk.go` is `!js`): it has the one
-repository, and the spreadsheet reader would have weighed on its engine. The
-page is a tab of its own on a computer, the eighth, and under More on a phone.
+The page is a tab of its own on a computer, the eighth, and under More on a
+phone.
 It was first a folder chip in the header instead, to spare the tabs a width,
 and was not found there; the name of the repository served is in the
 verified dot's tooltip now. Eight labelled tabs take 963 px, so the clock goes
 below 1500 px and the labels below 1260: measured every 10 px from 641 to
 1920, the bar pages at none, 48 px spare at the tightest.
+
+The phone has it too. At first it was left out (`desk.go` was `!js`), the
+phone holding one repository and the spreadsheet reader weighing on its
+engine: 9.7 MB, and 11.9 MB with it, 450 KB more gzipped. But that left a
+phone unable to start from the workbook without a computer, and with a
+single journal to try anything in. Its home folder is `/` on its own file
+system, the first repository `/wits`; the stand-in folder and the temporary
+one are hidden (`/.remote`, `/.tmp`), so the page lists only what was made
+there, and every other file is kept in IndexedDB. Making a repository in a
+new folder is one step now on both (`POST /api/repo` makes the folder when
+the one above it is there), since a phone has no folders until it makes
+them. The engine sends a workbook across as bytes in its own type, syncs and
+shows the key of the repository open, and reopens it next time (`/.opened`).
+`make wasm-check` makes `/book` in the engine, imports the workbook there and
+opens `/wits` again: 1,429 entries, as `wits import` writes. With Sync, the
+phone's build has nine tabs, so there the clock goes below 1600 px and the
+labels below 1380: measured every 10 px from 641 to 1920, the bar pages at
+none.
 
 ### Themes in the browser — the palette, `t`
 
@@ -651,7 +668,7 @@ reads and records as it does against the server, through the same recorder. Go's
 js port calls Node's `fs`; `data/memfs.ts` is the twenty calls it makes, in
 memory, with "no error" passed as `null` (Go reads anything else as an error)
 and only error codes Go has an errno for (any other panics it). Every file the
-engine changes under `/wits` is written to IndexedDB after each call, and the
+engine changes, but for its scratch folders, is written to IndexedDB after each call, and the
 page asks for persistent storage. The lock is a no-op there (`lock_js.go`): one
 page, one thread.
 

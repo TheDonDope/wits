@@ -4,15 +4,17 @@
 // API the server runs, compiled to WebAssembly and run inside the page, so
 // the phone refuses the same things in the same words as the terminal.
 //
-// The repository lives in the browser, at /wits on the file system the page
-// hands Go (wits-ui's data/memfs.ts, kept in IndexedDB). Nothing is sent
+// The repositories live in the browser, on the file system the page hands Go
+// (wits-ui's data/memfs.ts, kept in IndexedDB): the first at /wits, and any
+// other the Repository page makes, the home folder being /. Nothing is sent
 // anywhere: the phone syncs by opening the remote's wits.age from the shared
 // folder and saving it back, and the remote package does the rest exactly as
 // wits pull and wits push do.
 //
 // It sets globalThis.witsEngine, with
 //
-//	request(method, url, body) → Promise<{status, type, body, bytes?}>  the API
+//	request(method, url, body, type?) → Promise<{status, type, body, bytes?}>  the API;
+//	                                     a body as bytes is sent as the type given
 //	sync(file, key)            → Promise<{pulled, pushed, file}>
 //	key()                      → Promise<string>           the remote's key
 //
@@ -20,7 +22,9 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -33,24 +37,36 @@ import (
 )
 
 const (
-	// root is where the repository lives on the page's file system.
+	// root is where the first repository lives on the page's file system.
 	root = "/wits"
+	// home is the folder the Repository page browses from.
+	home = "/"
 	// folder stands in for the shared folder: the file the phone opens is put
 	// here before a pull, and what a push writes here is handed back to save.
-	folder = "/remote"
+	// It and the temporary folder are hidden, so the Repository page lists
+	// only what was made there; neither is kept.
+	folder = "/.remote"
+	temp   = "/.tmp"
+	// opened names the repository the page had open, to open it again.
+	opened = "/.opened"
 )
 
 func main() {
+	// The page's process has no environment: a home for the Repository page,
+	// and a temporary folder out of its sight.
+	_ = os.Setenv("HOME", home)
+	_ = os.Setenv("TMPDIR", temp)
 	r, err := open()
 	if err != nil {
 		js.Global().Get("console").Call("error", "wits: "+err.Error())
 		return
 	}
-	handler := api.New(r, "").Handler()
+	srv := api.New(r, "")
+	handler := srv.Handler()
 	js.Global().Set("witsEngine", map[string]any{
-		"request": promised(func(args []js.Value) (any, error) { return request(handler, args) }),
-		"sync":    promised(func(args []js.Value) (any, error) { return sync(r, args) }),
-		"key":     promised(func([]js.Value) (any, error) { return key(r) }),
+		"request": promised(func(args []js.Value) (any, error) { return request(srv, handler, args) }),
+		"sync":    promised(func(args []js.Value) (any, error) { return sync(srv.Repo(), args) }),
+		"key":     promised(func([]js.Value) (any, error) { return key(srv.Repo()) }),
 	})
 	if ready := js.Global().Get("witsReady"); ready.Type() == js.TypeFunction {
 		ready.Invoke()
@@ -58,11 +74,17 @@ func main() {
 	select {}
 }
 
-// open finds the repository, making it on the first run, and the temporary
-// folder a key brought in passes through: the page's file system starts empty.
+// open finds the repository the page had open last, or the first one, making
+// it on the first run, and the temporary folder a key brought in passes
+// through: the page's file system starts empty.
 func open() (*repo.Repo, error) {
 	if err := os.MkdirAll(os.TempDir(), 0700); err != nil {
 		return nil, err
+	}
+	if last, err := os.ReadFile(opened); err == nil {
+		if r, err := repo.Discover(strings.TrimSpace(string(last))); err == nil {
+			return r, nil
+		}
 	}
 	r, err := repo.Discover(root)
 	if errors.Is(err, repo.ErrNotARepo) {
@@ -94,21 +116,29 @@ func promised(work func([]js.Value) (any, error)) js.Func {
 }
 
 // request answers one API call the way wits-server would: from this machine,
-// a write as JSON.
-func request(h http.Handler, args []js.Value) (any, error) {
+// a write as JSON, or as bytes of the type given — a workbook. When the call
+// opened another repository, the page opens it next time too.
+func request(srv *api.Server, h http.Handler, args []js.Value) (any, error) {
 	if len(args) < 3 {
 		return nil, errors.New("request takes a method, a URL and a body")
 	}
-	method, url, body := args[0].String(), args[1].String(), args[2].String()
-	req, err := http.NewRequest(method, "http://localhost"+url, strings.NewReader(body))
+	req, err := http.NewRequest(args[0].String(), "http://localhost"+args[1].String(), body(args))
 	if err != nil {
 		return nil, err
 	}
-	if body != "" {
+	if len(args) > 3 && args[3].Type() == js.TypeString {
+		req.Header.Set("Content-Type", args[3].String())
+	} else if args[2].Type() == js.TypeString && args[2].String() != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
+	before := srv.Repo()
 	rec := &recorder{header: http.Header{}, code: http.StatusOK}
 	h.ServeHTTP(rec, req)
+	if after := srv.Repo(); after != before {
+		if err := os.WriteFile(opened, []byte(after.WorkTree()+"\n"), 0600); err != nil {
+			return nil, err
+		}
+	}
 	out := map[string]any{"status": rec.code, "type": rec.header.Get("Content-Type")}
 	// A string crossing into JavaScript is read as UTF-8, which a PDF is not:
 	// anything but JSON goes across as bytes.
@@ -119,6 +149,14 @@ func request(h http.Handler, args []js.Value) (any, error) {
 		out["body"] = rec.body.String()
 	}
 	return out, nil
+}
+
+// body is a request's body: text, or a Uint8Array's bytes.
+func body(args []js.Value) io.Reader {
+	if args[2].Type() == js.TypeString {
+		return strings.NewReader(args[2].String())
+	}
+	return bytes.NewReader(bytesOf(args[2]))
 }
 
 // recorder keeps a response in memory. It is httptest's ResponseRecorder, all

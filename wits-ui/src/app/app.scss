@@ -252,6 +252,26 @@ kbd {
   }
 }
 
+// The phone's build has a ninth tab, Sync, 117 px more: the clock goes 100 px
+// and the labels 120 px sooner there. Measured every 10 px from 641 to 1920:
+// the bar pages at none.
+@media (width <= 1600px) {
+  :host(.ninth) .clock,
+  :host(.ninth) .chain .word {
+    display: none;
+  }
+}
+
+@media (width <= 1380px) {
+  :host(.ninth) .label {
+    display: none;
+  }
+
+  :host(.ninth) .nav mat-icon {
+    margin-right: 0;
+  }
+}
+
 // A small tablet: tighter tabs, and the repository by its icon, its name in the tooltip.
 @media (width <= 900px) {
   .nav a {

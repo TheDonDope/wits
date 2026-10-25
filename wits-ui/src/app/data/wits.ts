@@ -2,7 +2,6 @@ import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/htt
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { ENGINE } from './mode';
 
 import {
   Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, Verdict, Written,
@@ -29,8 +28,8 @@ export class Wits {
   readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
   readonly avb = httpResource<Avb>(() => `/api/avb?v=${this.version()}`);
   readonly costs = httpResource<Costs>(() => `/api/costs?v=${this.version()}`);
-  /** The repository being served; the phone has the one, and no such endpoint. */
-  readonly place = httpResource<Place>(() => (ENGINE ? undefined : `/api/repo?v=${this.version()}`));
+  /** The repository open: the server's, or the phone's, on its own file system. */
+  readonly place = httpResource<Place>(() => `/api/repo?v=${this.version()}`);
   readonly strains = httpResource<Strain[]>(() => `/api/strains?v=${this.version()}`, { defaultValue: [] });
   readonly journal = httpResource<{ entries: Entry[]; total: number }>(
     () => `/api/journal?limit=100000&v=${this.version()}`,
