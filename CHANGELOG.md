@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.80.0"></a>
+## [v0.80.0] - 2026-10-25
+### Fix
+- **wits-ui:** the record dialog's five tabs, all in a phone's width
+
+
 <a name="v0.79.0"></a>
 ## [v0.79.0] - 2026-10-25
+### Docs
+- update changelog for v0.79.0
+
 ### Feat
 - **record:** a fill of many strains, priced, and read off the invoices
 
@@ -1006,7 +1015,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.79.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.80.0...HEAD
+[v0.80.0]: https://github.com/TheDonDope/wits/compare/v0.79.0...v0.80.0
 [v0.79.0]: https://github.com/TheDonDope/wits/compare/v0.78.0...v0.79.0
 [v0.78.0]: https://github.com/TheDonDope/wits/compare/v0.77.0...v0.78.0
 [v0.77.0]: https://github.com/TheDonDope/wits/compare/v0.76.0...v0.77.0
