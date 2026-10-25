@@ -23,6 +23,9 @@ import (
 func TestMain(m *testing.M) {
 	// Disable log output during tests
 	log.SetOutput(io.Discard)
+	// A reload is read at once, so the helpers that drop slow commands (timers)
+	// never drop one on a slow machine and leave a screen showing stale data.
+	reloadAtOnce = true
 	os.Exit(m.Run())
 }
 

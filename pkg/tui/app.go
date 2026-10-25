@@ -725,10 +725,20 @@ type reloadedMsg struct {
 	err  error
 }
 
+// reloadAtOnce reads the repository again inside Update rather than in a
+// command. The tests set it: they run a command the way the runtime does but
+// give up on one that takes longer than a timer would, and a reload on a slow
+// machine under the race detector can take longer than that.
+var reloadAtOnce = false
+
 // reload re-reads the journal after something has been written to it, so every
 // screen sees the new entry at once.
 func (a *App) reload() tea.Cmd {
 	repository := a.data.Repo
+	if reloadAtOnce {
+		data, err := Load(repository)
+		return func() tea.Msg { return reloadedMsg{data: data, err: err} }
+	}
 	return func() tea.Msg {
 		data, err := Load(repository)
 		return reloadedMsg{data: data, err: err}
