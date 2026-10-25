@@ -2,6 +2,7 @@ package importer
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"time"
 
@@ -84,7 +85,22 @@ func Read(path string) (*Result, error) {
 		return nil, err
 	}
 	defer f.Close()
+	return read(f)
+}
 
+// ReadFrom parses a workbook from a stream — one uploaded through the browser,
+// which has no path. It writes nothing, anywhere.
+func ReadFrom(in io.Reader) (*Result, error) {
+	f, err := excelize.OpenReader(in)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return read(f)
+}
+
+// read parses an open workbook.
+func read(f *excelize.File) (*Result, error) {
 	result := &Result{}
 	seen := map[string]bool{}
 	// Different spellings that resolve to the same product are worth saying out

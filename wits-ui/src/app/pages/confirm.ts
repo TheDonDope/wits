@@ -6,9 +6,11 @@ export interface Confirm {
   title: string;
   body: string;
   yes: string;
+  /** The way back, when "Keep it" is not what it means. */
+  no?: string;
 }
 
-/** Asks before something is recorded that cannot be taken back, only corrected. */
+/** Asks before something is written that cannot be taken back, only corrected. */
 @Component({
   selector: 'w-confirm',
   imports: [MatButtonModule, MatDialogModule],
@@ -17,7 +19,7 @@ export interface Confirm {
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>{{ data.body }}</mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false" cdkFocusInitial>Keep it</button>
+      <button mat-button [mat-dialog-close]="false" cdkFocusInitial>{{ data.no ?? 'Keep it' }}</button>
       <button mat-flat-button [mat-dialog-close]="true">{{ data.yes }}</button>
     </mat-dialog-actions>
   `,

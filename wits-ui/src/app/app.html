@@ -17,12 +17,17 @@
   <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false" class="nav">
     @for (l of links; track l.path) {
       <a mat-tab-link [routerLink]="l.path" routerLinkActive #rla="routerLinkActive"
-        [routerLinkActiveOptions]="{ exact: l.path === '/' }" [active]="rla.isActive">
+        [routerLinkActiveOptions]="{ exact: l.path === '/' }" [active]="rla.isActive" [attr.aria-label]="l.label">
         <mat-icon>{{ l.icon }}</mat-icon><span class="label">{{ l.label }}</span>
       </a>
     }
   </nav>
   <div class="right">
+    @if (desk.length && wits.place.value(); as p) {
+      <a class="repo-chip" routerLink="/repository" routerLinkActive="on" [matTooltip]="p.path + ' — open another, or import'">
+        <mat-icon>folder_open</mat-icon><span>{{ p.name }}</span>
+      </a>
+    }
     @if (wits.overview.value(); as o) {
       <span class="chain" [class.bad]="!o.chain_ok" role="status"
         [attr.aria-label]="o.chain_ok ? 'The journal verifies' : 'The journal was changed outside wits'"

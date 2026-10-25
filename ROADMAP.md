@@ -575,6 +575,35 @@ with the day it was last used, and the four figures in one line, and the
 buttons as a grid of two under the shelf/finished switch. 6,800 px for the
 53 jars of the workbook.
 
+### Which repository, and importing — the Repository page
+
+`wits-server` started on one repository and kept it. The interface can open
+another now: the Repository page browses this computer's folders
+(`GET /api/dirs`: a folder's folders, hidden ones left out, each saying whether
+it holds `.wits` of its own), opens the one picked (`POST /api/repo`), or makes
+one in a folder, after asking. The server swaps the repository under the lock
+that guards its snapshot, so a request already under way finishes on the one it
+began on, and the client reads every view again. It must be the folder's own
+repository: a folder inside one is refused, though a command run there would
+find it. Recent ones are remembered in the browser.
+
+A workbook can be imported from the browser (`POST /api/import`): sent as the
+file itself, in the spreadsheet's own type, which a page elsewhere cannot send
+without a preflight the server never grants, as with JSON for every other
+write. It is a dry run unless `?commit=1`, reporting what `wits import` reports
+— worksheets, products, entries, grams dispensed, ground and unaccounted, the
+merged spellings, the anomalies — and commits through `importer.Commit`, so
+into an empty journal only (409 otherwise). The importer reads a stream as well
+as a path now (`importer.ReadFrom`). Tested against the committed workbook,
+through a repository made by the endpoint: 53 products and 1,429 entries, the
+dry run writing nothing and a second import refused.
+
+None of this is built for the phone (`desk.go` is `!js`): it has the one
+repository, and the spreadsheet reader would have weighed on its engine. The
+header's folder chip, not an eighth tab, opens the page on a computer, and More
+does on a phone; making room for it, the clock goes below 1400 px and the tab
+labels below 1100, so the tabs no longer page anywhere from 660 px up.
+
 ### Themes in the browser — the palette, `t`
 
 Twenty-one themes for `wits-ui`, chosen from the header or stepped with `t`
