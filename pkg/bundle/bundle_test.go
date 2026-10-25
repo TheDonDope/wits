@@ -362,6 +362,29 @@ func TestPricesTravelInTheBundle(t *testing.T) {
 	assert.ErrorContains(t, err, "unreadable cents")
 }
 
+func TestAPriceKeepsItsPharmacyAndItsNoneToBeHad(t *testing.T) {
+	paid := []prices.Price{
+		{Purchase: strings.Repeat("b", 64), At: time.Date(2026, 8, 29, 12, 0, 0, 0, berlin), Cents: 11680,
+			Seller: "Cannabis Apotheke Nordostbahnhof", Note: "invoice 2608"},
+		{Purchase: strings.Repeat("c", 64), At: time.Date(2026, 8, 29, 12, 0, 0, 0, berlin), Unknown: true},
+	}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Prices: paid}))
+
+	got, err := Read(&buf)
+
+	require.NoError(t, err)
+	require.Len(t, got.Prices, 2)
+	assert.Equal(t, "Cannabis Apotheke Nordostbahnhof", got.Prices[0].Seller, "The pharmacy travels")
+	assert.True(t, got.Prices[1].Unknown, "and so does a price not to be had")
+	assert.Zero(t, got.Prices[1].Cents)
+	want, err := prices.Chain(paid)
+	require.NoError(t, err)
+	restored, err := prices.Chain(got.Prices)
+	require.NoError(t, err, "A price not to be had restores: it is no price of nothing")
+	assert.Equal(t, want[1].Hash, restored[1].Hash, "Restored, each hashes as it did")
+}
+
 func TestSealsTravelInTheBundle(t *testing.T) {
 	seals := []seal.File{
 		{Name: "2026-10-24-f81bbd2cc893", Text: "wits-seal 1\nhead f81b\n", OTS: []byte{0x00, 'O', 0xff, 0x01}},

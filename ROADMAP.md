@@ -1118,7 +1118,13 @@ an unpriced one is counted, not guessed at. Bundle format 4 carries the log
 after the ratings, restore writes it back byte for byte, fsck checks its chain
 and names a price for no purchase, and push and pull carry and rebase it. A
 price follows its purchase to the purchase's new hash, as a rating follows its
-session. The workbook has no prices. Priced by hand in a copy, fill 30 read
+session. Format 7 carries a price's pharmacy (`s=`) and a price not to be
+had (`u=1`). Format 6 dropped both, so from v0.88.0 to v0.90.0 a bundle, a
+push or a pull lost the pharmacy. A price not to be had came back as a price
+of nothing, so its restore was refused: "a price is more than nothing, got
+0.00 €". Run on the workbook priced from every invoice, with one price not to
+be had, v0.90.0 restored none of its 89 prices. Now all 89 restore, their
+hashes identical, with the mark and all 88 pharmacies. The workbook has no prices. Priced by hand in a copy, fill 30 read
 520.00 € for 60 g, 8.67 € a gram, the one session rated 4 cost 3.40 €, and the
 bundle restored the log identical.
 

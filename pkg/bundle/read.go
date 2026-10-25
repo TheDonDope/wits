@@ -204,7 +204,7 @@ func readSeal(text string, line int) (seal.File, error) {
 	return f, nil
 }
 
-// readPrice decodes one price line: C <purchase> <at> <cents> [n=<note>].
+// readPrice decodes one price line: C <purchase> <at> <cents> [u=1] [s=<seller>] [n=<note>].
 func readPrice(text string, line int) (prices.Price, error) {
 	parts := strings.Fields(text)
 	if len(parts) < 4 {
@@ -220,9 +220,14 @@ func readPrice(text string, line int) (prices.Price, error) {
 	}
 	p := prices.Price{Purchase: parts[1], At: at, Cents: cents}
 	for _, attr := range parts[4:] {
-		if key, value := field(attr); key == "n" {
+		switch key, value := field(attr); key {
+		case "n":
 			p.Note = unescape(value)
-		} else {
+		case "s":
+			p.Seller = unescape(value)
+		case "u":
+			p.Unknown = value == "1"
+		default:
 			return prices.Price{}, errorf(line, "unknown price attribute %q", key)
 		}
 	}
