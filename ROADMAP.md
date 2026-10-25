@@ -590,6 +590,12 @@ seal fixes the journal up to there. `wits verify` checks the signature and
 whether the journal here holds that head at that entry; a journal grown since
 still does. Outside a repository it checks the seal alone. The fingerprint,
 `SHA256:` and base64 the way ssh writes one, is what to hand out (`--key`).
+The key is read or made under its own lock (`seal.Key`): two first uses at
+once — the browser's carry page and `wits seal` — each made a key, the second
+written replaced the first, and what the first had signed could never be
+verified. Six `wits carry` started together on a repository without a key
+signed with a key that was then lost in 7 of 20 rounds; under the lock, in
+none.
 
 `--timestamp` is OpenTimestamps, written in-tree: the seal's SHA-256 goes to
 the four public calendars, the only network call wits makes, opt-in and said
