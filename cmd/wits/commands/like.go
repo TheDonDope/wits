@@ -1,5 +1,4 @@
-// Package commands: `wits like`, the products most like one, by name, cannabinoids and terpenes.
-
+// Package commands holds `wits like` here: the products most like one, by name, cannabinoids and terpenes.
 package commands
 
 import (

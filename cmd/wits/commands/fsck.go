@@ -1,5 +1,4 @@
-// Package commands: `wits fsck`, the journal, its logs and the catalogs checked for damage.
-
+// Package commands holds `wits fsck` here: the journal, its logs and the catalogs checked for damage.
 package commands
 
 import (

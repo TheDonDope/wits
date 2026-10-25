@@ -1,5 +1,4 @@
-// Package commands: `wits verify`, a seal or a carry statement checked.
-
+// Package commands holds `wits verify` here: a seal or a carry statement checked.
 package commands
 
 import (

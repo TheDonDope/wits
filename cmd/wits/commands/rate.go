@@ -1,5 +1,4 @@
-// Package commands: `wits rate`, what a session did, rated afterwards.
-
+// Package commands holds `wits rate` here: what a session did, rated afterwards.
 package commands
 
 import (

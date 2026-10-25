@@ -1,9 +1,8 @@
-// Package report: the PDF, written here, not by a library — one page of text,
-// lines and bars in the standard Helvetica every PDF reader carries, which is a
-// few hundred lines and no dependency, the way the charts are drawn in-tree.
-// Text is encoded as WinAnsi, which has the euro sign, the umlauts and the
-// dashes a German report needs.
-
+// Package report holds the PDF writer here, written in-tree rather than by a
+// library: one page of text, lines and bars in the standard Helvetica every
+// PDF reader carries, which is a few hundred lines and no dependency, the way
+// the charts are drawn in-tree. Text is encoded as WinAnsi, which has the
+// euro sign, the umlauts and the dashes a German report needs.
 package report
 
 import (

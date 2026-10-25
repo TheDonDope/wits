@@ -1,5 +1,4 @@
-// Package commands: `wits seal`, the journal's head signed, and timestamped on request.
-
+// Package commands holds `wits seal` here: the journal's head signed, and timestamped on request.
 package commands
 
 import (

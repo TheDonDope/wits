@@ -1,5 +1,4 @@
-// Package commands: `wits carry`, a signed statement of what is held.
-
+// Package commands holds `wits carry` here: a signed statement of what is held.
 package commands
 
 import (
