@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.86.0"></a>
+## [v0.86.0] - 2026-10-25
+### Docs
+- **diary:** forty-one coats, and three strains to a receipt
+
+### Feat
+- **invoice:** both pharmacies' invoices read, and each finds its fill by what it shares
+
+
 <a name="v0.85.0"></a>
 ## [v0.85.0] - 2026-10-25
+### Docs
+- update changelog for v0.85.0
+
 ### Feat
 - **wits-ui:** a fill is priced as it was picked up, from its invoice if you have it
 
@@ -1066,7 +1078,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.85.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.86.0...HEAD
+[v0.86.0]: https://github.com/TheDonDope/wits/compare/v0.85.0...v0.86.0
 [v0.85.0]: https://github.com/TheDonDope/wits/compare/v0.84.0...v0.85.0
 [v0.84.0]: https://github.com/TheDonDope/wits/compare/v0.83.0...v0.84.0
 [v0.83.0]: https://github.com/TheDonDope/wits/compare/v0.82.0...v0.83.0
