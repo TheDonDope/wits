@@ -30,11 +30,18 @@ var ErrBrokenChain = errors.New("price log hash chain is broken")
 
 // Price is what was paid for one purchase. Field order is significant: the
 // hash is taken over the JSON encoding.
+//
+// Unknown is a price that is not to be had — no invoice kept, nothing
+// remembered — written down so the purchase stops being asked about. It
+// costs nothing in the sums; the purchase stays without a price, and a price
+// given later supersedes it. Left out when false, so the records written
+// before it hash as they did.
 type Price struct {
 	Seq      int       `json:"seq"`
 	Purchase string    `json:"purchase"`
 	At       time.Time `json:"at"`
 	Cents    int64     `json:"cents"`
+	Unknown  bool      `json:"unknown,omitempty"`
 	Note     string    `json:"note,omitempty"`
 	Prev     string    `json:"prev"`
 	Hash     string    `json:"hash"`
@@ -44,10 +51,16 @@ type Price struct {
 func (p Price) Euros() float64 { return float64(p.Cents) / 100 }
 
 // Validate reports whether a price is well formed: a purchase named, and an
-// amount paid.
+// amount paid — or none, for a price not to be had.
 func (p Price) Validate() error {
 	if p.Purchase == "" {
 		return errors.New("a price names the purchase it was paid for")
+	}
+	if p.Unknown {
+		if p.Cents != 0 {
+			return errors.New("a price not to be had has no amount")
+		}
+		return nil
 	}
 	if p.Cents <= 0 {
 		return fmt.Errorf("a price is more than nothing, got %s", Format(p.Cents))
@@ -186,7 +199,7 @@ func Analyse(state *ledger.State, latest map[string]Price, ratings []effects.Rat
 			}
 			f.Dispensed = ledger.Round(f.Dispensed + e.Grams)
 			p, ok := latest[e.Hash]
-			if !ok {
+			if !ok || p.Unknown {
 				f.Unpriced++
 				continue
 			}

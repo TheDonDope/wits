@@ -2,17 +2,21 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { Wits } from '../data/wits';
+import { pictureOf } from '../data/invoice';
+import { InvoiceBatch, Read } from './invoice-batch';
 import { Pickup, PickupCard, Scan, byFill } from './pickup';
 
 /**
  * The purchases still to be priced, walked a fill at a time — reconcile
  * purchases, grouped as they were picked up: a price a gram for each strain,
- * VAT on top when it is due, or its invoice scanned (PickupCard). A price goes
- * beside the journal: the purchase is never edited.
+ * VAT on top when it is due, or its invoice scanned (PickupCard) — or many
+ * invoices at once (InvoiceBatch). Newest fill first, every purchase without
+ * a price unless asked for only those in storage. A price goes beside the
+ * journal: the purchase is never edited.
  */
 @Component({
   selector: 'w-price-walk',
-  imports: [MatSlideToggleModule, PickupCard],
+  imports: [InvoiceBatch, MatSlideToggleModule, PickupCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header>
@@ -20,6 +24,7 @@ import { Pickup, PickupCard, Scan, byFill } from './pickup';
         A strain left blank keeps no price, and nothing is ever edited.</p>
       <mat-slide-toggle [checked]="all()" (change)="setAll($event.checked)">every purchase, not only those in storage</mat-slide-toggle>
     </header>
+    <w-invoice-batch [(reads)]="batch" (priced)="load()" (review)="reviewOn($event)" />
     @for (f of shown(); track f.fill) {
       <w-pickup [pickup]="f" [position]="index() + 1 + ' of ' + pickups().length" [fills]="numbers()"
         [handed]="handed()?.fill === f.fill ? handed()!.scan : null" (saved)="next()" (skipped)="next()" (jump)="jump($event)" />
@@ -36,9 +41,12 @@ import { Pickup, PickupCard, Scan, byFill } from './pickup';
 })
 export class PriceWalk {
   private readonly wits = inject(Wits);
-  protected readonly all = signal(false);
+  /** Every purchase without a price, or only those still in storage. Every one unless asked. */
+  protected readonly all = signal(true);
   protected readonly pickups = signal<Pickup[]>([]);
   protected readonly index = signal(0);
+  /** Invoices added many at once, kept here so the list outlives the card being priced. */
+  protected readonly batch = signal<Read[]>([]);
   /** An invoice read on one fill's card that is another's, on its way there. */
   protected readonly handed = signal<{ fill: number; scan: Scan } | null>(null);
 
@@ -55,7 +63,7 @@ export class PriceWalk {
     void this.load();
   }
 
-  private async load(): Promise<void> {
+  protected async load(): Promise<void> {
     this.pickups.set(byFill(await this.wits.unpriced(this.all())));
     this.index.set(0);
   }
@@ -63,6 +71,20 @@ export class PriceWalk {
   protected next(): void {
     this.handed.set(null);
     this.index.update((i) => i + 1);
+  }
+
+  /** Opens an invoice of the batch on its pickup's card, its first page drawn beside the figures. */
+  protected async reviewOn(r: Read): Promise<void> {
+    const fill = r.reading?.match?.fill;
+    if (!r.reading || !fill) {
+      return;
+    }
+    if (!this.pickups().some((p) => p.fill === fill)) {
+      this.all.set(true);
+      await this.load();
+    }
+    const scan: Scan = { file: r.file.name, picture: await pictureOf(r.file), pdf: URL.createObjectURL(r.file), reading: r.reading };
+    this.jump({ fill, scan });
   }
 
   protected jump(to: { fill: number; scan: Scan }): void {
