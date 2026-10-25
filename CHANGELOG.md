@@ -2,12 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.74.0"></a>
+## [v0.74.0] - 2026-10-25
+### Chore
+- what the review left behind, cleared
+- **wits-ui:** its go.mod names no Go version
+
+
 <a name="v0.73.0"></a>
 ## [v0.73.0] - 2026-10-25
 ### Build
 - **preflight:** ask revive about a new file's package comment
 
 ### Docs
+- update changelog for v0.73.0
 - a new file needs its own package comment, not to be avoided
 
 ### Fix
@@ -942,7 +950,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.73.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.74.0...HEAD
+[v0.74.0]: https://github.com/TheDonDope/wits/compare/v0.73.0...v0.74.0
 [v0.73.0]: https://github.com/TheDonDope/wits/compare/v0.72.0...v0.73.0
 [v0.72.0]: https://github.com/TheDonDope/wits/compare/v0.71.0...v0.72.0
 [v0.71.0]: https://github.com/TheDonDope/wits/compare/v0.70.0...v0.71.0
