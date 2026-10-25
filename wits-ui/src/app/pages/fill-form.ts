@@ -15,7 +15,7 @@ import { FillLine, InvoiceReading, LabelReading } from '../data/models';
 import { Wits } from '../data/wits';
 
 /** The VAT added to a price a gram typed in, in percent: Germany's, which medical cannabis pays in full. */
-const VAT = 19;
+export const VAT = 19;
 
 /**
  * One strain of a fill, as the form holds it. A strain read off an invoice
@@ -35,6 +35,13 @@ export interface Row {
   printed?: string;
   /** The invoice's number, written down beside the price. */
   invoice?: string;
+}
+
+/** An invoice read on the form, and what became of it. */
+interface Read {
+  file: string;
+  reading: InvoiceReading;
+  state: 'new' | 'matched' | 'ask' | 'priced';
 }
 
 let nextRow = 0;
@@ -116,6 +123,30 @@ export function rowCents(r: Row, vat: boolean): number {
               }
             }
           </p>
+          @if (inv.reading.match; as m) {
+            @switch (inv.state) {
+              @case ('matched') {
+                <p class="known">Already recorded: Fill {{ m.fill }}, picked up {{ day(m.start) }}{{
+                  m.priced ? ', which has its prices already' : '' }}. Its strains are not added again.</p>
+              }
+              @case ('ask') {
+                <p class="known">Fill {{ m.fill }} was picked up {{ day(m.start) }} with its strains,
+                  {{ m.days }} {{ m.days === 1 ? 'day' : 'days' }} from the invoice{{
+                  m.priced ? ', and has its prices already' : '' }}. Is it that fill?</p>
+              }
+              @case ('priced') {
+                <p class="known">Fill {{ m.fill }} priced from it.</p>
+              }
+            }
+            @if (inv.state === 'matched' || inv.state === 'ask') {
+              <div class="choose">
+                <button mat-flat-button type="button" [disabled]="pricing()" (click)="priceMatched($index)">
+                  {{ inv.state === 'ask' ? 'Yes — price' : 'Price' }} Fill {{ m.fill }} from it
+                </button>
+                <button mat-button type="button" (click)="asNew($index)">{{ inv.state === 'ask' ? 'No, a new fill' : 'Record it as a new fill' }}</button>
+              </div>
+            }
+          }
         </div>
       </div>
     }
@@ -203,6 +234,8 @@ export function rowCents(r: Row, vat: boolean): number {
     .read { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; border: 1px solid var(--w-glass-edge);
       border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
     .read p { margin: 0 0 4px; }
+    .known { color: var(--mat-sys-on-surface); }
+    .choose { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
     .read pre { white-space: pre-wrap; font: 12px var(--w-mono); max-height: 160px; overflow: auto; margin: 6px 0 0; }
     /* A strain is a card: its name across with the way to remove it, its figures under it. */
     .strain { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(76px, auto) 40px;
@@ -242,11 +275,17 @@ export class FillForm {
   protected readonly rows = signal<Row[]>([blank()]);
   /** Whether VAT is added to the prices a gram typed in. On: a German pharmacy's prices are quoted before it. */
   readonly vat = signal(true);
-  /** The invoices read, each with what the API made of it. */
-  protected readonly invoices = signal<{ file: string; reading: InvoiceReading }[]>([]);
+  /**
+   * The invoices read, each with what the API made of it, and what became of
+   * it: strains for this fill (new); a fill recorded already, the same day
+   * (matched) or a few days off (ask); or that fill priced from it (priced).
+   */
+  protected readonly invoices = signal<Read[]>([]);
+  /** Whether a fill already recorded is being priced from its invoice. */
+  protected readonly pricing = signal(false);
   protected readonly fromInvoice = computed(() => this.rows().some((r) => r.inclVAT));
   protected readonly invoiceDates = computed(() =>
-    [...new Set(this.invoices().flatMap((i) => (i.reading.date ? [i.reading.date] : [])))].sort(),
+    [...new Set(this.invoices().flatMap((i) => (i.state === 'new' && i.reading.date ? [i.reading.date] : [])))].sort(),
   );
   /** The prices typed in, before VAT, in cents. */
   protected readonly typedCents = computed(() =>
@@ -310,18 +349,12 @@ export class FillForm {
     for (const [i, file] of files.entries()) {
       try {
         const reading = await this.wits.invoice(await readInvoice(file));
-        this.invoices.update((all) => [...all, { file: file.name, reading }]);
-        const read: Row[] = reading.lines.map((l) => ({
-          id: ++nextRow,
-          name: l.name,
-          grams: l.grams,
-          perGram: l.per_gram_cents / 100,
-          total: l.total_cents,
-          inclVAT: true,
-          printed: l.printed,
-          invoice: reading.number,
-        }));
-        this.rows.update((rs) => [...rs.filter(started), ...read]);
+        // A fill recorded already is priced from its invoice, not recorded again.
+        const state = !reading.match ? 'new' : reading.match.days === 0 ? 'matched' : 'ask';
+        this.invoices.update((all) => [...all, { file: file.name, reading, state }]);
+        if (state === 'new') {
+          this.addRows(reading);
+        }
       } catch (err) {
         failed.push(`${file.name}: ${(err as Error).message}`);
       }
@@ -334,6 +367,61 @@ export class FillForm {
     }
     this.error.set(failed.length ? `Not read — ${failed.join('; ')}` : '');
     this.reading.set(null);
+  }
+
+  /** An invoice's strains, added to the fill as rows. */
+  private addRows(reading: InvoiceReading): void {
+    const read: Row[] = reading.lines.map((l) => ({
+      id: ++nextRow,
+      name: l.name,
+      grams: l.grams,
+      perGram: l.per_gram_cents / 100,
+      total: l.total_cents,
+      inclVAT: true,
+      printed: l.printed,
+      invoice: reading.number,
+    }));
+    this.rows.update((rs) => [...rs.filter(started), ...read]);
+  }
+
+  protected day(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+  }
+
+  /** Prices the fill an invoice is for from it, each strain at the invoice's total for it. */
+  protected async priceMatched(i: number): Promise<void> {
+    const inv = this.invoices()[i];
+    const m = inv.reading.match;
+    if (!m) {
+      return;
+    }
+    this.pricing.set(true);
+    this.error.set('');
+    try {
+      const lines = inv.reading.lines.flatMap((l, n) => (m.lines[n]
+        ? [{ purchase: m.lines[n], total: (l.total_cents / 100).toFixed(2), note: inv.reading.number ? `invoice ${inv.reading.number}` : undefined }]
+        : []));
+      await this.wits.priceFill(lines, false);
+      this.setState(i, 'priced');
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : String(e));
+    } finally {
+      this.pricing.set(false);
+    }
+  }
+
+  /** Not the fill it matched: its strains go on this one after all. */
+  protected asNew(i: number): void {
+    this.addRows(this.invoices()[i].reading);
+    this.setState(i, 'new');
+    const latest = this.invoiceDates().at(-1);
+    if (latest) {
+      this.date.set(new Date(`${latest}T12:00`));
+    }
+  }
+
+  private setState(i: number, state: Read['state']): void {
+    this.invoices.update((all) => all.map((inv, n) => (n === i ? { ...inv, state } : inv)));
   }
 
   /** Reads the photograph just taken or picked, and fills a strain with what the label says. */

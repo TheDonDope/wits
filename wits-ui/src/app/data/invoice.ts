@@ -58,3 +58,30 @@ export function rows(items: Item[]): string {
     .map((r) => r.items.sort((a, b) => a.x - b.x).map((i) => i.str).join('\t'))
     .join('\n');
 }
+
+/**
+ * The invoice's first page as a picture, drawn here like its text is read, to
+ * set beside the figures taken from it. An object URL: revoke it when done.
+ */
+export async function pictureOf(file: Blob, width = 1200): Promise<string> {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdf/pdf.worker.min.mjs', document.baseURI).href;
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  try {
+    const page = await (await task.promise).getPage(1);
+    const viewport = page.getViewport({ scale: width / page.getViewport({ scale: 1 }).width });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    await page.render({ canvas, viewport }).promise;
+    const blob = await new Promise<Blob | null>((done) => {
+      canvas.toBlob(done, 'image/png');
+    });
+    if (!blob) {
+      throw new Error('the page could not be drawn');
+    }
+    return URL.createObjectURL(blob);
+  } finally {
+    await task.destroy();
+  }
+}

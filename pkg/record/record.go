@@ -770,17 +770,49 @@ func plural(n int, noun string) string {
 // edited, so the price goes beside the journal; pricing it again supersedes
 // the price before, which the log keeps.
 func (r *Recorder) Price(purchase string, cents int64, note string, at time.Time) (prices.Price, error) {
-	e, err := r.Find(purchase)
+	e, err := r.priceable(purchase)
 	if err != nil {
 		return prices.Price{}, err
 	}
+	return r.repo.Prices().Append(prices.Price{Purchase: e.Hash, At: at, Cents: cents, Note: strings.TrimSpace(note)})
+}
+
+// PriceAll records what each of several purchases cost — a fill's, priced
+// together. Every purchase is checked before any price is written, so a bad
+// one refuses them all rather than leaving the fill half priced.
+func (r *Recorder) PriceAll(paid []prices.Price, at time.Time) ([]prices.Price, error) {
+	checked := make([]prices.Price, len(paid))
+	for i, p := range paid {
+		e, err := r.priceable(p.Purchase)
+		if err != nil {
+			return nil, err
+		}
+		checked[i] = prices.Price{Purchase: e.Hash, At: at, Cents: p.Cents, Note: strings.TrimSpace(p.Note)}
+	}
+	out := make([]prices.Price, 0, len(checked))
+	for _, p := range checked {
+		written, err := r.repo.Prices().Append(p)
+		if err != nil {
+			return out, err
+		}
+		out = append(out, written)
+	}
+	return out, nil
+}
+
+// priceable finds a purchase that can be given a price: one that stands.
+func (r *Recorder) priceable(purchase string) (journal.Event, error) {
+	e, err := r.Find(purchase)
+	if err != nil {
+		return journal.Event{}, err
+	}
 	if e.Type != journal.Purchase {
-		return prices.Price{}, fmt.Errorf("%s is a %s, not a purchase; only a purchase has a price", short(e.Hash), e.Type)
+		return journal.Event{}, fmt.Errorf("%s is a %s, not a purchase; only a purchase has a price", short(e.Hash), e.Type)
 	}
 	if r.RevertOf(e.Hash) != nil {
-		return prices.Price{}, fmt.Errorf("the purchase %s was undone", short(e.Hash))
+		return journal.Event{}, fmt.Errorf("the purchase %s was undone", short(e.Hash))
 	}
-	return r.repo.Prices().Append(prices.Price{Purchase: e.Hash, At: at, Cents: cents, Note: strings.TrimSpace(note)})
+	return e, nil
 }
 
 // Unpriced is every purchase that stands without a price, oldest first:

@@ -68,6 +68,12 @@ export interface Entry {
   corrected?: boolean;
 }
 
+/** A purchase without a price, with the fill — the pickup, the prescription — it came in. */
+export interface UnpricedEntry extends Entry {
+  fill: number;
+  fill_start: string;
+}
+
 export interface Overview {
   now: string;
   chain_ok: boolean;
@@ -249,6 +255,28 @@ export interface InvoiceReading {
   rate: number;
   gross_cents: number;
   sum_cents: number;
+  /** The fill already recorded that the invoice is for, if one is: priced from it, not recorded again. */
+  match?: InvoiceMatch;
+}
+
+/**
+ * A recorded fill holding an invoice's strains near its date: `days` apart (0
+ * the same day), and for each line of the invoice the purchase it is, or ''.
+ */
+export interface InvoiceMatch {
+  fill: number;
+  start: string;
+  days: number;
+  lines: string[];
+  priced: number;
+}
+
+/** One purchase of a fill being priced: a price a gram, or an invoice's line total; blank keeps no price. */
+export interface PriceLine {
+  purchase: string;
+  per_gram?: string;
+  total?: string;
+  note?: string;
 }
 
 /** One product of a fill as the form sends it: a line's total, or a price a gram, or neither. */

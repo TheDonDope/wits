@@ -15,6 +15,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/repo"
 )
 
@@ -813,6 +814,34 @@ func TestPrice(t *testing.T) {
 	unpriced, err = rec.Unpriced(true)
 	require.NoError(t, err)
 	assert.Empty(t, unpriced, "Should leave nothing to price")
+}
+
+func TestPriceAllIsWholeOrNothing(t *testing.T) {
+	rec := stocked(t)
+	var purchase, grind journal.Event
+	for _, e := range rec.State().Events {
+		switch e.Type {
+		case journal.Purchase:
+			purchase = e
+		case journal.Grind:
+			grind = e
+		}
+	}
+
+	_, err := rec.PriceAll([]prices.Price{{Purchase: purchase.Hash, Cents: 17000}, {Purchase: grind.Hash, Cents: 100}}, time.Now())
+	assert.ErrorContains(t, err, "not a purchase")
+	unpriced, err := rec.Unpriced(true)
+	require.NoError(t, err)
+	assert.Len(t, unpriced, 1, "A bad line writes no price, not even the good one before it")
+
+	paid, err := rec.PriceAll([]prices.Price{{Purchase: purchase.Hash[:7], Cents: 17000, Note: " invoice 2608 "}}, time.Now())
+	require.NoError(t, err)
+	require.Len(t, paid, 1)
+	assert.Equal(t, purchase.Hash, paid[0].Purchase)
+	assert.Equal(t, "invoice 2608", paid[0].Note)
+	unpriced, err = rec.Unpriced(true)
+	require.NoError(t, err)
+	assert.Empty(t, unpriced)
 }
 
 func TestUndoneNamesBothHalvesOfAnUndo(t *testing.T) {

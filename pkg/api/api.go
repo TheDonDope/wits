@@ -90,6 +90,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/costs", s.read(costsOf))
 	mux.HandleFunc("GET /api/unpriced", s.unpriced)
 	mux.HandleFunc("POST /api/price", s.price)
+	mux.HandleFunc("POST /api/price/fill", s.priceFill)
 	mux.HandleFunc("GET /api/report.pdf", s.report)
 	mux.HandleFunc("GET /api/carry", s.carry)
 	mux.HandleFunc("GET /api/strains", s.read(strainsOf))
@@ -389,56 +390,6 @@ func costsOf(ws *workspace.Workspace) any {
 		out.Months = append(out.Months, month(m))
 	}
 	return out
-}
-
-// unpriced is the purchases without a price, for reconcile purchases: those
-// still in storage, or every one with ?all=1.
-func (s *Server) unpriced(w http.ResponseWriter, r *http.Request) {
-	ws, err := s.snapshot()
-	if err != nil {
-		fail(w, http.StatusInternalServerError, err)
-		return
-	}
-	events, err := ws.Recorder.Unpriced(r.URL.Query().Get("all") == "1")
-	if err != nil {
-		fail(w, http.StatusInternalServerError, err)
-		return
-	}
-	out := make([]entry, 0, len(events))
-	for _, e := range events {
-		out = append(out, entryOf(e, ws, nil))
-	}
-	reply(w, http.StatusOK, out)
-}
-
-// price writes down what a purchase cost.
-func (s *Server) price(w http.ResponseWriter, r *http.Request) {
-	ws, ok := s.writable(w, r)
-	if !ok {
-		return
-	}
-	var req struct {
-		Purchase string `json:"purchase"`
-		Euros    string `json:"euros"`
-		Note     string `json:"note"`
-	}
-	if err := decode(r, &req); err != nil {
-		fail(w, http.StatusBadRequest, err)
-		return
-	}
-	cents, err := prices.ParseEuros(req.Euros)
-	if err != nil {
-		fail(w, http.StatusBadRequest, err)
-		return
-	}
-	p, err := ws.Recorder.Price(req.Purchase, cents, req.Note, time.Now())
-	if err != nil {
-		fail(w, http.StatusBadRequest, err)
-		return
-	}
-	e, _ := ws.Recorder.Find(p.Purchase)
-	reply(w, http.StatusCreated, map[string]string{"message": fmt.Sprintf("%s for %.2f g of %s",
-		prices.Format(cents), e.Grams, ws.ProductName(e.Product))})
 }
 
 // reading is what a pharmacy label says about a fill, as the buy form is
