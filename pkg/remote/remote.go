@@ -306,7 +306,7 @@ func Pull(r *repo.Repo) (Pulled, error) {
 		if done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings, rb.Moved); rerr != nil {
 			return rerr
 		}
-		done.Prices, rerr = r.Prices().Rebase(theirs.Prices, rb.Moved)
+		done.Prices, _, rerr = r.Prices().Rebase(theirs.Prices, rb.Moved)
 		return rerr
 	})
 	if err != nil {

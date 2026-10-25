@@ -10,20 +10,13 @@
 package effects
 
 import (
-	"bufio"
-	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"slices"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/chain"
 	"github.com/TheDonDope/wits/pkg/journal"
 )
 
@@ -116,163 +109,31 @@ func names() string {
 	return strings.Join(out, ", ")
 }
 
-// sum is the rating's hash chained onto prev, taken with the hash blank.
-func (r Rating) sum(prev string) (string, error) {
-	r.Prev, r.Hash = prev, ""
-	payload, err := json.Marshal(r)
-	if err != nil {
-		return "", err
-	}
-	h := sha256.Sum256(append([]byte(prev), payload...))
-	return hex.EncodeToString(h[:]), nil
-}
+// Log is the effect log: a chain of ratings (pkg/chain).
+type Log = chain.Log[Rating, *Rating]
 
-// Log is the effect log stored at a path.
-type Log struct {
-	mu   sync.Mutex
-	path string
-}
-
-// Open returns the log at path; it is created on the first append.
-func Open(path string) *Log { return &Log{path: path} }
-
-// Path returns the file the log is stored in.
-func (l *Log) Path() string { return l.path }
-
-// Append validates a rating, chains it onto the log's tip and writes it, under
-// the same kind of lock the journal takes. The stored rating is returned.
-func (l *Log) Append(r Rating) (Rating, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	release, err := journal.Lock(l.path)
-	if err != nil {
-		return Rating{}, err
-	}
-	defer release()
-
-	ratings, _, err := l.read()
-	if err != nil {
-		return Rating{}, err
-	}
-	if r, err = seal(r, ratings); err != nil {
-		return Rating{}, err
-	}
-	line, err := json.Marshal(r)
-	if err != nil {
-		return Rating{}, err
-	}
-	f, err := os.OpenFile(l.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return Rating{}, err
-	}
-	defer f.Close()
-	if _, err := f.Write(append(line, '\n')); err != nil {
-		return Rating{}, err
-	}
-	return r, f.Sync()
-}
-
-// seal makes a rating what the log stores after the ratings before it: dated,
-// checked, numbered and chained.
-func seal(r Rating, before []Rating) (Rating, error) {
-	if r.At.IsZero() {
-		r.At = time.Now()
-	}
-	r.At = r.At.Truncate(time.Second)
-	if err := r.Validate(); err != nil {
-		return r, err
-	}
-	r.Seq, r.Prev = len(before)+1, ""
-	if n := len(before); n > 0 {
-		r.Prev = before[n-1].Hash
-	}
-	var err error
-	r.Hash, err = r.sum(r.Prev)
-	return r, err
+// Open returns the effect log at path; it is created on the first append.
+func Open(path string) *Log {
+	return chain.Open[Rating](path, "effect log", "rating", ErrBrokenChain)
 }
 
 // Chain seals ratings one onto the next from the start of a log, as appending
 // them to an empty one would.
-func Chain(ratings []Rating) ([]Rating, error) {
-	out := make([]Rating, 0, len(ratings))
-	for _, r := range ratings {
-		sealed, err := seal(r, out)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, sealed)
-	}
-	return out, nil
+func Chain(ratings []Rating) ([]Rating, error) { return chain.Chain[Rating](ratings) }
+
+// Link is the rating's place in the log.
+func (r *Rating) Link() chain.Link {
+	return chain.Link{Seq: r.Seq, At: r.At, Prev: r.Prev, Hash: r.Hash}
 }
 
-// All returns every rating, oldest first, superseded ones included.
-func (l *Log) All() ([]Rating, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	ratings, _, err := l.read()
-	return ratings, err
-}
+// SetLink places the rating in the log.
+func (r *Rating) SetLink(l chain.Link) { r.Seq, r.At, r.Prev, r.Hash = l.Seq, l.At, l.Prev, l.Hash }
 
-// Verify walks the chain over the lines as stored, the way the journal's
-// Verify does: the hash is the last field, so blanking it gives back the bytes
-// that were hashed.
-func (l *Log) Verify() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	_, lines, err := l.read()
-	if err != nil {
-		return err
-	}
-	prev := ""
-	for n, line := range lines {
-		var r Rating
-		if err := json.Unmarshal(line, &r); err != nil {
-			return fmt.Errorf("effect log line %d is not valid JSON: %w", n+1, err)
-		}
-		stored := []byte(`,"hash":"` + r.Hash + `"}`)
-		if r.Prev != prev || !bytes.HasSuffix(line, stored) {
-			return fmt.Errorf("%w at rating %d", ErrBrokenChain, r.Seq)
-		}
-		payload := append(bytes.Clone(line[:len(line)-len(stored)]), `,"hash":""}`...)
-		sum := sha256.Sum256(append([]byte(prev), payload...))
-		if hex.EncodeToString(sum[:]) != r.Hash {
-			return fmt.Errorf("%w at rating %d", ErrBrokenChain, r.Seq)
-		}
-		prev = r.Hash
-	}
-	return nil
-}
+// Names is the session the rating rates.
+func (r *Rating) Names() string { return r.Session }
 
-// read loads the complete lines and the ratings they hold; a line cut off
-// before its newline is a write that never finished, and is left out. Callers
-// hold the mutex.
-func (l *Log) read() ([]Rating, [][]byte, error) {
-	data, err := os.ReadFile(l.path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil, nil
-		}
-		return nil, nil, err
-	}
-	data = data[:bytes.LastIndexByte(data, '\n')+1]
-	var ratings []Rating
-	var lines [][]byte
-	sc := bufio.NewScanner(bytes.NewReader(data))
-	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	for sc.Scan() {
-		line := bytes.Clone(sc.Bytes())
-		if len(line) == 0 {
-			continue
-		}
-		var r Rating
-		if err := json.Unmarshal(line, &r); err != nil {
-			return nil, nil, fmt.Errorf("effect log line %d is not valid JSON: %w", len(lines)+1, err)
-		}
-		ratings = append(ratings, r)
-		lines = append(lines, line)
-	}
-	return ratings, lines, sc.Err()
-}
+// Rename rates the session by a new hash.
+func (r *Rating) Rename(hash string) { r.Session = hash }
 
 // Latest returns each session's newest rating: a session rated again is rated
 // as it was rated last.
@@ -388,76 +249,4 @@ func timeOfDay(t time.Time) string {
 	default:
 		return "4 evening"
 	}
-}
-
-// Rebase brings in another device's copy of the log the way the journal's
-// Rebase does: shared ratings kept, the other's taken as they are, and this
-// log's own chained again on top, each pointed at the new hash of a session
-// that moved (moved, from the journal's rebase). It returns how many of the
-// other's it lacked and how many of its own it chained again.
-func (l *Log) Rebase(onto []Rating, moved map[string]string) (fetched, rechained int, err error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	release, err := journal.Lock(l.path)
-	if err != nil {
-		return 0, 0, err
-	}
-	defer release()
-	if err := whole(onto); err != nil {
-		return 0, 0, err
-	}
-	local, _, err := l.read()
-	if err != nil {
-		return 0, 0, err
-	}
-	k := 0
-	for k < len(local) && k < len(onto) && local[k].Hash == onto[k].Hash {
-		k++
-	}
-	tail := local[k:]
-	if len(onto) == k && !follows(tail, moved) {
-		return 0, 0, nil // nothing new, and nothing of ours points anywhere new
-	}
-	merged := slices.Clone(onto)
-	for _, r := range tail {
-		if to, ok := moved[r.Session]; ok {
-			r.Session = to
-		}
-		if r, err = seal(r, merged); err != nil {
-			return 0, 0, err
-		}
-		merged = append(merged, r)
-	}
-	var buf bytes.Buffer
-	for _, r := range merged {
-		line, _ := json.Marshal(r) // a Rating always encodes
-		buf.Write(append(line, '\n'))
-	}
-	return len(onto) - k, len(tail), journal.WriteFile(l.path, buf.Bytes())
-}
-
-// follows reports whether any of the ratings rates a session in moved.
-func follows(ratings []Rating, moved map[string]string) bool {
-	for _, r := range ratings {
-		if _, ok := moved[r.Session]; ok {
-			return true
-		}
-	}
-	return false
-}
-
-// whole reports whether ratings form a whole chain from the start.
-func whole(ratings []Rating) error {
-	prev := ""
-	for i, r := range ratings {
-		sum, err := r.sum(prev)
-		if err != nil {
-			return err
-		}
-		if r.Seq != i+1 || r.Prev != prev || r.Hash != sum {
-			return fmt.Errorf("%w at rating %d of the other copy", ErrBrokenChain, i+1)
-		}
-		prev = r.Hash
-	}
-	return nil
 }
