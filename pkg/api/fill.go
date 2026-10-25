@@ -34,10 +34,11 @@ type fillLine struct {
 }
 
 type fillRequest struct {
-	Lines []fillLine `json:"lines"`
-	VAT   bool       `json:"vat"`
-	Date  string     `json:"date"`
-	Note  string     `json:"note"`
+	Lines  []fillLine `json:"lines"`
+	VAT    bool       `json:"vat"`
+	Seller string     `json:"seller"`
+	Date   string     `json:"date"`
+	Note   string     `json:"note"`
 }
 
 // recordFill records a fill of one product or several, each with its price.
@@ -56,7 +57,7 @@ func recordFill(ws *workspace.Workspace, r *http.Request) ([]journal.Event, stri
 		if err != nil {
 			return nil, "", fmt.Errorf("line %d, %s: %w", i+1, l.Name, err)
 		}
-		lines[i] = record.FillLine{Name: l.Name, Slug: l.Slug, Grams: l.Grams, Cents: cents, Note: l.Note}
+		lines[i] = record.FillLine{Name: l.Name, Slug: l.Slug, Grams: l.Grams, Cents: cents, Note: l.Note, Seller: req.Seller}
 	}
 	filled, err := ws.Recorder.Fill(lines, at, req.Note)
 	if err != nil && !errors.Is(err, record.ErrUnpriced) {
@@ -134,6 +135,7 @@ func fillMessage(filled []record.Filled) string {
 // invoiceReading is what an invoice says, as the fill form is filled from it:
 // each line's product named as the jar it already is, where it is one.
 type invoiceReading struct {
+	Seller string        `json:"seller,omitempty"`
 	Date   string        `json:"date,omitempty"`
 	Number string        `json:"number,omitempty"`
 	Lines  []invoiceLine `json:"lines"`
@@ -187,7 +189,7 @@ func (s *Server) readInvoice(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusUnprocessableEntity, errors.New("no product lines found: is it a pharmacy's invoice for a fill?"))
 		return
 	}
-	out := invoiceReading{Number: inv.Number, Lines: make([]invoiceLine, len(inv.Lines)),
+	out := invoiceReading{Seller: inv.Seller, Number: inv.Number, Lines: make([]invoiceLine, len(inv.Lines)),
 		Net: inv.Net, VAT: inv.VAT, Rate: inv.Rate, Gross: inv.Gross, Sum: inv.Sum(), Other: []invoiceOther{}}
 	for _, o := range inv.Other {
 		out.Other = append(out.Other, invoiceOther{Name: o.Name, Total: o.Total})

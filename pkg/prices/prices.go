@@ -36,12 +36,16 @@ var ErrBrokenChain = errors.New("price log hash chain is broken")
 // costs nothing in the sums; the purchase stays without a price, and a price
 // given later supersedes it. Left out when false, so the records written
 // before it hash as they did.
+//
+// Seller is the pharmacy the price was paid to, as its invoice names it;
+// empty when it was typed in, and then left out, for the same reason.
 type Price struct {
 	Seq      int       `json:"seq"`
 	Purchase string    `json:"purchase"`
 	At       time.Time `json:"at"`
 	Cents    int64     `json:"cents"`
 	Unknown  bool      `json:"unknown,omitempty"`
+	Seller   string    `json:"seller,omitempty"`
 	Note     string    `json:"note,omitempty"`
 	Prev     string    `json:"prev"`
 	Hash     string    `json:"hash"`

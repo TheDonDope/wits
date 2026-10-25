@@ -326,7 +326,7 @@ export class FillForm {
    * include VAT; one typed in goes with its price a gram, VAT added there.
    * The blank strains the form starts with go.
    */
-  request(): { lines: FillLine[]; vat: boolean } {
+  request(): { lines: FillLine[]; vat: boolean; seller?: string } {
     const lines = this.rows()
       .filter(started)
       .map((r) => ({
@@ -336,7 +336,10 @@ export class FillForm {
         per_gram: !r.inclVAT && r.perGram ? String(r.perGram) : undefined,
         note: r.invoice ? `invoice ${r.invoice}` : undefined,
       }));
-    return { lines, vat: this.vat() };
+    // The pharmacy, when the invoices read for this fill name one and the same.
+    const sellers = new Set(this.invoices().filter((i) => i.state === 'new').map((i) => i.reading.seller ?? ''));
+    const seller = sellers.size === 1 ? [...sellers][0] : '';
+    return { lines, vat: this.vat(), seller: seller || undefined };
   }
 
   /** Reads the invoices picked, one after the other, and adds their strains to the fill. */
@@ -406,7 +409,7 @@ export class FillForm {
       const lines = inv.reading.lines.flatMap((l, n) => (m.lines[n]
         ? [{ purchase: m.lines[n], total: (l.total_cents / 100).toFixed(2), note: inv.reading.number ? `invoice ${inv.reading.number}` : undefined }]
         : []));
-      await this.wits.priceFill(lines, false);
+      await this.wits.priceFill(lines, false, inv.reading.seller ?? '');
       this.setState(i, 'priced');
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : String(e));

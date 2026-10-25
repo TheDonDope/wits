@@ -787,7 +787,8 @@ func (r *Recorder) PriceAll(paid []prices.Price, at time.Time) ([]prices.Price, 
 		if err != nil {
 			return nil, err
 		}
-		checked[i] = prices.Price{Purchase: e.Hash, At: at, Cents: p.Cents, Unknown: p.Unknown, Note: strings.TrimSpace(p.Note)}
+		checked[i] = prices.Price{Purchase: e.Hash, At: at, Cents: p.Cents, Unknown: p.Unknown,
+			Seller: strings.TrimSpace(p.Seller), Note: strings.TrimSpace(p.Note)}
 	}
 	out := make([]prices.Price, 0, len(checked))
 	for _, p := range checked {

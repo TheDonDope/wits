@@ -430,7 +430,8 @@ export class PickupCard implements OnInit, OnDestroy {
     this.busy.set(true);
     this.error.set('');
     try {
-      const out = await this.wits.priceFill(priceLines(this.pickup().lines, this.priced(), this.vat(), this.giveUp()), this.vat());
+      const seller = this.applied() ? (this.scan()?.reading.seller ?? '') : '';
+      const out = await this.wits.priceFill(priceLines(this.pickup().lines, this.priced(), this.vat(), this.giveUp()), this.vat(), seller);
       this.snack.open(out.message, undefined, { duration: 3000 });
       this.saved.emit();
     } catch (e) {

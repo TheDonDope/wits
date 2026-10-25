@@ -122,8 +122,8 @@ export class Wits {
    * Writes down a fill's prices: a price a gram for each purchase, VAT added
    * when asked for, or the invoice's line total. One left blank keeps no price.
    */
-  priceFill(lines: PriceLine[], vat: boolean) {
-    return this.write<{ message: string }>('price/fill', { lines, vat });
+  priceFill(lines: PriceLine[], vat: boolean, seller = '') {
+    return this.write<{ message: string }>('price/fill', { lines, vat, seller });
   }
 
   /** The page for the prescriber, as a PDF, for the days from and to. */

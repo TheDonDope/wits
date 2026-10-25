@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // Line is one product on the invoice. Its prices are as printed: with VAT
@@ -39,6 +40,7 @@ type Other struct {
 
 // Invoice is what the text of one says about a fill.
 type Invoice struct {
+	Seller string    // the pharmacy, as it names itself; empty when it was not found
 	Date   time.Time // the day ordered; zero when none was found
 	Number string
 	Lines  []Line
@@ -113,6 +115,9 @@ func Read(text string) Invoice {
 		if line == "" {
 			continue
 		}
+		if inv.Seller == "" {
+			inv.Seller = seller(raw)
+		}
 		inv.head(line, prev)
 		above := prev
 		prev = line
@@ -136,6 +141,30 @@ func Read(text string) Invoice {
 	}
 	inv.close(b)
 	return inv
+}
+
+var (
+	// A row's cells, or the parts of an address line: "Apotheke … – Straße 19 – Stadt".
+	cells = regexp.MustCompile(`\t|\s+[-–]\s+`)
+	// The owner's part of a pharmacy's name, cut off: "e.K. Kirsten Fritsch".
+	owner = regexp.MustCompile(`\s+e\.\s?K\..*$`)
+)
+
+// seller is the pharmacy a row names, if it names one: the first short cell
+// with "Apotheke" in it, starting as a name does, its owner cut off. A
+// sentence that mentions "der Apotheke" is longer, and starts otherwise.
+func seller(raw string) string {
+	for _, cell := range cells.Split(raw, -1) {
+		cell = strings.TrimSpace(owner.ReplaceAllString(strings.TrimSpace(cell), ""))
+		words := strings.Fields(cell)
+		if len(words) == 0 || len(words) > 5 || !strings.Contains(strings.ToLower(cell), "apotheke") {
+			continue
+		}
+		if r := []rune(cell)[0]; unicode.IsUpper(r) || unicode.IsDigit(r) {
+			return cell
+		}
+	}
+	return ""
 }
 
 // head takes the date and the number from a line, given the one before it.

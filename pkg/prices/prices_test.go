@@ -119,3 +119,23 @@ func TestAPriceNotToBeHad(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(b), "unknown", "A price written before it encodes, and so hashes, as it did")
 }
+
+func TestTheSameStrainKeysAlikeUnderItsNames(t *testing.T) {
+	producers := map[string]bool{"all": true, "nations": true}
+	key := func(maker, cultivar string) string {
+		k, _ := StrainOf(Product{Maker: maker, Cultivar: cultivar}, producers)
+		return k
+	}
+	assert.Equal(t, "mac1", key("420 Evolution", "CA MAC: MAC1"))
+	assert.Equal(t, "mac1", key("420 Evolution", "MAC 1"), "A number after a short name is part of it")
+	assert.Equal(t, "mac1", key("Cantourage", "MAC 1+"))
+	assert.Equal(t, "mac3", key("Barongo", "MAC3"), "MAC 3 is another cut")
+	assert.Equal(t, "hindu kush", key("IMC", "T01 Hindu Kush"), "A pharmacy's code is no part of the strain")
+	assert.Equal(t, "hindu kush", key("Quantity IMC", "Hindu Kush"))
+	assert.Equal(t, key("Cannamedical", "Lemon Cookie"), key("Cannamedical", "Lemon Cookies"))
+	assert.Equal(t, "ca gg", key("Quantity 420 Natural", "CA GG"), "A name of codes alone keeps them")
+
+	k, name := StrainOf(Product{Name: "All Nations Mac Doughnut GM 25/1", Maker: "All Nations Mac Doughnut GM"}, producers)
+	assert.Equal(t, "doughnut mac", k, "No cultivar: the name, less the producers known and the strength")
+	assert.Equal(t, "Mac Doughnut", name)
+}

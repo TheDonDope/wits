@@ -603,6 +603,27 @@ Nothing new was recorded. The five for pickups the workbook does not hold
 matched no fill. The one purchase left without a price is a 10 g jar its
 fill's invoice does not list.
 
+**Insights → Costs** shows what the prices add up to:
+
+- **The headline:** what was paid, a gram over everything, a gram lately (the
+  last 90 days), and a month at the current fill's rate.
+- **Every purchase over time,** as a dot for its price a gram, with a line
+  through each fill's.
+- **Each strain,** in a table you sort by any column, with a line of how its
+  price moved. A strain gathers the same cultivar under every name and
+  producer it came by: MAC1 from 420 Evolution and Cantourage, Hindu Kush
+  from IMC and Canopy. Open one for every purchase of it, priced over time.
+- **Each pharmacy,** named from its invoices.
+- **Strength against price.**
+- **By year, fill and month.** A fill opens to its purchases.
+
+On a chart, a pharmacy is told by its shape as well as its colour. Priced from
+all 37 invoices, the workbook's purchases come to 10,156.01 € for 1,244 g. A
+gram cost 10.73 € in 2023, 9.75 € in 2024, 6.96 € in 2025 and 6.25 € in 2026:
+10.38 € at one pharmacy, 6.74 € and 6.52 € at the other two. Strength bought
+no premium: under 20 % THC was 6.13 € a gram, 20–24 % 8.79 €, and 30 % and up
+8.08 €. Shipping and the narcotics fee are not in these.
+
 ## AVB
 
 Already vaped bud is what is left of a session once it has been through a
