@@ -189,3 +189,21 @@ body {
     padding: 0 4px;
   }
 }
+
+// The record dialog's five tabs on a phone: Material gives each 90 px and 24 px
+// of padding, five of which do not fit the dialog, and pages them two at a
+// time. There each takes a fifth, its icon over its name (record.ts).
+@media (width <= 640px) {
+  .record-panel {
+    .mat-mdc-tab {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 60px;
+      padding: 0 2px;
+    }
+
+    .mat-mdc-tab-header-pagination {
+      display: none;
+    }
+  }
+}
