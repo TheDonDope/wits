@@ -10,11 +10,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Findings } from '../data/models';
 import { Wits } from '../data/wits';
 
-/** A typed list of terpenes as the server takes it: by commas, dominant first. */
-export function splitTerpenes(typed: string): string[] {
-  return typed.split(/[,;]/).map((t) => t.trim()).filter((t) => t !== '');
-}
-
 /**
  * A jar's terpene profile: the one written down, dominant first, or a button
  * that looks it up on the web — a search for the product as the pharmacy
@@ -147,4 +142,9 @@ export class Terpenes {
       this.saving.set(false);
     }
   }
+}
+
+/** A typed list of terpenes as the server takes it: by commas, dominant first. */
+export function splitTerpenes(typed: string): string[] {
+  return typed.split(/[,;]/).map((t) => t.trim()).filter((t) => t !== '');
 }
