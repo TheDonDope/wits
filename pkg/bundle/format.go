@@ -15,10 +15,11 @@ import (
 // version 1 bundle is still read, its adjustments' accounts recovered. Version
 // 3 carries the effect log after the events, version 4 the price log beside
 // it, version 5 the seals of the journal's head with their timestamps, and
-// version 6 a product's terpenes, which every version before dropped.
+// version 6 a product's terpenes, which every version before dropped, and
+// version 7 a price's pharmacy and a price not to be had, which 6 dropped.
 const (
 	Magic   = "wits-bundle"
-	Version = 6
+	Version = 7
 )
 
 // separator ends the header and begins the events; ratingsSeparator ends the

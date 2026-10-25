@@ -345,10 +345,17 @@ func writeRatings(out io.Writer, ratings []effects.Rating) {
 
 // writePrices appends the price log after the ratings, in the same section: a
 // line a price, the purchase by hash, the moment it was given, its cents, and
-// its note. Format 4 added them.
+// its note. Format 4 added them; format 7 the pharmacy (s=) and a price not to
+// be had (u=1), both written only when there.
 func writePrices(out io.Writer, paid []prices.Price) {
 	for _, p := range paid {
 		fmt.Fprintf(out, "C %s %s %d", p.Purchase, p.At.Format(time.RFC3339), p.Cents)
+		if p.Unknown {
+			fmt.Fprint(out, " u=1")
+		}
+		if p.Seller != "" {
+			fmt.Fprintf(out, " s=%s", escape(p.Seller))
+		}
 		if p.Note != "" {
 			fmt.Fprintf(out, " n=%s", escape(p.Note))
 		}
