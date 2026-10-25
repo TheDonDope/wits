@@ -162,7 +162,17 @@ func LoadKey(path string) (ed25519.PrivateKey, error) {
 }
 
 // Key reads the sealing key at path, making one the first time.
+//
+// Reading and making happen under the key's lock: two first uses at once —
+// the browser's carry page and wits seal — each made a key, and the one
+// written second replaced the first, so whatever the first had signed could
+// never be verified again.
 func Key(path string) (ed25519.PrivateKey, bool, error) {
+	release, err := journal.Lock(path)
+	if err != nil {
+		return nil, false, err
+	}
+	defer release()
 	key, err := LoadKey(path)
 	if !errors.Is(err, ErrNoKey) {
 		return key, false, err

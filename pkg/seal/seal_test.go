@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -50,6 +51,37 @@ func TestKeyIsKept(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, made)
 	assert.Equal(t, first, again, "Should seal with the same key every time")
+}
+
+// Eight first uses at once each made a key, in every one of fifty rounds, and
+// all but the last written signed with a key that was then replaced.
+func TestKeyIsMadeOnce(t *testing.T) {
+	for round := 0; round < 50; round++ {
+		path := filepath.Join(t.TempDir(), "seal.key")
+		seeds := make([][]byte, 8)
+		made := make([]bool, len(seeds))
+		var wg sync.WaitGroup
+		for i := range seeds {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				key, m, err := Key(path)
+				assert.NoError(t, err)
+				seeds[i], made[i] = key.Seed(), m
+			}(i)
+		}
+		wg.Wait()
+		kept, err := LoadKey(path)
+		require.NoError(t, err)
+		makers := 0
+		for i, seed := range seeds {
+			require.Equal(t, kept.Seed(), seed, "round %d: every first use signs with the key that is kept", round)
+			if made[i] {
+				makers++
+			}
+		}
+		require.Equal(t, 1, makers, "round %d: and one of them made it", round)
+	}
 }
 
 func TestStore(t *testing.T) {
