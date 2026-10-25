@@ -637,7 +637,7 @@ type effectLog struct {
 // session first; the latest sessions not yet rated; and the insights.
 func effectsOf(ws *workspace.Workspace) any {
 	latest := effects.Latest(ws.Ratings)
-	undone := record.Reverted(ws.State.Events)
+	undone := ledger.Undone(ws.State.Events)
 	out := effectLog{Dimensions: effects.Dimensions, Rated: []rated{}, Unrated: []entry{}}
 	for i := len(ws.State.Events) - 1; i >= 0; i-- {
 		e := ws.State.Events[i]
@@ -738,9 +738,9 @@ type refill struct {
 // projection is the shelf's grams day by day since the fill arrived, and on
 // to the day they run out at the observed rate.
 type projection struct {
-	History   []point    `json:"history"`
-	Projected []point    `json:"projected"`
-	EmptyOn   *time.Time `json:"empty_on,omitempty"`
+	History   []point `json:"history"`
+	Projected []point `json:"projected"`
+	EmptyOn   string  `json:"empty_on,omitempty"`
 }
 
 // point is grams on a day.
@@ -796,7 +796,7 @@ func fillOf(ws *workspace.Workspace) *fill {
 	if c == nil {
 		return nil
 	}
-	stats := ledger.Summarise(c.Events)
+	stats := ledger.Summarise(c.Standing)
 	remaining := ws.State.FillOnShelf(c)
 	f := &fill{
 		Number:       c.Seq + 1,
@@ -811,7 +811,7 @@ func fillOf(ws *workspace.Workspace) *fill {
 	if c.Purchased > 0 {
 		f.RemainingPct = float64(remaining / c.Purchased)
 	}
-	f.ShelfProjection = projectionOf(c, ws.OpenedAt, stats.PerActiveDay)
+	f.ShelfProjection = projectionOf(c, ws.OpenedAt)
 	if plan, ok := ledger.PlanRefill(c, ws.OpenedAt, ws.Repo.Config.Lead()); ok {
 		f.Refill = &refill{OrderBy: plan.OrderBy.Format(time.DateOnly), EmptyOn: plan.EmptyOn.Format(time.DateOnly),
 			LeadDays: plan.Lead, Overdue: plan.Overdue(ws.OpenedAt)}
@@ -829,34 +829,21 @@ func fillOf(ws *workspace.Workspace) *fill {
 	return f
 }
 
-// projectionOf is the terminal's supply projection, as data: the shelf's grams
-// on each day of the fill so far, then on at the rate until they run out —
-// ninety days at most.
-func projectionOf(c *ledger.Cycle, now time.Time, rate float64) projection {
-	perDay := map[string]journal.Centigrams{}
-	for _, e := range c.Events {
-		if e.Type == journal.Grind {
-			perDay[e.OccurredAt.Format(time.DateOnly)] += journal.CG(e.Grams)
-		}
-	}
+// projectionOf is the ledger's projection of the shelf, as data: the shelf's
+// grams on each day of the fill so far, then on at the fill's rate to the day
+// the refill planner says it runs out.
+func projectionOf(c *ledger.Cycle, now time.Time) projection {
+	p := ledger.Project(c, now)
 	out := projection{History: []point{}, Projected: []point{}}
-	held := journal.CG(float64(c.Held()))
-	day := c.Start
-	for ; !day.After(now); day = day.AddDate(0, 0, 1) {
-		held -= perDay[day.Format(time.DateOnly)]
-		out.History = append(out.History, point{day.Format(time.DateOnly), max(held.Grams(), 0)})
+	for _, l := range p.History {
+		out.History = append(out.History, point{l.Day.Format(time.DateOnly), float64(l.Shelf)})
 	}
-	if rate <= 0 || held <= 0 {
-		return out
+	for _, l := range p.Projected {
+		out.Projected = append(out.Projected, point{l.Day.Format(time.DateOnly), float64(l.Shelf)})
 	}
-	level := held.Grams()
-	last := now
-	for i := 0; i < 90 && level > 0; i++ {
-		level = max(level-rate, 0)
-		last = now.AddDate(0, 0, i+1)
-		out.Projected = append(out.Projected, point{last.Format(time.DateOnly), ledger.Round(level)})
+	if !p.EmptyOn.IsZero() {
+		out.EmptyOn = p.EmptyOn.Format(time.DateOnly)
 	}
-	out.EmptyOn = &last
 	return out
 }
 
@@ -872,7 +859,7 @@ func daysOf(ws *workspace.Workspace) any {
 	ground, seshed := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
 	seen := map[string]bool{}
 	var dates []string
-	for _, e := range ws.State.Events {
+	for _, e := range ws.State.Standing {
 		d := e.OccurredAt.Format(time.DateOnly)
 		if !seen[d] {
 			seen[d] = true
@@ -935,7 +922,7 @@ func (s *Server) journal(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, errors.New("limit must be a positive number"))
 		return
 	}
-	undone := record.Reverted(ws.State.Events)
+	undone := ledger.Undone(ws.State.Events)
 	out := []entry{}
 	for i := len(ws.State.Events) - 1; i >= 0 && len(out) < limit; i-- {
 		e := ws.State.Events[i]
@@ -970,7 +957,7 @@ type jar struct {
 func jarsOf(ws *workspace.Workspace) any {
 	bought, ground := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
 	fills, seen := map[string]int{}, map[string]time.Time{}
-	for _, e := range ws.State.Events {
+	for _, e := range ws.State.Standing {
 		switch e.Type {
 		case journal.Purchase:
 			bought[e.Product] += journal.CG(e.Grams)
@@ -1044,7 +1031,7 @@ type device struct {
 
 func devicesOf(ws *workspace.Workspace) any {
 	sessions, grams := map[string]int{}, map[string]journal.Centigrams{}
-	for _, e := range ws.State.Events {
+	for _, e := range ws.State.Standing {
 		if e.Type == journal.Sesh && e.Device != "" {
 			sessions[e.Device]++
 			grams[e.Device] += journal.CG(e.Grams)

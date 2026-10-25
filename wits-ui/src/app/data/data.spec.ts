@@ -57,6 +57,17 @@ describe('derive', () => {
     expect(s.median).toBe(1.25); // the days were 0.75, 1.25, 2
   });
 
+  it('counts nothing that was undone, though the balances still fold it', () => {
+    const mistake = { ...entry('grind', '2026-07-06', 5), corrected: true };
+    const fix = { ...entry('adjust', '2026-07-06', 5, 'wcake', 'stash', 'storage'), reverts: mistake.hash };
+    const withUndo = [...record, mistake, fix];
+
+    expect(summarise(withUndo)).toEqual(summarise(record));
+    expect(perDay(withUndo)).toEqual(perDay(record));
+    expect(byProduct(withUndo)).toEqual(byProduct(record));
+    expect(balances(withUndo)).toEqual(balances(record));
+  });
+
   it('totals each day, and each product heaviest first', () => {
     expect(perDay(record).map((d) => [d.date, d.ground, d.seshed])).toEqual([
       ['2026-07-02', 0.75, 0.5],

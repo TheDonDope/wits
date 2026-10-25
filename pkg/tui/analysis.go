@@ -14,7 +14,6 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
-	"github.com/TheDonDope/wits/pkg/record"
 )
 
 // analysisView is the long view: how this cycle is going, how it compares to
@@ -317,14 +316,14 @@ func (v analysisView) events(a *App) []journal.Event {
 	case 3:
 		return since(a, a.data.Now.AddDate(-1, 0, 0))
 	default:
-		return a.data.State.Events
+		return a.data.State.Standing
 	}
 }
 
 // since returns the events that happened after the cutoff.
 func since(a *App, cutoff time.Time) []journal.Event {
 	var out []journal.Event
-	for _, e := range a.data.State.Events {
+	for _, e := range a.data.State.Standing {
 		if e.OccurredAt.After(cutoff) {
 			out = append(out, e)
 		}
@@ -547,7 +546,7 @@ func (v analysisView) cycles(a *App, events []journal.Event, width int) string {
 
 	bars := make([]Bar, 0, len(all))
 	for _, c := range all {
-		stats := ledger.Summarise(c.Events)
+		stats := ledger.Summarise(c.Standing)
 		bars = append(bars, Bar{
 			Label: c.Start.Format("Jan 2006"),
 			Value: float64(c.Ground),
@@ -620,21 +619,20 @@ func (v sessionsView) Update(msg tea.Msg, a *App) (sessionsView, tea.Cmd) {
 // recentSessions are the newest sessions that stand — an undone one has
 // nothing to rate — newest first, as many as are listed.
 func recentSessions(a *App) []journal.Event {
-	undone := record.Reverted(a.data.State.Events)
 	var out []journal.Event
-	events := a.data.State.Events
+	events := a.data.State.Standing
 	for i := len(events) - 1; i >= 0 && len(out) < recentShown; i-- {
-		if e := events[i]; e.Type == journal.Sesh && !undone[e.Hash] {
+		if e := events[i]; e.Type == journal.Sesh {
 			out = append(out, e)
 		}
 	}
 	return out
 }
 
-// seshes returns the session events, oldest first.
+// seshes returns the sessions that stand, oldest first.
 func seshes(a *App) []journal.Event {
 	var out []journal.Event
-	for _, e := range a.data.State.Events {
+	for _, e := range a.data.State.Standing {
 		if e.Type == journal.Sesh {
 			out = append(out, e)
 		}

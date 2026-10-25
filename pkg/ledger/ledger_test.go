@@ -527,3 +527,60 @@ func TestYields(t *testing.T) {
 	assert.Equal(t, Yield{At: day(2), Device: "mighty", Collected: 0.21, From: 0.75, Sessions: 2}, y[0])
 	assert.InDelta(t, 0.28, y[0].Ratio(), 1e-9)
 }
+
+// undo is the correction wits revert writes for an entry: the grams moved
+// back, dated when the undo was made.
+func undo(e journal.Event, at time.Time) journal.Event {
+	return journal.Event{Type: journal.Adjust, Product: e.Product, Grams: e.Grams, From: e.To, To: e.From,
+		OccurredAt: at, Reverts: e.Hash, Hash: "undo-" + e.Hash}
+}
+
+// An undone grind counted in the rate, the shelf and the refill date — every
+// undo moved the day to order earlier — though the jar itself was right.
+func TestUndoneCountsInNoTotal(t *testing.T) {
+	mistake := event(journal.Grind, "wedding-cake", 5, day(3))
+	mistake.Hash = "mistake"
+	s := Fold([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 20, day(0)),
+		event(journal.Grind, "wedding-cake", 2, day(1)),
+		event(journal.Grind, "wedding-cake", 2, day(2)),
+		mistake,
+		undo(mistake, day(3).Add(time.Minute)),
+	})
+	c := &s.Cycles[0]
+
+	assert.Equal(t, 16.0, s.Balances["wedding-cake"].Storage, "The jar was always right")
+	assert.Len(t, s.Events, 5, "Every entry is still in the fold")
+	assert.Len(t, s.Standing, 3, "but neither half of the undo stands")
+	assert.Equal(t, Shelf(4), c.Ground, "The fill's grinding leaves out the undone 5 g")
+	assert.Equal(t, 2.0, Summarise(c.Standing).PerActiveDay, "2 g a day on 2 days, not 3 g on 3")
+
+	plan, ok := PlanRefill(c, day(3), 3)
+	require.True(t, ok)
+	assert.Equal(t, Shelf(16), plan.Shelf, "The shelf the refill counts is the jar's 16 g, not 11 g")
+	assert.Equal(t, midnight(day(11)), plan.EmptyOn, "16 g at 2 g a day: eight days on")
+
+	p := Project(c, day(3))
+	assert.Equal(t, Shelf(16), p.History[len(p.History)-1].Shelf, "The curve starts from the same 16 g")
+	assert.Equal(t, plan.EmptyOn, p.EmptyOn, "and ends where the refill planner says")
+	assert.Equal(t, Shelf(0), p.Projected[len(p.Projected)-1].Shelf)
+}
+
+// An undo is dated when it was made, which can be inside another fill's
+// tenure: the fill the undone entry fell in must still leave it out.
+func TestAnUndoInALaterFill(t *testing.T) {
+	mistake := event(journal.Grind, "wedding-cake", 5, day(2))
+	mistake.Hash = "mistake"
+	s := Fold([]journal.Event{
+		event(journal.Purchase, "wedding-cake", 10, day(0)),
+		event(journal.Grind, "wedding-cake", 1, day(1)),
+		mistake,
+		event(journal.Purchase, "lemon-tartz", 10, day(20)),
+		undo(mistake, day(21)),
+	})
+	require.Len(t, s.Cycles, 2)
+
+	assert.Equal(t, Shelf(1), s.Cycles[0].Ground, "The first fill's grinding, without the grind undone later")
+	assert.Equal(t, 1.0, Summarise(s.Cycles[0].Standing).Ground)
+	assert.Empty(t, Summarise(s.Cycles[1].Standing).Ground, "and the undo grinds nothing in the second")
+}

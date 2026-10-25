@@ -175,7 +175,7 @@ func current(ws *workspace.Workspace) *currentCycle {
 	if c == nil {
 		return nil
 	}
-	stats := ledger.Summarise(c.Events)
+	stats := ledger.Summarise(c.Standing)
 	remaining := ws.State.FillOnShelf(c)
 	held := c.Purchased
 	pct := 0.0
@@ -199,7 +199,7 @@ func current(ws *workspace.Workspace) *currentCycle {
 // perDay totals the grams ground and seshed per calendar day.
 func perDay(ws *workspace.Workspace) map[string]dayTotals {
 	out := map[string]dayTotals{}
-	for _, e := range ws.State.Events {
+	for _, e := range ws.State.Standing {
 		day := e.OccurredAt.Format(time.DateOnly)
 		t := out[day]
 		switch e.Type {
@@ -221,7 +221,7 @@ func deviceUsage(ws *workspace.Workspace) []deviceUse {
 	byDev := map[string]*deviceUse{}
 	var order []string
 	temps := map[string][2]int{}
-	for _, e := range ws.State.Events {
+	for _, e := range ws.State.Standing {
 		if e.Type != journal.Sesh {
 			continue
 		}

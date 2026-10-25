@@ -393,7 +393,7 @@ func writeStatus(out io.Writer, state *ledger.State, cycle *ledger.Cycle) {
 		return
 	}
 
-	stats := ledger.Summarise(cycle.Events)
+	stats := ledger.Summarise(cycle.Standing)
 	fmt.Fprintf(out, "On cycle %d, opened %s (day %d)\n\n",
 		cycle.Seq+1, cycle.Start.Format(time.DateOnly), daysSince(cycle.Start))
 

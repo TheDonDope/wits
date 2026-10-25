@@ -64,14 +64,22 @@ export interface Stats {
   median: number;
 }
 
-/** The grinds' statistics — ledger.Summarise. */
+/**
+ * Whether an entry counts in a total: an undone one does not — ledger.State.Standing.
+ * The undo itself is an adjustment, which no total here counts either.
+ */
+export function stands(e: Entry): boolean {
+  return !e.corrected;
+}
+
+/** The grinds' statistics — ledger.Summarise, over what stands. */
 export function summarise(entries: Entry[]): Stats {
   const perDay = new Map<string, number>();
   let ground = 0;
   let first = '';
   let last = '';
   for (const e of entries) {
-    if (e.type !== 'grind') {
+    if (e.type !== 'grind' || !stands(e)) {
       continue;
     }
     const d = dayOf(e);
@@ -133,7 +141,9 @@ export function perDay(entries: Entry[]): Day[] {
   const seshed = new Map<string, number>();
   for (const e of entries) {
     const d = dayOf(e);
-    if (e.type === 'grind') {
+    if (!stands(e)) {
+      continue;
+    } else if (e.type === 'grind') {
       ground.set(d, (ground.get(d) ?? 0) + cg(e.grams));
     } else if (e.type === 'sesh') {
       seshed.set(d, (seshed.get(d) ?? 0) + cg(e.grams));
@@ -170,7 +180,7 @@ export interface ProductTotal {
 export function byProduct(entries: Entry[]): ProductTotal[] {
   const totals = new Map<string, { name: string; grams: number; days: Set<string> }>();
   for (const e of entries) {
-    if (e.type !== 'grind' || !e.product) {
+    if (e.type !== 'grind' || !e.product || !stands(e)) {
       continue;
     }
     let t = totals.get(e.product);
@@ -226,7 +236,7 @@ export function tolerance(entries: Entry[], overall: Map<string, number>, from: 
   const counts = new Array<number>(days.length).fill(0);
   for (const e of entries) {
     const i = index.get(dayOf(e));
-    if (i === undefined || e.corrected || e.type === 'adjust') {
+    if (i === undefined || !stands(e) || e.type === 'adjust') {
       continue;
     }
     if (e.type === 'grind') {

@@ -79,9 +79,9 @@ func TestOverview(t *testing.T) {
 		o.Fill.Products[0], "The stash, as far as it is this fill's")
 	assert.Equal(t, shelf{Storage: 18, Stash: 1.5, Jars: 1}, o.Shelf)
 	assert.NotEmpty(t, o.Fill.ShelfProjection.History)
-	assert.NotNil(t, o.Fill.ShelfProjection.EmptyOn, "A rate to project from")
+	assert.NotEmpty(t, o.Fill.ShelfProjection.EmptyOn, "A rate to project from")
 	require.NotNil(t, o.Fill.Refill, "When to order, from the same projection")
-	assert.Equal(t, o.Fill.ShelfProjection.EmptyOn.Format(time.DateOnly), o.Fill.Refill.EmptyOn,
+	assert.Equal(t, o.Fill.ShelfProjection.EmptyOn, o.Fill.Refill.EmptyOn,
 		"The refill's empty day is the projection's")
 	assert.Equal(t, 3, o.Fill.Refill.LeadDays, "The lead time starts at three days")
 }

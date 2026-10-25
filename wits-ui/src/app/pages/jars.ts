@@ -10,7 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
-import { balances, dayOf } from '../data/derive';
+import { balances, dayOf, stands } from '../data/derive';
 import { capacities, filmFrames } from '../data/film';
 import { Binding, Keys } from '../data/keys';
 import { Jar } from '../data/models';
@@ -246,8 +246,9 @@ export class Jars {
     const played = this.replay.played();
     const held = balances(played);
     const life = new Map<string, { bought: number; ground: number; fills: number; seen: string }>();
+    // What was bought and ground counts what stands; the balances above fold everything.
     for (const e of played) {
-      if (!e.product) {
+      if (!e.product || !stands(e)) {
         continue;
       }
       const l = life.get(e.product) ?? { bought: 0, ground: 0, fills: 0, seen: '' };

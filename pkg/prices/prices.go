@@ -372,7 +372,7 @@ func Analyse(state *ledger.State, latest map[string]Price, ratings []effects.Rat
 	byMonth := map[string]*Month{}
 	byProduct := map[string][2]float64{} // cents, priced grams
 	standing := map[string]bool{}
-	for _, e := range ledger.Standing(state.Events) {
+	for _, e := range state.Standing {
 		standing[e.Hash] = true
 	}
 	for _, c := range state.Cycles {
@@ -418,7 +418,7 @@ func Analyse(state *ledger.State, latest map[string]Price, ratings []effects.Rat
 func helped(out *Costs, state *ledger.State, byProduct map[string][2]float64, ratings []effects.Rating) {
 	rated := effects.Latest(ratings)
 	var cents float64
-	for _, e := range ledger.Standing(state.Events) {
+	for _, e := range state.Standing {
 		r, ok := rated[e.Hash]
 		if e.Type != journal.Sesh || !ok || r.Scores[effects.Overall] < helps {
 			continue

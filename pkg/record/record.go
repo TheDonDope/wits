@@ -481,19 +481,6 @@ func (r *Recorder) RevertOf(hash string) *journal.Event {
 	return nil
 }
 
-// Reverted returns the hashes of every entry that has been corrected, along with
-// the corrections themselves, so a view can leave the pair out.
-func Reverted(events []journal.Event) map[string]bool {
-	out := map[string]bool{}
-	for _, e := range events {
-		if e.Reverts != "" {
-			out[e.Reverts] = true
-			out[e.Hash] = true
-		}
-	}
-	return out
-}
-
 // short abbreviates a hash the way a commit is abbreviated.
 func short(h string) string {
 	if len(h) > 7 {
@@ -831,7 +818,7 @@ func (r *Recorder) Unpriced(all bool) ([]journal.Event, error) {
 	}
 	latest := prices.Latest(paid)
 	standing := map[string]bool{}
-	for _, e := range ledger.Standing(r.state.Events) {
+	for _, e := range r.state.Standing {
 		standing[e.Hash] = true
 	}
 	var out []journal.Event

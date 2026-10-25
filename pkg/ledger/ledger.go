@@ -34,7 +34,13 @@ type State struct {
 	// its hash chain is that order — so anything that needs the chain reads
 	// the journal, not this.
 	Events []journal.Event
-	Cycles []Cycle
+	// Standing is Events less every undone entry and the undo that undid it:
+	// what a total counts. An undo can be written long after the entry it
+	// undoes, outside any window or fill the entry falls in, so it is settled
+	// here, over the whole journal, and not by whoever filters a slice of it.
+	// Left out of JSON: it is Events again, less what any reader can work out.
+	Standing []journal.Event `json:"-"`
+	Cycles   []Cycle
 
 	// lots is each product's jar split into the fills that stocked it,
 	// oldest first. It is how a gram in storage stays on the account of the
@@ -94,6 +100,9 @@ type Cycle struct {
 	Ground   Shelf
 	Products []string
 	Events   []journal.Event // everything that happened during the fill's tenure
+	// Standing is Events less what was undone, wherever the undo was written:
+	// what the fill's rate and projection count.
+	Standing []journal.Event `json:"-"`
 
 	// Opening is the storage balance each product carried into the cycle,
 	// noted for the record: those grams stay on their own cycles' accounts.
@@ -142,6 +151,8 @@ type folder struct {
 	// same last grams — and undoing it must put back only what it took, or
 	// the fill reads grams its jar does not hold.
 	drew map[string]journal.Centigrams
+	// undone is what counts in no total: see Undone.
+	undone map[string]bool
 }
 
 // settle closes a cycle the moment its share is ground away, and reopens it
@@ -313,11 +324,25 @@ func Chronological(events []journal.Event) []journal.Event {
 // dated ahead: the recorder refuses an entry that has not happened yet.
 func Fold(events []journal.Event) *State {
 	s := &State{Balances: map[string]*Balance{}, Events: Chronological(events), lots: map[string][]lot{}}
-	f := &folder{s: s, last: map[string]int{}, cur: -1, drew: map[string]journal.Centigrams{}}
+	f := &folder{s: s, last: map[string]int{}, cur: -1, drew: map[string]journal.Centigrams{}, undone: Undone(events)}
 	for _, e := range s.Events {
 		f.apply(e)
 	}
 	return s
+}
+
+// Undone is every entry that was undone, and every undo: the entries that
+// count in no total. It reads the whole journal, since an undo is dated when
+// it was made, not when the entry it undoes happened.
+func Undone(events []journal.Event) map[string]bool {
+	out := map[string]bool{}
+	for _, e := range events {
+		if e.Reverts != "" {
+			out[e.Reverts] = true
+			out[e.Hash] = true
+		}
+	}
+	return out
 }
 
 // apply folds one event into the running state.
@@ -332,7 +357,7 @@ func (f *folder) apply(e journal.Event) {
 	case journal.Purchase:
 		f.purchase(e)
 	case journal.Grind:
-		if f.cur != -1 {
+		if f.cur != -1 && !f.undone[e.Hash] {
 			s.Cycles[f.cur].Ground = Shelf(plus(float64(s.Cycles[f.cur].Ground), e.Grams))
 		}
 		f.consume(e, cg)
@@ -350,8 +375,15 @@ func (f *folder) apply(e journal.Event) {
 			f.credit(e.Product, cg, e.OccurredAt)
 		}
 	}
+	standing := !f.undone[e.Hash]
+	if standing {
+		s.Standing = append(s.Standing, e)
+	}
 	if f.cur != -1 {
 		s.Cycles[f.cur].Events = append(s.Cycles[f.cur].Events, e)
+		if standing {
+			s.Cycles[f.cur].Standing = append(s.Cycles[f.cur].Standing, e)
+		}
 	}
 }
 
@@ -646,26 +678,82 @@ type Refill struct {
 func (r Refill) Overdue(now time.Time) bool { return midnight(r.OrderBy).Before(midnight(now)) }
 
 // PlanRefill is when to order, as the supply projection sees it: the shelf
-// held when the fill arrived, less every grind since, running down from now
-// at the fill's rate. It is false without a fill or a rate to go by.
+// held when the fill arrived, less every grind since that stands, running down
+// from now at the fill's rate. It is false without a fill or a rate to go by.
 func PlanRefill(c *Cycle, now time.Time, lead int) (Refill, bool) {
 	if c == nil {
 		return Refill{}, false
 	}
-	shelf := journal.CG(float64(c.Held()))
-	for _, e := range c.Events {
-		if e.Type == journal.Grind && !e.OccurredAt.After(now) {
-			shelf -= journal.CG(e.Grams)
-		}
-	}
-	rate := Summarise(c.Events).PerActiveDay
+	rate := Summarise(c.Standing).PerActiveDay
 	if rate <= 0 {
 		return Refill{}, false
 	}
-	shelf = max(shelf, 0)
+	shelf := max(shelfAt(c, now), 0)
 	empty := midnight(now).AddDate(0, 0, int(math.Ceil(shelf.Grams()/rate)))
 	return Refill{Shelf: Shelf(shelf.Grams()), Rate: rate, EmptyOn: empty,
 		OrderBy: empty.AddDate(0, 0, -lead), Lead: lead}, true
+}
+
+// shelfAt is the shelf the fill arrived to, less every standing grind up to
+// at, from whichever jar.
+func shelfAt(c *Cycle, at time.Time) journal.Centigrams {
+	shelf := journal.CG(float64(c.Held()))
+	for _, e := range c.Standing {
+		if e.Type == journal.Grind && !e.OccurredAt.After(at) {
+			shelf -= journal.CG(e.Grams)
+		}
+	}
+	return shelf
+}
+
+// Level is the shelf at the end of a day.
+type Level struct {
+	Day   time.Time
+	Shelf Shelf
+}
+
+// Projection is the shelf through a fill: each day of it so far, then on from
+// today at the fill's rate until the day the refill planner says it runs out —
+// ninety days at most. The terminal and the browser draw this one, so their
+// curve and the refill date cannot disagree.
+type Projection struct {
+	History   []Level
+	Projected []Level
+	// EmptyOn is PlanRefill's; zero when there is no rate to go by.
+	EmptyOn time.Time
+}
+
+// mostProjected is how far a projection runs, in days.
+const mostProjected = 90
+
+// Project is the shelf's projection through the fill c, as it stands at now.
+func Project(c *Cycle, now time.Time) Projection {
+	var p Projection
+	if c == nil {
+		return p
+	}
+	for day := midnight(c.Start); !day.After(now); day = day.AddDate(0, 0, 1) {
+		end := day.AddDate(0, 0, 1).Add(-time.Nanosecond)
+		p.History = append(p.History, Level{day, Shelf(max(shelfAt(c, end), 0).Grams())})
+	}
+	plan, ok := PlanRefill(c, now, 0)
+	if !ok || plan.Shelf <= 0 {
+		return p
+	}
+	p.EmptyOn = plan.EmptyOn
+	today := midnight(now)
+	for i := 1; i <= mostProjected; i++ {
+		day := today.AddDate(0, 0, i)
+		if day.After(plan.EmptyOn) {
+			break
+		}
+		left := Round(max(float64(plan.Shelf)-plan.Rate*float64(i), 0))
+		if day.Equal(plan.EmptyOn) {
+			left = 0
+		}
+		p.Projected = append(p.Projected, Level{day, Shelf(left)})
+	}
+	return p
 }
 
 // midnight is the start of the calendar day a moment falls on, in its zone.
@@ -678,15 +766,10 @@ func midnight(t time.Time) time.Time {
 // entry and the undo that undid it moved nothing between them, and neither
 // counts.
 func Standing(events []journal.Event) []journal.Event {
-	undone := map[string]bool{}
-	for _, e := range events {
-		if e.Reverts != "" {
-			undone[e.Reverts] = true
-		}
-	}
+	undone := Undone(events)
 	var out []journal.Event
 	for _, e := range Chronological(events) {
-		if e.Reverts == "" && !undone[e.Hash] {
+		if !undone[e.Hash] {
 			out = append(out, e)
 		}
 	}

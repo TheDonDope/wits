@@ -104,7 +104,7 @@ func Build(ws *workspace.Workspace, from, to time.Time, version string) Report {
 		r.Seal = sealOf(ws, r.Head)
 	}
 	var in []journal.Event
-	for _, e := range ledger.Standing(ws.State.Events) {
+	for _, e := range ws.State.Standing {
 		if !e.OccurredAt.Before(from) && e.OccurredAt.Before(to.AddDate(0, 0, 1)) {
 			in = append(in, e)
 		}
@@ -615,7 +615,7 @@ func Holdings(ws *workspace.Workspace, all bool) []seal.Item {
 func fillsOf(ws *workspace.Workspace, slug string) []seal.Dispensed {
 	// Over the whole journal: an undo can land in a later fill than its entry.
 	stands := map[string]bool{}
-	for _, e := range ledger.Standing(ws.State.Events) {
+	for _, e := range ws.State.Standing {
 		stands[e.Hash] = true
 	}
 	var standing, last []seal.Dispensed
@@ -690,7 +690,7 @@ type Strain struct {
 // the cannabinoids included.
 func Strains(ws *workspace.Workspace) []Strain {
 	dispensed := map[string]float64{}
-	for _, e := range ledger.Standing(ws.State.Events) {
+	for _, e := range ws.State.Standing {
 		if e.Type == journal.Purchase {
 			dispensed[e.Product] = ledger.Round(dispensed[e.Product] + e.Grams)
 		}

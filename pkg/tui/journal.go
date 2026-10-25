@@ -12,7 +12,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/TheDonDope/wits/pkg/journal"
-	"github.com/TheDonDope/wits/pkg/record"
+	"github.com/TheDonDope/wits/pkg/ledger"
 )
 
 // journalView is the log: every entry, newest first, grouped under the day it
@@ -155,7 +155,7 @@ func (v journalView) firstEntry(i, direction int) int {
 // a record that can be audited and one that cannot.
 func (v journalView) build(a *App) []row {
 	events := a.data.State.Events
-	corrected := record.Reverted(events)
+	corrected := ledger.Undone(events)
 
 	var out []row
 	var last string
