@@ -2,6 +2,29 @@
 
 ## 2026-10-25
 
+### Twenty-one looks, a thumb's reach, and the paperwork
+
+The afternoon was the browser's. It got twenty-one themes, Aurora as it was and twenty more, differing in corners, glass, backdrop, shadow and type as much as colour. That meant routing some seventy colours written into the components through theme variables first; the film's canvas reads the theme off the page, and Aurora was checked against main's screenshot. Then a review round on an iPhone 11 Pro held upright, 375 px, now the narrowest the interface is laid out for. The tabs there showed one icon at a time between paging arrows, so phones got a dock with Record raised in it and the rest under More. Analysis measured 503 px and Costs 404 at that width, and every page measures 375 now. Analysis's five scopes go by short names, the Jars page went from 12,900 px to 6,800 as a compact list, and the Record dialog's five tabs now fit side by side.
+
+Then two things the terminal could do and the browser could not. The Repository page opens another repository or makes one, after asking, and imports a workbook uploaded from the browser: a dry run first, then into an empty journal only. Through the page, the committed workbook came in as 53 products and 1,429 entries, and a second import was refused. None of it is built for the phone, whose engine stays clear of the spreadsheet reader. Last, a fill holds several strains now, each with grams and a price a gram, recorded as one batch. A 19% VAT switch, on by default, adds Germany's tax to prices typed in. Pharmacy invoices are read as PDFs on the device by pdf.js, and the example's three strains matched their jars past "GM", "MOS" and "PAB". It came to 351.80 €, the invoice's total with VAT to the cent. Shipped as v0.75.0 through v0.80.0.
+
+- `f6c8742` feat(wits-ui): twenty-one ways to look at the same grams
+- `a105608` fix(wits-ui): the film's jar takes its box as one
+- `376a395` fix(wits-ui): the film's jar takes its box by name
+- `72e96f7` docs: update changelog for v0.75.0
+- `c5d5c57` feat(wits-ui): a phone navigates by thumb, and nothing scrolls sideways
+- `236c34d` fix(wits-ui): the page's path is split without a regex
+- `3d3859b` docs: update changelog for v0.76.0
+- `18447c0` feat(wits-ui): five scopes in a phone's width, and the shelf as a list
+- `eb52512` docs: update changelog for v0.77.0
+- `ffe6273` feat(api): the browser picks the repository, and brings the workbook
+- `00744ea` fix(api): a folder is made absolute, not cleaned
+- `9108326` docs: update changelog for v0.78.0
+- `9d73183` feat(record): a fill of many strains, priced, and read off the invoices
+- `5592065` docs: update changelog for v0.79.0
+- `7a6b3aa` fix(wits-ui): the record dialog's five tabs, all in a phone's width
+- `b5b844b` docs: update changelog for v0.80.0
+
 ### The label, the undo, and a house in order
 
 Next came one of the roadmap's later delights: a photograph of the pharmacy label fills the fill. Tesseract reads it in the page, compiled to WebAssembly, its engine and its German served by wits itself, so a photograph of a prescription goes nowhere, and `catalog.ReadLabel` makes a product line and grams of the text, passing over the expiry date, the batch number and the pharmacy's house number. Every one of the workbook's 53 names, copied off labels to begin with, reads back to its own product, as written and in capitals. A rendered label read in 1.0 s in headless Chromium, every request, the worker's included, to the machine serving the page. Then a review of the 9,600 lines landed since the last one, every finding reproduced before anything was fixed. The worst: an undone grind still counted in the rate, the shelf and the refill date, everywhere but the export and the report. Buying 20 g, grinding 2 g on two days and undoing a 5 g grind said order by 26 October; it says 30 October now, settled once in the fold over the whole journal. The seal key could be made twice by two first uses at once, which in 7 of 20 rounds left a carry statement signed by a key that no longer existed, and restoring 1500 ratings took 21.2 s, a record and a flush at a time; it takes 0.10 s now that the effect log and the price log are one chained log, put back in one write. Last, the files: every command in the one named for it and the report's four concerns apart, moved by a tool rather than retyped, 221 of 225 declarations byte for byte. Shipped as v0.69.0 through v0.74.0.
@@ -45,6 +68,8 @@ From "Later" came the map of the strains and the replay as a film. The workbook 
 - `5d7a4b1` docs: update changelog for v0.68.0
 
 ### Notes for 2026-10-25
+
+The example invoice names its patient, so it stays out of the repository, kept off commits by `.git/info/exclude` on this machine; the tests use its rows without the person. Its line prices include VAT: they add up to its gross total, not its net. A strain read off an invoice is never taxed again, but whether the prices typed in by hand are quoted before VAT, as the switch assumes, is the maintainer's to confirm. pdf.js 6 needs `Promise.try`, which the Chromium here lacks and Safari has only from iOS 18.2, so it runs as its legacy build. A headless profile reused between runs kept the app's service worker, which served the old chunks and hid the fix for a while; the profile is wiped before each run now. Codacy flagged two things that were not what it took them for: lizard read the regex literal `/[?#]/` as the start of a 62-line function, and a security rule took `filepath.Clean` on a browsed path for a traversal guard. That guard is absent by design: the folder browser may look anywhere its user could, on a server that answers this machine only. Left open: the phone layouts were measured in Chromium's emulation, never on the iPhone itself, so the notch and home-bar insets are untested. The dashboard is 345 px wide at 320 px, below the width the layout is held to.
 
 The label reader has only read labels rendered here, never a photograph of a real one; the next fill is its first test. The TUI's fixture tests failed every morning before eleven, on main too, because they dated an entry ten o'clock UTC today, which the recorder refuses until then. The rule that a new Go file gets flagged by Codacy turned out wrong: a file with a package comment of its own passes. Fourteen files then failed on the form, a comment a blank line above the package clause being no package comment at all, so preflight now asks revive itself, which `./doctor.sh install` fetches. Codacy read `go 1.26` in `wits-ui/go.mod` as a standard library in use and listed 47 advisories, so that file names no Go version. A force-push to fix a test on a branch was refused by the permission check, which is why `test(chain)` is a commit of its own. Left open: the Record dialog's tab body is 4 px wider than the dialog, on main before any of this, and `journal.Marshal` stays exported because other packages' tests use it.
 
