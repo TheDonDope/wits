@@ -238,7 +238,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits describe <product>` | What is known about a product; `--terpenes` writes down its profile, dominant first |
 | `wits like <product>` | The products most like one, by name, cannabinoids and terpenes |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
-| `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--note` |
+| `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--mode`, `--timer`, `--heater`, `--setting`, `--note` |
 | `wits avb collect <grams>` / `use <grams>` | AVB weighed out of a device, or used up; `wits avb` for the jar and every yield |
 | `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
 | `wits status` | What is left, and how long it will last |
@@ -724,11 +724,47 @@ while there is some, and the tab counts them:
 It also lists the jars still sealed with **Weigh**, which opens Record on that
 jar. These are offered but not counted, since a weighing that agrees with the
 ledger writes nothing. On the workbook it counts 50: two pickups and 48
-stashes left behind, 1,154.00 g. **Shelf** holds Jars and the Journal: what is
-on hand, and every entry. **Insights** holds Analysis, Effects, History and
+stashes left behind, 1,154.00 g. **Shelf** holds Jars, the Journal and
+Devices: what is on hand, every entry, and what it is all taken with. **Insights** holds Analysis, Effects, History and
 Costs. `1` to `4` go to the tabs, and `h` and `l` step through every page in
 turn. The old addresses (`/jars`, `/costs` and so on) still lead to their
 pages. The theme's name is beside the build at the end of the help line.
+
+**Devices** lists every device by what it is for:
+
+- **Vaporizers and glass,** what a session is had with.
+- **Induction heaters and torches,** what heats a manual one.
+- **Grinders.**
+
+**Add a device** starts from a preset, or from nothing. The presets cover the
+Storz & Bickel Venty and Mighty+, the Limelight Herb Frolic, the Vestratto
+Tornado and Anvil, the Mad Heaters Tempest, the Simrell and the Simrell
+Hydro, the YLL 3.0, the Blazer PT-4000 and PB-207, the Brilliant Cut and
+Aroma 3 grinders, and dry and water glass. A preset fills in what could be
+found out about the device; what couldn't stays empty for you to fill.
+
+A device has:
+
+- what it is: manufacturer, model and the maker's country;
+- electric or manual;
+- its way of heating: convection, conduction or hybrid;
+- how it's used: on demand, session or both. A manual vaporizer is on demand,
+  heated once, inhaled, and its AVB tossed.
+- its temperature range, and how long it stays on unused before it turns
+  itself off;
+- its modes. Each mode can heat its own way, be run at its own usual
+  temperature, and run a session timer: the Frolic's On demand is convection
+  at 165 °C, its Session hybrid at 185 °C for 420 s.
+- what it cost, where and when it was bought, a link and notes.
+
+A card also shows what the device has done: its sessions and grams, the
+sessions it heated, when it was last used, and its price per session so far.
+A device can be retired; it's kept, since its sessions name it. Recording a
+session asks for the device's mode, when it has modes, and starts from that
+mode's temperature and timer. A manual vaporizer or glass also asks what
+heated it, and at which of the heater's settings: an induction heater's
+wattage. The Journal shows it all, as in "Vestratto Tornado · heated with YLL
+3.0 at 45 W".
 
 The **Repository** page, off the header's menu (⋮), is where the server is pointed.
 Browse this computer's folders to open another repository, those that are one

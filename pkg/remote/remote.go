@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -388,7 +389,7 @@ func takeDevices(c *catalog.Devices, theirs bundle.Contents) []string {
 		switch {
 		case i < 0:
 			c.Devices = append(c.Devices, d)
-		case *c.Devices[i] != *d:
+		case !sameDevice(c.Devices[i], d):
 			c.Devices[i] = d
 		default:
 			continue
@@ -409,6 +410,17 @@ func sameProduct(a, b *catalog.Product) bool {
 	return fmt.Sprint(x) == fmt.Sprint(y)
 }
 
+// sameDevice compares two devices field by field, their modes by value.
+func sameDevice(a, b *catalog.Device) bool {
+	x, y := *a, *b
+	if !slices.Equal(x.Modes, y.Modes) {
+		return false
+	}
+	// Equal modes are made alike, an empty list and none the same.
+	x.Modes, y.Modes = nil, nil
+	return reflect.DeepEqual(x, y)
+}
+
 // sameCatalogs reports whether two copies name the same products and devices
 // alike.
 func sameCatalogs(a, b bundle.Contents) bool {
@@ -422,7 +434,7 @@ func sameCatalogs(a, b bundle.Contents) bool {
 		}
 	}
 	for _, d := range da {
-		if e := findDevice(b.Devices, d.Slug); e == nil || *e != *d {
+		if e := findDevice(b.Devices, d.Slug); e == nil || !sameDevice(e, d) {
 			return false
 		}
 	}

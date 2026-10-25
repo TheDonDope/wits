@@ -16,10 +16,12 @@ import (
 // 3 carries the effect log after the events, version 4 the price log beside
 // it, version 5 the seals of the journal's head with their timestamps, and
 // version 6 a product's terpenes, which every version before dropped, and
-// version 7 a price's pharmacy and a price not to be had, which 6 dropped.
+// version 7 a price's pharmacy and a price not to be had, which 6 dropped,
+// and version 8 what a device is (its category, maker, model and the rest)
+// and a session's mode, heater and setting.
 const (
 	Magic   = "wits-bundle"
-	Version = 7
+	Version = 8
 )
 
 // separator ends the header and begins the events; ratingsSeparator ends the

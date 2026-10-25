@@ -162,14 +162,17 @@ func productOptions(a *App, account journal.Account) []huh.Option[string] {
 	return opts
 }
 
-// deviceOptions lists the known devices.
+// deviceOptions lists the devices a session is had with: the vaporizers and
+// the glass still in use, not the grinders, heaters and torches.
 func deviceOptions(a *App) []huh.Option[string] {
 	if a.data.Devices == nil {
 		return nil
 	}
 	var opts []huh.Option[string]
 	for _, d := range a.data.Devices.Devices {
-		opts = append(opts, huh.NewOption(d.Name, d.Slug))
+		if d.SessionWith() && !d.Retired {
+			opts = append(opts, huh.NewOption(d.Name, d.Slug))
+		}
 	}
 	return opts
 }

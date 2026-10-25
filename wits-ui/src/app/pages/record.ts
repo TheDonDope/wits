@@ -13,7 +13,8 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { Written } from '../data/models';
+import { DeviceMode, Written } from '../data/models';
+import { heats, needsHeat, sessionWith } from '../data/devices';
 import { Wits } from '../data/wits';
 import { FillForm } from './fill-form';
 
@@ -94,11 +95,58 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
               <mat-label>Device</mat-label>
               <mat-select [ngModel]="device()" (ngModelChange)="pickDevice($event)">
                 <mat-option value="">none</mat-option>
-                @for (d of wits.devices.value(); track d.slug) {
+                @for (d of sessionDevices(); track d.slug) {
                   <mat-option [value]="d.slug">{{ d.name }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
+            @if (picked()?.modes?.length) {
+              <mat-form-field appearance="outline">
+                <mat-label>Mode</mat-label>
+                <mat-select [ngModel]="mode()" (ngModelChange)="pickMode($event)">
+                  <mat-option value="">not said</mat-option>
+                  @for (m of picked()!.modes; track m.name) {
+                    <mat-option [value]="m.name">{{ m.name }}<span class="dim">{{ modeHint(m) }}</span></mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            @if (timed()) {
+              <mat-form-field appearance="outline">
+                <mat-label>Session timer</mat-label>
+                <input matInput type="number" min="0" [ngModel]="timer()" (ngModelChange)="timer.set($event)" />
+                <span matTextSuffix>s</span>
+              </mat-form-field>
+            }
+            @if (picked() && heatedBy(picked()!)) {
+              <mat-form-field appearance="outline">
+                <mat-label>Heated with</mat-label>
+                <mat-select [ngModel]="heater()" (ngModelChange)="pickHeater($event)">
+                  <mat-option value="">not said</mat-option>
+                  @for (h of heaters(); track h.slug) {
+                    <mat-option [value]="h.slug">{{ h.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              @if (heaterPicked(); as h) {
+                @if (h.modes.length) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Setting</mat-label>
+                    <mat-select [ngModel]="setting()" (ngModelChange)="setting.set($event)">
+                      <mat-option value="">not said</mat-option>
+                      @for (m of h.modes; track m.name) {
+                        <mat-option [value]="m.name">{{ m.name }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                } @else {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Setting</mat-label>
+                    <input matInput [ngModel]="setting()" (ngModelChange)="setting.set($event)" placeholder="45 W, 40 s" />
+                  </mat-form-field>
+                }
+              }
+            }
             @if (range(); as r) {
               <div class="temp">
                 <span class="eyebrow">temperature</span>
@@ -246,10 +294,26 @@ export class RecordDialog {
     const waiting = this.wits.avb.value()?.waiting ?? [];
     return this.device() || (waiting.length === 1 ? waiting[0].device : '');
   });
+  protected readonly mode = signal('');
+  protected readonly heater = signal('');
+  protected readonly setting = signal('');
+  protected readonly timer = signal<number | null>(null);
+  protected readonly heatedBy = needsHeat;
+  /** What a session is had with: the vaporizers and glass still in use. */
+  protected readonly sessionDevices = computed(() => this.wits.devices.value().filter((d) => sessionWith(d) && !d.retired));
+  protected readonly heaters = computed(() => this.wits.devices.value().filter((d) => heats(d) && !d.retired));
+  protected readonly picked = computed(() => this.wits.devices.value().find((x) => x.slug === this.device()));
+  protected readonly heaterPicked = computed(() => this.heaters().find((x) => x.slug === this.heater()));
+  /** Whether the mode picked runs a session timer. */
+  protected readonly timed = computed(() => !!this.picked()?.modes.find((m) => m.name === this.mode())?.timer);
+  /** The temperatures a device can be set to: an electric one's range, none for one heated by hand. */
   protected readonly range = computed(() => {
-    const d = this.wits.devices.value().find((x) => x.slug === this.device());
+    const d = this.picked();
+    if (!d || needsHeat(d) || d.power === 'manual') {
+      return null;
+    }
     // The API leaves a range out when the device has none.
-    return d ? { min: d.min_temp ?? 120, max: d.max_temp ?? 230 } : null;
+    return { min: d.min_temp ?? 120, max: d.max_temp ?? 230 };
   });
 
   /** A device's name, or what a session that named none is called. */
@@ -259,10 +323,36 @@ export class RecordDialog {
 
   protected pickDevice(slug: string): void {
     this.device.set(slug);
+    this.mode.set('');
+    this.timer.set(null);
     const d = this.wits.devices.value().find((x) => x.slug === slug);
     if (d?.default_temp) {
       this.temp.set(d.default_temp);
     }
+    if (!d || !needsHeat(d)) {
+      this.heater.set('');
+      this.setting.set('');
+    }
+  }
+
+  /** A mode starts the session at its usual temperature, with its timer. */
+  protected pickMode(name: string): void {
+    this.mode.set(name);
+    const m = this.picked()?.modes.find((x) => x.name === name);
+    if (m?.temp) {
+      this.temp.set(m.temp);
+    }
+    this.timer.set(m?.timer ?? null);
+  }
+
+  protected pickHeater(slug: string): void {
+    this.heater.set(slug);
+    this.setting.set('');
+  }
+
+  protected modeHint(m: DeviceMode): string {
+    const parts = [m.temp ? `${m.temp} °C` : '', m.timer ? `${m.timer} s` : '', m.signature ?? ''].filter((x) => x);
+    return parts.length ? ` · ${parts.join(', ')}` : '';
   }
 
   protected async save(): Promise<void> {
@@ -291,7 +381,11 @@ export class RecordDialog {
           product: this.product(),
           grams,
           device: this.device() || undefined,
-          temperature: this.device() ? this.temp() : undefined,
+          temperature: this.range() ? this.temp() : undefined,
+          mode: this.mode() || undefined,
+          heater: this.heater() || undefined,
+          setting: this.setting().trim() || undefined,
+          timer: this.timed() ? (this.timer() ?? undefined) : undefined,
           note: this.note() || undefined,
           date,
         });
