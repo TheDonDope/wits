@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,13 +8,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 
 import { Binding, Keys } from './data/keys';
 import { ENGINE } from './data/mode';
 import { THEMES, Theme } from './data/theme';
 import { Wits } from './data/wits';
 import { RecordDialog } from './pages/record';
+
+/** The pages a phone's dock holds; the rest are under More. */
+const DOCK = ['/', '/journal', '/jars'];
 
 /** The record dialog's tabs, in order, as a link names them. */
 const RECORD_TABS = ['grind', 'session', 'fill', 'weigh', 'avb'];
@@ -55,8 +60,30 @@ export class App {
     { path: '/costs', label: 'Costs', icon: 'euro' },
     ...(ENGINE ? [{ path: '/sync', label: 'Sync', icon: 'sync' }] : []),
   ];
+  /** A phone's dock and its More sheet: the same links, split for a thumb. */
+  protected readonly dock = this.links.filter((l) => DOCK.includes(l.path));
+  protected readonly more = this.links.filter((l) => !DOCK.includes(l.path));
+  protected readonly moreOpen = signal(false);
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+  /** The page showing, which a phone names in its top bar for want of tabs. */
+  protected readonly here = computed(() => {
+    const path = this.url().split(/[?#]/)[0];
+    return this.links.find((l) => l.path !== '/' && path.startsWith(l.path)) ?? this.links[0];
+  });
+  protected readonly inMore = computed(() => this.more.includes(this.here()));
 
   constructor() {
+    // Any way of arriving at a page — a tap, h/l, a number — puts More away.
+    effect(() => {
+      this.here();
+      this.moreOpen.set(false);
+    });
     const tick = setInterval(() => {
       this.now.set(new Date());
     }, 1000);
@@ -101,6 +128,9 @@ export class App {
       { keys: ['T'], help: 'previous theme', run: () => {
         this.theme.step(-1);
       }, quiet: true },
+      { keys: ['Escape'], help: 'close', run: () => {
+        this.moreOpen.set(false);
+      }, quiet: true },
       { keys: ['?'], help: 'all keys', run: () => {
         this.keys.showAll.update((v) => !v);
       } },
@@ -113,6 +143,7 @@ export class App {
   }
 
   protected record(tab = 0): void {
+    this.moreOpen.set(false);
     this.dialog.open(RecordDialog, {
       autoFocus: 'first-tabbable',
       panelClass: 'record-panel',

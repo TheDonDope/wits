@@ -118,10 +118,12 @@ const SCOPES = [
     }
   `,
   styles: `
-    :host { display: grid; gap: 20px; }
+    :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
     h1 .dim { font: 400 14px var(--w-font); margin-left: 8px; }
+    // A phone is narrower than the five scopes: they scroll on their own, the page stays put.
+    mat-button-toggle-group { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
     .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
     .tile { padding: 18px 22px; display: grid; gap: 4px; }
     .v { font-size: 30px; font-weight: 600; }

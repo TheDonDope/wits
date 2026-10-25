@@ -11,8 +11,9 @@
         stroke-linecap="round" stroke-dasharray="110 200" />
       <circle cx="32" cy="32" r="8" fill="url(#brand)" />
     </svg>
-    <span>wits</span>
+    <span class="word">wits</span>
   </a>
+  <h1 class="here">{{ here().label }}</h1>
   <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false" class="nav">
     @for (l of links; track l.path) {
       <a mat-tab-link [routerLink]="l.path" routerLinkActive #rla="routerLinkActive"
@@ -23,9 +24,10 @@
   </nav>
   <div class="right">
     @if (wits.overview.value(); as o) {
-      <span class="chain" [class.bad]="!o.chain_ok"
+      <span class="chain" [class.bad]="!o.chain_ok" role="status"
+        [attr.aria-label]="o.chain_ok ? 'The journal verifies' : 'The journal was changed outside wits'"
         [matTooltip]="o.chain_ok ? 'The journal’s hash chain verifies' : 'The journal was changed outside wits'">
-        <i></i>{{ o.chain_ok ? 'verified' : 'changed' }}
+        <i></i><span class="word">{{ o.chain_ok ? 'verified' : 'changed' }}</span>
       </span>
     }
     <button mat-icon-button class="theme" [matMenuTriggerFor]="themes" [matTooltip]="'Theme: ' + theme.info().label + ' (t)'"
@@ -73,6 +75,35 @@
         </div>
       }
     </div>
+  </section>
+}
+
+<!-- A phone's navigation: the pages a thumb wants most, Record between them, the rest under More. -->
+<nav class="dock" aria-label="Pages">
+  @for (l of dock; track l.path; let i = $index) {
+    @if (i === 2) {
+      <button class="rec" (click)="record()" aria-label="Record"><mat-icon>add</mat-icon></button>
+    }
+    <a [routerLink]="l.path" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: l.path === '/' }"
+      #da="routerLinkActive" [attr.aria-current]="da.isActive ? 'page' : null">
+      <mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span>
+    </a>
+  }
+  <button [class.on]="moreOpen() || inMore()" (click)="moreOpen.set(!moreOpen())" [attr.aria-expanded]="moreOpen()"
+    aria-controls="more">
+    <mat-icon>{{ moreOpen() ? 'close' : 'more_horiz' }}</mat-icon><span>More</span>
+  </button>
+</nav>
+
+@if (moreOpen()) {
+  <div class="more-backdrop" (click)="moreOpen.set(false)" aria-hidden="true"></div>
+  <section id="more" class="more glass" role="dialog" aria-label="More pages">
+    @for (l of more; track l.path) {
+      <a [routerLink]="l.path" routerLinkActive="on" #ma="routerLinkActive" [attr.aria-current]="ma.isActive ? 'page' : null"
+        (click)="moreOpen.set(false)">
+        <mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span>
+      </a>
+    }
   </section>
 }
 

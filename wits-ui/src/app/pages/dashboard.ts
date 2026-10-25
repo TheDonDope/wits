@@ -171,7 +171,7 @@ import { ProjectionChart } from '../viz/projection-chart';
     }
   `,
   styles: `
-    :host { display: grid; gap: 20px; }
+    :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .hero { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 32px; padding: 28px 32px; align-items: center; }
     @media (max-width: 760px) { .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
     h1 { font: 600 34px/1.1 var(--w-num); margin: 8px 0 18px; letter-spacing: -0.03em; }

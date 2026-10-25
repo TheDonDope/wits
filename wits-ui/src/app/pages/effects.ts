@@ -169,7 +169,7 @@ const ASKS: Record<Dimension, string> = {
     }
   `,
   styles: `
-    :host { display: grid; gap: 20px; }
+    :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .mapnote { margin: 6px 0 0; font-size: 13px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
