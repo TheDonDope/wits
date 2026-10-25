@@ -207,15 +207,6 @@ func (a *App) show(m modal) (bool, tea.Cmd) {
 	return true, m.init()
 }
 
-// entryInFront, deviceInFront and pickerInFront return the form in front when
-// it is of that kind, or nil.
-func (a *App) entryInFront() *entryForm   { f, _ := a.front.(*entryForm); return f }
-func (a *App) deviceInFront() *deviceForm { f, _ := a.front.(*deviceForm); return f }
-func (a *App) pickerInFront() *themePicker {
-	p, _ := a.front.(*themePicker)
-	return p
-}
-
 // New returns the root model for a repository.
 func New(data Data) *App {
 	a := &App{
