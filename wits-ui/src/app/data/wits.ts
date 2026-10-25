@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 
 import {
-  Avb, Costs, Cycle, Strain, Day, Device, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
+  Avb, Costs, Cycle, Strain, Day, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
 } from './models';
 
 /**
@@ -71,7 +71,8 @@ export class Wits {
     return this.write('grind', body);
   }
 
-  sesh(body: { product: string; grams: number; device?: string; temperature?: number; note?: string; date?: string }) {
+  sesh(body: { product: string; grams: number; device?: string; temperature?: number; mode?: string; heater?: string;
+    setting?: string; timer?: number; note?: string; date?: string }) {
     return this.write('sesh', body);
   }
 
@@ -132,6 +133,22 @@ export class Wits {
   }
 
   /** Records the named stashes as consumed, as one batch. */
+  /** Puts a device in the catalog. */
+  addDevice(device: DeviceFields) {
+    return this.write<{ message: string; slug: string }>('devices', device);
+  }
+
+  /** Changes what a device is; its slug, which its sessions name it by, stays. */
+  async editDevice(slug: string, device: DeviceFields): Promise<{ message: string }> {
+    try {
+      const out = await firstValueFrom(this.http.put<{ message: string }>(`/api/devices/${encodeURIComponent(slug)}`, device));
+      this.version.update((v) => v + 1);
+      return out;
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
   async flush(products: string[]): Promise<{ message: string }> {
     return this.write<{ message: string }>('flush', { products });
   }

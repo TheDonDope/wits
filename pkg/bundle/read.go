@@ -376,6 +376,30 @@ var eventAttrs = map[string]func(e *journal.Event, out *state, in state, value s
 		e.Device = t.devices[i]
 		return nil
 	},
+	"m": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
+		e.Mode = unescape(v)
+		return nil
+	},
+	"h": func(e *journal.Event, _ *state, _ state, v string, t refs) error {
+		i, err := parseNum(v)
+		if err != nil || i < 0 || int(i) >= len(t.devices) {
+			return fmt.Errorf("event refers to heater %q, which the header does not define", v)
+		}
+		e.Heater = t.devices[i]
+		return nil
+	},
+	"s": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
+		e.Setting = unescape(v)
+		return nil
+	},
+	"tm": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
+		secs, err := parseNum(v)
+		if err != nil {
+			return fmt.Errorf("unreadable timer %q", v)
+		}
+		e.Timer = int(secs)
+		return nil
+	},
 	"t": func(e *journal.Event, _ *state, _ state, v string, _ refs) error {
 		temp, err := parseNum(v)
 		if err != nil {
@@ -538,24 +562,77 @@ func readDevice(text string, line int) (string, *catalog.Device, error) {
 	d := &catalog.Device{Slug: slug, Name: slug}
 	for _, attr := range parts[2:] {
 		key, value := field(attr)
-		var err error
-		switch key {
-		case "n":
-			d.Name = unescape(value)
-		case "k":
-			d.Kind = unescape(value)
-		case "lo":
-			d.MinTemp, err = strconv.Atoi(value)
-		case "hi":
-			d.MaxTemp, err = strconv.Atoi(value)
-		case "df":
-			d.DefaultTemp, err = strconv.Atoi(value)
-		default:
-			return "", nil, errorf(line, "unknown device attribute %q", key)
-		}
-		if err != nil {
-			return "", nil, errorf(line, "unreadable device attribute %q: %v", key, err)
+		if err := deviceAttr(d, key, value); err != nil {
+			return "", nil, errorf(line, "%v", err)
 		}
 	}
 	return slug, d, nil
+}
+
+// deviceText is where each text attribute of a device line goes.
+var deviceText = map[string]func(*catalog.Device) *string{
+	"n": func(d *catalog.Device) *string { return &d.Name }, "k": func(d *catalog.Device) *string { return &d.Kind },
+	"c": func(d *catalog.Device) *string { return &d.Category }, "mk": func(d *catalog.Device) *string { return &d.Maker },
+	"md": func(d *catalog.Device) *string { return &d.Model }, "co": func(d *catalog.Device) *string { return &d.Country },
+	"pw": func(d *catalog.Device) *string { return &d.Power }, "sg": func(d *catalog.Device) *string { return &d.Signature },
+	"us": func(d *catalog.Device) *string { return &d.Use }, "sh": func(d *catalog.Device) *string { return &d.Shop },
+	"bo": func(d *catalog.Device) *string { return &d.BoughtOn }, "ln": func(d *catalog.Device) *string { return &d.Link },
+	"nt": func(d *catalog.Device) *string { return &d.Notes },
+}
+
+// readModes reads a device's modes: name@signature@temp@timer, the last ones optional.
+func readModes(text string) ([]catalog.Mode, error) {
+	var out []catalog.Mode
+	for _, part := range strings.Split(text, "|") {
+		fields := append(strings.Split(part, "@"), "", "", "")
+		m := catalog.Mode{Name: fields[0], Signature: fields[1]}
+		for _, n := range []struct {
+			text string
+			into *int
+		}{{fields[2], &m.Temp}, {fields[3], &m.Timer}} {
+			if n.text == "" {
+				continue
+			}
+			v, err := strconv.Atoi(n.text)
+			if err != nil {
+				return nil, fmt.Errorf("unreadable mode %q", part)
+			}
+			*n.into = v
+		}
+		out = append(out, m)
+	}
+	return out, nil
+}
+
+// deviceAttr reads one attribute of a device line into the device.
+func deviceAttr(d *catalog.Device, key, value string) error {
+	if at, ok := deviceText[key]; ok {
+		*at(d) = unescape(value)
+		return nil
+	}
+	var err error
+	switch key {
+	case "lo":
+		d.MinTemp, err = strconv.Atoi(value)
+	case "hi":
+		d.MaxTemp, err = strconv.Atoi(value)
+	case "df":
+		d.DefaultTemp, err = strconv.Atoi(value)
+	case "pr":
+		d.Cents, err = strconv.ParseInt(value, 10, 64)
+	case "ao":
+		d.AutoOff, err = strconv.Atoi(value)
+	case "mo":
+		d.Modes, err = readModes(unescape(value))
+	case "w":
+		d.Water = value == "1"
+	case "rt":
+		d.Retired = value == "1"
+	default:
+		return fmt.Errorf("unknown device attribute %q", key)
+	}
+	if err != nil {
+		return fmt.Errorf("unreadable device attribute %q: %v", key, err)
+	}
+	return nil
 }

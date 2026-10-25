@@ -75,6 +75,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/jars", s.read(jarsOf))
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
+	mux.HandleFunc("POST /api/devices", s.addDevice)
+	mux.HandleFunc("PUT /api/devices/{slug}", s.editDevice)
 	mux.HandleFunc("GET /api/days", s.read(daysOf))
 	mux.HandleFunc("GET /api/effects", s.read(effectsOf))
 	mux.HandleFunc("POST /api/rate", s.rate)
@@ -871,6 +873,10 @@ type entry struct {
 	To          string    `json:"to"`
 	Device      string    `json:"device,omitempty"`
 	Temperature int       `json:"temperature,omitempty"`
+	Mode        string    `json:"mode,omitempty"`
+	Heater      string    `json:"heater,omitempty"`
+	Setting     string    `json:"setting,omitempty"`
+	Timer       int       `json:"timer,omitempty"`
 	Note        string    `json:"note,omitempty"`
 	Reverts     string    `json:"reverts,omitempty"`
 	Corrected   bool      `json:"corrected,omitempty"`
@@ -881,7 +887,7 @@ func entryOf(e journal.Event, ws *workspace.Workspace, undone map[string]bool) e
 		Hash: e.Hash, Type: string(e.Type), OccurredAt: e.OccurredAt, RecordedAt: e.RecordedAt,
 		Product: e.Product, ProductName: ws.ProductName(e.Product), Grams: e.Grams,
 		From: string(e.From), To: string(e.To), Device: e.Device, Temperature: e.Temperature,
-		Note: e.Note, Reverts: e.Reverts, Corrected: undone[e.Hash] && e.Reverts == "",
+		Mode: e.Mode, Heater: e.Heater, Setting: e.Setting, Timer: e.Timer, Note: e.Note, Reverts: e.Reverts, Corrected: undone[e.Hash] && e.Reverts == "",
 	}
 }
 
@@ -995,34 +1001,6 @@ func cyclesOf(ws *workspace.Workspace) any {
 	return out
 }
 
-// device is one vaporizer and what has gone through it.
-type device struct {
-	Slug        string  `json:"slug"`
-	Name        string  `json:"name"`
-	Kind        string  `json:"kind,omitempty"`
-	MinTemp     int     `json:"min_temp,omitempty"`
-	MaxTemp     int     `json:"max_temp,omitempty"`
-	DefaultTemp int     `json:"default_temp,omitempty"`
-	Sessions    int     `json:"sessions"`
-	Grams       float64 `json:"grams"`
-}
-
-func devicesOf(ws *workspace.Workspace) any {
-	sessions, grams := map[string]int{}, map[string]journal.Centigrams{}
-	for _, e := range ws.State.Standing {
-		if e.Type == journal.Sesh && e.Device != "" {
-			sessions[e.Device]++
-			grams[e.Device] += journal.CG(e.Grams)
-		}
-	}
-	out := []device{}
-	for _, d := range ws.Devices.Devices {
-		out = append(out, device{Slug: d.Slug, Name: d.Name, Kind: d.Kind, MinTemp: d.MinTemp,
-			MaxTemp: d.MaxTemp, DefaultTemp: d.DefaultTemp, Sessions: sessions[d.Slug], Grams: grams[d.Slug].Grams()})
-	}
-	return out
-}
-
 // decode reads a request body into v, refusing fields it does not know.
 func decode(r *http.Request, v any) error {
 	dec := json.NewDecoder(r.Body)
@@ -1074,6 +1052,10 @@ type seshRequest struct {
 	Grams       float64 `json:"grams"`
 	Device      string  `json:"device"`
 	Temperature int     `json:"temperature"`
+	Mode        string  `json:"mode"`
+	Heater      string  `json:"heater"`
+	Setting     string  `json:"setting"`
+	Timer       int     `json:"timer"`
 	Note        string  `json:"note"`
 	Date        string  `json:"date"`
 }
@@ -1087,7 +1069,8 @@ func sesh(ws *workspace.Workspace, r *http.Request) (journal.Event, string, erro
 	if err != nil {
 		return journal.Event{}, "", err
 	}
-	e, err := ws.Recorder.Session(req.Product, req.Grams, at, req.Device, req.Temperature, strings.TrimSpace(req.Note))
+	e, err := ws.Recorder.SessionWith(record.Sesh{Product: req.Product, Grams: req.Grams, At: at, Device: req.Device,
+		Temp: req.Temperature, Mode: req.Mode, Heater: req.Heater, Setting: req.Setting, Timer: req.Timer, Note: strings.TrimSpace(req.Note)})
 	if err != nil {
 		return e, "", err
 	}

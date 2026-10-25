@@ -109,10 +109,18 @@ type Event struct {
 	To          Account   `json:"to"`
 	Device      string    `json:"device,omitempty"`
 	Temperature int       `json:"temperature,omitempty"`
-	Note        string    `json:"note,omitempty"`
-	Reverts     string    `json:"reverts,omitempty"`
-	Prev        string    `json:"prev"`
-	Hash        string    `json:"hash"`
+	// A session's mode on its device (a boost), the device that heated it
+	// (an induction heater, a torch) and that one's setting (a wattage). Left
+	// out when empty, so an entry written before them hashes as it did.
+	Mode    string `json:"mode,omitempty"`
+	Heater  string `json:"heater,omitempty"`
+	Setting string `json:"setting,omitempty"`
+	// Timer is a session's timer in seconds, on a device that runs one.
+	Timer   int    `json:"timer,omitempty"`
+	Note    string `json:"note,omitempty"`
+	Reverts string `json:"reverts,omitempty"`
+	Prev    string `json:"prev"`
+	Hash    string `json:"hash"`
 }
 
 // Validate reports whether the event is well formed enough to be appended.

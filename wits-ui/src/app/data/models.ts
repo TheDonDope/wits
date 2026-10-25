@@ -63,6 +63,12 @@ export interface Entry {
   to: string;
   device?: string;
   temperature?: number;
+  /** A session's mode on its device, what heated it, and that one's setting. */
+  mode?: string;
+  heater?: string;
+  setting?: string;
+  /** A session's timer, seconds. */
+  timer?: number;
   note?: string;
   reverts?: string;
   corrected?: boolean;
@@ -110,15 +116,54 @@ export interface Cycle {
   products: string[];
 }
 
-export interface Device {
-  slug: string;
+/** What a device is, as it is added or changed. */
+export interface DeviceFields {
   name: string;
   kind?: string;
   min_temp?: number;
   max_temp?: number;
   default_temp?: number;
+  category: DeviceCategory;
+  maker?: string;
+  model?: string;
+  country?: string;
+  power?: '' | 'electric' | 'manual';
+  signature?: '' | 'convection' | 'conduction' | 'hybrid';
+  use?: '' | 'session' | 'on-demand' | 'both';
+  /** Glass that holds water: a bubbler, a rig with water. */
+  water?: boolean;
+  /** What it is set to when used, and asked which of: a boost, a session mode, an induction heater's wattage. */
+  modes: DeviceMode[];
+  /** How long, in seconds, it stays on unused before it turns itself off. */
+  auto_off?: number;
+  cents?: number;
+  shop?: string;
+  bought_on?: string;
+  link?: string;
+  notes?: string;
+  retired?: boolean;
+}
+
+export type DeviceCategory = 'vaporizer' | 'induction-heater' | 'torch' | 'grinder' | 'glass';
+
+/** One way a device is run; a mode may heat its own way (on demand by convection, a session hybrid). */
+export interface DeviceMode {
+  name: string;
+  signature?: '' | 'convection' | 'conduction' | 'hybrid';
+  /** The temperature it is usually run at, °C. */
+  temp?: number;
+  /** A session timer, seconds, for a mode that runs a session for a set time. */
+  timer?: number;
+}
+
+/** A device, and what has been done with it. */
+export interface Device extends DeviceFields {
+  slug: string;
   sessions: number;
   grams: number;
+  /** Sessions it heated: an induction heater's, a torch's. */
+  heated: number;
+  last_used?: string;
 }
 
 export interface Day {

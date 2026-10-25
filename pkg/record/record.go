@@ -150,44 +150,10 @@ func (r *Recorder) Grind(ref string, grams float64, at time.Time) (journal.Event
 	})
 }
 
-// Session records a session drawing on a product's stash.
+// Session records a session drawing on a product's stash: SessionWith, with
+// no mode, heater or setting.
 func (r *Recorder) Session(ref string, grams float64, at time.Time, device string, temp int, note string) (journal.Event, error) {
-	if err := notAhead(journal.Event{Type: journal.Sesh, OccurredAt: at}, time.Now()); err != nil {
-		return journal.Event{}, err
-	}
-	product, err := r.products.Find(ref)
-	if err != nil {
-		return journal.Event{}, err
-	}
-
-	var slug string
-	if device != "" {
-		d, err := r.devices.Find(device)
-		if err != nil {
-			return journal.Event{}, err
-		}
-		slug = d.Slug
-		if temp == 0 {
-			temp = d.DefaultTemp
-		}
-		if d.MaxTemp > 0 && temp > d.MaxTemp {
-			return journal.Event{}, fmt.Errorf("%s only goes up to %d°C", d.Name, d.MaxTemp)
-		}
-	}
-	return r.one(func() (journal.Event, error) {
-		if err := r.check(product.Slug, grams, journal.Stash); err != nil {
-			return journal.Event{}, err
-		}
-		return journal.Event{
-			Type:        journal.Sesh,
-			Product:     product.Slug,
-			Grams:       grams,
-			OccurredAt:  at,
-			Device:      slug,
-			Temperature: temp,
-			Note:        note,
-		}, nil
-	})
+	return r.SessionWith(Sesh{Product: ref, Grams: grams, At: at, Device: device, Temp: temp, Note: note})
 }
 
 // Available returns how many grams of a product sit in an account.

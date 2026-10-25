@@ -641,7 +641,7 @@ the tab bar, the dock, the keys and the phone's top bar):
 - **Dashboard.**
 - **I forgot to** (`Forgot`), what the ledger can show was left undone,
   counted on the tab (`Todo`).
-- **Shelf**: Jars and Journal.
+- **Shelf**: Jars, Journal and Devices.
 - **Insights**: Analysis, Effects, History and Costs.
 
 A tab that holds several pages is one component (`Section`) with its pages as
@@ -703,6 +703,73 @@ tag.
 On this machine, the first build took 16 seconds. Served by the AppImage, the
 imported workbook shows its dashboard (fill 30, day 58, 36.73 g left) and its
 costs (10,156 € priced from the invoices). The footer names `wits-ui v0.89.0`.
+
+### Devices — Shelf → Devices
+
+A device was a vaporizer with a temperature range. It is now any of the
+things a session is taken with (`catalog.Device`):
+
+- a **category**: vaporizer, induction heater, torch, grinder or glass;
+- what it is: maker, model and the maker's country;
+- electric or manual;
+- its way of heating: convection, conduction or hybrid;
+- how it's used: session, on demand or both;
+- for glass, whether it holds water;
+- its **modes**, how long it stays on unused (`AutoOff`), and what it cost,
+  where and when it was bought, a link, notes, and whether it is retired.
+
+A mode (`catalog.Mode`) has a name and may heat its own way, have a usual
+temperature, and run a session timer. The Limelight Herb Frolic's On demand is
+convection at 165 °C, and its Session hybrid at 185 °C for 420 s. An induction
+heater's modes are its settings. Every field is left out when empty, so a
+catalog written before reads and writes as it did, and a device without a
+category is a vaporizer.
+
+A session records more (`record.Sesh`, `SessionWith`): the device's mode, the
+device that heated it, that heater's setting, and its timer, all `omitempty`
+on the entry, so the entries before them hash as they did. The recorder
+refuses:
+
+- a device a session is not had with (a grinder, a heater);
+- a mode or a setting the device or the heater does not list, when it lists
+  any;
+- a heater that is not an induction heater or a torch;
+- a heater, or a setting, with no device.
+
+A mode's usual temperature and timer fill in what a session leaves out, before
+the device's default temperature. `wits sesh` takes `--mode`, `--timer`,
+`--heater` and `--setting`. The terminal's session form offers only the
+vaporizers and glass in use.
+
+Bundle format 8 carries all of it:
+
+- a device line's new attributes, the modes as
+  `name@signature@temp@timer` joined by `|`;
+- a session's `m=`, `h=` (the heater by its place in the header, which now
+  lists heaters too), `s=` and `tm=`.
+
+A remote compares devices by value (`sameDevice`), since a list of modes
+cannot be compared with `!=`.
+
+`/api/devices` gives each device whole, with what it has done: its sessions
+and grams, the sessions it heated, and when it was last used. `POST
+/api/devices` adds one and `PUT /api/devices/{slug}` changes one, through
+`repo.UpdateDevices`, checked by `Device.Check`. **Shelf → Devices** groups
+them by category, each card with what the device is, cost and has done,
+including its price per session so far, and opens the form to change it.
+**Add a device** starts from a preset (`data/devices.ts`) researched for the
+maintainer's devices. Each preset fills in only what could be found, and the
+rest stays empty: nothing was found on the Mad Heaters Tempest, the Simrell
+Hydro or Old Mate Designs' country. The Record dialog's session asks for the
+mode, then the timer when the mode runs one, then for a manual vaporizer or
+glass what heated it and at which setting. It shows a temperature only for a
+device with a range.
+
+In the browser, on the imported workbook, the Frolic was added from its preset
+through the form. A session in its Session mode came out at 185 °C with a 420 s
+timer, and a Tornado session heated with the YLL 3.0 at 45 W. The journal
+holds both, `wits fsck` verifies, and the Journal reads "Vestratto Tornado ·
+heated with YLL 3.0 at 45 W". Every page measures 375 px on the phone.
 
 ### Themes in the browser — the palette, `t`
 

@@ -16,6 +16,7 @@ export const TABS: readonly Tab[] = [
   { path: '/shelf', label: 'Shelf', icon: 'inventory_2', pages: [
     { path: 'jars', label: 'Jars', icon: 'inventory_2' },
     { path: 'journal', label: 'Journal', icon: 'receipt_long' },
+    { path: 'devices', label: 'Devices', icon: 'air' },
   ] },
   { path: '/insights', label: 'Insights', icon: 'insights', pages: [
     { path: 'analysis', label: 'Analysis', icon: 'monitoring' },

@@ -17,6 +17,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'jars' },
       { path: 'jars', loadComponent: () => import('./pages/jars').then((m) => m.Jars), title: 'wits · jars' },
       { path: 'journal', loadComponent: () => import('./pages/journal').then((m) => m.Journal), title: 'wits · journal' },
+      { path: 'devices', loadComponent: () => import('./pages/devices').then((m) => m.Devices), title: 'wits · devices' },
     ],
   },
   {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -134,6 +135,19 @@ func writeRefs(out io.Writer, e journal.Event, devices, notes map[string]int) {
 	if e.Temperature != 0 {
 		fmt.Fprintf(out, " t=%s", num(int64(e.Temperature)))
 	}
+	// Format 8: a session's mode, the device that heated it, and its setting.
+	if e.Mode != "" {
+		fmt.Fprintf(out, " m=%s", escape(e.Mode))
+	}
+	if e.Heater != "" {
+		fmt.Fprintf(out, " h=%s", num(int64(devices[e.Heater])))
+	}
+	if e.Setting != "" {
+		fmt.Fprintf(out, " s=%s", escape(e.Setting))
+	}
+	if e.Timer != 0 {
+		fmt.Fprintf(out, " tm=%s", num(int64(e.Timer)))
+	}
 	if e.Note != "" {
 		fmt.Fprintf(out, " n=%s", num(int64(notes[e.Note])))
 	}
@@ -181,22 +195,54 @@ func writeProduct(out io.Writer, p *catalog.Product) {
 	}
 }
 
-// writeDevice appends a device's details.
+// modes writes a device's modes, each its name, way of heating, temperature
+// and timer apart by @, the empty ones at the end left off:
+// "On demand@convection@165|Session@hybrid@185@420".
+func modes(ms []catalog.Mode) string {
+	parts := make([]string, len(ms))
+	for i, m := range ms {
+		fields := []string{m.Name, m.Signature, "", ""}
+		if m.Temp != 0 {
+			fields[2] = strconv.Itoa(m.Temp)
+		}
+		if m.Timer != 0 {
+			fields[3] = strconv.Itoa(m.Timer)
+		}
+		for len(fields) > 1 && fields[len(fields)-1] == "" {
+			fields = fields[:len(fields)-1]
+		}
+		parts[i] = strings.Join(fields, "@")
+	}
+	return strings.Join(parts, "|")
+}
+
+// writeDevice appends a device's details. Format 8 added everything after
+// the temperatures; modes are joined by |, a mode's fields by @.
 func writeDevice(out io.Writer, d *catalog.Device) {
-	if d.Name != "" {
-		fmt.Fprintf(out, " n=%s", escape(d.Name))
+	text := []struct{ key, value string }{
+		{"n", d.Name}, {"k", d.Kind}, {"c", d.Category}, {"mk", d.Maker}, {"md", d.Model},
+		{"co", d.Country}, {"pw", d.Power}, {"sg", d.Signature}, {"us", d.Use},
+		{"mo", modes(d.Modes)}, {"sh", d.Shop}, {"bo", d.BoughtOn}, {"ln", d.Link}, {"nt", d.Notes},
 	}
-	if d.Kind != "" {
-		fmt.Fprintf(out, " k=%s", escape(d.Kind))
+	for _, t := range text {
+		if t.value != "" {
+			fmt.Fprintf(out, " %s=%s", t.key, escape(t.value))
+		}
 	}
-	if d.MinTemp != 0 {
-		fmt.Fprintf(out, " lo=%d", d.MinTemp)
+	numbers := []struct {
+		key   string
+		value int64
+	}{{"lo", int64(d.MinTemp)}, {"hi", int64(d.MaxTemp)}, {"df", int64(d.DefaultTemp)}, {"pr", d.Cents}, {"ao", int64(d.AutoOff)}}
+	for _, n := range numbers {
+		if n.value != 0 {
+			fmt.Fprintf(out, " %s=%d", n.key, n.value)
+		}
 	}
-	if d.MaxTemp != 0 {
-		fmt.Fprintf(out, " hi=%d", d.MaxTemp)
+	if d.Water {
+		fmt.Fprint(out, " w=1")
 	}
-	if d.DefaultTemp != 0 {
-		fmt.Fprintf(out, " df=%d", d.DefaultTemp)
+	if d.Retired {
+		fmt.Fprint(out, " rt=1")
 	}
 }
 
@@ -262,6 +308,9 @@ func deviceIndex(events []journal.Event, d *catalog.Devices) deviceIdx {
 	for _, e := range events {
 		if e.Device != "" {
 			counts[e.Device]++
+		}
+		if e.Heater != "" {
+			counts[e.Heater]++
 		}
 	}
 	if d != nil {

@@ -78,7 +78,7 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
             <div class="amount"><i [style.width.%]="share(e)" [style.background]="KINDS[e.type].tone"></i></div>
             <span class="what">
               {{ e.product_name }}
-              @if (e.device) { <span class="dim"> · {{ e.device }}{{ e.temperature ? ' · ' + e.temperature + '°C' : '' }}</span> }
+              @if (e.device) { <span class="dim"> · {{ takenWith(e) }}</span> }
               @if (e.note) { <span class="dim"> · {{ e.note }}</span> }
             </span>
             <span class="hash dim" [matTooltip]="e.hash">{{ e.hash.slice(0, 7) }}</span>
@@ -124,6 +124,19 @@ type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry 
   `,
 })
 export class Journal {
+  /** What a session was taken with: the device, its mode, temperature and timer, and what heated it at which setting. */
+  protected takenWith(e: Entry): string {
+    const name = (slug: string) => this.wits.devices.value().find((d) => d.slug === slug)?.name ?? slug;
+    const parts = [
+      name(e.device ?? ''),
+      e.mode ?? '',
+      e.temperature ? `${e.temperature} °C` : '',
+      e.timer ? `${e.timer} s` : '',
+      e.heater ? `heated with ${name(e.heater)}${e.setting ? ' at ' + e.setting : ''}` : '',
+    ];
+    return parts.filter((p) => p).join(' · ');
+  }
+
   protected readonly wits = inject(Wits);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);

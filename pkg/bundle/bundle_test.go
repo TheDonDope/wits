@@ -385,6 +385,53 @@ func TestAPriceKeepsItsPharmacyAndItsNoneToBeHad(t *testing.T) {
 	assert.Equal(t, want[1].Hash, restored[1].Hash, "Restored, each hashes as it did")
 }
 
+func TestADeviceAndASessionsModeTravel(t *testing.T) {
+	tornado := &catalog.Device{Slug: "tornado", Name: "Vestratto Tornado", Category: catalog.Vaporizer, Maker: "Vestratto",
+		Model: "Tornado", Power: catalog.Manual, Signature: catalog.Convection, Use: catalog.SessionUse, Cents: 20800,
+		Shop: "vestratto.com", BoughtOn: "2026-03-01", Link: "https://example.org/tornado", Notes: "full soak, 3250 J"}
+	yll := &catalog.Device{Slug: "yll-3", Name: "YLL 3.0", Category: catalog.Induction, Power: catalog.Electric,
+		Modes: []catalog.Mode{{Name: "30 W"}, {Name: "45 W, gentle"}, {Name: "60 W"}}, Retired: true}
+	frolic := &catalog.Device{Slug: "frolic", Name: "Limelight Herb Frolic", Power: catalog.Electric, Use: catalog.BothUses,
+		AutoOff: 300, Modes: []catalog.Mode{{Name: "On demand", Signature: catalog.Convection, Temp: 165},
+			{Name: "Session", Signature: catalog.Hybrid, Temp: 185, Timer: 420}}}
+	pipe := &catalog.Device{Slug: "bubbler", Name: "Bubbler", Category: catalog.Glass, Water: true}
+	devices := &catalog.Devices{Devices: []*catalog.Device{tornado, yll, pipe, frolic}}
+	at := time.Date(2026, 10, 1, 20, 0, 0, 0, berlin)
+	events := []journal.Event{
+		{Type: journal.Purchase, OccurredAt: at, RecordedAt: at, Product: "w", Grams: 10, From: journal.External, To: journal.Storage},
+		{Type: journal.Grind, OccurredAt: at, RecordedAt: at, Product: "w", Grams: 1, From: journal.Storage, To: journal.Stash},
+		{Type: journal.Sesh, OccurredAt: at, RecordedAt: at, Product: "w", Grams: 0.1, From: journal.Stash, To: journal.Consumed,
+			Device: "tornado", Mode: "full soak", Heater: "yll-3", Setting: "45 W, gentle"},
+		{Type: journal.Sesh, OccurredAt: at, RecordedAt: at, Product: "w", Grams: 0.2, From: journal.Stash, To: journal.Consumed,
+			Device: "frolic", Mode: "Session", Temperature: 185, Timer: 420},
+	}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Devices: devices, Events: events}))
+	assert.True(t, strings.HasPrefix(buf.String(), "wits-bundle 8\n"))
+
+	got, err := Read(&buf)
+
+	require.NoError(t, err)
+	assert.Equal(t, tornado, findDev(got.Devices, "tornado"), "Every field a device has travels")
+	assert.Equal(t, yll, findDev(got.Devices, "yll-3"), "a list of modes with a comma in one, and a device retired")
+	assert.True(t, findDev(got.Devices, "bubbler").Water)
+	assert.Equal(t, frolic, findDev(got.Devices, "frolic"), "A mode keeps the way it heats")
+	s := got.Events[2]
+	assert.Equal(t, "full soak", s.Mode)
+	assert.Equal(t, "yll-3", s.Heater, "The device that heated it, by its place in the header")
+	assert.Equal(t, "45 W, gentle", s.Setting)
+	assert.Equal(t, 420, got.Events[3].Timer, "A session's timer travels")
+}
+
+func findDev(d *catalog.Devices, slug string) *catalog.Device {
+	for _, x := range d.Devices {
+		if x.Slug == slug {
+			return x
+		}
+	}
+	return nil
+}
+
 func TestSealsTravelInTheBundle(t *testing.T) {
 	seals := []seal.File{
 		{Name: "2026-10-24-f81bbd2cc893", Text: "wits-seal 1\nhead f81b\n", OTS: []byte{0x00, 'O', 0xff, 0x01}},
