@@ -2,9 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v0.70.0"></a>
+## [v0.70.0] - 2026-10-25
+### Fix
+- **ledger:** an undone entry counts in no total, wherever it is read
+
+
 <a name="v0.69.0"></a>
 ## [v0.69.0] - 2026-10-25
 ### Docs
+- update changelog for v0.69.0
 - **diary:** trust, a map, a film, and a cache that was not
 
 ### Feat
@@ -895,7 +902,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.69.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.70.0...HEAD
+[v0.70.0]: https://github.com/TheDonDope/wits/compare/v0.69.0...v0.70.0
 [v0.69.0]: https://github.com/TheDonDope/wits/compare/v0.68.0...v0.69.0
 [v0.68.0]: https://github.com/TheDonDope/wits/compare/v0.67.0...v0.68.0
 [v0.67.0]: https://github.com/TheDonDope/wits/compare/v0.66.0...v0.67.0
