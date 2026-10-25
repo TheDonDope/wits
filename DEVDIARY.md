@@ -2,6 +2,30 @@
 
 ## 2026-10-25
 
+### The label, the undo, and a house in order
+
+Next came one of the roadmap's later delights: a photograph of the pharmacy label fills the fill. Tesseract reads it in the page, compiled to WebAssembly, its engine and its German served by wits itself, so a photograph of a prescription goes nowhere, and `catalog.ReadLabel` makes a product line and grams of the text, passing over the expiry date, the batch number and the pharmacy's house number. Every one of the workbook's 53 names, copied off labels to begin with, reads back to its own product, as written and in capitals. A rendered label read in 1.0 s in headless Chromium, every request, the worker's included, to the machine serving the page. Then a review of the 9,600 lines landed since the last one, every finding reproduced before anything was fixed. The worst: an undone grind still counted in the rate, the shelf and the refill date, everywhere but the export and the report. Buying 20 g, grinding 2 g on two days and undoing a 5 g grind said order by 26 October; it says 30 October now, settled once in the fold over the whole journal. The seal key could be made twice by two first uses at once, which in 7 of 20 rounds left a carry statement signed by a key that no longer existed, and restoring 1500 ratings took 21.2 s, a record and a flush at a time; it takes 0.10 s now that the effect log and the price log are one chained log, put back in one write. Last, the files: every command in the one named for it and the report's four concerns apart, moved by a tool rather than retyped, 221 of 225 declarations byte for byte. Shipped as v0.69.0 through v0.74.0.
+
+- `4f18a95` test(tui): today's fixture is dated no later than now
+- `d455bf9` feat(label): photograph the pharmacy label, and the fill fills itself
+- `a2bfd5d` docs: update changelog for v0.69.0
+- `0943992` fix(ledger): an undone entry counts in no total, wherever it is read
+- `d34110d` docs: update changelog for v0.70.0
+- `ee56c86` fix(seal): one key, however many ask for it first
+- `ba296e9` docs: update changelog for v0.71.0
+- `e511ec4` refactor(chain): one chained log for ratings and prices, put back in one write
+- `21c168f` test(chain): date the record a test compares, so the zone cannot differ
+- `66a5050` docs: update changelog for v0.72.0
+- `e35be8d` docs: a new file needs its own package comment, not to be avoided
+- `002aed8` refactor: a file for each command, and the report's four concerns apart
+- `1df94cc` refactor(rate): the last session is the fold's, not a fourth undo map
+- `672c346` fix(commands): put each new file's package comment where revive reads it
+- `d30d40d` build(preflight): ask revive about a new file's package comment
+- `d408fc3` docs: update changelog for v0.73.0
+- `311e936` chore: what the review left behind, cleared
+- `79c9c2c` chore(wits-ui): its go.mod names no Go version
+- `636570e` docs: update changelog for v0.74.0
+
 ### Trust, a map, a film, and a cache that was not
 
 Phase 4 came first: making the record checkable by someone who trusts neither the patient nor wits. `wits seal` signs the journal's head with an Ed25519 key of one's own. The head's hash covers every entry before it, so six lines of text fix the whole journal. `--timestamp` sends the seal's SHA-256, and nothing else, to the four public OpenTimestamps calendars, the one network call wits makes and only when asked; the proof format is written in-tree, and a real proof writes back byte for byte. Codacy refused the first push for a SHA-1 operation in it, and the calendars only use SHA-256, so it went. `wits carry` then signs what is held against the fills that dispensed it, as a QR code that opens a plain verify page checking the signature on the checker's own phone, the statement riding after the `#` where no server sees it. The headless Chromium here is 128, which has no Ed25519 in WebCrypto, so the page carries its own RFC 8032 as well; both paths accepted the workbook's statement and refused it with one gram changed. Deflating the link took the code from 117 modules to 89.
@@ -21,6 +45,8 @@ From "Later" came the map of the strains and the replay as a film. The workbook 
 - `5d7a4b1` docs: update changelog for v0.68.0
 
 ### Notes for 2026-10-25
+
+The label reader has only read labels rendered here, never a photograph of a real one; the next fill is its first test. The TUI's fixture tests failed every morning before eleven, on main too, because they dated an entry ten o'clock UTC today, which the recorder refuses until then. The rule that a new Go file gets flagged by Codacy turned out wrong: a file with a package comment of its own passes. Fourteen files then failed on the form, a comment a blank line above the package clause being no package comment at all, so preflight now asks revive itself, which `./doctor.sh install` fetches. Codacy read `go 1.26` in `wits-ui/go.mod` as a standard library in use and listed 47 advisories, so that file names no Go version. A force-push to fix a test on a branch was refused by the permission check, which is why `test(chain)` is a commit of its own. Left open: the Record dialog's tab body is 4 px wider than the dialog, on main before any of this, and `journal.Marshal` stays exported because other packages' tests use it.
 
 Installing the reference OpenTimestamps JavaScript library to parse a proof independently was refused by the permission check, so the outside check left is `ots verify` on a proof once it is in a block (`wits seal --upgrade` fetches it, a few hours on). The QR code has not been read by a real phone's camera yet. A phone makes a sealing key of its own, so its fingerprint differs from the computer's until `.wits/seal.key` is brought over, and there is no way in the app to do that yet. Twice, a `pkill -f` matching its own command line killed the shell running it; a `timeout` around the server is the way here. A bulk find-and-replace in the API also rewrote the read inside the new snapshot function into a call to itself, which held its own lock and hung the race tests until it was stopped.
 
