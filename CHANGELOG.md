@@ -2,9 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.87.0"></a>
+## [v0.87.0] - 2026-10-25
+### Docs
+- a list stands off the paragraph before it
+
+### Feat
+- **wits-ui:** four tabs, and one of them for everything forgotten
+
+
 <a name="v0.86.0"></a>
 ## [v0.86.0] - 2026-10-25
 ### Docs
+- update changelog for v0.86.0
 - **diary:** forty-one coats, and three strains to a receipt
 
 ### Feat
@@ -1078,7 +1088,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.86.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.87.0...HEAD
+[v0.87.0]: https://github.com/TheDonDope/wits/compare/v0.86.0...v0.87.0
 [v0.86.0]: https://github.com/TheDonDope/wits/compare/v0.85.0...v0.86.0
 [v0.85.0]: https://github.com/TheDonDope/wits/compare/v0.84.0...v0.85.0
 [v0.84.0]: https://github.com/TheDonDope/wits/compare/v0.83.0...v0.84.0
