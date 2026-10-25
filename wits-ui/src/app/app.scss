@@ -23,10 +23,29 @@
 }
 
 .here,
-.dock,
-.more,
-.more-backdrop {
+.dock {
   display: none;
+}
+
+// How many things wait under "I forgot to", on its tab and in the dock.
+.badge {
+  min-width: 18px;
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--w-warn);
+  color: var(--w-on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+// The build and the theme, at the foot of the header's menu: the phone has no footer.
+.build {
+  margin: 4px 16px 8px;
+  color: var(--w-dim);
+  font: 400 11px var(--w-num);
 }
 
 .brand {
@@ -230,44 +249,23 @@ kbd {
   }
 }
 
-// The tabs want the width — eight of them, labelled, take 963 px. Below
-// 1500 px the clock goes, and the chain says itself by its dot alone, its
-// words in the tooltip; below 1260 the tabs go by their icons. Measured: the
-// bar pages at no width from 660 px up.
-@media (width <= 1500px) {
+// Four tabs take little width, but the bar holds more than tabs: below
+// 1100 px the clock goes, and the chain says itself by its dot, its words in
+// the tooltip; below 780 the tabs go by their icons, which name themselves to
+// a reader. Measured every 20 px from 641 to 1920: the bar pages at none.
+@media (width <= 1100px) {
   .clock,
   .chain .word {
     display: none;
   }
 }
 
-// The tabs by their icons, which name themselves to a reader.
-@media (width <= 1260px) {
-  .label {
+@media (width <= 780px) {
+  .nav .label {
     display: none;
   }
 
   .nav mat-icon {
-    margin-right: 0;
-  }
-}
-
-// The phone's build has a ninth tab, Sync, 117 px more: the clock goes 100 px
-// and the labels 120 px sooner there. Measured every 10 px from 641 to 1920:
-// the bar pages at none.
-@media (width <= 1600px) {
-  :host(.ninth) .clock,
-  :host(.ninth) .chain .word {
-    display: none;
-  }
-}
-
-@media (width <= 1380px) {
-  :host(.ninth) .label {
-    display: none;
-  }
-
-  :host(.ninth) .nav mat-icon {
     margin-right: 0;
   }
 }
@@ -280,7 +278,6 @@ kbd {
 }
 
 @media (width <= 900px) {
-  .label,
   .clock {
     display: none;
   }
@@ -302,9 +299,9 @@ kbd {
 }
 
 // A phone, an iPhone 11 Pro upright (375 px) the narrowest it is laid out
-// for: no tabs to page through, but a dock under the thumb — the pages used
-// most, Record raised between them, the rest under More — and the bars clear
-// of the notch and the home indicator.
+// for: no tabs to page through, but a dock under the thumb — the four tabs,
+// Record raised between them — and the bars clear of the notch and the home
+// indicator.
 @include bp.phone {
   :host {
     --w-dock: 64px;
@@ -389,6 +386,23 @@ kbd {
       transition: background-color 0.2s;
     }
 
+    .icon {
+      position: relative;
+      display: grid;
+      justify-items: center;
+
+      .badge {
+        position: absolute;
+        top: -4px;
+        left: calc(50% + 6px);
+        margin: 0;
+        min-width: 16px;
+        padding: 0 4px;
+        font-size: 10px;
+        line-height: 16px;
+      }
+    }
+
     .on {
       color: var(--mat-sys-on-surface);
 
@@ -412,49 +426,6 @@ kbd {
         width: 28px;
         font-size: 28px;
       }
-    }
-  }
-
-  .more-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 13;
-    display: block;
-    background: color-mix(in srgb, var(--w-ink) 55%, transparent);
-    backdrop-filter: blur(4px);
-  }
-
-  .more {
-    position: fixed;
-    inset: auto 10px calc(var(--w-dock) + 10px + env(safe-area-inset-bottom));
-    z-index: 14;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    padding: 12px;
-    animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-
-    a {
-      display: grid;
-      justify-items: center;
-      gap: 6px;
-      padding: 14px 4px;
-      border-radius: calc(var(--w-radius) / 2);
-      color: var(--mat-sys-on-surface);
-      text-decoration: none;
-      font: 500 13px var(--w-font);
-    }
-
-    a.on {
-      background: color-mix(in srgb, var(--w-primary) 16%, transparent);
-      color: var(--w-primary);
-    }
-
-    // The phone has no footer, so its build is named here.
-    .ver {
-      grid-column: 1 / -1;
-      margin: 0;
-      text-align: center;
     }
   }
 }

@@ -559,10 +559,10 @@ and then 180 € a jar; the workbook itself has no prices. A purchase priced
 again costs what it was priced at last, and the log keeps both. Only purchases
 with a price count. How many have none is said, not guessed at. A session that
 helped is one rated 4 or more overall, at its product's price per gram. The
-same walk is `$` in the terminal interface and the **Costs** page in the
+same walk is `$` in the terminal interface and **I forgot to** in the
 browser.
 
-The **Costs** page walks it a fill at a time, as the prescription was picked
+**I forgot to** walks it a fill at a time, as the prescription was picked
 up: on the workbook, 88 purchases in 30 fills, three strains to most of them.
 Type each strain's price a gram, and **Add 19% VAT (Germany)**, on unless
 switched off, puts the tax on top; the fill's total is worked out as the server
@@ -652,7 +652,25 @@ grinds, records a session, a fill or a weighing — through the same recorder as
 the commands, with the same refusals in the same words. The interface follows
 the repository: an entry made with the command line shows within a few seconds.
 
-The **Repository** tab (under More on a phone) is where the server is pointed.
+There are four tabs. **Dashboard** is what is happening now. **I forgot to** is
+everything left undone that the ledger can show, each section there only
+while there is some, and the tab counts them:
+- sessions of the last week waiting for a rating;
+- pickups still to be priced;
+- stashes left behind, where a jar has nothing sealed left but its stash
+  still holds grams, all ticked and cleared together;
+- AVB waiting in a device, with **Collect**.
+
+It also lists the jars still sealed with **Weigh**, which opens Record on that
+jar. These are offered but not counted, since a weighing that agrees with the
+ledger writes nothing. On the workbook it counts 50: two pickups and 48
+stashes left behind, 1,154.00 g. **Shelf** holds Jars and the Journal: what is
+on hand, and every entry. **Insights** holds Analysis, Effects, History and
+Costs. `1` to `4` go to the tabs, and `h` and `l` step through every page in
+turn. The old addresses (`/jars`, `/costs` and so on) still lead to their
+pages. The theme's name is beside the build at the end of the help line.
+
+The **Repository** page, off the header's menu (⋮), is where the server is pointed.
 Browse this computer's folders to open another repository, those that are one
 marked *wits*, or make one in an empty folder or a new one; the server serves it from then
 on, and every page reads it. There, too, a tracking workbook can be
@@ -678,9 +696,10 @@ fill already recorded is not recorded again: on the same day, the form says so
 and offers to price that fill from it. Within a week, it asks whether it is
 that fill. Only an invoice that matches no fill adds its strains as a new one.
 
-On a phone the tabs give way to a dock under the thumb: Dashboard, Journal, a
-raised **Record**, Jars, and **More** for the other pages. The top bar names
-the page you are on, and the bars keep clear of the notch and the home
+On a phone the tabs give way to a dock under the thumb: Dashboard, Forgot, a
+raised **Record**, Shelf and Insights, with the count on Forgot. The header's
+menu holds Repository (and Sync), and the build and theme at its foot. The top
+bar names the page you are on, and the bars keep clear of the notch and the home
 indicator. It is laid out for an iPhone 11 Pro held upright (375 px) and
 nothing narrower; no page scrolls sideways. There, Analysis's scopes go by
 short names (Fill, 30 d, 90 d, 12 mo, All) and the jars are a compact list.
@@ -735,7 +754,8 @@ On the jars, tick the cards — or **Select all** — and **Clear stash** record
 their stashes as consumed, one adjustment each in a single write: the
 terminal's history clean-up, for the stashes you choose.
 
-**Effects** is the effect log. Each session waits to be rated — 1 to 5, tapped,
+**Effects** is the effect log. Each session waits to be rated, under **I
+forgot to** — 1 to 5, tapped,
 on how it went overall and on pain, sleep, calm, mood, focus or appetite, any of
 them — and what the ratings add up to is drawn three ways: every product against
 every dimension, each dimension by temperature band, and by time of day as a
@@ -806,14 +826,14 @@ save it over the folder's copy yourself. The key and the journal never leave
 the phone except inside that encrypted file. `make pages` builds what Pages
 serves, and `make wasm-check` syncs the engine with the command line both ways.
 
-The phone has the **Repository** tab too, beside **Sync**, on its own storage
+The phone has **Repository** too, beside **Sync** on the header's menu, on its own storage
 in the browser: the first repository is `/wits`, others can be made in new
 folders beside it and opened in turn, and a tracking workbook can be imported
 into an empty one, with no computer involved. The phone reopens whichever was
 open last, and Sync syncs that one, each repository with its own key. The
 build a page is, `git describe` when it was made (`wits-ui v0.82.0`, or
 `v0.82.0-3-gabc1234` between releases), is at the end of the help line and at
-the foot of a phone's More sheet. The phone's page is cached for offline use,
+the foot of the header's menu on a phone, with the theme's name beside it. The phone's page is cached for offline use,
 so if it names an older build than the latest release, close and reopen it to
 take the new one.
 

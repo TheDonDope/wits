@@ -19,6 +19,9 @@
       <a mat-tab-link [routerLink]="l.path" routerLinkActive #rla="routerLinkActive"
         [routerLinkActiveOptions]="{ exact: l.path === '/' }" [active]="rla.isActive" [attr.aria-label]="l.label">
         <mat-icon>{{ l.icon }}</mat-icon><span class="label">{{ l.label }}</span>
+        @if (l.path === '/forgot' && todo.count()) {
+          <span class="badge num" [attr.aria-label]="todo.count() + ' waiting'">{{ todo.count() }}</span>
+        }
       </a>
     }
   </nav>
@@ -30,6 +33,16 @@
         <i></i><span class="word">{{ o.chain_ok ? 'verified' : 'changed' }}</span>
       </span>
     }
+    <button mat-icon-button class="aside" [matMenuTriggerFor]="asideMenu" matTooltip="Repository and more" aria-label="Repository and more">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #asideMenu="matMenu" xPosition="before">
+      @for (l of aside; track l.path) {
+        <a mat-menu-item [routerLink]="l.path"><mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span></a>
+      }
+      <!-- The phone has no footer, so its build and theme are named here. -->
+      <p class="build">wits-ui {{ version }} · {{ theme.info().label }}</p>
+    </mat-menu>
     <button mat-icon-button class="theme" [matMenuTriggerFor]="themes" [matTooltip]="'Theme: ' + theme.info().label + ' (t)'"
       aria-label="Choose a theme">
       <mat-icon>palette</mat-icon>
@@ -56,7 +69,7 @@
   @for (b of keys.footer(); track b.help) {
     <span class="k"><kbd>{{ b.label ?? show(b.keys[0]) }}</kbd>{{ b.help }}</span>
   }
-  <span class="ver">wits-ui {{ version }}</span>
+  <span class="ver">wits-ui {{ version }} · {{ theme.info().label }}</span>
 </footer>
 
 @if (keys.showAll()) {
@@ -79,35 +92,20 @@
   </section>
 }
 
-<!-- A phone's navigation: the pages a thumb wants most, Record between them, the rest under More. -->
+<!-- A phone's navigation: the four tabs under the thumb, Record raised between them. -->
 <nav class="dock" aria-label="Pages">
-  @for (l of dock; track l.path; let i = $index) {
+  @for (l of links; track l.path; let i = $index) {
     @if (i === 2) {
       <button class="rec" (click)="record()" aria-label="Record"><mat-icon>add</mat-icon></button>
     }
     <a [routerLink]="l.path" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: l.path === '/' }"
       #da="routerLinkActive" [attr.aria-current]="da.isActive ? 'page' : null">
-      <mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span>
+      <span class="icon"><mat-icon>{{ l.icon }}</mat-icon>
+        @if (l.path === '/forgot' && todo.count()) { <span class="badge num">{{ todo.count() }}</span> }</span>
+      <span>{{ l.path === '/forgot' ? 'Forgot' : l.label }}</span>
     </a>
   }
-  <button [class.on]="moreOpen() || inMore()" (click)="moreOpen.set(!moreOpen())" [attr.aria-expanded]="moreOpen()"
-    aria-controls="more">
-    <mat-icon>{{ moreOpen() ? 'close' : 'more_horiz' }}</mat-icon><span>More</span>
-  </button>
 </nav>
-
-@if (moreOpen()) {
-  <div class="more-backdrop" (click)="moreOpen.set(false)" aria-hidden="true"></div>
-  <section id="more" class="more glass" role="dialog" aria-label="More pages">
-    @for (l of more; track l.path) {
-      <a [routerLink]="l.path" routerLinkActive="on" #ma="routerLinkActive" [attr.aria-current]="ma.isActive ? 'page' : null"
-        (click)="moreOpen.set(false)">
-        <mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span>
-      </a>
-    }
-    <p class="ver">wits-ui {{ version }}</p>
-  </section>
-}
 
 <button mat-fab extended class="fab" (click)="record()">
   <mat-icon>add</mat-icon>
