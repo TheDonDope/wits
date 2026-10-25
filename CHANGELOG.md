@@ -2,8 +2,27 @@
 ## [Unreleased]
 
 
+<a name="v0.73.0"></a>
+## [v0.73.0] - 2026-10-25
+### Build
+- **preflight:** ask revive about a new file's package comment
+
+### Docs
+- a new file needs its own package comment, not to be avoided
+
+### Fix
+- **commands:** put each new file's package comment where revive reads it
+
+### Refactor
+- a file for each command, and the report's four concerns apart
+- **rate:** the last session is the fold's, not a fourth undo map
+
+
 <a name="v0.72.0"></a>
 ## [v0.72.0] - 2026-10-25
+### Docs
+- update changelog for v0.72.0
+
 ### Refactor
 - **chain:** one chained log for ratings and prices, put back in one write
 
@@ -923,7 +942,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.72.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.73.0...HEAD
+[v0.73.0]: https://github.com/TheDonDope/wits/compare/v0.72.0...v0.73.0
 [v0.72.0]: https://github.com/TheDonDope/wits/compare/v0.71.0...v0.72.0
 [v0.71.0]: https://github.com/TheDonDope/wits/compare/v0.70.0...v0.71.0
 [v0.70.0]: https://github.com/TheDonDope/wits/compare/v0.69.0...v0.70.0
