@@ -238,3 +238,25 @@ export interface Verdict {
   anomalies: string[];
   committed: boolean;
 }
+
+/** What a pharmacy's invoice says, each line named as the jar it already is where it is one. Cents throughout. */
+export interface InvoiceReading {
+  date?: string;
+  number?: string;
+  lines: { name: string; slug?: string; printed: string; grams: number; per_gram_cents: number; total_cents: number }[];
+  net_cents: number;
+  vat_cents: number;
+  rate: number;
+  gross_cents: number;
+  sum_cents: number;
+}
+
+/** One product of a fill as the form sends it: a line's total, or a price a gram, or neither. */
+export interface FillLine {
+  name: string;
+  grams: number;
+  per_gram?: string;
+  total?: string;
+  /** Beside the price: the invoice it is from. */
+  note?: string;
+}

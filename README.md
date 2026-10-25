@@ -642,6 +642,15 @@ already have when it is one. The text is read in the browser, by Tesseract
 compiled to WebAssembly and served by wits itself, so the photograph goes
 nowhere — check what it read, then record.
 
+A fill holds one strain or several, each with its grams and its price a gram,
+and records as one: all of them or none, each with its price written down.
+**Add 19% VAT (Germany)**, on unless switched off, adds the tax to the prices
+typed in. **Read invoices** takes one or more of the pharmacy's PDF invoices and
+fills in their strains, matched to your jars, with the invoice's own totals —
+which already include VAT, so none is added to them — and the fill dated the
+day ordered. The PDF is read in the browser by pdf.js, and only its text is
+sent, so the invoice, which names you, goes nowhere either.
+
 On a phone the tabs give way to a dock under the thumb: Dashboard, Journal, a
 raised **Record**, Jars, and **More** for the other pages. The top bar names
 the page you are on, and the bars keep clear of the notch and the home
