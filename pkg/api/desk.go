@@ -104,12 +104,18 @@ func openOrInit(dir string, create bool) (*repo.Repo, error) {
 	return repo.Discover(dir)
 }
 
-// folder checks that a path names a directory, absolute and clean.
+// folder checks that a path names a directory, and gives it absolute and
+// without "..". It confines nothing, and is not meant to: any folder of this
+// computer is the browser's to look in, as it is the user's in a terminal —
+// the server is theirs, and answers no other machine.
 func folder(path string) (string, error) {
 	if !filepath.IsAbs(path) {
 		return "", fmt.Errorf("not an absolute path: %q", path)
 	}
-	dir := filepath.Clean(path)
+	dir, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
 	info, err := os.Stat(dir)
 	if err != nil {
 		return "", err
