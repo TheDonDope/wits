@@ -2,10 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.106.0"></a>
+## [v0.106.0] - 2026-10-26
+### Docs
+- **diary:** grams do not vanish
+
+### Feat
+- **record:** the dialog drawn — jars to pick, a dial to turn, a scale to read
+
+
 <a name="v0.105.0"></a>
 ## [v0.105.0] - 2026-10-26
 ### Chore
 - **vhs:** re-record wits-reconcile.gif, where a light jar is now a grind forgotten
+
+### Docs
+- update changelog for v0.105.0
 
 ### Feat
 - **weigh:** grams do not vanish — a light jar was a grind forgotten, light ground was sessions
@@ -1286,7 +1298,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.105.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.106.0...HEAD
+[v0.106.0]: https://github.com/TheDonDope/wits/compare/v0.105.0...v0.106.0
 [v0.105.0]: https://github.com/TheDonDope/wits/compare/v0.104.0...v0.105.0
 [v0.104.0]: https://github.com/TheDonDope/wits/compare/v0.103.0...v0.104.0
 [v0.103.0]: https://github.com/TheDonDope/wits/compare/v0.102.0...v0.103.0
