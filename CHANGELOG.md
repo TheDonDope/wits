@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.97.0"></a>
+## [v0.97.0] - 2026-10-26
+### Build
+- **deps-dev:** bump electron from 44.7.0 to 44.9.1 in /desktop
+
+### Docs
+- **diary:** every jar opened, a year to look around in, and a window of its own
+
+
 <a name="v0.96.0"></a>
 ## [v0.96.0] - 2026-10-26
+### Docs
+- update changelog for v0.96.0
+
 ### Feat
 - **appimage:** wits in a window of its own, closed to quit
 
@@ -1187,7 +1199,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.96.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.97.0...HEAD
+[v0.97.0]: https://github.com/TheDonDope/wits/compare/v0.96.0...v0.97.0
 [v0.96.0]: https://github.com/TheDonDope/wits/compare/v0.95.0...v0.96.0
 [v0.95.0]: https://github.com/TheDonDope/wits/compare/v0.94.0...v0.95.0
 [v0.94.0]: https://github.com/TheDonDope/wits/compare/v0.93.0...v0.94.0
