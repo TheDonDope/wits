@@ -20,7 +20,7 @@ import { Pickup, PickupCard, Scan, byFill } from './pickup';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header>
-      <p class="dim">A fill at a time, as the prescription was picked up: what each strain cost a gram, or scan its invoice.
+      <p class="dim">A prescription at a time, as it was picked up: what each strain cost a gram, or scan its invoice.
         A strain left blank keeps no price, and nothing is ever edited.</p>
       <mat-slide-toggle [checked]="all()" (change)="setAll($event.checked)">every purchase, not only those in storage</mat-slide-toggle>
     </header>

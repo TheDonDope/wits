@@ -51,6 +51,11 @@ import { Confirm, ConfirmDialog } from './confirm';
         <h1 class="num">{{ list().length }} <span class="dim">{{ which() === 'shelf' ? 'on the shelf' : 'finished' }}</span></h1>
       </div>
       <div class="actions">
+        <button mat-stroked-button (click)="playback.set(!transport())" [class.on]="transport()"
+          matTooltip="The shelf played back from empty, the way the record grew (p)">
+          <mat-icon>history</mat-icon>
+          {{ transport() ? 'Hide the history' : 'Play back history' }}
+        </button>
         <button mat-stroked-button (click)="film()" [disabled]="filming() !== null || !history().length"
           matTooltip="Three years of the shelf in thirty seconds, as a video">
           <mat-icon>movie</mat-icon>
@@ -65,9 +70,9 @@ import { Confirm, ConfirmDialog } from './confirm';
           {{ allSelected() ? 'Select none' : 'Select all' }}
         </button>
         <button mat-flat-button class="clear" (click)="clear()" [disabled]="!replay.live() || !selectedWithStash().length"
-          [matTooltip]="selectedWithStash().length ? '' : 'Tick the jars whose stash to clear'">
+          [matTooltip]="selectedWithStash().length ? '' : 'Tick the jars whose leftovers to clear'">
           <mat-icon>delete_sweep</mat-icon>
-          Clear stash
+          Clear leftovers
           @if (selected().size) { <span class="count num">{{ selected().size }}</span> }
         </button>
         <mat-button-toggle-group [value]="which()" (change)="which.set($event.value)" aria-label="Which jars">
@@ -77,7 +82,9 @@ import { Confirm, ConfirmDialog } from './confirm';
       </div>
     </section>
 
-    <w-transport [replay]="replay" />
+    @if (transport()) {
+      <w-transport [replay]="replay" />
+    }
 
     <section class="grid">
       @for (j of list(); track j.slug; let i = $index) {
@@ -89,14 +96,14 @@ import { Confirm, ConfirmDialog } from './confirm';
           <w-jar [capacity]="j.bought"
             [layers]="[
               { grams: j.storage, color: 'var(--w-storage)', label: 'sealed' },
-              { grams: j.stash, color: 'var(--w-stash)', label: 'in the stash' },
+              { grams: j.stash, color: 'var(--w-stash)', label: 'ground, ready to use' },
             ]" />
           <div class="body">
             <h3>{{ j.name }}</h3>
             <div class="chips">
               @if (j.thc) { <span class="chip thc">THC {{ j.thc }}%</span> }
               @if (j.cbd) { <span class="chip cbd">CBD {{ j.cbd }}%</span> }
-              <span class="chip">{{ j.fills }} {{ j.fills === 1 ? 'fill' : 'fills' }}</span>
+              <span class="chip">{{ j.fills }} {{ j.fills === 1 ? 'prescription' : 'prescriptions' }}</span>
               @if (j.rating; as r) {
                 <span class="chip rated" [title]="line(r)">
                   @if (r.overall) { <mat-icon>star</mat-icon>{{ r.overall }} }
@@ -110,7 +117,7 @@ import { Confirm, ConfirmDialog } from './confirm';
             </div>
             <dl>
               <div><dt>sealed</dt><dd class="num" style="color: var(--w-storage)">{{ j.storage | number: '1.2-2' }}</dd></div>
-              <div><dt>stash</dt><dd class="num" style="color: var(--w-stash)">{{ j.stash | number: '1.2-2' }}</dd></div>
+              <div><dt>ready to use</dt><dd class="num" style="color: var(--w-stash)">{{ j.stash | number: '1.2-2' }}</dd></div>
               <div><dt>ground</dt><dd class="num">{{ j.ground | number: '1.0-0' }}</dd></div>
               <div><dt>dispensed</dt><dd class="num">{{ j.bought | number: '1.0-0' }}</dd></div>
             </dl>
@@ -204,6 +211,13 @@ export class Jars {
     [...this.wits.everything.value().entries].reverse(),
   );
   protected readonly replay = new Replay(this.history);
+  /**
+   * Whether the replay's controls show: the jars come first, and the history
+   * behind a button — or p — for whoever wants it. A replay under way keeps
+   * them.
+   */
+  protected readonly playback = signal(false);
+  protected readonly transport = computed(() => this.playback() || !this.replay.live());
 
   /** The jars live from the server, or as they stood at the replay's head. */
   private readonly jars = computed<Jar[]>(() => {
@@ -352,13 +366,15 @@ export class Jars {
       { keys: ['a'], help: this.allSelected() ? 'select none' : 'select all', run: () => {
         this.toggleAll();
       } },
-      { keys: ['c'], help: 'clear stash', run: () => {
+      { keys: ['c'], help: 'clear leftovers', run: () => {
         void this.clear();
       } },
       { keys: ['f'], help: this.which() === 'shelf' ? 'finished' : 'on the shelf', run: () => {
         this.which.update((w) => (w === 'shelf' ? 'finished' : 'shelf'));
       } },
-      ...replayKeys(this.replay).map((b) => (b.keys.includes(' ') ? { ...b, keys: ['p'] } : b)),
+      ...replayKeys(this.replay).map((b) => (b.keys.includes(' ')
+        ? { ...b, keys: ['p'], run: () => { this.playback.set(true); b.run(); } }
+        : b)),
     ];
   }
 
@@ -404,7 +420,7 @@ export class Jars {
       this.dialog
         .open<ConfirmDialog, Confirm, boolean>(ConfirmDialog, {
           data: {
-            title: `Clear ${jars.length === 1 ? 'this stash' : `${jars.length} stashes`}?`,
+            title: `Clear the leftovers of ${jars.length === 1 ? 'this jar' : `${String(jars.length)} jars`}?`,
             body:
               `${grams.toFixed(2)} g will be recorded as consumed — the grams went through a device at some point, ` +
               'the sessions never logged. Nothing is deleted: each is an adjustment, in the journal beside the rest.',

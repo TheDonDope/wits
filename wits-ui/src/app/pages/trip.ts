@@ -69,7 +69,7 @@ const PRESETS = [
             <p class="warn">The shelf holds only {{ p.shelf | number: '1.2-2' }} g: {{ p.packed / p.rate | number: '1.1-1' }} days' worth of the
               {{ p.need | number: '1.2-2' }} g the trip wants. Take it all, and ask for the next prescription before you go.</p>
           } @else {
-            <p class="dim">{{ p.days }} days at {{ p.rate | number: '1.2-2' }} g a day — this fill's rate with grinding — and
+            <p class="dim">{{ p.days }} days at {{ p.rate | number: '1.2-2' }} g a day — this prescription's rate with grinding — and
               {{ p.margin }} % to spare, from {{ p.lines.length }} {{ p.lines.length === 1 ? 'jar' : 'jars' }}.</p>
           }
         </div>
@@ -118,7 +118,7 @@ const PRESETS = [
           <div class="said">
             <span class="eyebrow">what I carry, signed</span>
             <strong>Signed for exactly {{ p.packed | number: '1.2-2' }} g</strong>
-            <p class="dim">The statement names each jar packed and the fill that dispensed it, against the journal's head. Scanned with
+            <p class="dim">The statement names each jar packed and the prescription that dispensed it, against the journal's head. Scanned with
               any phone, it opens a page that checks the signature there; nothing in it is sent to a server.</p>
             <code>{{ p.fingerprint }}</code>
             <a mat-stroked-button [href]="qrFile()" download="wits-trip.svg"><mat-icon>download</mat-icon>The QR code</a>

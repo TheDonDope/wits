@@ -1,8 +1,10 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { Keys } from '../data/keys';
 import { Dimension } from '../data/models';
@@ -13,6 +15,19 @@ import { GroupBars } from '../viz/group-bars';
 import { StrainMap } from '../viz/strain-map';
 import { TerpeneTable } from '../viz/terpene-table';
 import { ASKS } from './rate-queue';
+
+const VIEWS = [
+  { key: 'works', label: 'What works', icon: 'psychology' },
+  { key: 'strains', label: 'Strains', icon: 'bubble_chart' },
+  { key: 'terpenes', label: 'Terpenes', icon: 'spa' },
+  { key: 'ratings', label: 'Ratings', icon: 'rate_review' },
+] as const;
+
+type View = (typeof VIEWS)[number]['key'];
+
+function asView(v: string | null): View {
+  return VIEWS.find((x) => x.key === v)?.key ?? 'works';
+}
 
 /**
  * The effect log: what each session did, rated afterwards in a few taps (the
@@ -27,6 +42,8 @@ import { ASKS } from './rate-queue';
     DayWheel,
     EffectMatrix,
     GroupBars,
+    MatButtonModule,
+    MatButtonToggleModule,
     MatChipsModule,
     MatIconModule,
     RouterLink,
@@ -52,6 +69,14 @@ import { ASKS } from './rate-queue';
         </a>
       }
 
+      <mat-button-toggle-group class="views" [value]="view()" (change)="show($event.value)" aria-label="What to show"
+        hideSingleSelectionIndicator>
+        @for (v of views; track v.key) {
+          <mat-button-toggle [value]="v.key"><mat-icon>{{ v.icon }}</mat-icon><span>{{ v.label }}</span></mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      @if (view() === 'works') {
       @if (log.insights.rated) {
         <section class="glass pad">
           <header>
@@ -85,7 +110,9 @@ import { ASKS } from './rate-queue';
           <p>Rate a few sessions and wits starts to show what helps — which strains, at which temperature, at which time of day.</p>
         </section>
       }
+      }
 
+      @if (view() === 'strains') {
       @if (wits.strains.value().length) {
         <section class="glass pad">
           <div>
@@ -96,8 +123,12 @@ import { ASKS } from './rate-queue';
           </div>
           <w-strain-map [strains]="wits.strains.value()" />
         </section>
+      } @else {
+        <section class="glass empty"><mat-icon>bubble_chart</mat-icon><p>No strain on the shelf has its terpenes written down yet.</p></section>
+      }
       }
 
+      @if (view() === 'terpenes') {
       @if (wits.shelfTerpenes.value().length) {
         <section class="glass pad">
           <div>
@@ -107,12 +138,16 @@ import { ASKS } from './rate-queue';
           </div>
           <w-terpene-table [terpenes]="wits.shelfTerpenes.value()" />
         </section>
+      } @else {
+        <section class="glass empty"><mat-icon>spa</mat-icon><p>No product names its terpenes yet.</p></section>
+      }
       }
 
+      @if (view() === 'ratings') {
       @if (log.rated.length) {
         <section class="glass pad">
-          <span class="eyebrow">rated</span>
-          @for (r of log.rated.slice(0, 30); track r.hash) {
+          <span class="eyebrow">rated · newest first</span>
+          @for (r of log.rated.slice(0, shown()); track r.hash) {
             <div class="rated">
               <span class="when dim">{{ r.session.occurred_at | date: 'd MMM' }}</span>
               <span class="what">{{ r.session.grams | number: '1.2-2' }} g {{ r.session.product_name }}
@@ -127,12 +162,29 @@ import { ASKS } from './rate-queue';
               @if (r.note) { <span class="note dim">“{{ r.note }}”</span> }
             </div>
           }
+          @if (log.rated.length > shown()) {
+            <button mat-button class="older" (click)="shown.set(shown() + 30)">
+              <mat-icon>expand_more</mat-icon>{{ min(30, log.rated.length - shown()) }} older of {{ log.rated.length - shown() }}
+            </button>
+          }
         </section>
+      } @else {
+        <section class="glass empty"><mat-icon>rate_review</mat-icon><p>No session is rated yet.</p></section>
+      }
       }
     }
   `,
   styles: `
+    @use 'breakpoints' as bp;
     :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .views { justify-self: start; max-width: 100%; }
+    .views mat-icon { margin-right: 6px; vertical-align: -6px; font-size: 20px; }
+    .older { justify-self: center; }
+    @include bp.phone {
+      .views { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+      .views mat-button-toggle { min-width: 0; }
+      .views mat-icon { display: none; }
+    }
     .mapnote { margin: 6px 0 0; font-size: 13px; }
     .head { padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
     h1 { font: 600 28px var(--w-num); margin: 4px 0 0; }
@@ -162,6 +214,18 @@ export class Effects {
   protected readonly color = scoreColor;
   protected readonly dimension = signal<Dimension>('overall');
   protected readonly dimensions = computed(() => this.wits.effects.value()?.dimensions ?? []);
+  /** The page in four: what works, the strains' map, the terpenes, every rating. ?view= names one. */
+  protected readonly views = VIEWS;
+  private readonly router = inject(Router);
+  protected readonly view = signal<View>(asView(inject(ActivatedRoute).snapshot.queryParamMap.get('view')));
+  /** How many ratings are listed: thirty, and thirty more a tap. */
+  protected readonly shown = signal(30);
+  protected readonly min = Math.min;
+
+  protected show(v: View): void {
+    this.view.set(v);
+    void this.router.navigate([], { queryParams: { view: v === 'works' ? null : v }, replaceUrl: true });
+  }
 
   constructor() {
     inject(Keys).register(

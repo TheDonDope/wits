@@ -35,7 +35,7 @@ import { Terpenes } from './terpenes';
         <w-jar [capacity]="j.bought"
           [layers]="[
             { grams: j.storage, color: 'var(--w-storage)', label: 'sealed' },
-            { grams: j.stash, color: 'var(--w-stash)', label: 'in the stash' },
+            { grams: j.stash, color: 'var(--w-stash)', label: 'ground, ready to use' },
           ]" />
         <div class="who">
           <span class="eyebrow">{{ j.manufacturer || 'the jar' }} <span class="scope">the jar · its whole life</span></span>
@@ -46,19 +46,19 @@ import { Terpenes } from './terpenes';
             @if (j.cbd) { <span class="chip cbd">CBD {{ j.cbd }}%</span> }
             @if (j.country) { <span class="chip">{{ j.country }}</span> }
             @if (j.radiated) { <span class="chip">irradiated</span> }
-            <span class="chip">{{ j.fills }} {{ j.fills === 1 ? 'fill' : 'fills' }}</span>
+            <span class="chip">{{ j.fills }} {{ j.fills === 1 ? 'prescription' : 'prescriptions' }}</span>
           </div>
           <dl class="figures">
             <div><dt>sealed</dt><dd class="num" style="color: var(--w-storage)">{{ j.storage | number: '1.2-2' }}</dd></div>
-            <div><dt>stash</dt><dd class="num" style="color: var(--w-stash)">{{ j.stash | number: '1.2-2' }}</dd></div>
-            <div><dt>AVB</dt><dd class="num" style="color: var(--w-avb)">{{ j.avb | number: '1.2-2' }}</dd></div>
+            <div><dt>ready to use</dt><dd class="num" style="color: var(--w-stash)">{{ j.stash | number: '1.2-2' }}</dd></div>
+            <div><dt>already vaped</dt><dd class="num" style="color: var(--w-avb)">{{ j.avb | number: '1.2-2' }}</dd></div>
             <div><dt>dispensed</dt><dd class="num">{{ j.bought | number: '1.2-2' }}</dd></div>
-            <div><dt>ground</dt><dd class="num">{{ j.ground | number: '1.2-2' }}</dd></div>
-            <div><dt>seshed</dt><dd class="num" style="color: var(--w-sesh)">{{ j.seshed | number: '1.2-2' }}</dd></div>
+            <div><dt>ground in all</dt><dd class="num">{{ j.ground | number: '1.2-2' }}</dd></div>
+            <div><dt>vaped</dt><dd class="num" style="color: var(--w-sesh)">{{ j.seshed | number: '1.2-2' }}</dd></div>
           </dl>
           <p class="dim since">
             First {{ j.first_seen | date: 'd MMMM y' }} · last {{ j.last_seen | date: 'd MMMM y' }}
-            @if (j.flushed > 0) { · {{ j.flushed | number: '1.2-2' }} g cleared from the stash unlogged }
+            @if (j.flushed > 0) { · {{ j.flushed | number: '1.2-2' }} g of what was ground cleared unlogged }
           </p>
         </div>
       </section>
@@ -104,11 +104,11 @@ import { Terpenes } from './terpenes';
       </section>
 
       <section class="glass pad">
-        <header><span class="eyebrow">pickups, fill by fill</span><span class="scope">each fill's own grams</span></header>
+        <header><span class="eyebrow">pickups, prescription by prescription</span><span class="scope">each prescription's own grams</span></header>
         @for (f of j.fill_list; track f.number) {
           <div class="fill">
             <div class="fill-head">
-              <strong>Fill {{ f.number }}</strong>
+              <strong>Prescription {{ f.number }}</strong>
               <span class="dim">{{ f.start | date: 'd MMM y' }}</span>
               <span class="num">{{ f.sealed | number: '1.2-2' }} g <span class="dim">of {{ f.dispensed | number: '1.2-2' }} still sealed</span></span>
               <span class="state" [class.open]="f.sealed > 0">{{ f.sealed > 0 ? 'still sealed' : 'all ground' }}</span>
@@ -138,7 +138,7 @@ import { Terpenes } from './terpenes';
         <section class="glass pad">
           <header>
             <span class="eyebrow">month by month</span>
-            <span class="legend"><i style="background: var(--w-stash)"></i>ground <i style="background: var(--w-sesh)"></i>seshed</span>
+            <span class="legend"><i style="background: var(--w-stash)"></i>ground <i style="background: var(--w-sesh)"></i>vaped</span>
           </header>
           <w-month-bars [months]="j.months" />
         </section>
@@ -182,7 +182,7 @@ import { Terpenes } from './terpenes';
             }
           </div>
         } @else {
-          <p class="dim note">No session logged with it{{ j.flushed > 0 ? ' — its stash was cleared unlogged' : '' }}.</p>
+          <p class="dim note">No session logged with it{{ j.flushed > 0 ? ' — what was ground of it was cleared unlogged' : '' }}.</p>
         }
       </section>
 

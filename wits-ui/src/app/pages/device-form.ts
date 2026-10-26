@@ -95,7 +95,7 @@ import { Wits } from '../data/wits';
               }
             </mat-select>
             @if (d().power === 'manual') {
-              <mat-hint>Manual: heated once, inhaled, its AVB tossed.</mat-hint>
+              <mat-hint>Manual: heated once, inhaled, what was vaped tossed.</mat-hint>
             }
           </mat-form-field>
           @if (d().power === 'electric') {

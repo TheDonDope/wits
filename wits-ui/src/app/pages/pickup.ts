@@ -109,7 +109,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
     const hash = m ? m.lines[i] : f.lines.find((l) => l.product === line.slug)?.hash;
     const entry = hash ? ours.get(hash) : undefined;
     if (!entry) {
-      notes.push(`${line.printed} is not in this fill`);
+      notes.push(`${line.printed} is not in this prescription`);
       return;
     }
     if (Math.abs(entry.grams - line.grams) > 0.005) {
@@ -139,7 +139,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
         <div class="head">
           <span class="count num">{{ position() }}</span>
           <div class="what">
-            <strong>Fill {{ f.fill }}</strong>
+            <strong>Prescription {{ f.fill }}</strong>
             <span class="dim">picked up {{ f.start | date: 'd MMMM y' }} · {{ f.lines.length }} {{ f.lines.length === 1 ? 'strain' : 'strains' }}, {{ f.grams | number: '1.2-2' }} g</span>
           </div>
           <button mat-stroked-button type="button" class="scan" (click)="pdf.click()" [disabled]="reading()">
@@ -154,8 +154,8 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
               <div class="ask" role="status">
                 <mat-icon>help</mat-icon>
                 <p>The invoice{{ s.reading.number ? ' ' + s.reading.number : '' }} is dated {{ s.reading.date | date: 'd MMMM' }};
-                  Fill {{ f.fill }} was picked up {{ f.start | date: 'd MMMM' }},
-                  {{ s.reading.match?.days }} {{ s.reading.match?.days === 1 ? 'day' : 'days' }} apart. Is it this fill's invoice?</p>
+                  Prescription {{ f.fill }} was picked up {{ f.start | date: 'd MMMM' }},
+                  {{ s.reading.match?.days }} {{ s.reading.match?.days === 1 ? 'day' : 'days' }} apart. Is it this prescription's invoice?</p>
                 <div class="choose">
                   <button mat-flat-button type="button" (click)="apply(true)">Yes, take its prices</button>
                   <button mat-button type="button" (click)="dismiss()">No</button>
@@ -165,11 +165,11 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
             @case ('other') {
               <div class="ask" role="status">
                 <mat-icon>swap_horiz</mat-icon>
-                <p>This invoice is Fill {{ s.reading.match?.fill }}'s, picked up {{ s.reading.match?.start | date: 'd MMMM y' }}{{
+                <p>This invoice is Prescription {{ s.reading.match?.fill }}'s, picked up {{ s.reading.match?.start | date: 'd MMMM y' }}{{
                   s.reading.match?.priced ? ', which already has its prices' : '' }}.</p>
                 <div class="choose">
                   @if (fills().includes(s.reading.match?.fill ?? 0)) {
-                    <button mat-flat-button type="button" (click)="handOver()">Go to Fill {{ s.reading.match?.fill }}</button>
+                    <button mat-flat-button type="button" (click)="handOver()">Go to Prescription {{ s.reading.match?.fill }}</button>
                   }
                   <button mat-button type="button" (click)="apply(false)">Use it here anyway</button>
                   <button mat-button type="button" (click)="dismiss()">Dismiss</button>
@@ -179,7 +179,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
             @case ('none') {
               <div class="ask" role="status">
                 <mat-icon>help</mat-icon>
-                <p>No fill within two weeks of {{ s.reading.date ? (s.reading.date | date: 'd MMMM y') : 'the invoice' }} holds its strains.</p>
+                <p>No prescription within two weeks of {{ s.reading.date ? (s.reading.date | date: 'd MMMM y') : 'the invoice' }} holds its strains.</p>
                 <div class="choose">
                   <button mat-button type="button" (click)="apply(false)">Use it here anyway</button>
                   <button mat-button type="button" (click)="dismiss()">Dismiss</button>
@@ -225,7 +225,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
             @if (sums().invoice) {
               <div><dt>From the invoice, with VAT</dt><dd class="num">{{ sums().invoice / 100 | currency: 'EUR' }}</dd></div>
             }
-            <div class="sum"><dt>The fill</dt><dd class="num">{{ sums().total / 100 | currency: 'EUR' }}</dd></div>
+            <div class="sum"><dt>The prescription</dt><dd class="num">{{ sums().total / 100 | currency: 'EUR' }}</dd></div>
           </dl>
         </div>
         @if (error()) {
@@ -236,7 +236,7 @@ export function fromInvoice(f: Pickup, reading: InvoiceReading, byMatch: boolean
             No price to be had{{ sums().total ? ' for the rest' : '' }} — stop asking
           </mat-checkbox>
           <button mat-flat-button type="button" [disabled]="busy() || (!sums().total && !giveUp())" (click)="save()">
-            {{ giveUp() && !sums().total ? 'Mark as unpriced' : 'Save the fill' }}
+            {{ giveUp() && !sums().total ? 'Mark as unpriced' : 'Save the prescription' }}
           </button>
           <button mat-button type="button" (click)="skipped.emit()">Skip</button>
         </div>
@@ -402,7 +402,7 @@ export class PickupCard implements OnInit, OnDestroy {
     }
     const { priced, notes } = fromInvoice(this.pickup(), s.reading, byMatch);
     this.priced.update((all) => ({ ...all, ...priced }));
-    this.notes.set(Object.keys(priced).length ? notes : ['none of the invoice’s strains are in this fill', ...notes]);
+    this.notes.set(Object.keys(priced).length ? notes : ['none of the invoice’s strains are in this prescription', ...notes]);
     this.applied.set(Object.keys(priced).length > 0);
     this.ask.set(null);
   }

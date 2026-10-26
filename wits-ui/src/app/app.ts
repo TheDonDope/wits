@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 
+import { openDemo } from './data/demo';
 import { Binding, Keys } from './data/keys';
 import { ENGINE } from './data/mode';
 import { PAGES, TABS } from './data/pages';
@@ -85,14 +86,8 @@ export class App {
    */
   protected async demo(): Promise<void> {
     this.seeding.set(true);
-    this.snack.open('Opening the demo…');
     try {
-      const place = await this.wits.demo();
-      await this.router.navigateByUrl('/');
-      this.snack.open(`The demo is open, in ${place.path}: ${String(place.entries)} entries. Repository goes back to yours.`, 'OK',
-        { duration: 8000 });
-    } catch (e) {
-      this.snack.open((e as Error).message, 'OK', { duration: 8000 });
+      await openDemo(this.wits, this.router, this.snack);
     } finally {
       this.seeding.set(false);
     }
@@ -155,7 +150,13 @@ export class App {
     return ({ ' ': 'space', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Escape: 'esc' } as Record<string, string>)[key] ?? key;
   }
 
-  protected record(tab = 0): void {
-    openRecord(this.dialog, { tab });
+  /**
+   * Opens Record: on the tab asked for, or on Fill while there is nothing
+   * sealed to grind — the first thing an empty shelf wants — and on Grind
+   * once there is.
+   */
+  protected record(tab?: number): void {
+    const empty = this.wits.overview.value()?.fill === null;
+    openRecord(this.dialog, { tab: tab ?? (empty ? 2 : 0) });
   }
 }

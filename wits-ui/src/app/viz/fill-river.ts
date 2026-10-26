@@ -29,7 +29,7 @@ interface Bar {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <svg [attr.viewBox]="'0 0 ' + width() + ' ' + height()" [attr.height]="height()" role="img"
-      aria-label="Every fill on one timeline">
+      aria-label="Every prescription on one timeline">
       <defs>
         <linearGradient id="river-open" x1="0" x2="1">
           <stop offset="0" stop-color="var(--w-primary)" stop-opacity=".25" />
@@ -61,7 +61,7 @@ interface Bar {
       @if (hovered(); as h) {
         <g [attr.transform]="'translate(' + tipX(h) + ',' + (h.y + 18) + ')'" class="tipg">
           <rect width="230" height="58" rx="10" class="tip" />
-          <text x="12" y="20" class="tip-h">Fill {{ h.c.number }} · {{ h.c.dispensed.toFixed(0) }} g dispensed</text>
+          <text x="12" y="20" class="tip-h">Prescription {{ h.c.number }} · {{ h.c.dispensed.toFixed(0) }} g dispensed</text>
           <text x="12" y="36" class="tip-t">{{ span(h) }}</text>
           <text x="12" y="51" class="tip-t">
             {{ h.c.open ? h.c.remaining.toFixed(2) + ' g of it still sealed' : h.c.ground_during.toFixed(0) + ' g ground on the shelf meanwhile' }}

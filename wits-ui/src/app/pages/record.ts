@@ -1,5 +1,5 @@
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -13,10 +13,12 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { DeviceMode, Written } from '../data/models';
+import { DeviceMode, Dimension, Entry, Written } from '../data/models';
 import { heats, needsHeat, sessionWith } from '../data/devices';
 import { Wits } from '../data/wits';
+import { ScoreDots } from '../viz/score-dots';
 import { FillForm } from './fill-form';
+import { ASKS } from './rate-queue';
 
 /** What the dialog opens on: a tab, and the jar or the device already picked. */
 export interface RecordData {
@@ -62,9 +64,31 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
     MatSelectModule,
     MatSliderModule,
     MatTabsModule,
+    ScoreDots,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (rating(); as r) {
+      <h2 mat-dialog-title>How was it?</h2>
+      <mat-dialog-content>
+        <p class="dim said">{{ r.message }}</p>
+        <div class="dims">
+          @for (d of asked(); track d) {
+            <span class="ask" [class.lead]="d === 'overall'">{{ asks[d] }}</span>
+            <w-score-dots [label]="asks[d]" [value]="scores()[d] ?? null" (valueChange)="score(d, $event)"
+              [style.--tone]="d === 'overall' ? 'var(--w-accent)' : 'var(--w-primary)'" />
+          }
+        </div>
+        @if (!allDims()) {
+          <button mat-button class="more" (click)="allDims.set(true)"><mat-icon>expand_more</mat-icon>Pain, sleep, calm and more</button>
+        }
+        <p class="dim">Or later, under I forgot to — a session waits there a week.</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button (click)="ref.close(r)">Later</button>
+        <button mat-flat-button (click)="rate(r)" [disabled]="busy() || !rated()">Save</button>
+      </mat-dialog-actions>
+    } @else {
     <h2 mat-dialog-title>Record</h2>
     <mat-dialog-content>
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event); error.set('')" animationDuration="200ms">
@@ -84,7 +108,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>air</mat-icon><span>Session</span></span></ng-template>
           <div class="form">
             <mat-form-field appearance="outline">
-              <mat-label>From the stash</mat-label>
+              <mat-label>From what is ground</mat-label>
               <mat-select [ngModel]="product()" (ngModelChange)="product.set($event)">
                 @for (j of stashed(); track j.slug) {
                   <mat-option [value]="j.slug">{{ j.name }} <span class="dim">· {{ j.stash | number: '1.2-2' }} g ground</span></mat-option>
@@ -163,7 +187,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
             </mat-form-field>
           </div>
         </mat-tab>
-        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>local_pharmacy</mat-icon><span>Fill</span></span></ng-template>
+        <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>local_pharmacy</mat-icon><span>Prescription</span></span></ng-template>
           <w-fill-form class="form" [(date)]="date" [(error)]="error" />
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>scale</mat-icon><span>Weigh</span></span></ng-template>
@@ -180,8 +204,8 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
               <mat-label>Account</mat-label>
               <mat-select [ngModel]="account()" (ngModelChange)="account.set($event)">
                 <mat-option value="storage">Storage — still sealed</mat-option>
-                <mat-option value="stash">The stash</mat-option>
-                <mat-option value="avb">The AVB jar</mat-option>
+                <mat-option value="stash">Ground, ready to use</mat-option>
+                <mat-option value="avb">Already vaped (AVB)</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
@@ -196,7 +220,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
             <mat-form-field appearance="outline">
               <mat-label>What happened</mat-label>
               <mat-select [ngModel]="avbMode()" (ngModelChange)="avbMode.set($event)">
-                <mat-option value="collect">Emptied a device — AVB weighed out</mat-option>
+                <mat-option value="collect">Emptied a device — the already vaped bud weighed out</mat-option>
                 <mat-option value="use">Used AVB — butter, a tincture</mat-option>
               </mat-select>
             </mat-form-field>
@@ -231,13 +255,21 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
             <input matInput type="number" min="0.01" step="0.01" [ngModel]="grams()" (ngModelChange)="grams.set($event)" />
             <span matTextSuffix>g</span>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>When</mat-label>
             <input matInput [matDatepicker]="picker" [ngModel]="date()" (ngModelChange)="date.set($event)" placeholder="now" />
             <mat-datepicker-toggle matIconSuffix [for]="picker" />
             <mat-datepicker #picker />
           </mat-form-field>
         </div>
+        @if (recent().length) {
+          <div class="recent" role="group" aria-label="Amounts used lately">
+            <span class="dim">lately</span>
+            @for (g of recent(); track g) {
+              <button type="button" class="chip" [class.on]="grams() === g" (click)="grams.set(g)">{{ g | number: '1.2-2' }} g</button>
+            }
+          </div>
+        }
       </ng-template>
 
       @if (error()) {
@@ -248,6 +280,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-flat-button (click)="save()" [disabled]="busy()">Record</button>
     </mat-dialog-actions>
+    }
   `,
   styles: `
     @use 'breakpoints' as bp;
@@ -261,6 +294,16 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
     /* A hint that wraps on a phone takes its room, rather than running into the field under it. */
     .hinted { margin-bottom: 18px; }
     .tab { display: inline-flex; align-items: center; gap: 6px; }
+    .recent { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: -6px 0 10px; font-size: 12px; }
+    .chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--w-glass-edge); background: none; color: inherit;
+      font: 500 12px var(--w-num); cursor: pointer; }
+    .chip:hover { border-color: var(--w-primary); }
+    .chip.on { border-color: var(--w-primary); background: color-mix(in srgb, var(--w-primary) 18%, transparent); }
+    .dims { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; align-items: center; margin: 8px 0; }
+    .ask { font-size: 13px; color: var(--w-dim); }
+    .ask.lead { color: var(--mat-sys-on-surface); font-weight: 600; }
+    .said { margin-top: 0; }
+    .more { margin-left: -8px; }
     /* A phone: the five tabs side by side, each its icon over its name, none paged out of sight. */
     @include bp.phone {
       .tab { flex-direction: column; gap: 2px; font-size: 11px; line-height: 1.1; }
@@ -269,7 +312,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
 })
 export class RecordDialog {
   protected readonly wits = inject(Wits);
-  private readonly ref = inject(MatDialogRef<RecordDialog>);
+  protected readonly ref = inject(MatDialogRef<RecordDialog>);
   private readonly snack = inject(MatSnackBar);
 
   private readonly data = inject<RecordData | null>(MAT_DIALOG_DATA, { optional: true });
@@ -284,6 +327,22 @@ export class RecordDialog {
   protected readonly avbMode = signal<'collect' | 'use'>('collect');
   protected readonly error = signal('');
   protected readonly busy = signal(false);
+  protected readonly asks = ASKS;
+  /** The session just recorded, asked how it went before the dialog closes. */
+  protected readonly rating = signal<Written | null>(null);
+  protected readonly scores = signal<Partial<Record<Dimension, number>>>({});
+  protected readonly rated = computed(() => Object.keys(this.scores()).length > 0);
+  /** Overall, unless asked for every dimension. */
+  protected readonly allDims = signal(false);
+  protected readonly asked = computed<Dimension[]>(() =>
+    this.allDims() ? (Object.keys(ASKS) as Dimension[]) : ['overall']);
+  /** The sessions and grinds that stand, newest first: what the form starts from. */
+  private readonly standing = computed(() => this.wits.journal.value().entries.filter((e) => !e.corrected));
+  /** The amounts ground or had lately, the most used first, four at most, smallest first. */
+  protected readonly recent = computed(() => {
+    const type = this.tab() === 0 ? 'grind' : this.tab() === 1 ? 'sesh' : '';
+    return type ? lately(this.standing().filter((e) => e.type === type).slice(0, 30)) : [];
+  });
   /** The Fill tab's form, which says what a fill records. */
   private readonly fill = viewChild(FillForm);
 
@@ -315,6 +374,63 @@ export class RecordDialog {
     // The API leaves a range out when the device has none.
     return { min: d.min_temp ?? 120, max: d.max_temp ?? 230 };
   });
+
+  constructor() {
+    // A session starts from the last one: its strain while the stash holds it,
+    // its device, mode, heater and temperature. Only once, and only what is
+    // still unpicked.
+    let started = false;
+    effect(() => {
+      const last = this.standing().find((e) => e.type === 'sesh');
+      if (started || this.tab() !== 1 || !last || !this.wits.devices.value().length) {
+        return;
+      }
+      started = true;
+      untracked(() => {
+        this.startFrom(last);
+      });
+    });
+  }
+
+  private startFrom(last: Entry): void {
+    if (!this.product() && this.stashed().some((j) => j.slug === last.product)) {
+      this.product.set(last.product ?? '');
+    }
+    if (this.device() || !last.device) {
+      return;
+    }
+    this.pickDevice(last.device);
+    if (last.mode) {
+      this.pickMode(last.mode);
+    }
+    if (last.heater) {
+      this.pickHeater(last.heater);
+      this.setting.set(last.setting ?? '');
+    }
+    if (last.temperature) {
+      this.temp.set(last.temperature);
+    }
+  }
+
+  protected score(d: Dimension, v: number | null): void {
+    this.scores.update((all) => {
+      const kept = Object.entries(all).filter(([k]) => k !== d);
+      return Object.fromEntries(v === null ? kept : [...kept, [d, v]]);
+    });
+  }
+
+  protected async rate(w: Written): Promise<void> {
+    this.busy.set(true);
+    try {
+      const out = await this.wits.rate(w.entry.hash, this.scores(), '');
+      this.snack.open(out.message, undefined, { duration: 3000 });
+      this.ref.close(w);
+    } catch (err) {
+      this.snack.open((err as Error).message, 'OK', { duration: 6000 });
+    } finally {
+      this.busy.set(false);
+    }
+  }
 
   /** A device's name, or what a session that named none is called. */
   protected deviceName(slug: string): string {
@@ -360,6 +476,11 @@ export class RecordDialog {
     this.busy.set(true);
     try {
       const w = await this.send();
+      if (this.tab() === 1 && 'entry' in w) {
+        // A session is asked about at once, while it is fresh; Later closes.
+        this.rating.set(w);
+        return;
+      }
       this.snack.open(w.message, undefined, { duration: 3500 });
       this.ref.close(w);
     } catch (err) {
@@ -401,6 +522,15 @@ export class RecordDialog {
         return this.wits.weigh({ product: this.product(), account: this.account(), weighed: grams });
     }
   }
+}
+
+/** The amounts in the entries the most used first, four of them, then smallest first. */
+function lately(entries: Entry[]): number[] {
+  const count = new Map<number, number>();
+  for (const e of entries) {
+    count.set(e.grams, (count.get(e.grams) ?? 0) + 1);
+  }
+  return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 4).map(([g]) => g).sort((a, b) => a - b);
 }
 
 function isoDay(d: Date): string {

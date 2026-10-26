@@ -113,7 +113,7 @@ function recalled(): string[] {
 
     <section class="glass pad">
       <span class="eyebrow">import a workbook</span>
-      <p class="dim">A tracking spreadsheet, each worksheet a fill and the grinds that followed it. It is read and
+      <p class="dim">A tracking spreadsheet, each worksheet a prescription and the grinds that followed it. It is read and
         reported first; nothing is written until you import, and only into a repository with an empty journal.</p>
       <div class="row">
         <input #picker type="file" hidden (change)="choose($event)"

@@ -37,15 +37,18 @@ export const ASKS: Record<Dimension, string> = {
           <header>
             <strong>{{ s.grams | number: '1.2-2' }} g {{ s.product_name }}</strong>
             <span class="dim">{{ s.occurred_at | date: 'EEE d MMM · HH:mm' }}
-              @if (s.device) { · {{ s.device }} } @if (s.temperature) { · {{ s.temperature }} °C }</span>
+              @if (s.device) { · {{ deviceName(s.device) }} } @if (s.temperature) { · {{ s.temperature }} °C }</span>
           </header>
           <div class="dims">
-            @for (d of dimensions(); track d) {
+            @for (d of shown(s.hash); track d) {
               <span class="ask" [class.lead]="d === 'overall'">{{ asks[d] }}</span>
               <w-score-dots [label]="asks[d]" [value]="draft(s.hash)[d] ?? null" (valueChange)="set(s.hash, d, $event)"
                 [style.--tone]="d === 'overall' ? 'var(--w-accent)' : 'var(--w-primary)'" />
             }
           </div>
+          @if (shown(s.hash).length < dimensions().length) {
+            <button mat-button class="all" (click)="open(s.hash)"><mat-icon>expand_more</mat-icon>Pain, sleep, calm and more</button>
+          }
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>A line about it</mat-label>
             <input matInput [ngModel]="notes()[s.hash] ?? ''" (ngModelChange)="note(s.hash, $event)" />
@@ -72,6 +75,7 @@ export const ASKS: Record<Dimension, string> = {
     .dims { display: grid; grid-template-columns: auto 1fr; gap: 9px 16px; align-items: center; }
     .ask { font-size: 13px; color: var(--w-dim); }
     .ask.lead { color: var(--mat-sys-on-surface); font-weight: 600; }
+    .all { justify-self: start; margin: -8px 0 0 -8px; }
   `,
 })
 export class RateQueue {
@@ -87,6 +91,24 @@ export class RateQueue {
   /** Scores being given, per session, before they are saved. */
   private readonly drafts = signal<Record<string, Partial<Record<Dimension, number>>>>({});
   protected readonly notes = signal<Record<string, string>>({});
+
+  /** The cards opened to every dimension; the rest ask only overall. */
+  private readonly opened = signal<ReadonlySet<string>>(new Set());
+
+  /** What a card asks: overall, or every dimension once opened. */
+  protected shown(hash: string): Dimension[] {
+    const all = this.dimensions();
+    return this.opened().has(hash) ? all : all.filter((d) => d === 'overall');
+  }
+
+  protected open(hash: string): void {
+    this.opened.update((s) => new Set([...s, hash]));
+  }
+
+  /** A device by its name, not its slug. */
+  protected deviceName(slug: string): string {
+    return this.wits.devices.value().find((d) => d.slug === slug)?.name ?? slug;
+  }
 
   protected draft(hash: string): Partial<Record<Dimension, number>> {
     return this.drafts()[hash] ?? {};

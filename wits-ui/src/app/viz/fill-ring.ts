@@ -52,7 +52,7 @@ interface Segment {
       }
     </svg>
     <div class="centre">
-      <div class="eyebrow">left of this fill</div>
+      <div class="eyebrow">left of this prescription</div>
       <div class="big"><w-count [value]="remaining()" /><span class="unit">g</span></div>
       <div class="of dim">of {{ dispensed().toFixed(0) }} g dispensed</div>
     </div>

@@ -88,7 +88,7 @@ export function newestFirst(a: Read, b: Read): number {
               @if (r.error) {
                 <span class="bad">Not read — {{ r.error }}</span>
               } @else if (r.reading?.match; as m) {
-                <span>Fill {{ m.fill }}, picked up {{ m.start | date: 'd MMM y' }}</span>
+                <span>Prescription {{ m.fill }}, picked up {{ m.start | date: 'd MMM y' }}</span>
                 <span class="dim">
                   @if (m.days) { <span class="far">{{ m.days }} {{ m.days === 1 ? 'day' : 'days' }} apart</span> · } @else { the same day · }
                   {{ found(r) }} of {{ r.reading?.lines?.length }} {{ r.reading?.lines?.length === 1 ? 'strain' : 'strains' }}
@@ -96,7 +96,7 @@ export function newestFirst(a: Read, b: Read): number {
                   @if (twice().has(m.fill)) { · one of {{ twice().get(m.fill) }} invoices for it }
                 </span>
               } @else {
-                <span class="dim">No fill within two weeks holds its strains</span>
+                <span class="dim">No prescription within two weeks holds its strains</span>
               }
             </div>
             <div class="sum">
@@ -115,7 +115,7 @@ export function newestFirst(a: Read, b: Read): number {
           @if (far()) { · <span class="far">{{ far() }} dated some days off their pickup — check them</span> }</span>
         <button mat-button type="button" (click)="reads.set([])">Clear the list</button>
         <button mat-flat-button type="button" [disabled]="!ticked().length || busy()" (click)="price()">
-          Price {{ fills() }} {{ fills() === 1 ? 'fill' : 'fills' }} from {{ ticked().length }} {{ ticked().length === 1 ? 'invoice' : 'invoices' }}
+          Price {{ fills() }} {{ fills() === 1 ? 'prescription' : 'prescriptions' }} from {{ ticked().length }} {{ ticked().length === 1 ? 'invoice' : 'invoices' }}
         </button>
       </div>
     }
