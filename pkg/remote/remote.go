@@ -16,11 +16,13 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
+	"time"
 
 	"filippo.io/age"
 	"github.com/TheDonDope/wits/pkg/bundle"
@@ -362,26 +364,28 @@ func mergeCatalogs(r *repo.Repo, theirs bundle.Contents) (products, devices []st
 	return products, devices, err
 }
 
-// takeProducts adds or replaces each of the remote's products that this
-// catalog lacks or holds differently. A strain's own rating is the one given
-// last, wherever: a rating made here and not yet pushed outlives an older one
-// pulled over it.
+// takeProducts adds each of the remote's products this catalog lacks, and
+// merges those it holds differently field by field, the later change winning
+// (catalog.MergeProduct): a terpene profile written here and not yet pushed
+// outlives the remote's older copy. A strain's own rating is the one given
+// last, wherever.
 func takeProducts(c *catalog.Catalog, theirs bundle.Contents) []string {
 	var took []string
 	for _, p := range products(theirs) {
 		i := slices.IndexFunc(c.Products, func(q *catalog.Product) bool { return q.Slug == p.Slug })
-		switch {
-		case i < 0:
+		if i < 0 {
 			c.Products = append(c.Products, p)
-		case !sameProduct(c.Products[i], p):
-			p.Rating = newerRating(c.Products[i].Rating, p.Rating)
-			if sameProduct(c.Products[i], p) {
-				continue
-			}
-			c.Products[i] = p
-		default:
+			took = append(took, p.Slug)
 			continue
 		}
+		merged, changed := catalog.MergeProduct(c.Products[i], p)
+		if rating := newerRating(c.Products[i].Rating, p.Rating); !sameRating(rating, c.Products[i].Rating) {
+			merged.Rating, changed = rating, true
+		}
+		if !changed {
+			continue
+		}
+		c.Products[i] = merged
 		took = append(took, p.Slug)
 	}
 	return took
@@ -392,14 +396,16 @@ func takeDevices(c *catalog.Devices, theirs bundle.Contents) []string {
 	var took []string
 	for _, d := range devices(theirs) {
 		i := slices.IndexFunc(c.Devices, func(e *catalog.Device) bool { return e.Slug == d.Slug })
-		switch {
-		case i < 0:
+		if i < 0 {
 			c.Devices = append(c.Devices, d)
-		case !sameDevice(c.Devices[i], d):
-			c.Devices[i] = d
-		default:
+			took = append(took, d.Slug)
 			continue
 		}
+		merged, changed := catalog.MergeDevice(c.Devices[i], d)
+		if !changed {
+			continue
+		}
+		c.Devices[i] = merged
 		took = append(took, d.Slug)
 	}
 	return took
@@ -409,10 +415,11 @@ func takeDevices(c *catalog.Devices, theirs bundle.Contents) []string {
 // whatever zone it was read back in.
 func sameProduct(a, b *catalog.Product) bool {
 	x, y := *a, *b
-	if !x.AddedAt.Equal(y.AddedAt) || !slices.Equal(x.Terpenes, y.Terpenes) || !sameRating(x.Rating, y.Rating) {
+	if !x.AddedAt.Equal(y.AddedAt) || !slices.Equal(x.Terpenes, y.Terpenes) || !sameRating(x.Rating, y.Rating) ||
+		!sameChanged(x.Changed, y.Changed) {
 		return false
 	}
-	x.AddedAt, x.Terpenes, y.Terpenes, x.Rating, y.Rating = y.AddedAt, nil, nil, nil, nil
+	x.AddedAt, x.Terpenes, y.Terpenes, x.Rating, y.Rating, x.Changed, y.Changed = y.AddedAt, nil, nil, nil, nil, nil, nil
 	return fmt.Sprint(x) == fmt.Sprint(y)
 }
 
@@ -441,12 +448,18 @@ func newerRating(ours, theirs *catalog.StrainRating) *catalog.StrainRating {
 // sameDevice compares two devices field by field, their modes by value.
 func sameDevice(a, b *catalog.Device) bool {
 	x, y := *a, *b
-	if !slices.Equal(x.Modes, y.Modes) {
+	if !slices.Equal(x.Modes, y.Modes) || !sameChanged(x.Changed, y.Changed) {
 		return false
 	}
 	// Equal modes are made alike, an empty list and none the same.
-	x.Modes, y.Modes = nil, nil
+	x.Modes, y.Modes, x.Changed, y.Changed = nil, nil, nil, nil
 	return reflect.DeepEqual(x, y)
+}
+
+// sameChanged compares two sets of stamps by their moments, whatever zone
+// each was read back in.
+func sameChanged(a, b catalog.Changed) bool {
+	return maps.EqualFunc(a, b, func(x, y time.Time) bool { return x.Equal(y) })
 }
 
 // sameCatalogs reports whether two copies name the same products and devices

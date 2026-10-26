@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
@@ -287,16 +288,19 @@ func (r *Repo) writeConfig() error {
 // terminal meanwhile is gone, its entries left naming a slug nothing defines.
 // A change that returns an error writes nothing.
 func (r *Repo) UpdateProducts(change func(*catalog.Catalog) error) (*catalog.Catalog, error) {
-	return update(r.ProductsPath(), catalog.Load, change)
+	return update(r.ProductsPath(), catalog.Load, change, catalog.StampProducts)
 }
 
 // UpdateDevices is UpdateProducts for the device catalog.
 func (r *Repo) UpdateDevices(change func(*catalog.Devices) error) (*catalog.Devices, error) {
-	return update(r.DevicesPath(), catalog.LoadDevices, change)
+	return update(r.DevicesPath(), catalog.LoadDevices, change, catalog.StampDevices)
 }
 
-// update is the read-change-write of a catalog file, under its lock.
-func update[T interface{ Save(string) error }](path string, load func(string) (T, error), change func(T) error) (T, error) {
+// update is the read-change-write of a catalog file, under its lock. What the
+// change did is stamped field by field, against the file as it was read, so a
+// pull merges it rather than taking the other device's copy over it.
+func update[T interface{ Save(string) error }](path string, load func(string) (T, error), change func(T) error,
+	stamp func(before, after T, now time.Time)) (T, error) {
 	var zero T
 	release, err := journal.Lock(path)
 	if err != nil {
@@ -307,9 +311,14 @@ func update[T interface{ Save(string) error }](path string, load func(string) (T
 	if err != nil {
 		return zero, err
 	}
+	before, err := load(path)
+	if err != nil {
+		return zero, err
+	}
 	if err := change(fresh); err != nil {
 		return zero, err
 	}
+	stamp(before, fresh, time.Now())
 	if err := fresh.Save(path); err != nil {
 		return zero, err
 	}

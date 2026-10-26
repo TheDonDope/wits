@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -194,6 +196,21 @@ func writeProduct(out io.Writer, p *catalog.Product) {
 	if !p.AddedAt.IsZero() {
 		fmt.Fprintf(out, " a=%s", num(p.AddedAt.Unix()))
 	}
+	writeChanged(out, p.Changed)
+}
+
+// writeChanged writes when each field was last changed, "ch=name:unix,…" in
+// the names' order. Format 11 added it.
+func writeChanged(out io.Writer, c catalog.Changed) {
+	if len(c) == 0 {
+		return
+	}
+	names := slices.Sorted(maps.Keys(c))
+	parts := make([]string, len(names))
+	for i, n := range names {
+		parts[i] = n + ":" + num(c[n].Unix())
+	}
+	fmt.Fprintf(out, " ch=%s", escape(strings.Join(parts, ",")))
 }
 
 // writeRating writes a strain's own rating, when it has one: its scores,
@@ -262,6 +279,7 @@ func writeDevice(out io.Writer, d *catalog.Device) {
 	if d.Retired {
 		fmt.Fprint(out, " rt=1")
 	}
+	writeChanged(out, d.Changed)
 }
 
 // trimFloat renders a percentage without trailing zeroes.

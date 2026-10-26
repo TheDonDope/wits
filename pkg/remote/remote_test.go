@@ -148,13 +148,15 @@ func TestPushAndPull(t *testing.T) {
 		assert.Equal(t, 1.5, pulled.Clashes[0].Event.Grams)
 	})
 
-	t.Run("TakesTheRemotesProduct", func(t *testing.T) {
+	t.Run("TakesTheRemotesLaterChange", func(t *testing.T) {
 		deck, phone := pair(t)
 		record(t, deck, buy(2, 0))
 		_, err := Push(deck)
 		require.NoError(t, err)
+		// Named on the phone before the deck's copy was: the deck's is later.
 		_, err = phone.UpdateProducts(func(c *catalog.Catalog) error {
-			c.Products = []*catalog.Product{{Slug: "wcake", Name: "Wedding Cake", AddedAt: july}}
+			c.Products = []*catalog.Product{{Slug: "wcake", Name: "Wedding Cake", AddedAt: july,
+				Changed: catalog.Changed{"name": july}}}
 			return nil
 		})
 		require.NoError(t, err)
@@ -162,10 +164,35 @@ func TestPushAndPull(t *testing.T) {
 		pulled, err := Pull(phone)
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{"wcake"}, pulled.Products, "Should say which product it replaced")
+		assert.Equal(t, []string{"wcake"}, pulled.Products, "Should say which product it changed")
 		c, err := catalog.Load(phone.ProductsPath())
 		require.NoError(t, err)
-		assert.Equal(t, "Enua 22/1 Wedding Cake", c.Products[0].Name, "Should let the remote's stand")
+		assert.Equal(t, "Enua 22/1 Wedding Cake", c.Products[0].Name, "Should take the remote's later name")
+	})
+
+	t.Run("KeepsWhatWasChangedHereSince", func(t *testing.T) {
+		deck, phone := pair(t)
+		record(t, deck, buy(2, 0))
+		_, err := Push(deck)
+		require.NoError(t, err)
+		_, err = Pull(phone)
+		require.NoError(t, err)
+		// Terpenes written down on the phone, and not pushed: a later change than the remote's.
+		later := time.Now().Add(time.Hour)
+		_, err = phone.UpdateProducts(func(c *catalog.Catalog) error {
+			c.Products[0].Terpenes = []string{"Myrcene", "Limonene"}
+			c.Products[0].Changed["terpenes"] = later
+			return nil
+		})
+		require.NoError(t, err)
+
+		_, err = Pull(phone)
+
+		require.NoError(t, err)
+		c, err := catalog.Load(phone.ProductsPath())
+		require.NoError(t, err)
+		assert.Equal(t, []string{"Myrcene", "Limonene"}, c.Products[0].Terpenes, "Should keep what was written here since")
+		assert.Equal(t, "Enua 22/1 Wedding Cake", c.Products[0].Name, "and the rest as it was")
 	})
 
 	t.Run("NothingToPullIsNotAnError", func(t *testing.T) {

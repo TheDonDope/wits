@@ -40,6 +40,9 @@ type Product struct {
 	// session; nil until it is rated.
 	Rating  *StrainRating `yaml:"rating,omitempty"`
 	AddedAt time.Time     `yaml:"added_at"`
+	// Changed is when each field was last changed, for merging two devices'
+	// catalogs field by field (changed.go).
+	Changed Changed `yaml:"changed,omitempty"`
 }
 
 // String returns the display name of the product.
