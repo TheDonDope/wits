@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "wits in a window of its own: the interface wits-server serves, without a browser",
+  "type": "module",
   "main": "main.js",
   "license": "Unlicense",
   "devDependencies": {

@@ -11,10 +11,9 @@
 //                own libraries first: a browser a link opens gets it back
 //   WITS_SMOKE   set, and the window loads the page, prints its title and
 //                quits: what appimage.sh check runs
-'use strict';
+import { spawn } from 'node:child_process';
 
-const { spawn } = require('node:child_process');
-const { app, BrowserWindow, shell } = require('electron');
+import { app, BrowserWindow, shell } from 'electron';
 
 const url = process.env.WITS_URL || 'http://127.0.0.1:7341';
 const origin = new URL(url).origin;
@@ -41,12 +40,11 @@ function away(link) {
     void shell.openExternal(link);
     return;
   }
-  const env = { ...process.env, LD_LIBRARY_PATH: process.env.WITS_SYSTEM_LIBRARY_PATH };
-  for (const own of ['WITS_SYSTEM_LIBRARY_PATH', 'WITS_URL', 'WITS_ICON', 'WITS_SMOKE']) {
-    delete env[own];
-  }
-  if (!env.LD_LIBRARY_PATH) {
-    delete env.LD_LIBRARY_PATH;
+  // The window's own settings stay with it, and the image's libraries with them.
+  const own = new Set(['WITS_SYSTEM_LIBRARY_PATH', 'WITS_URL', 'WITS_ICON', 'WITS_SMOKE', 'LD_LIBRARY_PATH']);
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !own.has(key)));
+  if (process.env.WITS_SYSTEM_LIBRARY_PATH) {
+    env.LD_LIBRARY_PATH = process.env.WITS_SYSTEM_LIBRARY_PATH;
   }
   const browser = spawn('xdg-open', [link], { env, detached: true, stdio: 'ignore' });
   browser.on('error', () => void shell.openExternal(link));
