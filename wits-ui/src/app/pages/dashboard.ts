@@ -11,11 +11,13 @@ import { FillRing } from '../viz/fill-ring';
 import { GlassJar } from '../viz/glass-jar';
 import { Heatmap } from '../viz/heatmap';
 import { ProjectionChart } from '../viz/projection-chart';
+import { TodayCard } from './today';
 
 @Component({
   selector: 'w-dashboard',
   imports: [
     CountUp,
+    TodayCard,
     DatePipe,
     DecimalPipe,
     FillRing,
@@ -86,6 +88,8 @@ import { ProjectionChart } from '../viz/projection-chart';
             </div>
           }
         </section>
+
+        <w-today />
 
         <section class="jars glass">
           <header>

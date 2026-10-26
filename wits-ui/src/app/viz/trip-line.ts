@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** The colours a trip's jars take in turn: the theme's, so every theme speaks them. */
-export const TRIP_TONES = ['var(--w-stash)', 'var(--w-storage)', 'var(--w-sesh)', 'var(--w-avb)', 'var(--w-accent)', 'var(--w-primary)'];
+import { tone } from './tones';
+
 
 export interface TripLeg {
   name: string;
@@ -62,7 +62,7 @@ export class TripLine {
     let at = 0;
     return this.legs().map((l, i) => {
       const w = (l.days / this.span()) * 100;
-      const out = { name: l.name, at, w, tone: TRIP_TONES[i % TRIP_TONES.length],
+      const out = { name: l.name, at, w, tone: tone(i),
         title: `${l.name}: ${l.days.toFixed(1)} days` };
       at += w;
       return out;

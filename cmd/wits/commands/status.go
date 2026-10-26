@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/today"
 	"github.com/TheDonDope/wits/pkg/workspace"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,7 @@ var Status = &cobra.Command{
 		if plan, ok := ledger.PlanRefill(s.Cycle(), s.OpenedAt, s.Repo.Config.Lead()); ok {
 			fmt.Fprintln(cmd.OutOrStdout(), orderLine(plan, s.OpenedAt))
 		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Today: %s.\n", todayLine(today.Of(s.Workspace, s.OpenedAt)))
 		return nil
 	},
 }

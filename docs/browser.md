@@ -55,6 +55,17 @@ Then the shelf's supply as a curve to the day it runs out, with the day to
 order the next prescription by, and the last twenty weeks of grinding and
 sessions as calendars.
 
+Under the shelf's three accounts stands **Today**, as `wits today` says it:
+the THC in what went through a device so far, in milligrams — grams × the
+strain's per cent × 10 — with the CBD beside it and a bar against a usual
+day of the last 30. Then two rings, the THC by strain and the grams by
+device, a clock of the day with each session a dot at its hour, sized by its
+THC, and the sessions one a row: when, which strain, which device and how
+hot, the grams, the THC and CBD, its share of the day and its rating. A
+strain with no THC written down is counted and said, not guessed at. It is
+what was in the material, not what reached you; the page says so. With no
+session yet, it says what a usual day is, and offers to record one.
+
 ## One jar in full
 
 ![One jar in full, its terpenes looked up](../assets/wits-ui-jar.png)
