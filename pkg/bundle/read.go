@@ -541,6 +541,8 @@ func readProduct(text string, line int) (string, *catalog.Product, error) {
 			if at, err = parseNum(value); err == nil {
 				p.AddedAt = time.Unix(at, 0)
 			}
+		case "ch":
+			p.Changed, err = readChanged(unescape(value))
 		default:
 			return "", nil, errorf(line, "unknown product attribute %q", key)
 		}
@@ -576,6 +578,23 @@ func readStrainRating(p *catalog.Product, key, value string) error {
 	at, err := parseNum(f[4])
 	p.Rating.At = time.Unix(at, 0)
 	return err
+}
+
+// readChanged reads when each field was last changed: "name:unix,…".
+func readChanged(text string) (catalog.Changed, error) {
+	out := catalog.Changed{}
+	for _, part := range strings.Split(text, ",") {
+		name, at, ok := strings.Cut(part, ":")
+		if !ok {
+			return nil, fmt.Errorf("unreadable stamp %q", part)
+		}
+		n, err := parseNum(at)
+		if err != nil {
+			return nil, fmt.Errorf("unreadable stamp %q", part)
+		}
+		out[name] = time.Unix(n, 0)
+	}
+	return out, nil
 }
 
 // readDevice decodes a device header entry.
@@ -658,6 +677,8 @@ func deviceAttr(d *catalog.Device, key, value string) error {
 		d.Water = value == "1"
 	case "rt":
 		d.Retired = value == "1"
+	case "ch":
+		d.Changed, err = readChanged(unescape(value))
 	default:
 		return fmt.Errorf("unknown device attribute %q", key)
 	}

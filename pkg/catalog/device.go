@@ -94,6 +94,8 @@ type Device struct {
 	Notes    string  `yaml:"notes,omitempty"`
 	// Retired is a device no longer used: kept, since sessions name it.
 	Retired bool `yaml:"retired,omitempty"`
+	// Changed is when each field was last changed (changed.go).
+	Changed Changed `yaml:"changed,omitempty"`
 }
 
 // Mode is one way a device is run. A mode may heat its own way — a vaporizer
