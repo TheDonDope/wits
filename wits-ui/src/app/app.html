@@ -33,7 +33,7 @@
         <i></i><span class="word">{{ o.chain_ok ? 'verified' : 'changed' }}</span>
       </span>
     }
-    <button mat-icon-button class="aside" [matMenuTriggerFor]="asideMenu" matTooltip="Repository and more" aria-label="Repository and more">
+    <button mat-icon-button class="aside" [matMenuTriggerFor]="asideMenu" matTooltip="User guide, repository and more" aria-label="User guide, repository and more">
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #asideMenu="matMenu" xPosition="before">
@@ -78,6 +78,7 @@
   <section class="sheet glass" role="dialog" aria-label="Every key">
     <header>
       <span class="eyebrow">keys</span>
+      <a mat-button routerLink="/guide" (click)="keys.showAll.set(false)"><mat-icon>menu_book</mat-icon>User guide</a>
       <button mat-icon-button (click)="keys.showAll.set(false)" aria-label="Close"><mat-icon>close</mat-icon></button>
     </header>
     <div class="cols">

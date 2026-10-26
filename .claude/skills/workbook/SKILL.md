@@ -52,7 +52,7 @@ data ends (`figures` prints the last entry), and stop. Do not invent work.
    ```
 
    As of v0.28.0 that is `pkg/importer/integration_test.go` (sheets, products,
-   fills, grinds, grams, entries), `README.md` (grams ground, the bundle table),
+   fills, grinds, grams, entries), `docs/terminal.md` (grams ground, the bundle table),
    `ROADMAP.md` (the bundle figures, the cached-fold entry count) and the
    comment in `wits-bundle.tape`. The bundle figures come from `figures`:
    journal, bundle, and `wits bundle --gzip`, with ratios rounded to whole ×.

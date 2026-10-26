@@ -16,4 +16,4 @@ text). If it changes what a demo tape shows, re-record it with
 
 - [ ] Tests cover the change
 - [ ] `./preflight.sh` passes
-- [ ] README.md and ROADMAP.md still tell the truth
+- [ ] README.md, docs/, the user guide and ROADMAP.md still tell the truth

@@ -18,6 +18,14 @@
       }
     },
     {
+      "name": "guide",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": ["/guide/**"]
+      }
+    },
+    {
       "name": "ocr",
       "installMode": "lazy",
       "updateMode": "lazy",

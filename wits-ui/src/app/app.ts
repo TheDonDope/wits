@@ -22,6 +22,8 @@ import { RECORD_TABS, openRecord } from './pages/record';
 
 /** The pages off the header's menu: rarely wanted, so no tab of their own. */
 const ASIDE = [
+  // Every page explained, and the commands that do the same in a terminal.
+  { path: '/guide', label: 'User guide', icon: 'menu_book' },
   // Both open whichever repository is wanted, and import into it; the
   // phone keeps its own copies, and syncs them by hand.
   { path: '/repository', label: 'Repository', icon: 'folder_open' },

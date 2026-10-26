@@ -36,6 +36,8 @@ export const routes: Routes = [
   },
   // Which repository, and importing a workbook: the computer's folders, or the phone's own. Off the header's menu.
   { path: 'repository', loadComponent: () => import('./pages/repository').then((m) => m.Repository), title: 'wits · repository' },
+  // The user guide: every page, with pictures, and the same done in a terminal. Off the header's menu.
+  { path: 'guide', loadComponent: () => import('./pages/guide').then((m) => m.Guide), title: 'wits · user guide' },
   // The phone keeps its own copy and syncs it by hand; the server has no need.
   ...(ENGINE ? [{ path: 'sync', loadComponent: () => import('./pages/sync').then((m) => m.Sync), title: 'wits · sync' }] : []),
   // Where the pages were before the tabs were bundled, for a bookmark.
