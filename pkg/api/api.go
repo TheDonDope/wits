@@ -89,6 +89,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/overview", s.read(overviewOf))
 	mux.HandleFunc("GET /api/journal", s.journal)
+	mux.HandleFunc("GET /api/changes", s.changes)
 	mux.HandleFunc("GET /api/jars", s.read(jarsOf))
 	mux.HandleFunc("GET /api/jars/{slug}", s.jarAt)
 	mux.HandleFunc("GET /api/jars/{slug}/research", s.research)
@@ -1017,6 +1018,15 @@ func (s *Server) journal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
+	if q.Has("after") {
+		since, err := journalAfter(ws, q.Get("after"))
+		if err != nil {
+			fail(w, http.StatusInternalServerError, err)
+			return
+		}
+		reply(w, http.StatusOK, since)
+		return
+	}
 	limit := 200
 	if _, err := fmt.Sscan(q.Get("limit"), &limit); q.Get("limit") != "" && (err != nil || limit < 1) {
 		fail(w, http.StatusBadRequest, errors.New("limit must be a positive number"))

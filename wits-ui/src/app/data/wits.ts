@@ -1,6 +1,13 @@
 import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/http';
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, Injector, Signal, effect, inject, runInInjectionContext, signal, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+
+import { onElsewhere } from './engine';
+import { Entries, JournalView } from './entries';
+import { ENGINE } from './mode';
+
+/** How long after this page writes the server's word of a change is taken for this page's own write. */
+const CHANGE_ECHO = 1500;
 
 
 import {
@@ -10,63 +17,131 @@ import {
 /**
  * The repository, as wits-server answers for it.
  *
- * Every view reads through a resource keyed on `version`: a write here bumps
- * it, and so does a poll that finds the journal grown — an entry made with the
- * command line in another terminal shows up within a few seconds, the way the
- * terminal interface follows it.
+ * Every view reads through a resource keyed on `version`, made when a page
+ * first reads it — a page that never shows the costs never asks for them. A
+ * write here bumps the version, and so does the server saying the repository
+ * changed (`/api/changes`, a stream): an entry made with the command line or
+ * the terminal interface shows up within a second. On the phone the engine
+ * runs in the page, and says so itself when another tab has recorded. The
+ * journal is kept here and read from where it was left (entries.ts).
  */
 @Injectable({ providedIn: 'root' })
 export class Wits {
   private readonly http = inject(HttpClient);
+  private readonly injector = inject(Injector);
   readonly version = signal(0);
+  /** The views made so far, by name. */
+  private readonly made = new Map<string, unknown>();
+  private entries?: Entries;
+  /** When this page last wrote: the change it streams back is its own, already read. */
+  private wrote = 0;
 
-  readonly overview = httpResource<Overview>(() => `/api/overview?v=${this.version()}`);
-  readonly jars = httpResource<Jar[]>(() => `/api/jars?v=${this.version()}`, { defaultValue: [] });
-  readonly cycles = httpResource<Cycle[]>(() => `/api/cycles?v=${this.version()}`, { defaultValue: [] });
-  readonly devices = httpResource<Device[]>(() => `/api/devices?v=${this.version()}`, { defaultValue: [] });
-  readonly days = httpResource<Day[]>(() => `/api/days?v=${this.version()}`, { defaultValue: [] });
-  readonly effects = httpResource<EffectLog>(() => `/api/effects?v=${this.version()}`);
-  readonly avb = httpResource<Avb>(() => `/api/avb?v=${this.version()}`);
-  readonly costs = httpResource<Costs>(() => `/api/costs?v=${this.version()}`);
+  get overview() {
+    return this.view('overview', () => httpResource<Overview>(() => `/api/overview?v=${String(this.version())}`));
+  }
+  get jars() {
+    return this.view('jars', () => httpResource<Jar[]>(() => `/api/jars?v=${String(this.version())}`, { defaultValue: [] }));
+  }
+  get cycles() {
+    return this.view('cycles', () => httpResource<Cycle[]>(() => `/api/cycles?v=${String(this.version())}`, { defaultValue: [] }));
+  }
+  get devices() {
+    return this.view('devices', () => httpResource<Device[]>(() => `/api/devices?v=${String(this.version())}`, { defaultValue: [] }));
+  }
+  get days() {
+    return this.view('days', () => httpResource<Day[]>(() => `/api/days?v=${String(this.version())}`, { defaultValue: [] }));
+  }
+  get effects() {
+    return this.view('effects', () => httpResource<EffectLog>(() => `/api/effects?v=${String(this.version())}`));
+  }
+  get avb() {
+    return this.view('avb', () => httpResource<Avb>(() => `/api/avb?v=${String(this.version())}`));
+  }
+  get costs() {
+    return this.view('costs', () => httpResource<Costs>(() => `/api/costs?v=${String(this.version())}`));
+  }
   /** The purchases without a price whose jars are still in storage: what is still to be priced. */
-  readonly toPrice = httpResource<UnpricedEntry[]>(() => `/api/unpriced?v=${this.version()}`, { defaultValue: [] });
+  get toPrice() {
+    return this.view('toPrice', () => httpResource<UnpricedEntry[]>(() => `/api/unpriced?v=${String(this.version())}`, { defaultValue: [] }));
+  }
   /** The repository open: the server's, or the phone's, on its own file system. */
-  readonly place = httpResource<Place>(() => `/api/repo?v=${this.version()}`);
-  readonly strains = httpResource<Strain[]>(() => `/api/strains?v=${this.version()}`, { defaultValue: [] });
+  get place() {
+    return this.view('place', () => httpResource<Place>(() => `/api/repo?v=${String(this.version())}`));
+  }
+  get strains() {
+    return this.view('strains', () => httpResource<Strain[]>(() => `/api/strains?v=${String(this.version())}`, { defaultValue: [] }));
+  }
   /** Every terpene the shelf names, with its taste and what its products' sessions were rated. */
-  readonly shelfTerpenes = httpResource<Terpene[]>(() => `/api/terpenes?v=${this.version()}`, { defaultValue: [] });
-  readonly journal = httpResource<{ entries: Entry[]; total: number }>(
-    () => `/api/journal?limit=100000&v=${this.version()}`,
-    { defaultValue: { entries: [], total: 0 } },
-  );
+  get shelfTerpenes() {
+    return this.view('terpenes', () => httpResource<Terpene[]>(() => `/api/terpenes?v=${String(this.version())}`, { defaultValue: [] }));
+  }
+  /** The entries that stand, newest first. */
+  get journal(): { value: Signal<JournalView> } {
+    return { value: this.kept().standing };
+  }
   /** Every entry, corrections included — what a replay folds. Newest first. */
-  readonly everything = httpResource<{ entries: Entry[]; total: number }>(
-    () => `/api/journal?limit=100000&all=1&v=${this.version()}`,
-    { defaultValue: { entries: [], total: 0 } },
-  );
-
-  private seen = -1;
-
-  constructor() {
-    const timer = setInterval(() => void this.poll(), 4000);
-    inject(DestroyRef).onDestroy(() => {
-      clearInterval(timer);
-    });
+  get everything(): { value: Signal<JournalView> } {
+    return { value: this.kept().everything };
   }
 
-  /** Reloads every view when the journal has grown or shrunk elsewhere. */
-  private async poll(): Promise<void> {
-    try {
-      const { total } = await firstValueFrom(
-        this.http.get<{ total: number }>('/api/journal?limit=1'),
-      );
-      if (this.seen >= 0 && total !== this.seen) {
-        this.version.update((v) => v + 1);
-      }
-      this.seen = total;
-    } catch {
-      // The server is away; the next poll will find it again.
+  constructor() {
+    const stop = ENGINE ? onElsewhere(() => { this.changed(); }) : this.listen();
+    inject(DestroyRef).onDestroy(stop);
+  }
+
+  /**
+   * A view, made the first time a page reads it, in this service's injection
+   * context and outside whatever reactive context first read it — a template,
+   * a computed — which may not make one.
+   */
+  private view<T>(name: string, make: () => T): T {
+    let v = this.made.get(name) as T | undefined;
+    if (v === undefined) {
+      v = untracked(() => runInInjectionContext(this.injector, make));
+      this.made.set(name, v);
     }
+    return v;
+  }
+
+  /** The journal, read the first time a page asks for it, and again from where it was left at every change. */
+  private kept(): Entries {
+    if (!this.entries) {
+      const entries = new Entries(this.http);
+      this.entries = entries;
+      untracked(() => {
+        runInInjectionContext(this.injector, () => {
+          effect(() => {
+            this.version();
+            void entries.refresh();
+          });
+        });
+      });
+    }
+    return this.entries;
+  }
+
+  /** Listens to the server for changes, and returns the way to stop. */
+  private listen(): () => void {
+    if (typeof EventSource === 'undefined') {
+      return () => undefined;
+    }
+    const stream = new EventSource('/api/changes');
+    let first = true;
+    stream.onmessage = () => {
+      // The first event says the stream is open; every one after it is a change.
+      if (!first && Date.now() - this.wrote > CHANGE_ECHO) {
+        this.changed();
+      }
+      first = false;
+    };
+    return () => {
+      stream.close();
+    };
+  }
+
+  /** Reads every view again. */
+  private changed(): void {
+    this.version.update((v) => v + 1);
   }
 
   grind(body: { product: string; grams: number; date?: string }) {
@@ -232,9 +307,9 @@ export class Wits {
     return place;
   }
 
-  /** Every view reads again, and the poll starts counting afresh. */
+  /** Every view reads again: another repository is open. The journal kept here starts again by itself, its head not in the new one's. */
   private refresh(): void {
-    this.seen = -1;
+    this.wrote = Date.now();
     this.version.update((v) => v + 1);
   }
 
@@ -257,6 +332,7 @@ export class Wits {
   /** Writes an entry and refreshes everything; rejects with the server's words. */
   private async write<T = Written>(what: string, body: object): Promise<T> {
     const out = await this.post<T>(what, body);
+    this.wrote = Date.now();
     this.version.update((v) => v + 1);
     return out;
   }
