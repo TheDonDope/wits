@@ -5,6 +5,9 @@ import { Wits } from './wits';
 /** How long after a session a rating is still asked for: past it, nobody remembers. */
 export const RATE_DAYS = 7;
 
+/** How lately a jar was used for what is ground of it to be offered for weighing. */
+export const WEIGH_GROUND_DAYS = 30;
+
 /** How long after a strain was last used it is still asked to be rated as a whole. */
 export const RATE_STRAIN_DAYS = 90;
 
@@ -29,8 +32,17 @@ export class Todo {
   readonly stashes = computed(() => this.wits.jars.value().filter((j) => j.storage <= 0 && j.stash > 0));
   /** Devices whose sessions since they were last emptied hold AVB not yet weighed out. */
   readonly avb = computed(() => this.wits.avb.value()?.waiting ?? []);
-  /** Jars still sealed, to weigh against the scale now and then. Offered, not counted. */
-  readonly sealed = computed(() => this.wits.jars.value().filter((j) => j.storage > 0));
+  /**
+   * Jars to weigh against the scale now and then: those still sealed, and
+   * what is ground of any used in the last month — what is ground drifts as
+   * surely as what is sealed, but a stash untouched for longer is a leftover,
+   * cleared above, not weighed. Offered, not counted.
+   */
+  readonly weighable = computed(() => {
+    const since = Date.now() - WEIGH_GROUND_DAYS * 86_400_000;
+    const lately = (j: { last_used?: string }) => j.last_used !== undefined && new Date(j.last_used).getTime() >= since;
+    return this.wits.jars.value().filter((j) => j.storage > 0 || (j.stash > 0 && lately(j)));
+  });
 
   /**
    * Every jar ever dispensed with no terpene profile written down, those

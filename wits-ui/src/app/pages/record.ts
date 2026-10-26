@@ -1,4 +1,5 @@
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,7 +14,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { DeviceMode, Dimension, Entry, Written } from '../data/models';
+import { DeviceMode, Dimension, Entry, ForgottenPlan, Written } from '../data/models';
 import { heats, needsHeat, sessionWith } from '../data/devices';
 import { Wits } from '../data/wits';
 import { ScoreDots } from '../viz/score-dots';
@@ -25,6 +26,8 @@ export interface RecordData {
   tab?: number;
   product?: string;
   device?: string;
+  /** The account a weighing starts on: storage, stash or avb. */
+  account?: string;
 }
 
 /** The record dialog's tabs, in order, as a link names them. */
@@ -51,6 +54,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
   selector: 'w-record',
   providers: [provideNativeDateAdapter()],
   imports: [
+    DatePipe,
     DecimalPipe,
     FillForm,
     FormsModule,
@@ -212,7 +216,37 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
               <mat-label>On the scale</mat-label>
               <input matInput type="number" min="0" step="0.01" [ngModel]="grams()" (ngModelChange)="grams.set($event)" />
               <span matTextSuffix>g</span>
+              @if (product()) {
+                <mat-hint>The ledger says {{ expected() | number: '1.2-2' }} g</mat-hint>
+              }
             </mat-form-field>
+            @if (weighed()) {
+              <p class="said weighed"><mat-icon>check_circle</mat-icon>{{ weighed() }}</p>
+            }
+            @if (why()) {
+              <p class="dim why"><mat-icon>info</mat-icon>{{ why() }}</p>
+            }
+            @if (plan(); as p) {
+              <div class="forgot" role="radiogroup" [attr.aria-label]="(p.short | number: '1.2-2') + ' g less than the ledger says'">
+                <span class="eyebrow">{{ p.short | number: '1.2-2' }} g less than the ledger says</span>
+                <button type="button" role="radio" class="pick" [class.on]="!lost()" [attr.aria-checked]="!lost()" (click)="lost.set(false)">
+                  <mat-icon>{{ p.entries[0].type === 'grind' ? 'grain' : 'air' }}</mat-icon>
+                  @if (p.entries[0].type === 'grind') {
+                    <strong>I forgot to record a grind</strong>
+                    <span class="dim">A grind of {{ p.short | number: '1.2-2' }} g on {{ p.entries[0].occurred_at | date: 'EEE d MMM' }},
+                      just after the jar's last entry. Weigh what is ground after.</span>
+                  } @else {
+                    <strong>I forgot to record {{ p.entries.length === 1 ? 'a session' : 'sessions' }}</strong>
+                    <span class="dim">{{ sessionsSaid(p) }}</span>
+                  }
+                </button>
+                <button type="button" role="radio" class="pick" [class.on]="lost()" [attr.aria-checked]="lost()" (click)="lost.set(true)">
+                  <mat-icon>delete_outline</mat-icon>
+                  <strong>It went missing</strong>
+                  <span class="dim">Spilled, misread, gone: the {{ p.short | number: '1.2-2' }} g are recorded as lost.</span>
+                </button>
+              </div>
+            }
           </div>
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>recycling</mat-icon><span>AVB</span></span></ng-template>
@@ -303,6 +337,18 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
     .ask { font-size: 13px; color: var(--w-dim); }
     .ask.lead { color: var(--mat-sys-on-surface); font-weight: 600; }
     .said { margin-top: 0; }
+    .weighed { display: flex; gap: 8px; align-items: center; margin: 4px 0 8px; color: var(--w-good); font-size: 13px; }
+    .why { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; margin: 4px 0 8px; }
+    .why mat-icon { font-size: 18px; width: 18px; height: 18px; flex: none; }
+    .forgot { display: grid; gap: 8px; margin: 14px 0 4px; }
+    .pick { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: center; text-align: left;
+      padding: 12px 14px; border-radius: 12px; border: 1px solid var(--w-glass-edge); background: none; color: inherit;
+      font: inherit; cursor: pointer; }
+    .pick mat-icon { grid-row: 1 / 3; color: var(--w-dim); }
+    .pick .dim { font-size: 12px; line-height: 1.45; }
+    .pick:hover { border-color: var(--w-primary); }
+    .pick.on { border-color: var(--w-primary); background: color-mix(in srgb, var(--w-primary) 12%, transparent); }
+    .pick.on mat-icon { color: var(--w-primary); }
     .more { margin-left: -8px; }
     /* A phone: the five tabs side by side, each its icon over its name, none paged out of sight. */
     @include bp.phone {
@@ -323,7 +369,11 @@ export class RecordDialog {
   protected readonly device = signal(this.data?.device ?? '');
   protected readonly temp = signal(185);
   protected readonly note = signal('');
-  protected readonly account = signal('storage');
+  protected readonly account = signal(this.data?.account ?? 'storage');
+  /** Whether a weighing short of the ledger is recorded as grams lost, not something forgotten. */
+  protected readonly lost = signal(false);
+  /** What the last weighing in this dialog recorded, when it stays open for the next. */
+  protected readonly weighed = signal('');
   protected readonly avbMode = signal<'collect' | 'use'>('collect');
   protected readonly error = signal('');
   protected readonly busy = signal(false);
@@ -345,6 +395,33 @@ export class RecordDialog {
   });
   /** The Fill tab's form, which says what a fill records. */
   private readonly fill = viewChild(FillForm);
+
+  /** What the ledger says the jar picked holds in the account on the scale. */
+  protected readonly expected = computed(() => {
+    const j = this.wits.jars.value().find((x) => x.slug === this.product());
+    const a = this.account();
+    return !j ? 0 : a === 'storage' ? j.storage : a === 'stash' ? j.stash : j.avb;
+  });
+  /** What a reading short of the ledger would be put down to, asked of the server as it is typed. */
+  private readonly forgotten = httpResource<ForgottenPlan>(() => {
+    const g = this.grams();
+    if (this.tab() !== 3 || !this.product() || this.account() === 'avb' || g === null || g < 0 || g >= this.expected()) {
+      return undefined;
+    }
+    const q = new URLSearchParams({ product: this.product(), account: this.account(), weighed: String(g) });
+    return `/api/weigh/forgotten?${q.toString()}&v=${this.wits.version()}`;
+  });
+  protected readonly plan = computed(() => {
+    const p = this.forgotten.hasValue() ? this.forgotten.value() : undefined;
+    const g = this.grams();
+    // A plan for a reading since changed back to no shortfall is not shown.
+    return p?.entries.length && g !== null && g < this.expected() ? p : null;
+  });
+  /** Why a reading short of the ledger is recorded as lost, when it cannot be anything forgotten. */
+  protected readonly why = computed(() => {
+    const p = this.forgotten.hasValue() ? this.forgotten.value() : undefined;
+    return !this.plan() && p?.why ? p.why : '';
+  });
 
   protected readonly sealed = computed(() => this.wits.jars.value().filter((j) => j.storage > 0));
   protected readonly stashed = computed(() => this.wits.jars.value().filter((j) => j.stash > 0));
@@ -471,10 +548,47 @@ export class RecordDialog {
     return parts.length ? ` · ${parts.join(', ')}` : '';
   }
 
+  /** Forgotten sessions in a line: how many, of about what, over which days, with what. */
+  protected sessionsSaid(p: ForgottenPlan): string {
+    const entries = p.entries;
+    const total = entries.reduce((s, e) => s + Math.round(e.grams * 100), 0) / 100;
+    const day = (e: Entry) => new Date(e.occurred_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const first = entries[0];
+    const last = entries[entries.length - 1];
+    const what = entries.length === 1 ? `A session of ${total.toFixed(2)} g` :
+      `${String(entries.length)} sessions of about ${(total / entries.length).toFixed(2)} g`;
+    const when = day(first) === day(last) ? day(first) : `${day(first)} – ${day(last)}`;
+    const how = first.device ? `, with the ${this.deviceName(first.device)}` : '';
+    const sized = { sessions: 'the size your sessions usually are', load: 'a load of your gear', day: 'one a day, nothing saying how big a session is' };
+    return `${what}, ${when}${how} — ${sized[p.sized_by ?? 'day']}.`;
+  }
+
+  /**
+   * Records a weighing short of the ledger as what was forgotten. After a
+   * forgotten grind the dialog stays, on what is ground, to be weighed next.
+   */
+  private async weighForgotten(): Promise<boolean> {
+    const out = await this.wits.weighForgotten({ product: this.product(), account: this.account(), weighed: this.grams() ?? 0 });
+    if (this.account() !== 'storage') {
+      this.snack.open(out.message, undefined, { duration: 3500 });
+      return true;
+    }
+    this.weighed.set(`Recorded ${out.message}. Now weigh what is ground of it.`);
+    this.account.set('stash');
+    this.grams.set(null);
+    return false;
+  }
+
   protected async save(): Promise<void> {
     this.error.set('');
     this.busy.set(true);
     try {
+      if (this.tab() === 3 && this.plan() && !this.lost()) {
+        if (await this.weighForgotten()) {
+          this.ref.close();
+        }
+        return;
+      }
       const w = await this.send();
       if (this.tab() === 1 && 'entry' in w) {
         // A session is asked about at once, while it is fresh; Later closes.

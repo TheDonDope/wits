@@ -880,7 +880,11 @@ things a session is taken with (`catalog.Device`):
 - how it's used: session, on demand or both;
 - for glass, whether it holds water;
 - its **modes**, how long it stays on unused (`AutoOff`), and what it cost,
-  where and when it was bought, a link, notes, and whether it is retired.
+  where and when it was bought, a link, notes, and whether it is retired;
+- for a vaporizer or glass, what **a load** holds (`Load`, grams; `load:`
+  in the catalog, `ld=` in centigrams in a bundle from format 10): 0.15 g on
+  the Venty, Mighty+, Frolic, Tornado, Anvil and Tempest presets, 0.1 g on
+  the Simrell and the Hydro, as the maintainer loads them.
 
 A mode (`catalog.Mode`) has a name and may heat its own way, have a usual
 temperature, and run a session timer. The Limelight Herb Frolic's On demand is
@@ -1567,9 +1571,10 @@ jars take are one list, `viz/tones`.
 ### Ready for anyone — the first launch, a short path, plain words, less at once
 
 The UI review of 2026-10-26 found wits made for an expert. **The first
-launch**: an empty repository opens on a welcome with three ways in (the
-first prescription, a spreadsheet, the demo, the last through `data/demo.ts`
-shared with the menu); calendars with nothing to draw are left out; Record
+launch**: an empty repository opens on a welcome with four ways in (the
+first prescription, your gear — each device added shown on its card — a
+spreadsheet, the demo, the last through `data/demo.ts` shared with the
+menu); calendars with nothing to draw are left out; Record
 opens on Prescription while the shelf is empty. **A session in two taps**:
 the form starts from the last session (strain while ground, device, mode,
 heater, temperature), the amounts used lately are chips, *When* says now,
@@ -1587,6 +1592,40 @@ been used in this browser. **Fixed**: the Record dialog's scrollbar, device
 slugs on rating cards, History's calendar on a phone (every year in half
 years under 560 px), and every theme's dim text at 4.5:1 against its
 background and its cards — 19 themes raised, held by a spec.
+
+### Forgotten, not lost — weighing short of the ledger
+
+Grams do not vanish into thin air, so a scale reading short of the ledger is
+offered as what was forgotten rather than recorded as a loss
+(`record.Forgotten` / `RecordForgotten`, `pkg/record/forgotten.go`). Short in
+storage is **a forgotten grind** of the difference, storage → stash; short in
+the stash is **forgotten sessions**. Both are dated after the jar's last
+entry — the grind a minute after it, the sessions spread evenly from then
+until now — so no entry already recorded loses a gram to them, and both carry
+the note `forgotten, worked out at the scale` (`record.ForgottenNote`); a
+predicted session is left out of the sessions waiting to be rated. A session
+takes the amount the last thirty standing sessions most often took, had as
+the last one was (device, mode, heater, temperature); with none on record,
+the mean load of the gear in use (`SizedBy`: `sessions`, `load`, `day`); with
+neither, one a day. The grams are shared in centigrams, the odd ones first,
+and add up to the shortfall exactly. More than 30 sessions is refused
+(`record.ErrTooMany`) — a leftover or a loss, not something forgotten. The
+AVB jar, and a reading over the ledger, stay plain adjustments.
+
+`wits reconcile` asks of each jar found short — `Forgotten` the default —
+and `--forgot` answers yes; `--dry-run` shows what it would write, and a dry
+run of a plain reconcile offers it. After a grind it says to weigh the ground.
+The terminal interface's weighing forms ask the same, one question a jar or
+one for the ticked jars, in the same words (`record.ForgottenWords`). In the
+browser, `GET /api/weigh/forgotten` says what a reading would be put down to
+and `POST /api/weigh/forgotten` writes it; **Weigh** shows the ledger's
+figure, offers **I forgot to record a grind / sessions** or **It went
+missing**, and after a forgotten grind stays open on the ground. **I forgot
+to** offers **Sealed** and **Ground** for every jar still sealed and what is
+ground of any used in the last 30 days. On the workbook: Morning Sun's
+storage holds 11.37 g; 10.50 g on the scale is a grind of 0.87 g on Fri
+23 Oct, after its last entry; its ground then holds 9.50 g, and 7.50 g on the
+scale with a Mighty+ at 0.15 g is 13 sessions of about 0.15 g, 23–26 Oct.
 
 ---
 

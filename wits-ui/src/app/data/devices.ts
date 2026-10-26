@@ -56,32 +56,32 @@ export const PRESETS: (DeviceFields & { preset: string })[] = [
   {
     preset: 'Storz & Bickel Venty', name: 'Storz & Bickel Venty', category: 'vaporizer', maker: 'Storz & Bickel', model: 'Venty',
     country: 'Germany', power: 'electric', signature: 'hybrid', use: 'both', min_temp: 40, max_temp: 210, default_temp: 180,
-    modes: [{ name: 'Base' }, { name: 'Boost' }, { name: 'Superboost' }, { name: 'Permanent boost' }],
+    load: 0.15, modes: [{ name: 'Base' }, { name: 'Boost' }, { name: 'Superboost' }, { name: 'Permanent boost' }],
   },
   {
     preset: 'Storz & Bickel Mighty+', name: 'Storz & Bickel Mighty+', category: 'vaporizer', maker: 'Storz & Bickel',
     model: 'Mighty+', country: 'Germany', power: 'electric', signature: 'hybrid', use: 'session', min_temp: 40, max_temp: 210,
-    default_temp: 180, modes: [{ name: 'Base' }, { name: 'Super Boost' }],
+    default_temp: 180, load: 0.15, modes: [{ name: 'Base' }, { name: 'Super Boost' }],
   },
   {
     preset: 'Limelight Herb Frolic', name: 'Limelight Herb Frolic', category: 'vaporizer', maker: 'Limelight Herb', model: 'Frolic',
     power: 'electric', signature: 'convection', use: 'both',
-    modes: [{ name: 'On demand', signature: 'convection', temp: 165 }, { name: 'Session', signature: 'hybrid', temp: 185, timer: 420 }],
+    load: 0.15, modes: [{ name: 'On demand', signature: 'convection', temp: 165 }, { name: 'Session', signature: 'hybrid', temp: 185, timer: 420 }],
   },
   {
     preset: 'Vestratto Tornado', name: 'Vestratto Tornado', category: 'vaporizer', maker: 'Vestratto', model: 'Tornado',
-    power: 'manual', signature: 'convection', use: 'on-demand', modes: [],
+    power: 'manual', signature: 'convection', use: 'on-demand', load: 0.15, modes: [],
     notes: 'Heated by induction: a copper coil inside heats the air drawn through.',
   },
-  { preset: 'Vestratto Anvil', name: 'Vestratto Anvil', category: 'vaporizer', maker: 'Vestratto', model: 'Anvil', power: 'manual', use: 'on-demand', modes: [] },
-  { preset: 'Mad Heaters Tempest', name: 'Mad Heaters Tempest', category: 'vaporizer', maker: 'Mad Heaters', model: 'Tempest', power: 'manual', use: 'on-demand', modes: [] },
+  { preset: 'Vestratto Anvil', name: 'Vestratto Anvil', category: 'vaporizer', maker: 'Vestratto', model: 'Anvil', power: 'manual', use: 'on-demand', load: 0.15, modes: [] },
+  { preset: 'Mad Heaters Tempest', name: 'Mad Heaters Tempest', category: 'vaporizer', maker: 'Mad Heaters', model: 'Tempest', power: 'manual', use: 'on-demand', load: 0.15, modes: [] },
   {
     preset: 'The Simrell Collection — The Simrell', name: 'The Simrell', category: 'vaporizer', maker: 'The Simrell Collection',
-    model: 'The Simrell', country: 'USA', power: 'manual', signature: 'hybrid', use: 'on-demand', modes: [],
+    model: 'The Simrell', country: 'USA', power: 'manual', signature: 'hybrid', use: 'on-demand', load: 0.1, modes: [],
   },
   {
     preset: 'The Simrell Collection — Hydro', name: 'Simrell Hydro', category: 'vaporizer', maker: 'The Simrell Collection',
-    model: 'Hydro', country: 'USA', power: 'manual', use: 'on-demand', modes: [],
+    model: 'Hydro', country: 'USA', power: 'manual', use: 'on-demand', load: 0.1, modes: [],
   },
   {
     preset: 'YLL 3.0', name: 'YLL 3.0', category: 'induction-heater', maker: 'YLL', model: '3.0', power: 'electric', modes: [],

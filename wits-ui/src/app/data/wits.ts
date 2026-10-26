@@ -97,6 +97,11 @@ export class Wits {
     return this.write('weigh', body);
   }
 
+  /** Records what a reading short of the ledger is put down to: a grind forgotten, or sessions. */
+  weighForgotten(body: { product: string; account: string; weighed: number }) {
+    return this.write<{ message: string; entries: Entry[] }>('weigh/forgotten', body);
+  }
+
   undo(hash: string) {
     return this.write('undo', { hash });
   }

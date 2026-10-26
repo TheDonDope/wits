@@ -327,29 +327,48 @@ func TestWeighPicksTheFullestJarOffTheStorageScreen(t *testing.T) {
 }
 
 func TestReconcileFromTheInterface(t *testing.T) {
-	app := shelved(t)
-	app.screen = storageScreen
-	var m tea.Model = app
+	weigh := func(t *testing.T, lost bool) (*App, entryDoneMsg) {
+		t.Helper()
+		app := shelved(t)
+		app.screen = storageScreen
+		var m tea.Model = app
+		require.InDelta(t, 18.0, app.data.State.Balances["wcake"].Storage, 0.001)
 
-	before := app.data.State.Balances["wcake"].Storage
-	require.InDelta(t, 18.0, before, 0.001)
+		m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
+		require.NotNil(t, app.entryInFront(), "r should open the weighing form")
 
-	m, _ = send(m, tea.KeyPressMsg{Code: 'r', Text: "r"})
-	require.NotNil(t, app.entryInFront(), "r should open the weighing form")
+		// Storage is preselected; type what the scale says, pass the why, and
+		// answer whether a grind was forgotten.
+		m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = typeText(m, "17.6")
+		m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+		m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+		require.Contains(t, stripANSI(m.View().Content), "was a grind forgotten?", "Should ask about a jar found light")
+		if lost {
+			m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyLeft})
+		}
+		_, msgs := confirmThrough(m, 3)
 
-	// Storage is preselected; type what the scale says and submit.
-	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
-	m = typeText(m, "17.6")
-	_, msgs := confirmThrough(m, 6)
+		done, ok := findDone(msgs)
+		require.True(t, ok, "Should report the outcome, got %v", msgs)
+		require.NoError(t, done.err)
+		assert.InDelta(t, 17.6, app.data.State.Balances["wcake"].Storage, 0.001,
+			"and storage should now agree with the scale")
+		return app, done
+	}
 
-	done, ok := findDone(msgs)
-	require.True(t, ok, "Should report the outcome, got %v", msgs)
-	require.NoError(t, done.err)
+	t.Run("Forgotten", func(t *testing.T) {
+		app, done := weigh(t, false)
+		assert.Contains(t, done.summary, "a grind of 0.40 g", "Should record a forgotten grind by default")
+		assert.Contains(t, done.summary, "weigh the ground next")
+		assert.InDelta(t, 2.40, app.data.State.Balances["wcake"].Stash, 0.001, "Should put the grams in the stash")
+	})
 
-	assert.Equal(t, journal.Adjust, done.event.Type, "Should record an adjustment")
-	assert.InDelta(t, 0.40, done.event.Grams, 0.001, "of the difference, not the weight")
-	assert.InDelta(t, 17.6, app.data.State.Balances["wcake"].Storage, 0.001,
-		"and storage should now agree with the scale")
+	t.Run("Lost", func(t *testing.T) {
+		_, done := weigh(t, true)
+		assert.Equal(t, journal.Adjust, done.event.Type, "Should record an adjustment")
+		assert.InDelta(t, 0.40, done.event.Grams, 0.001, "of the difference, not the weight")
+	})
 }
 
 func TestDashboardShowsQuickActions(t *testing.T) {

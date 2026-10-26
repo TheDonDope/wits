@@ -492,18 +492,48 @@ func TestReconcileCommand(t *testing.T) {
 
 		var out bytes.Buffer
 		require.NoError(t, applyReadings(&out, s, journal.Stash,
-			[]string{"wcake-221"}, []string{"1.75"}))
+			[]string{"wcake-221"}, []string{"1.75"}, nil))
 		assert.Contains(t, out.String(), "out of stash of wcake-221", "Should record a typed reading")
 
 		out.Reset()
 		require.NoError(t, applyReadings(&out, s, journal.Stash,
-			[]string{"wcake-221"}, []string{""}))
+			[]string{"wcake-221"}, []string{""}, nil))
 		assert.Contains(t, out.String(), "nothing to record", "Should treat a blank as a skip")
 
 		out.Reset()
 		require.NoError(t, applyReadings(&out, s, journal.Stash,
-			[]string{"wcake-221"}, []string{"1.75"}))
+			[]string{"wcake-221"}, []string{"1.75"}, nil))
 		assert.Contains(t, out.String(), "already matches", "Should say when the scale agrees")
+
+		out.Reset()
+		require.NoError(t, applyReadings(&out, s, journal.Stash,
+			[]string{"wcake-221"}, []string{"1.5"}, map[string]bool{"wcake-221": true}))
+		assert.Contains(t, out.String(), "forgotten sesh of 0.25g", "Should record a session for a jar answered forgotten")
+	})
+
+	t.Run("ForgotPutsAShortJarDownToAGrind", func(t *testing.T) {
+		dir := stocked(t)
+
+		out, err := run(t, dir, Reconcile, "storage", "wedding", "17.6", "--forgot", "--dry-run")
+		require.NoError(t, err)
+		assert.Contains(t, out, "would record a grind of 0.40 g", "Should say what it would record")
+
+		out, err = run(t, dir, Reconcile, "storage", "wedding", "17.6", "--forgot")
+		require.NoError(t, err)
+		assert.Contains(t, out, "forgotten grind of 0.40g", "Should record a grind, not a loss")
+		assert.Contains(t, out, "wits reconcile stash wcake-221", "Should ask for the ground to be weighed next")
+
+		status, err := run(t, dir, Status)
+		require.NoError(t, err)
+		assert.Contains(t, status, "2.40", "Should have put the grams in the stash")
+	})
+
+	t.Run("DryRunOffersForgot", func(t *testing.T) {
+		dir := stocked(t)
+
+		out, err := run(t, dir, Reconcile, "wedding", "17.6", "--dry-run")
+		require.NoError(t, err)
+		assert.Contains(t, out, "--forgot records a grind of 0.40 g", "Should offer the likelier story")
 	})
 }
 

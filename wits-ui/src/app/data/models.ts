@@ -154,6 +154,8 @@ export interface DeviceFields {
   modes: DeviceMode[];
   /** How long, in seconds, it stays on unused before it turns itself off. */
   auto_off?: number;
+  /** The grams one fill holds, as it is usually loaded. */
+  load?: number;
   cents?: number;
   shop?: string;
   bought_on?: string;
@@ -193,6 +195,21 @@ export interface Day {
 export interface Written {
   entry: Entry;
   message: string;
+}
+
+/**
+ * What a scale reading short of the ledger would be put down to, not yet
+ * written: a grind forgotten, for what is sealed; sessions forgotten, for what
+ * is ground. No entries when the reading is not short.
+ */
+export interface ForgottenPlan {
+  expected: number;
+  short: number;
+  entries: Entry[];
+  /** Why a shortfall is not put down to anything forgotten: more sessions than anybody forgets. */
+  why?: string;
+  /** What forgotten sessions are sized by: the sessions on record, the gear's load, or one a day. */
+  sized_by?: 'sessions' | 'load' | 'day';
 }
 
 /** What a pharmacy label says about a fill, read from the text of its photograph. */

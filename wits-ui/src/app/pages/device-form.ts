@@ -76,6 +76,15 @@ import { Wits } from '../data/wits';
             </mat-select>
           </mat-form-field>
         }
+        @if (d().category === 'vaporizer' || d().category === 'glass') {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>A load holds</mat-label>
+            <input matInput type="number" min="0" step="0.01" [ngModel]="d().load ?? null"
+              (ngModelChange)="set('load', $event || undefined)" />
+            <span matTextSuffix>g</span>
+            <mat-hint>As you usually fill it. Sizes a session you forgot to record.</mat-hint>
+          </mat-form-field>
+        }
         @if (d().category === 'vaporizer') {
           <mat-form-field appearance="outline">
             <mat-label>Heats by</mat-label>

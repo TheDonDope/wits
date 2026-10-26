@@ -5,6 +5,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,7 @@ var (
 	deviceMinTemp int
 	deviceMaxTemp int
 	deviceDefault int
+	deviceLoad    float64
 )
 
 // Device is the `wits device` command.
@@ -24,10 +26,11 @@ var Device = &cobra.Command{
 }
 
 var deviceAdd = &cobra.Command{
-	Use:     "add <name>",
-	Short:   "Add a device",
-	Example: "  wits device add \"Volcano Hybrid\" --min 40 --max 230 --default 185",
-	Args:    cobra.ExactArgs(1),
+	Use:   "add <name>",
+	Short: "Add a device",
+	Example: "  wits device add \"Volcano Hybrid\" --min 40 --max 230 --default 185\n" +
+		"  wits device add \"Storz & Bickel Mighty+\" --load 0.15",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {
@@ -39,6 +42,10 @@ var deviceAdd = &cobra.Command{
 			MinTemp:     deviceMinTemp,
 			MaxTemp:     deviceMaxTemp,
 			DefaultTemp: deviceDefault,
+			Load:        journal.CG(deviceLoad).Grams(),
+		}
+		if deviceLoad < 0 {
+			return fmt.Errorf("a load holds some grams or none, not %.2f", deviceLoad)
 		}
 		if _, err := s.Repo.UpdateDevices(func(d *catalog.Devices) error {
 			return d.Add(device)
@@ -135,5 +142,6 @@ func init() {
 	deviceAdd.Flags().IntVar(&deviceMinTemp, "min", 0, "the lowest temperature it can be set to")
 	deviceAdd.Flags().IntVar(&deviceMaxTemp, "max", 0, "the highest temperature it can be set to")
 	deviceAdd.Flags().IntVar(&deviceDefault, "default", 0, "the temperature to assume when none is given")
+	deviceAdd.Flags().Float64Var(&deviceLoad, "load", 0, "the grams one fill holds, as usually loaded — sizes a forgotten session")
 	Device.AddCommand(deviceAdd, deviceList)
 }

@@ -24,6 +24,7 @@ var (
 	reconcileAVB    bool
 	reconcileReason string
 	reconcileDryRun bool
+	reconcileForgot bool
 )
 
 // accountNames maps the words the command line accepts to the accounts that
@@ -48,6 +49,12 @@ var Reconcile = &cobra.Command{
 		"Run without arguments it is interactive: pick storage or the stash, tick\n" +
 		"the jars to weigh, and each is asked for in turn. Naming just the account\n" +
 		"skips the first question. The full form records one jar directly.\n\n" +
+		"A jar lighter than the ledger says was most likely ground, and ground\n" +
+		"grams that are gone most likely vaped: the interactive form asks whether\n" +
+		"a grind or sessions were forgotten, and --forgot says yes up front. A\n" +
+		"forgotten grind is dated just after the jar's last entry; forgotten\n" +
+		"sessions take the usual size and the last session's device, spread from\n" +
+		"then until now. Weigh the ground after a forgotten grind.\n\n" +
 		"`reconcile purchases` walks every purchase still in storage without a\n" +
 		"price, one at a time, to write down what was paid; --all takes every\n" +
 		"purchase without one, however long ago it was emptied.",
@@ -55,6 +62,7 @@ var Reconcile = &cobra.Command{
 		"  wits reconcile stash\n" +
 		"  wits reconcile stash wcake-221 1.75\n" +
 		"  wits reconcile storage wcake-221 17.6 --dry-run\n" +
+		"  wits reconcile storage wcake-221 16.4 --forgot\n" +
 		"  wits reconcile wedding-cake 17.6\n" +
 		"  wits reconcile purchases --all",
 	Args:              cobra.MaximumNArgs(3),
@@ -129,6 +137,9 @@ func reconcileOne(cmd *cobra.Command, s *session, account journal.Account, ref, 
 		return err
 	}
 	out := cmd.OutOrStdout()
+	if reconcileForgot {
+		return reconcileForgotten(out, s, account, ref, weighed)
+	}
 	if reconcileDryRun {
 		expected, difference, err := s.Recorder.Difference(ref, account, weighed)
 		if err != nil {
@@ -139,6 +150,9 @@ func reconcileOne(cmd *cobra.Command, s *session, account journal.Account, ref, 
 		if difference == 0 {
 			fmt.Fprintln(out, "Nothing to reconcile.")
 			return nil
+		}
+		if planned, err := s.Recorder.Forgotten(ref, account, weighed); err == nil {
+			fmt.Fprintf(out, "Forgotten rather than lost? --forgot records %s.\n", record.ForgottenWords(planned, s.Devices))
 		}
 		fmt.Fprintln(out, "\nDry run. Nothing was written. Re-run without --dry-run to record it.")
 		return nil
@@ -218,7 +232,11 @@ func reconcileInteractively(cmd *cobra.Command, s *session, account journal.Acco
 	if err != nil {
 		return err
 	}
-	return applyReadings(cmd.OutOrStdout(), s, account, selected, readings)
+	forgot, err := askForgotten(s, account, selected, readings)
+	if err != nil {
+		return err
+	}
+	return applyReadings(cmd.OutOrStdout(), s, account, selected, readings, forgot)
 }
 
 // pickJars offers the jars as a checklist, every one of them ticked, and
@@ -288,7 +306,7 @@ func askAccount(s *session, account *journal.Account) error {
 // applyReadings records the collected weights, or reports what they would
 // change under --dry-run. Jars left blank are skipped, and a jar that already
 // matches is said to match rather than silently passed over.
-func applyReadings(out io.Writer, s *session, account journal.Account, slugs, readings []string) error {
+func applyReadings(out io.Writer, s *session, account journal.Account, slugs, readings []string, forgot map[string]bool) error {
 	recorded := 0
 	for i, slug := range slugs {
 		reading := strings.TrimSpace(readings[i])
@@ -298,6 +316,13 @@ func applyReadings(out io.Writer, s *session, account journal.Account, slugs, re
 		weighed, err := parseWeight(reading)
 		if err != nil {
 			return err
+		}
+		if forgot[slug] {
+			if err := reconcileForgotten(out, s, account, slug, weighed); err != nil {
+				return err
+			}
+			recorded++
+			continue
 		}
 		if reconcileDryRun {
 			expected, difference, err := s.Recorder.Difference(slug, account, weighed)
@@ -324,6 +349,78 @@ func applyReadings(out io.Writer, s *session, account journal.Account, slugs, re
 		fmt.Fprintln(out, "Every jar was skipped or already matched; nothing to record.")
 	} else if reconcileDryRun {
 		fmt.Fprintln(out, "\nDry run. Nothing was written. Re-run without --dry-run to record it.")
+	}
+	return nil
+}
+
+// askForgotten asks, of each jar the scale found short, whether a grind — or,
+// weighing the ground, sessions — went unlogged, and says what would be
+// recorded. Yes is the default: grams do not vanish, a forgotten entry is the
+// likelier story. --forgot answers yes for every jar without asking.
+func askForgotten(s *session, account journal.Account, slugs, readings []string) (map[string]bool, error) {
+	forgot := map[string]bool{}
+	answers := map[string]*bool{}
+	var groups []*huh.Group
+	for i, slug := range slugs {
+		weighed, err := parseWeight(readings[i])
+		if strings.TrimSpace(readings[i]) == "" || err != nil {
+			continue
+		}
+		planned, err := s.Recorder.Forgotten(slug, account, weighed)
+		if err != nil {
+			continue
+		}
+		answer := true
+		answers[slug] = &answer
+		if !reconcileForgot {
+			groups = append(groups, forgottenQuestion(s, account, slug, planned, &answer))
+		}
+	}
+	if len(groups) > 0 {
+		if err := formErr(huh.NewForm(groups...).Run()); err != nil {
+			return nil, err
+		}
+	}
+	for slug, answer := range answers {
+		forgot[slug] = *answer
+	}
+	return forgot, nil
+}
+
+// forgottenQuestion asks of one jar whether a grind or sessions went unlogged.
+func forgottenQuestion(s *session, account journal.Account, slug string, planned []journal.Event, answer *bool) *huh.Group {
+	question := "Was a grind forgotten?"
+	if account == journal.Stash {
+		question = "Were sessions forgotten?"
+	}
+	return huh.NewGroup(huh.NewConfirm().
+		Title(fmt.Sprintf("%s: %s", s.ProductName(slug), question)).
+		Description(fmt.Sprintf("Forgotten records %s. Lost records the grams as gone.", record.ForgottenWords(planned, s.Devices))).
+		Affirmative("Forgotten").Negative("Lost").
+		Value(answer))
+}
+
+// reconcileForgotten records — or, under --dry-run, shows — what a jar short
+// of the ledger is put down to: a grind, or sessions.
+func reconcileForgotten(out io.Writer, s *session, account journal.Account, ref string, weighed float64) error {
+	if reconcileDryRun {
+		planned, err := s.Recorder.Forgotten(ref, account, weighed)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "%s: would record %s\n", ref, record.ForgottenWords(planned, s.Devices))
+		return nil
+	}
+	written, err := s.Recorder.RecordForgotten(ref, account, weighed)
+	if err != nil {
+		return err
+	}
+	for _, e := range written {
+		fmt.Fprintf(out, "[%s] forgotten %s of %.2fg of %s, %s\n", shortHash(e.Hash), e.Type, e.Grams, e.Product,
+			e.OccurredAt.Format("Mon 02 Jan 15:04"))
+	}
+	if account == journal.Storage {
+		fmt.Fprintf(out, "Now weigh what is ground: wits reconcile stash %s <weight>\n", written[0].Product)
 	}
 	return nil
 }
@@ -412,6 +509,7 @@ func init() {
 	Reconcile.Flags().BoolVar(&reconcileAVB, "avb", false, "weigh the already vaped bud")
 	Reconcile.Flags().StringVar(&reconcileReason, "reason", "", "why the amounts differ")
 	Reconcile.Flags().BoolVar(&reconcileDryRun, "dry-run", false, "show the difference without recording it")
+	Reconcile.Flags().BoolVar(&reconcileForgot, "forgot", false, "put a jar short of the ledger down to a forgotten grind, or forgotten sessions")
 	Reconcile.Flags().BoolVar(&reconcileAll, "all", false, "with purchases: every purchase without a price, not only those in storage")
 }
 

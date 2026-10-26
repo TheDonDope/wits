@@ -116,16 +116,29 @@ function recall(): boolean {
       </section>
     }
 
-    @if (todo.sealed().length && shows('weigh')) {
+    @if (todo.weighable().length && shows('weigh')) {
       <section class="glass pad">
         <header><span class="eyebrow">weigh against the scale</span></header>
-        <p class="dim note">Now and then, so the ledger and the jar agree. A weighing that agrees writes nothing, so these are offered, never counted.</p>
-        @for (j of todo.sealed(); track j.slug) {
-          <div class="row">
+        <p class="dim note">Now and then, so the ledger and the jar agree — what is sealed, and what is ground. Less than the
+          ledger says is most likely a grind or a session not recorded, and is offered as one. A weighing that agrees writes
+          nothing, so these are offered, never counted.</p>
+        @for (j of todo.weighable(); track j.slug) {
+          <div class="row weigh">
             <mat-icon>scale</mat-icon>
             <span class="name">{{ j.name }}</span>
-            <span class="dim num">{{ j.storage | number: '1.2-2' }} g sealed</span>
-            <button mat-stroked-button (click)="weigh(j.slug)">Weigh</button>
+            <span class="dim num">
+              @if (j.storage > 0) { {{ j.storage | number: '1.2-2' }} g sealed }
+              @if (j.storage > 0 && j.stash > 0) { · }
+              @if (j.stash > 0) { {{ j.stash | number: '1.2-2' }} g ground }
+            </span>
+            <span class="acts">
+              @if (j.storage > 0) {
+                <button mat-stroked-button (click)="weigh(j.slug, 'storage')">Sealed</button>
+              }
+              @if (j.stash > 0) {
+                <button mat-stroked-button (click)="weigh(j.slug, 'stash')">Ground</button>
+              }
+            </span>
           </div>
         }
       </section>
@@ -161,6 +174,7 @@ function recall(): boolean {
       padding: 6px 0; border-top: 1px solid var(--w-glass-edge); }
     .row mat-icon { color: var(--w-primary); }
     .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .acts { display: flex; gap: 6px; }
     .strains { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
     .strain { padding: 16px; display: grid; gap: 12px; align-content: start; }
     .strain header { display: grid; gap: 2px; }
@@ -175,7 +189,8 @@ function recall(): boolean {
       .pad { padding: 18px 16px; }
       .row { grid-template-columns: auto minmax(0, 1fr) auto; }
       .row .dim { grid-column: 2; grid-row: 2; }
-      .row button { grid-row: 1 / 3; grid-column: 3; }
+      .row button, .row .acts { grid-row: 1 / 3; grid-column: 3; }
+      .acts { flex-direction: column; }
     }
   `,
 })
@@ -207,7 +222,7 @@ export class Forgot {
     ...(this.unpricedAtAll() ? ['price'] : []),
     ...(this.todo.stashes().length ? ['leftovers'] : []),
     ...(this.todo.avb().length ? ['avb'] : []),
-    ...(this.todo.sealed().length ? ['weigh'] : []),
+    ...(this.todo.weighable().length ? ['weigh'] : []),
     ...(this.todo.terpenes().length ? ['terpenes'] : []),
   ]);
   /** Whether the page shows one kind of thing at a time, kept in this browser. */
@@ -241,8 +256,8 @@ export class Forgot {
     return slug ? (this.wits.devices.value().find((d) => d.slug === slug)?.name ?? slug) : 'no device named';
   }
 
-  protected weigh(product: string): void {
-    openRecord(this.dialog, { tab: 3, product });
+  protected weigh(product: string, account: string): void {
+    openRecord(this.dialog, { tab: 3, product, account });
   }
 
   protected collect(device: string): void {
