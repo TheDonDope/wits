@@ -31,6 +31,12 @@ let next = 0;
 export class Keys {
   private readonly layers = signal<Layer[]>([]);
   readonly showAll = signal(false);
+  /**
+   * Whether keys have been used here: the help line along the foot shows from
+   * the first, and stays out of the way of whoever only clicks. Kept in this
+   * browser.
+   */
+  readonly used = signal(remembered());
 
   /** The layers as the help draws them, page first. */
   readonly sections = computed(() =>
@@ -62,6 +68,19 @@ export class Keys {
     });
   }
 
+  /** Notes that keys are used here, so the help line shows from now on. */
+  private remember(): void {
+    if (this.used()) {
+      return;
+    }
+    this.used.set(true);
+    try {
+      localStorage.setItem(USED, '1');
+    } catch {
+      // Storage refused: the help line shows for this visit only.
+    }
+  }
+
   /** Runs the binding for a key, if one answers it and nothing else should. */
   handle(ev: KeyboardEvent): void {
     if (ev.ctrlKey || ev.metaKey || ev.altKey || typing(ev.target)) {
@@ -80,9 +99,20 @@ export class Keys {
       if (hit) {
         ev.preventDefault();
         hit.run();
+        this.remember();
         return;
       }
     }
+  }
+}
+
+const USED = 'wits.keys';
+
+function remembered(): boolean {
+  try {
+    return localStorage.getItem(USED) === '1';
+  } catch {
+    return false;
   }
 }
 

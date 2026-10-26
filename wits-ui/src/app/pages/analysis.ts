@@ -18,7 +18,7 @@ import { Transport, replayKeys } from '../viz/transport';
 
 /** The terminal's scopes, and how far back each reaches. */
 const SCOPES = [
-  { key: 'fill', label: 'This fill', short: 'Fill', days: 0 },
+  { key: 'fill', label: 'This prescription', short: 'Now', days: 0 },
   { key: '30', label: '30 days', short: '30 d', days: 30 },
   { key: '90', label: '90 days', short: '90 d', days: 90 },
   { key: '365', label: '12 months', short: '12 mo', days: 365 },
@@ -94,7 +94,7 @@ const SCOPES = [
       <header>
         <span class="eyebrow">by product</span>
         @if (scope().key === 'fill') {
-          <span class="key"><i style="background: var(--w-stash)"></i>this fill
+          <span class="key"><i style="background: var(--w-stash)"></i>this prescription
             <i style="background: var(--w-avb)"></i>older jars</span>
         }
       </header>
@@ -111,8 +111,8 @@ const SCOPES = [
     @if (scope().days === 365 || scope().days === -1) {
       <section class="glass pad">
         <header>
-          <span class="eyebrow">fills</span>
-          <span class="scope">the fill</span>
+          <span class="eyebrow">prescriptions</span>
+          <span class="scope">the prescription</span>
         </header>
         <w-fill-river [cycles]="cycles()" [until]="moment()" />
       </section>

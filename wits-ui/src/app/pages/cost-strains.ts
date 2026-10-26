@@ -83,7 +83,7 @@ export function spark(prices: number[], w = 84, h = 22): string {
                     <tbody>
                       @for (b of picks(); track b.hash) {
                         <tr>
-                          <td class="num">{{ b.at | date: 'd MMM y' }}<span class="dim small">fill {{ b.fill }}</span></td>
+                          <td class="num">{{ b.at | date: 'd MMM y' }}<span class="dim small">prescription {{ b.fill }}</span></td>
                           <td>{{ b.name }}</td>
                           <td class="opt">
                             <svg width="12" height="12" viewBox="-6 -6 12 12" aria-hidden="true"><path [attr.d]="shape(b)" [style.fill]="color(b)" /></svg>

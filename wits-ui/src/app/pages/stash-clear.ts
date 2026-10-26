@@ -37,7 +37,7 @@ import { Confirm, ConfirmDialog } from './confirm';
     <div class="go">
       <span class="dim">{{ ticked().length }} of {{ jars().length }} · <span class="num">{{ grams() | number: '1.2-2' }} g</span></span>
       <button mat-flat-button class="clear" [disabled]="!ticked().length || busy()" (click)="clear()">
-        Clear {{ ticked().length === 1 ? 'this stash' : ticked().length + ' stashes' }}
+        Clear {{ ticked().length === 1 ? 'these leftovers' : 'the leftovers of ' + ticked().length + ' jars' }}
       </button>
     </div>
   `,
@@ -102,7 +102,7 @@ export class StashClear {
       this.dialog
         .open<ConfirmDialog, Confirm, boolean>(ConfirmDialog, {
           data: {
-            title: `Clear ${jars.length === 1 ? 'this stash' : `${jars.length} stashes`}?`,
+            title: `Clear the leftovers of ${jars.length === 1 ? 'this jar' : `${String(jars.length)} jars`}?`,
             body:
               `${this.grams().toFixed(2)} g will be recorded as consumed — the grams went through a device at some point, ` +
               'the sessions never logged. Nothing is deleted: each is an adjustment, in the journal beside the rest.',

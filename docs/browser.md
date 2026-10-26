@@ -43,6 +43,21 @@ carries NSS and ALSA too, which SteamOS lacks. Chromium sandboxes its pages
 where the kernel lets it (on Ubuntu 24.04 and later AppArmor does not, and it
 runs without), and the window shows only this server's own pages.
 
+## Plain words, and the first launch
+
+The interface speaks plainly; the terminal keeps the ledger's own words. A
+fill is a **prescription** ("Prescription 30"), the stash is what is
+**ground, ready to use**, AVB is **already vaped (AVB)**, seshed is
+**vaped**, and leftover stashes are **leftovers**. The shelf and **I forgot
+to** keep their names. Which of the three a figure speaks of — the
+prescription, the shelf, the jar — shows when its card is pointed at, and the
+user guide explains them. The header says nothing about the journal's hash
+chain unless it was changed outside wits.
+
+A repository with nothing in it opens on a welcome rather than an empty page:
+record the first prescription, bring a spreadsheet across, or look around in
+the demo. Record opens on Prescription while the shelf is empty.
+
 ## The dashboard
 
 ![The dashboard](../assets/wits-ui-dashboard.png)
@@ -55,7 +70,8 @@ Then the shelf's supply as a curve to the day it runs out, with the day to
 order the next prescription by, and the last twenty weeks of grinding and
 sessions as calendars.
 
-Under the shelf's three accounts stands **Today**, as `wits today` says it:
+Under the shelf's three accounts stands **Today**, with **Same as last time**
+to record the last session again in one tap (the snackbar can undo it), as `wits today` says it:
 the THC in what went through a device so far, in milligrams — grams × the
 strain's per cent × 10 — with the CBD beside it and a bar against a usual
 day of the last 30. Then two rings, the THC by strain and the grams by
@@ -140,6 +156,13 @@ already recorded is not recorded again: on the same day, the form says so and
 offers to price that fill from it. Within two weeks, it asks whether it is
 that fill. Only an invoice that matches no fill adds its strains as a new one.
 
+
+A session starts from the last one: its strain while there is some ground,
+its device, mode, heater and temperature. The amounts used lately are chips
+to tap, and *When* says now. Once saved, the dialog asks **How was it?** —
+overall, or every dimension behind a tap — and **Later** leaves it for I
+forgot to, where each card asks overall first too, and **One at a time**
+shows one kind of thing waiting, with **Skip for now**.
 ## Pricing the fills
 
 **I forgot to** walks it a fill at a time, as the prescription was picked
@@ -216,9 +239,10 @@ newer rating stands. It is kept with the product, travels in bundles and
 syncs: of two devices' ratings of one strain, the one given last stays.
 
 The jars are a gallery, every product a card across its life; tick the cards
-— or **Select all** — and **Clear stash** records their stashes as consumed,
-one adjustment each in a single write: the terminal's history clean-up, for
-the stashes you choose. The journal scrolls all of its entries and undoes one
+— or **Select all** — and **Clear leftovers** records what is ground of them
+as consumed, one adjustment each in a single write: the terminal's history
+clean-up, for the jars you choose. **Play back history** opens the replay
+above the cards; `p` does too. The journal scrolls all of its entries and undoes one
 with a correction.
 
 ![Every day, and every fill](../assets/wits-ui-history.png)
@@ -259,7 +283,7 @@ over to share.
 
 ## Effects, and the map of the strains
 
-**Effects** is the effect log. Each session waits to be rated, under **I
+**Effects** is the effect log, in four views — **What works**, **Strains**, **Terpenes** and **Ratings**, thirty a page — `?view=` naming one. Each session waits to be rated, under **I
 forgot to** — 1 to 5, tapped, on how it went overall and on pain, sleep,
 calm, mood, focus or appetite, any of them — and what the ratings add up to is
 drawn three ways: every product against every dimension, each dimension by
@@ -409,8 +433,10 @@ storage: see below.
 
 ## Keys, themes and small screens
 
-Every key the terminal has is here too, and the footer shows the ones the page
-answers: `g` `s` `b` `r` `v` to record, `1` to `4` for the tabs and `h`/`l`
+Every key the terminal has is here too. The line along the foot showing the
+ones the page answers appears once a key has been used in this browser, and
+stays out of the way of whoever only clicks; `?` lists them all whenever. The
+keys: `g` `s` `b` `r` `v` to record, `1` to `4` for the tabs and `h`/`l`
 through every page in turn, `p` to replay, `j`/`k` to move, `space` to tick,
 `o` to open a jar, and `?` for all of them. The old addresses (`/jars`,
 `/costs` and so on) still lead to their pages. `?record=grind` (or `session`,

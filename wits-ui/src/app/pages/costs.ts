@@ -47,7 +47,7 @@ function about(b: Bought): string[] {
         @if (monthly(); as m) {
           <div class="glass stat"><span class="eyebrow">a month, at this rate</span>
             <span class="v num">{{ money(m.cents, 0) }}</span>
-            <span class="dim">at this fill's {{ m.grams | number: '1.2-2' }} g a day and {{ money(recent().cents) }} a gram</span></div>
+            <span class="dim">at this prescription's {{ m.grams | number: '1.2-2' }} g a day and {{ money(recent().cents) }} a gram</span></div>
         }
         <div class="glass stat"><span class="eyebrow">without a price</span>
           <span class="v num">{{ c.unpriced }}</span>
@@ -66,7 +66,7 @@ function about(b: Bought): string[] {
         <section class="glass pad">
           <header>
             <span class="eyebrow">a gram, purchase by purchase</span>
-            <span class="dim small">the line is each fill's · pick a dot for its strain</span>
+            <span class="dim small">the line is each prescription's · pick a dot for its strain</span>
           </header>
           <w-price-plot [points]="timeline()" [trend]="trend()" label="What a gram cost, every purchase over time"
             (picked)="openStrainOf($event)" />
@@ -151,7 +151,7 @@ function about(b: Bought): string[] {
       }
 
       <section class="glass pad">
-        <span class="eyebrow">by fill</span>
+        <span class="eyebrow">by prescription</span>
         <table>
           <thead><tr><th>fill</th><th>dispensed</th><th class="r">grams</th><th class="r">paid</th><th class="r">a gram</th><th class="opt"></th></tr></thead>
           <tbody>

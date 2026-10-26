@@ -78,6 +78,29 @@ body {
   color: var(--w-dim);
 }
 
+// Which of the three a figure speaks of — the prescription, the shelf, the
+// jar — is said when its card is pointed at, not printed on every card: there
+// for whoever asks, and out of the way of whoever does not. A touch screen,
+// with nothing to point, leaves them out; the user guide explains them, and
+// its own (.keep) stay.
+@media (hover: hover) {
+  .glass .scope:not(.keep) {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .glass:hover .scope,
+  .glass:focus-within .scope {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .glass .scope:not(.keep) {
+    display: none;
+  }
+}
+
 .scope {
   display: inline-flex;
   align-items: center;
@@ -127,6 +150,13 @@ body {
 // Material sizes a field's input box at 180 px, so two side by side in the
 // record dialog could not shrink to a phone's width and pushed the form past
 // the dialog's edge. Inside it, fields take the width the form gives them.
+.record-panel .mat-mdc-tab-body-content {
+  // A tab's form runs a few pixels past the tab's body (the outlined fields'
+  // borders), which put a scrollbar under every form; there is nothing to
+  // scroll to across.
+  overflow-x: hidden;
+}
+
 .record-panel .mat-mdc-form-field-infix {
   width: auto;
   min-width: 0;
@@ -189,6 +219,13 @@ body {
   w-analysis .mat-button-toggle-label-content {
     padding: 0 4px;
   }
+}
+
+// The record dialog's five tabs, Prescription the longest: Material pads each
+// by 24 px, which pages them past the dialog's width; 12 px fits all five.
+.record-panel .mat-mdc-tab {
+  padding: 0 12px;
+  min-width: 0;
 }
 
 // The record dialog's five tabs on a phone: Material gives each 90 px and 24 px

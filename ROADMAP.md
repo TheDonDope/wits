@@ -1564,6 +1564,30 @@ morning: 206 mg THC and 7 mg CBD in 0.67 g, against a usual 239 mg; 0.15 g
 of the 32 % Morning Sun is 48 mg. The colours a day's strains and a trip's
 jars take are one list, `viz/tones`.
 
+### Ready for anyone — the first launch, a short path, plain words, less at once
+
+The UI review of 2026-10-26 found wits made for an expert. **The first
+launch**: an empty repository opens on a welcome with three ways in (the
+first prescription, a spreadsheet, the demo, the last through `data/demo.ts`
+shared with the menu); calendars with nothing to draw are left out; Record
+opens on Prescription while the shelf is empty. **A session in two taps**:
+the form starts from the last session (strain while ground, device, mode,
+heater, temperature), the amounts used lately are chips, *When* says now,
+saving asks **How was it?** (overall, the rest behind a tap; Later leaves it
+for I forgot to), and Today has **Same as last time**, undoable from its
+snackbar. **Plain words** on screen: prescription for fill, ground and ready
+to use for stash, already vaped for AVB, vaped for seshed, leftovers for
+stale stashes; the shelf and I forgot to keep their names, the terminal its
+own words. Scope chips show on hover (none on touch); the guide's stay. The
+chain badge says only "changed". **Less at once**: Effects in four views
+(`?view=`), ratings thirty a page; rating cards ask overall first; I forgot
+to has **One at a time** with Skip for now; Jars opens on the jars with
+**Play back history**; the key line along the foot appears once a key has
+been used in this browser. **Fixed**: the Record dialog's scrollbar, device
+slugs on rating cards, History's calendar on a phone (every year in half
+years under 560 px), and every theme's dim text at 4.5:1 against its
+background and its cards — 19 themes raised, held by a spec.
+
 ---
 
 ## 📌 Planned
@@ -1586,68 +1610,8 @@ taken away — what is deep moves one step back, and the everyday path gets
 short. This phase comes before the ones below. Phone and desktop count
 equally.
 
-#### 🔹 The first launch
-
-- **Status**: Planned
-- An empty repository shows "No fill in progress", two calendars with nothing
-  in them and "the journal's hash chain verifies", and nothing to press. It
-  becomes a welcome with three ways in: record the first prescription, import
-  a spreadsheet, or look around in the demo. Charts with nothing to draw are
-  left out until they have something. Record opens on Fill while the shelf is
-  empty, not on Grind.
-
-#### 🔹 A session in two taps
-
-- **Status**: Planned
-- Logging a session is the thing done most, several times a day, and the form
-  starts blank each time, its device "none". It starts from the last session
-  instead: the strain, the device, its mode and temperature. The amounts used
-  lately are chips to tap. "When" says now, and can be changed. Today on the
-  dashboard has **Same as last time**, one tap. Saving a session asks how it
-  went then, rather than leaving it for I forgot to.
-
-#### 🔹 Plain words on screen
-
-- **Status**: Proposed — the words below want the maintainer's yes
-- The interface speaks the ledger's words — fill, stash, AVB, seshed, the
-  shelf, and a scope chip on every figure. They are exact, and each is a wall
-  for a newcomer. On screen they become plain; the exact word stays in a
-  tooltip, in a glossary in the user guide, and in the terminal, whose users
-  chose it:
-
-  | now | on screen |
-  | --- | --- |
-  | fill | prescription ("Prescription 30") |
-  | stash, in the stashes | ground, ready to use |
-  | sealed, storage | sealed (unchanged) |
-  | AVB | already vaped (AVB), the short form after |
-  | seshed | vaped |
-  | the shelf | everything you have |
-  | the fill / the shelf / the jar chips | shown on hover, not on every card |
-  | I forgot to | To do |
-  | verified | said only when the journal was changed outside wits |
-
-#### 🔹 Less at once
-
-- **Status**: Planned
-- Effects is about 6,000 px tall and ends in every rated session: it becomes
-  tabs (what works, strains, terpenes, ratings), the ratings paged. I forgot to
-  holds a rating card of seven rows of dots per session: each card starts at
-  overall, the rest behind "more", and the page can go one thing at a time.
-  The jars page opens on the jars; the replay is a **Play back history**
-  button that opens the transport. The row of keys under every page shows once
-  a key has been pressed, and `?` keeps the whole list.
-
-#### 🔹 What the review found broken
-
-- **Status**: Planned
-- The Record dialog shows a horizontal scrollbar, on a computer and on a phone.
-- I forgot to's rating cards name the device by its slug
-  (`storz-bickel-venty`), not its name.
-- History's calendar is cut off after August on a phone; Year splits its
-  calendar in half years there, and History could too.
-- Dim 11 px text falls short of comfortable contrast in some themes: a
-  contrast pass over every theme.
+The first five — the first launch, a session in two taps, plain words, less
+at once, and what the review found broken — are built, above. What is left:
 
 #### 🔹 German, and more languages
 

@@ -121,8 +121,8 @@ export class Heatmap {
     return [0.25, 0.5, 0.75].map((q) => quantile(vals, q) ?? 0);
   });
 
-  /** One year on a narrow screen: two half years, so all of it fits. */
-  private readonly halves = computed(() => this.year() !== null && this.width() < 560);
+  /** A year on a narrow screen is two half years, so all of it fits. */
+  private readonly halves = computed(() => this.weeks() === null && this.width() < 560);
 
   protected readonly cell = computed(() => {
     const cols = this.weeks() ?? (this.halves() ? 27 : 53);
@@ -145,12 +145,16 @@ export class Heatmap {
     }
     const only = this.year();
     const step = (this.cell() + GAP) * 7 + 34;
-    if (only !== null && this.halves()) {
-      return [this.row('', new Date(only, 0, 1), new Date(only, 5, 30), 18, LEFT),
-        this.row('', new Date(only, 6, 1), new Date(only, 11, 31), 18 + step, LEFT)];
-    }
     const first = only ?? Number(dates[0].slice(0, 4));
     const rows: Row[] = [];
+    if (this.halves()) {
+      // Each year as two rows, the year named on its first.
+      for (let year = only ?? today.getFullYear(), i = 0; year >= first; year--, i += 2) {
+        rows.push(this.row(only === null ? String(year) : '', new Date(year, 0, 1), new Date(year, 5, 30), 18 + i * step, LEFT),
+          this.row('', new Date(year, 6, 1), new Date(year, 11, 31), 18 + (i + 1) * step, LEFT));
+      }
+      return rows;
+    }
     for (let year = only ?? today.getFullYear(), i = 0; year >= first; year--, i++) {
       rows.push(this.row(String(year), new Date(year, 0, 1), new Date(year, 11, 31), 18 + i * step, LEFT));
     }

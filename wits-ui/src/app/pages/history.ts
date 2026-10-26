@@ -40,7 +40,7 @@ import { Heatmap } from '../viz/heatmap';
 
     <section class="glass pad">
       <header>
-        <span class="eyebrow">every day since the first fill</span>
+        <span class="eyebrow">every day since the first prescription</span>
         <mat-button-toggle-group [value]="metric()" (change)="metric.set($event.value)" aria-label="What to colour by">
           <mat-button-toggle value="ground">Grinding</mat-button-toggle>
           <mat-button-toggle value="seshed">Sessions</mat-button-toggle>
@@ -53,10 +53,10 @@ import { Heatmap } from '../viz/heatmap';
     <section class="glass pad">
       <header>
         <div>
-          <span class="eyebrow">every fill, from pickup to empty</span>
-          <p class="dim">A fill closes when its own jars are empty, not when the next one comes — so they overlap.</p>
+          <span class="eyebrow">every prescription, from pickup to empty</span>
+          <p class="dim">A prescription closes when its own jars are empty, not when the next one comes — so they overlap.</p>
         </div>
-        <span class="scope">the fill</span>
+        <span class="scope">the prescription</span>
       </header>
       <w-fill-river [cycles]="wits.cycles.value()" />
     </section>
@@ -161,7 +161,7 @@ export class History {
     const ground = days.reduce((s, d) => s + d.ground, 0);
     const active = days.filter((d) => d.ground > 0).length;
     return [
-      { label: 'fills', value: cycles.length, decimals: 0, unit: '' },
+      { label: 'prescriptions', value: cycles.length, decimals: 0, unit: '' },
       { label: 'dispensed', value: dispensed, decimals: 0, unit: ' g' },
       { label: 'ground', value: ground, decimals: 0, unit: ' g' },
       { label: 'days with a grind', value: active, decimals: 0, unit: '' },

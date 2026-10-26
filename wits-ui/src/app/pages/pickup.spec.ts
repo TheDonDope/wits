@@ -42,7 +42,7 @@ describe('a fill priced together', () => {
     };
     const { priced, notes } = fromInvoice(byFill([sun, doughnut, papaya])[0], reading, true);
     expect(Object.keys(priced).sort()).toEqual(['a', 'b']);
-    expect(notes).toEqual(['Something else is not in this fill']);
+    expect(notes).toEqual(['Something else is not in this prescription']);
     const sums = fillCents([sun, doughnut, papaya], priced, true);
     expect(sums.invoice).toBe(23280);
     expect(sums.vat).toBe(0);

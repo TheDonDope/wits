@@ -69,7 +69,7 @@ export class MonthBars {
   });
 
   protected readonly label = computed(() =>
-    `Grams ground and seshed each month, ${String(this.span().length)} months`);
+    `Grams ground and vaped each month, ${String(this.span().length)} months`);
 
   protected readonly bars = computed(() => {
     const months = this.span();

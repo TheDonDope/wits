@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { RouterLink } from '@angular/router';
 
 import { RATE_DAYS, RATE_STRAIN_DAYS, Todo } from '../data/todo';
@@ -20,9 +21,19 @@ import { TerpeneQueue } from './terpene-queue';
  * and counted on the tab — and the jars still sealed, to weigh now and then,
  * and those with no terpene profile, to look up.
  */
+const ONE = 'wits.forgot.one';
+
+function recall(): boolean {
+  try {
+    return localStorage.getItem(ONE) === '1';
+  } catch {
+    return false;
+  }
+}
+
 @Component({
   selector: 'w-forgot',
-  imports: [DatePipe, DecimalPipe, MatButtonModule, MatIconModule, PriceWalk, RateQueue, RouterLink, StashClear, StrainRatingForm, TerpeneQueue],
+  imports: [DatePipe, DecimalPipe, MatButtonModule, MatIconModule, MatSlideToggleModule, PriceWalk, RateQueue, RouterLink, StashClear, StrainRatingForm, TerpeneQueue],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="glass head">
@@ -31,9 +42,19 @@ import { TerpeneQueue } from './terpene-queue';
         <h1 class="num">{{ todo.count() || 'Nothing' }} <span class="dim">{{ todo.count() === 1 ? 'thing waits' : 'things wait' }}</span></h1>
       </div>
       <p class="dim lede">What the ledger can tell was left undone. Each goes from here as soon as it is done.</p>
+      <mat-slide-toggle [checked]="one()" (change)="setOne($event.checked)">One at a time</mat-slide-toggle>
     </section>
 
-    @if (todo.rate().length) {
+    @if (one() && current(); as c) {
+      <div class="step glass">
+        <span class="dim">{{ waiting().indexOf(c) + 1 }} of {{ waiting().length }}</span>
+        @if (waiting().length > 1) {
+          <button mat-button (click)="skip(c)"><mat-icon>skip_next</mat-icon>Skip for now</button>
+        }
+      </div>
+    }
+
+    @if (todo.rate().length && shows('rate')) {
       <section class="glass pad">
         <header><span class="eyebrow">rate a session</span><span class="chip num">{{ todo.rate().length }}</span></header>
         <p class="dim note">Sessions of the last {{ rateDays }} days, while you still remember how they went.</p>
@@ -41,7 +62,7 @@ import { TerpeneQueue } from './terpene-queue';
       </section>
     }
 
-    @if (todo.strains().length) {
+    @if (todo.strains().length && shows('strains')) {
       <section class="glass pad">
         <header><span class="eyebrow">rate a strain</span><span class="chip num">{{ todo.strains().length }}</span></header>
         <p class="dim note">Strains used in the last {{ strainDays }} days, rated as a whole — its taste, its aroma, whether
@@ -65,7 +86,7 @@ import { TerpeneQueue } from './terpene-queue';
       </section>
     }
 
-    @if (unpricedAtAll()) {
+    @if (unpricedAtAll() && shows('price')) {
       <section class="glass pad">
         <header><span class="eyebrow">price a pickup</span>
           @if (todo.pickups()) { <span class="chip num">{{ todo.pickups() }}</span> }</header>
@@ -73,17 +94,17 @@ import { TerpeneQueue } from './terpene-queue';
       </section>
     }
 
-    @if (todo.stashes().length) {
+    @if (todo.stashes().length && shows('leftovers')) {
       <section class="glass pad">
-        <header><span class="eyebrow">clear the stashes</span><span class="chip num">{{ todo.stashes().length }}</span></header>
-        <p class="dim note">Jars with nothing sealed left whose stash still holds grams: ground, and the sessions never logged.</p>
+        <header><span class="eyebrow">clear the leftovers</span><span class="chip num">{{ todo.stashes().length }}</span></header>
+        <p class="dim note">Jars with nothing sealed left that still hold ground grams: ground once, and their sessions never logged.</p>
         <w-stash-clear [jars]="todo.stashes()" />
       </section>
     }
 
-    @if (todo.avb().length) {
+    @if (todo.avb().length && shows('avb')) {
       <section class="glass pad">
-        <header><span class="eyebrow">collect the AVB</span><span class="chip num">{{ todo.avb().length }}</span></header>
+        <header><span class="eyebrow">collect what was already vaped (AVB)</span><span class="chip num">{{ todo.avb().length }}</span></header>
         @for (w of todo.avb(); track w.device) {
           <div class="row">
             <mat-icon>recycling</mat-icon>
@@ -95,7 +116,7 @@ import { TerpeneQueue } from './terpene-queue';
       </section>
     }
 
-    @if (todo.sealed().length) {
+    @if (todo.sealed().length && shows('weigh')) {
       <section class="glass pad">
         <header><span class="eyebrow">weigh against the scale</span></header>
         <p class="dim note">Now and then, so the ledger and the jar agree. A weighing that agrees writes nothing, so these are offered, never counted.</p>
@@ -110,7 +131,7 @@ import { TerpeneQueue } from './terpene-queue';
       </section>
     }
 
-    @if (todo.terpenes().length) {
+    @if (todo.terpenes().length && shows('terpenes')) {
       <section class="glass pad">
         <header><span class="eyebrow">terpene profile</span><span class="chip num">{{ todo.terpenes().length }}</span></header>
         <p class="dim note">Jars with no terpenes written down. Each is looked up on the web — a search for the product as the
@@ -147,6 +168,7 @@ import { TerpeneQueue } from './terpene-queue';
     .strain a:hover { color: var(--w-primary); }
     .strain .dim { font-size: 12px; }
     .more { justify-self: start; }
+    .step { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 16px; }
     .done { display: flex; align-items: center; gap: 8px; justify-content: center; margin: 0; font-size: 13px; }
     .done mat-icon { color: var(--w-good); }
     @include bp.phone {
@@ -173,10 +195,46 @@ export class Forgot {
     ...(this.todo.rate().length ? [] : ['nothing to rate']),
     ...(this.todo.strains().length ? [] : ['every strain rated']),
     ...(this.unpricedAtAll() ? [] : ['every purchase priced']),
-    ...(this.todo.stashes().length ? [] : ['no stash left behind']),
+    ...(this.todo.stashes().length ? [] : ['no leftovers']),
     ...(this.todo.avb().length ? [] : ['no AVB waiting']),
     ...(this.todo.terpenes().length ? [] : ['every terpene profile written down']),
   ]);
+
+  /** The kinds of thing waiting, in the page's order. */
+  protected readonly waiting = computed(() => [
+    ...(this.todo.rate().length ? ['rate'] : []),
+    ...(this.todo.strains().length ? ['strains'] : []),
+    ...(this.unpricedAtAll() ? ['price'] : []),
+    ...(this.todo.stashes().length ? ['leftovers'] : []),
+    ...(this.todo.avb().length ? ['avb'] : []),
+    ...(this.todo.sealed().length ? ['weigh'] : []),
+    ...(this.todo.terpenes().length ? ['terpenes'] : []),
+  ]);
+  /** Whether the page shows one kind of thing at a time, kept in this browser. */
+  protected readonly one = signal(recall());
+  private readonly skipped = signal<ReadonlySet<string>>(new Set());
+  /** The kind shown when one at a time: the first not skipped, or round again to the first. */
+  protected readonly current = computed(() =>
+    this.waiting().find((k) => !this.skipped().has(k)) ?? this.waiting().at(0) ?? null);
+
+  protected shows(kind: string): boolean {
+    return !this.one() || this.current() === kind;
+  }
+
+  protected skip(kind: string): void {
+    const next = new Set([...this.skipped(), kind]);
+    // Once every kind is skipped, start round again.
+    this.skipped.set(this.waiting().every((k) => next.has(k)) ? new Set() : next);
+  }
+
+  protected setOne(on: boolean): void {
+    this.one.set(on);
+    try {
+      localStorage.setItem(ONE, on ? '1' : '0');
+    } catch {
+      // Storage refused: kept for this visit.
+    }
+  }
 
   /** A device's name, or what a session that named none is called. */
   protected deviceName(slug: string): string {

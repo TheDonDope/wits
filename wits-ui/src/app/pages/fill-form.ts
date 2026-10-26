@@ -129,24 +129,24 @@ export function rowCents(r: Row, vat: boolean): number {
           @if (inv.reading.match; as m) {
             @switch (inv.state) {
               @case ('matched') {
-                <p class="known">Already recorded: Fill {{ m.fill }}, picked up {{ day(m.start) }}{{
+                <p class="known">Already recorded: Prescription {{ m.fill }}, picked up {{ day(m.start) }}{{
                   m.priced ? ', which has its prices already' : '' }}. Its strains are not added again.</p>
               }
               @case ('ask') {
-                <p class="known">Fill {{ m.fill }} was picked up {{ day(m.start) }} with its strains,
+                <p class="known">Prescription {{ m.fill }} was picked up {{ day(m.start) }} with its strains,
                   {{ m.days }} {{ m.days === 1 ? 'day' : 'days' }} from the invoice{{
-                  m.priced ? ', and has its prices already' : '' }}. Is it that fill?</p>
+                  m.priced ? ', and has its prices already' : '' }}. Is it that prescription?</p>
               }
               @case ('priced') {
-                <p class="known">Fill {{ m.fill }} priced from it.</p>
+                <p class="known">Prescription {{ m.fill }} priced from it.</p>
               }
             }
             @if (inv.state === 'matched' || inv.state === 'ask') {
               <div class="choose">
                 <button mat-flat-button type="button" [disabled]="pricing()" (click)="priceMatched($index)">
-                  {{ inv.state === 'ask' ? 'Yes — price' : 'Price' }} Fill {{ m.fill }} from it
+                  {{ inv.state === 'ask' ? 'Yes — price' : 'Price' }} Prescription {{ m.fill }} from it
                 </button>
-                <button mat-button type="button" (click)="asNew($index)">{{ inv.state === 'ask' ? 'No, a new fill' : 'Record it as a new fill' }}</button>
+                <button mat-button type="button" (click)="asNew($index)">{{ inv.state === 'ask' ? 'No, a new prescription' : 'Record it as a new prescription' }}</button>
               </div>
             }
           }
@@ -215,7 +215,7 @@ export function rowCents(r: Row, vat: boolean): number {
         <div><dt>{{ fromInvoice() ? 'Typed in, before VAT' : 'Before VAT' }}</dt><dd class="num">{{ euros(typedCents()) }}</dd></div>
         <div><dt>VAT 19%</dt><dd class="num">{{ euros(vatCents()) }}</dd></div>
       }
-      <div class="all"><dt>The fill</dt><dd class="num">{{ totalGrams() | number: '1.0-2' }} g · {{ totalCents() ? euros(totalCents()) : 'no price' }}</dd></div>
+      <div class="all"><dt>The prescription</dt><dd class="num">{{ totalGrams() | number: '1.0-2' }} g · {{ totalCents() ? euros(totalCents()) : 'no price' }}</dd></div>
     </dl>
 
     <mat-form-field appearance="outline">
@@ -224,7 +224,7 @@ export function rowCents(r: Row, vat: boolean): number {
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
       <mat-datepicker #picker />
       @if (invoiceDates().length > 1) {
-        <mat-hint>The invoices are dated {{ invoiceDates().join(', ') }}: a fill is one pickup, on the day set here.</mat-hint>
+        <mat-hint>The invoices are dated {{ invoiceDates().join(', ') }}: a prescription is one pickup, on the day set here.</mat-hint>
       }
     </mat-form-field>
   `,

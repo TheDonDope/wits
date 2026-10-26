@@ -1,12 +1,13 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { DayToday } from '../data/models';
+import { DayToday, Entry } from '../data/models';
 import { Wits } from '../data/wits';
 import { CountUp } from '../viz/count-up';
 import { DayClock, Moment } from '../viz/day-clock';
@@ -34,6 +35,13 @@ import { openRecord } from './record';
             <mat-icon>info</mat-icon>in the material, not what reached you
           </span>
         </header>
+        @if (again(); as l) {
+          <button mat-flat-button class="again" (click)="repeat(l)" [disabled]="busy()"
+            [matTooltip]="'Records ' + l.grams + ' g of ' + l.product_name + ' now, as last time'">
+            <mat-icon>replay</mat-icon>Same as last time
+            <span class="what">{{ l.grams | number: '1.2-2' }} g · {{ l.product_name }}{{ deviceAt(l) }}</span>
+          </button>
+        }
 
         @if (d.sessions.length) {
           <div class="top">
@@ -119,6 +127,9 @@ import { openRecord } from './record';
       background: radial-gradient(80% 120% at 0% 0%, color-mix(in srgb, var(--w-sesh) 12%, transparent), transparent 60%), var(--w-glass); }
     header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
     .eyebrow { display: flex; gap: 6px; align-items: center; }
+    .again { justify-self: start; max-width: 100%; }
+    .again .what { margin-left: 8px; font-weight: 400; opacity: .8; }
+    @include bp.phone { .again .what { display: none; } }
     .note { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; cursor: help; }
     .note mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .top { display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(3, minmax(120px, 1fr)); gap: 24px; align-items: start; }
@@ -181,6 +192,39 @@ import { openRecord } from './record';
 export class TodayCard {
   private readonly wits = inject(Wits);
   private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(MatSnackBar);
+  protected readonly busy = signal(false);
+
+  /**
+   * The last session, to have again in one tap: its strain, grams, device,
+   * mode, heater and temperature — while the stash still holds its grams.
+   */
+  protected readonly again = computed(() => {
+    const last = this.wits.journal.value().entries.find((e) => e.type === 'sesh' && !e.corrected);
+    const jar = last && this.wits.jars.value().find((j) => j.slug === last.product);
+    return last && jar && jar.stash >= last.grams ? last : null;
+  });
+
+  protected deviceAt(e: Entry): string {
+    const name = this.wits.devices.value().find((d) => d.slug === e.device)?.name;
+    return name ? ` · ${name}${e.temperature ? ` ${String(e.temperature)} °C` : ''}` : '';
+  }
+
+  protected async repeat(e: Entry): Promise<void> {
+    this.busy.set(true);
+    try {
+      // The journal leaves out what a session did not say, so each is passed as it stands.
+      const w = await this.wits.sesh({ product: e.product ?? '', grams: e.grams, device: e.device,
+        temperature: e.temperature, mode: e.mode, heater: e.heater, setting: e.setting });
+      this.snack.open(w.message, 'Undo', { duration: 8000 }).onAction().subscribe(() => {
+        void this.wits.undo(w.entry.hash).then((u) => this.snack.open(u.message, undefined, { duration: 3000 }));
+      });
+    } catch (err) {
+      this.snack.open((err as Error).message, 'OK', { duration: 6000 });
+    } finally {
+      this.busy.set(false);
+    }
+  }
   protected readonly day = httpResource<DayToday>(() => `/api/today?v=${String(this.wits.version())}`);
   protected readonly now = computed(() => {
     this.day.value();
