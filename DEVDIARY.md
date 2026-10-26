@@ -2,6 +2,13 @@
 
 ## 2026-10-26
 
+### What the day held
+
+The dashboard said where the fill stood and nothing of the day. Today stands under the shelf now, as `wits today` says it in the terminal and `wits status` in its last line: the THC in what went through a device so far, in milligrams, grams × the strain's per cent × 10, with the CBD beside it and a bar against a usual day of the last 30 with a session. Two rings give the THC by strain and the grams by device, a 24-hour clock puts each session at its hour sized by its THC, and every session has a row with its share of the day and its rating. It is what was in the material, not what reached the body, and every place it shows says so; a strain with no THC written down is counted, not guessed at. Four sessions recorded this morning on a copy of the demo came to 206 mg THC and 6.7 mg CBD in 0.67 g against a usual 239 mg, every row checked by hand: 0.15 g of the 32 % Morning Sun is 48 mg. `wits-cli.gif` was re-recorded for the new line in `wits status`. Shipped as v0.103.0.
+
+- `0c1f15a` feat(today): the day so far, and the THC that went through the device
+- `0d844f6` docs: update changelog for v0.103.0
+
 ### A year looked back on, a trip packed for
 
 Two of the roadmap's delights, each in the terminal and the browser. `wits review` is a year in wits, every figure the year's own and one the report, the effect log or the price log already computes, with two of its own: the longest break, by the tolerance curve's week-or-more rule, and the terpene most of the grams led with. On the demo, 2025 is 446.34 g on 221 of 365 days, a 53-day break in spring, 190–199 °C rated best at 4.2 over 67 ratings, Limonene leading 60 % of the grams, and a gram from 3.99 € to 10.99 €; Insights → Year draws it as a hero year over a bento of cards, a vaporizer's dial among them. `wits pack --days 10` is the grams for a trip at the refill planner's rate with 20 % on top, drawn evenly from the jars on the shelf, as asked mid-way, so they go down together: shares in tenths that add up to exactly the need, 23.20 g as 4.60 or 4.70 g from each of five jars, or `--oldest` first. It is signed as a carry statement of exactly what is packed, and `wits verify` checks it. Shelf → Trip draws the trip day by day, each glass jar with what it gives lit, and the QR code. Shipped as v0.102.0.
@@ -54,6 +61,8 @@ The dashboard shows every fill not yet emptied now, not only the newest: on the 
 - `5facd06` docs: update changelog for v0.96.0
 
 ### Notes for 2026-10-26
+
+On the phone the Today rings' legends ran into each other until the names were given a span of their own to cut short, and the clock a row of its own. The device ring was first ordered by THC while it shows grams; devices are ordered by grams now. Milligrams are of THC in the bud, with no extraction rate assumed: what a vaporizer releases depends on the device, the temperature and the session, and nothing in the journal measures it.
 
 The longest break first came out as 300 days for a year with grinding on 221 of them: the days were keyed by midnight in each entry's own zone against midnight here, which are different times, so they are keyed by calendar date now. CI runs in UTC, where the same instant prints as UTC rather than Local, and a test comparing times failed there and nowhere here; it compares dates, and the packages were run under UTC and Pacific/Auckland. The even split's first rounding put 23.50 g in the bag for a 23.20 g need, then gave every leftover tenth to one jar; it rounds down and hands one tenth each to the fullest jars. A fifth Insights page made the phone's sub-tabs page with arrows, so there they lose their icons. The History page's calendar is still cut off after August on a phone, as it was before today; the Year page splits its one year into halves instead. The browser pictures were taken with a go-rod driver in the session's scratchpad, now with a wait and a PNG option, still not committed.
 
