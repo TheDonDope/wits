@@ -5,7 +5,6 @@ import (
 	"sort"
 	"time"
 
-
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"

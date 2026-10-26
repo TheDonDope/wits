@@ -129,7 +129,7 @@ type Event struct {
 	// to the one Prev names. Empty, and left out, on every other entry.
 	Merge string `json:"merge,omitempty"`
 	Prev  string `json:"prev"`
-	Hash    string `json:"hash"`
+	Hash  string `json:"hash"`
 }
 
 // Validate reports whether the event is well formed enough to be appended.
