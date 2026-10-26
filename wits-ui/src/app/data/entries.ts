@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { Entry } from './models';
 
 /** The journal from where this page left it, as the server answers `/api/journal?after=`. */
-interface Since {
+export interface Since {
   entries: Entry[];
   head: string;
   reset: boolean;

@@ -40,6 +40,8 @@ jobs:
 
       - name: Lint the stylesheets
         run: npm run lint:styles
+      - name: Type-check every file, the models held to the API's shapes
+        run: npm run typecheck
 
       - name: Test
         run: npx ng test --watch=false

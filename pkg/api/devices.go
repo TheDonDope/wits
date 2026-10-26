@@ -11,6 +11,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/views"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -87,31 +88,15 @@ func (f deviceFields) toDevice() *catalog.Device {
 }
 
 func devicesOf(ws *workspace.Workspace) any {
-	sessions, heated, grams := map[string]int{}, map[string]int{}, map[string]journal.Centigrams{}
-	last := map[string]time.Time{}
-	use := func(slug string, at time.Time) {
-		if at.After(last[slug]) {
-			last[slug] = at
-		}
-	}
-	for _, e := range ws.State.Standing {
-		if e.Type != journal.Sesh {
-			continue
-		}
-		if e.Device != "" {
-			sessions[e.Device]++
-			grams[e.Device] += journal.CG(e.Grams)
-			use(e.Device, e.OccurredAt)
-		}
-		if e.Heater != "" {
-			heated[e.Heater]++
-			use(e.Heater, e.OccurredAt)
-		}
-	}
+	use := views.Devices(ws.State.Standing)
 	out := []device{}
 	for _, d := range ws.Devices.Devices {
-		out = append(out, device{Slug: d.Slug, deviceFields: fieldsOf(d), Sessions: sessions[d.Slug],
-			Grams: grams[d.Slug].Grams(), Heated: heated[d.Slug], LastUsed: last[d.Slug]})
+		u := use[d.Slug]
+		if u == nil {
+			u = &views.Use{}
+		}
+		out = append(out, device{Slug: d.Slug, deviceFields: fieldsOf(d), Sessions: u.Sessions,
+			Grams: u.Grams.Grams(), Heated: u.Heated, LastUsed: u.LastUsed})
 	}
 	return out
 }

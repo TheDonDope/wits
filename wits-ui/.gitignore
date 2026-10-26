@@ -2,6 +2,7 @@
 
 # Compiled output
 /public/wits.wasm
+/public/wits-xlsx.wasm
 /public/wasm_exec.js
 /dist
 /tmp

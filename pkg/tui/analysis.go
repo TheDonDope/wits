@@ -14,6 +14,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/views"
 )
 
 // analysisView is the long view: how this cycle is going, how it compares to
@@ -757,22 +758,15 @@ type deviceUsage struct {
 // without a device are owned rather than dropped: they happened.
 func usageByDevice(events []journal.Event) ([]string, map[string]*deviceUsage) {
 	byDev := map[string]*deviceUsage{}
-	for _, e := range events {
-		name := e.Device
+	for slug, u := range views.Devices(events) {
+		if u.Sessions == 0 {
+			continue // a heater: it heated sessions, but had none
+		}
+		name := slug
 		if name == "" {
 			name = "no device"
 		}
-		u, ok := byDev[name]
-		if !ok {
-			u = &deviceUsage{}
-			byDev[name] = u
-		}
-		u.grams += e.Grams
-		u.count++
-		if e.Temperature > 0 {
-			u.tSum += e.Temperature
-			u.temps++
-		}
+		byDev[name] = &deviceUsage{grams: u.Grams.Grams(), count: u.Sessions, temps: u.Temps, tSum: u.TempSum}
 	}
 	names := make([]string, 0, len(byDev))
 	for n := range byDev {

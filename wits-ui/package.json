@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "lint:styles": "stylelint \"src/**/*.scss\""
+    "lint:styles": "stylelint \"src/**/*.scss\"",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit"
   },
   "private": true,
   "packageManager": "npm@12.2.1",

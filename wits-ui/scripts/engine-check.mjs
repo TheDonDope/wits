@@ -85,10 +85,25 @@ process.exit(0);
 /** A repository in a new folder, the workbook read and imported into it, and the first opened again. */
 async function book(path) {
   const xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-  const data = new Uint8Array(await readFile(path));
+  // The engine has no .xlsx reader of its own: as the page does, the
+  // reader module reads the file, and the engine is sent what it read.
+  const reader = new Promise((resolve) => (globalThis.witsXLSXReady = resolve));
+  const rgo = new globalThis.Go();
+  const r = await WebAssembly.instantiate(await readFile(join(dirname(wasmPath), 'wits-xlsx.wasm')), rgo.importObject);
+  void rgo.run(r.instance);
+  await reader;
+  const got = globalThis.witsReadWorkbook(new Uint8Array(await readFile(path)));
+  if (got.error) {
+    throw new Error(got.error);
+  }
+  const type = 'application/vnd.wits.workbook+json';
   const made = await call('POST', '/api/repo', JSON.stringify({ path: '/book', create: true }));
-  const read = await engine.request('POST', '/api/import', data, xlsx);
-  const imported = await engine.request('POST', '/api/import?commit=1', data, xlsx);
+  const refused = await engine.request('POST', '/api/import', new Uint8Array(await readFile(path)), xlsx);
+  if (refused.status < 400) {
+    throw new Error('the engine read a .xlsx file itself: it should carry no reader');
+  }
+  const read = await engine.request('POST', '/api/import', got.workbook, type);
+  const imported = await engine.request('POST', '/api/import?commit=1', got.workbook, type);
   const place = (await call('GET', '/api/repo')).body;
   const listed = (await call('GET', '/api/dirs')).body.dirs.map((d) => d.name);
   const back = (await call('POST', '/api/repo', JSON.stringify({ path: '/wits' }))).body;

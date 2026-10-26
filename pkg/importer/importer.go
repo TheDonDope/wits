@@ -2,11 +2,9 @@ package importer
 
 import (
 	"fmt"
-	"io"
 	"sort"
 	"time"
 
-	"github.com/xuri/excelize/v2"
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
@@ -77,30 +75,8 @@ func (r *Result) Counts() map[journal.Type]int {
 	return counts
 }
 
-// Read parses the workbook at path. It opens the file read-only and writes
-// nothing, anywhere.
-func Read(path string) (*Result, error) {
-	f, err := excelize.OpenFile(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return read(f)
-}
-
-// ReadFrom parses a workbook from a stream — one uploaded through the browser,
-// which has no path. It writes nothing, anywhere.
-func ReadFrom(in io.Reader) (*Result, error) {
-	f, err := excelize.OpenReader(in)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return read(f)
-}
-
-// read parses an open workbook.
-func read(f *excelize.File) (*Result, error) {
+// read parses a workbook.
+func read(w *Workbook) (*Result, error) {
 	result := &Result{}
 	seen := map[string]bool{}
 	// Different spellings that resolve to the same product are worth saying out
@@ -109,11 +85,8 @@ func read(f *excelize.File) (*Result, error) {
 	// merge, since the THC/CBD ratio ends every slug.
 	spellings := map[string]map[string]bool{}
 
-	for _, name := range f.GetSheetList() {
-		sheet, err := readSheet(f, name)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", name, err)
-		}
+	for _, ws := range w.Sheets {
+		sheet := readSheet(ws)
 		if sheet == nil {
 			continue
 		}

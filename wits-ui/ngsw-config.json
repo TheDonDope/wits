@@ -18,6 +18,14 @@
       }
     },
     {
+      "name": "reader",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": ["/wits-xlsx.wasm"]
+      }
+    },
+    {
       "name": "guide",
       "installMode": "lazy",
       "updateMode": "lazy",
