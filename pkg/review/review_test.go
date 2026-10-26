@@ -73,7 +73,7 @@ func TestYear(t *testing.T) {
 	require.Len(t, r.Strains, 2)
 	assert.Equal(t, "Cantourage 25/1 Lemon Haze", r.Strains[0].Name, "The most ground first")
 	assert.InDelta(t, 4.0/7, r.Strains[0].Share, 1e-9)
-	assert.Equal(t, day(time.January, 4, 0), r.Busiest.Day)
+	assert.Equal(t, "2024-01-04", r.Busiest.Day.Format(time.DateOnly))
 }
 
 func TestYearBreak(t *testing.T) {
@@ -81,7 +81,7 @@ func TestYearBreak(t *testing.T) {
 
 	require.NotNil(t, r.Break)
 	assert.Equal(t, 304, r.Break.Days, "From the day after the last session, 3 March, to New Year's Eve")
-	assert.Equal(t, day(time.March, 3, 0), r.Break.From)
+	assert.Equal(t, "2024-03-03", r.Break.From.Format(time.DateOnly))
 	assert.Equal(t, 2, r.Break.Breaks, "January's last session to March, and March to the year's end")
 }
 
