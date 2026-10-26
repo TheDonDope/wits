@@ -146,10 +146,14 @@ function device(): Habit {
   return HABITS[0];
 }
 
-/** When in the day a session falls: mostly the evening. */
+/** The parts of the day sessions fall in, as [up to this share of them, from, to]: mostly the evening. */
+const DAY: [number, number, number][] = [[0.1, 8, 11], [0.3, 13, 18], [1, 19, 24]];
+
+/** When in the day a session falls. */
 function hour(): number {
   const r = rand();
-  return r < 0.1 ? Math.floor(between(8, 11)) : r < 0.3 ? Math.floor(between(13, 18)) : Math.floor(between(19, 24));
+  const [, from, to] = DAY.find(([share]) => r < share) ?? DAY[DAY.length - 1];
+  return Math.floor(between(from, to));
 }
 
 /** A product's own quality, the same every time it is asked. */
@@ -161,21 +165,49 @@ function qualityOf(product: string): number {
   return quality.get(product) ?? 3.5;
 }
 
+/** What the heat adds to how a session went: best between 183 and 197 °C. */
+function heatOf(temp: number): number {
+  if (temp > 197) {
+    return -0.3;
+  }
+  return temp >= 183 ? 0.4 : -0.1;
+}
+
+/** What a session at an hour is rated on besides overall. */
+function asksAt(h: number): string[] {
+  if (h >= 19) {
+    return ['sleep', 'calm', 'pain'];
+  }
+  return h < 12 ? ['focus', 'mood', 'pain'] : ['pain', 'mood', 'appetite', 'calm'];
+}
+
+/** What the hour and the heat add to one dimension: sleep at night, focus in the morning, calm when cool. */
+function liftOf(d: string, h: number, temp: number): number {
+  if (d === 'sleep') {
+    return h >= 19 ? 0.7 : 0;
+  }
+  if (d === 'focus') {
+    if (h < 12) {
+      return 0.7;
+    }
+    return h >= 19 ? -0.8 : 0;
+  }
+  if (d === 'calm') {
+    return temp < 183 ? 0.5 : 0;
+  }
+  return 0;
+}
+
 /**
  * What a session did: overall from the product, the heat and the hour, and
- * two or three of what it was for — sleep at night, focus in the morning.
+ * two or three of what it was for.
  */
 function scores(product: string, temp: number, h: number): Record<string, number> {
-  const heat = temp >= 183 && temp <= 197 ? 0.4 : temp > 197 ? -0.3 : -0.1;
   const clamp = (v: number) => Math.min(5, Math.max(1, Math.round(v + between(-0.8, 0.8))));
-  const q = qualityOf(product) + heat;
+  const q = qualityOf(product) + heatOf(temp);
   const out: Record<string, number> = { overall: clamp(q) };
-  const night = h >= 19;
-  const morning = h < 12;
-  const asks = night ? ['sleep', 'calm', 'pain'] : morning ? ['focus', 'mood', 'pain'] : ['pain', 'mood', 'appetite', 'calm'];
-  for (const d of asks.slice(0, 2 + Math.floor(rand() * 2))) {
-    const lift = (d === 'sleep' && night) || (d === 'focus' && morning) ? 0.7 : d === 'focus' && night ? -0.8 : 0;
-    out[d] = clamp(q + lift + (d === 'calm' && temp < 183 ? 0.5 : 0));
+  for (const d of asksAt(h).slice(0, 2 + Math.floor(rand() * 2))) {
+    out[d] = clamp(q + liftOf(d, h, temp));
   }
   return out;
 }
@@ -202,6 +234,45 @@ async function collect(slug: string, force = false): Promise<boolean> {
   return true;
 }
 
+/** How many sessions were recorded, rated and refused, and the AVB collections. */
+const tally = { made: 0, rated: 0, refused: 0, collected: 0 };
+
+/** When the sessions after a grind fall: over the next days, none after now. */
+function after(g: Entry): Date[] {
+  const n = Math.max(1, Math.min(4, Math.round((g.grams * between(0.55, 0.85)) / 0.25)));
+  const out: Date[] = [];
+  for (let i = 0; i < n; i++) {
+    const at = new Date(g.occurred_at);
+    at.setDate(at.getDate() + Math.floor(rand() * 3));
+    at.setHours(hour(), Math.floor(rand() * 60), 0, 0);
+    if (at.getTime() <= Date.now() - 60_000) {
+      out.push(at);
+    }
+  }
+  return out;
+}
+
+/** One session of a product at a moment, on a device by habit, most of them rated. */
+async function session(product: string, at: Date): Promise<void> {
+  const d = device();
+  const mode = d.modes ? pick(d.modes) : undefined;
+  const temp = mode?.temp ?? pick(d.temps);
+  const grams = Math.round(between(0.15, 0.32) * 100) / 100;
+  const out = await api<{ entry: Entry }>('POST', '/api/sesh', {
+    product, grams, device: d.slug, temperature: mode ? 0 : temp, mode: mode?.name ?? '', timer: mode?.timer ?? 0, date: stamp(at),
+  });
+  tally.made++;
+  const s = since.get(d.slug) ?? { grams: 0, sessions: 0, last: at };
+  since.set(d.slug, { grams: s.grams + grams, sessions: s.sessions + 1, last: at > s.last ? at : s.last });
+  if (rand() < 0.82) {
+    await api('POST', '/api/rate', { session: out.entry.hash, scores: scores(product, temp, at.getHours()), note: '' });
+    tally.rated++;
+  }
+  if (await collect(d.slug)) {
+    tally.collected++;
+  }
+}
+
 /**
  * A year of sessions: after every grind of the last twelve months, two to four
  * sessions of what was ground over the next days, most of them rated, each
@@ -212,41 +283,14 @@ async function sessions(): Promise<void> {
   const grinds = (await api<{ entries: Entry[] }>('GET', '/api/journal?type=grind&limit=100000')).entries
     .filter((e) => Date.parse(e.occurred_at) > Date.now() - 365 * 86_400_000)
     .reverse();
-  let made = 0, rated = 0, refused = 0, collected = 0;
   for (const g of grinds) {
-    const product = g.product ?? '';
-    const n = Math.max(1, Math.min(4, Math.round((g.grams * between(0.55, 0.85)) / 0.25)));
-    for (let i = 0; i < n; i++) {
-      const at = new Date(g.occurred_at);
-      at.setDate(at.getDate() + Math.floor(rand() * 3));
-      at.setHours(hour(), Math.floor(rand() * 60), 0, 0);
-      if (at.getTime() > Date.now() - 60_000) {
-        continue;
-      }
-      const d = device();
-      const mode = d.modes ? pick(d.modes) : undefined;
-      const temp = mode ? mode.temp : pick(d.temps);
-      const grams = Math.round(between(0.15, 0.32) * 100) / 100;
-      try {
-        const out = await api<{ entry: Entry }>('POST', '/api/sesh', {
-          product, grams, device: d.slug, temperature: mode ? 0 : temp, mode: mode?.name ?? '', timer: mode?.timer ?? 0, date: stamp(at),
-        });
-        made++;
-        const s = since.get(d.slug) ?? { grams: 0, sessions: 0, last: at };
-        since.set(d.slug, { grams: s.grams + grams, sessions: s.sessions + 1, last: at > s.last ? at : s.last });
-        if (rand() < 0.82) {
-          await api('POST', '/api/rate', { session: out.entry.hash, scores: scores(product, temp, at.getHours()), note: '' });
-          rated++;
-        }
-        if (await collect(d.slug)) {
-          collected++;
-        }
-      } catch {
-        refused++;
-      }
+    for (const at of after(g)) {
+      await session(g.product ?? '', at).catch(() => {
+        tally.refused++;
+      });
     }
   }
-  console.log(`sessions: ${String(made)} recorded, ${String(rated)} rated, ${String(collected)} AVB collections, ${String(refused)} refused`);
+  console.log(`sessions: ${String(tally.made)} recorded, ${String(tally.rated)} rated, ${String(tally.collected)} AVB collections, ${String(tally.refused)} refused`);
 }
 
 /** Every jar's terpenes looked up, and what most pages name kept. */
