@@ -1471,6 +1471,29 @@ and a wheel of the day. The terminal interface rates from its sessions screen.
 The interface's change stamp includes `effects.ndjson`, so a rating made
 elsewhere shows within a tick.
 
+### The user guide — User guide, on the menu, and the docs split
+
+**User guide**, first on the header's menu (⋮) and linked from the `?` sheet,
+opens `/guide`: eighteen sections from how wits thinks to the phone, each with
+what the page is for, the steps, pictures of it, a button that opens it (or
+the Record tab it means), and **the same, in a terminal**: the commands with
+what they printed on the demo, and the terminal interface's keys, with a
+photograph of its screen where it has one. The content is data
+(`data/guide.ts`), and `guide.spec.ts` holds it to the app: ids unique, every
+`#link` in the prose a section, every page it opens a route, every picture in
+`public/guide`, every section with a terminal way. The pictures are WebP,
+1.3 MB in all, in a lazily cached service-worker group, so the phone does not
+fetch them on install. The browser's were taken in headless Chromium on the
+demo, the terminal's with vhs. A link inside the prose is followed by the page
+itself, since `#weigh` would otherwise resolve against Pages' `/wits/` base.
+Every section measures 375 px on the phone, and the page was looked at in
+Aurora and in Paper.
+
+The README was split the same way: it keeps what wits is, getting it
+installed, and the layout and development; `docs/terminal.md` is the command
+line and the terminal interface, `docs/browser.md` the server, the window and
+the phone.
+
 ---
 
 ## 📌 Planned

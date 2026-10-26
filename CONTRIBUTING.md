@@ -23,8 +23,9 @@ make test
   why, and how it was verified.
 - Commit messages use conventional prefixes in the repository's own voice —
   read `git log` for a few before writing one.
-- If behaviour changes, update README.md and ROADMAP.md in the same pull
-  request. Both are claims checked against the code, not aspirations.
+- If behaviour changes, update README.md (or the doc in `docs/` it touches),
+  ROADMAP.md and, for a page of the browser interface, its section of the user
+  guide (`wits-ui/src/app/data/guide.ts`) in the same pull request. Both are claims checked against the code, not aspirations.
 - If the change is visible on screen, re-record the GIFs it affects
   (`./render-vhs-tapes.sh <tape>`).
 

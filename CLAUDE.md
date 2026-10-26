@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 Guidance for Claude Code in this repository. README.md is for people using
-wits; ROADMAP.md is the plan and the record of what is built; this file is how
-to work on it.
+wits, with `docs/terminal.md` (the command line and the terminal interface) and
+`docs/browser.md` (the server, the window, the phone) beside it; ROADMAP.md is
+the plan and the record of what is built; this file is how to work on it.
 
 ## Start here
 
@@ -272,8 +273,11 @@ Angular client (signals, zoneless, standalone components, `httpResource`).
 - **ROADMAP.md replaces GitHub Issues** (blank issues are off, and the issue
   chooser points at the roadmap — `.github/ISSUE_TEMPLATE/config.yml`). Features, bugs and their rationale live
   there, and "Built" is kept exact against the code. When behaviour changes,
-  update ROADMAP.md and README.md in the same PR — both are verified claims, not
-  aspirations.
+  update ROADMAP.md, README.md and the doc in `docs/` it touches in the same
+  PR — all verified claims, not aspirations. A change to a page of the browser
+  interface also updates its section of the user guide (`wits-ui/src/app/data/guide.ts`):
+  its words, its terminal equivalents, and its picture in `wits-ui/public/guide`
+  (WebP, taken on the demo) when the page looks different.
 - Branch → PR → green checks → rebase-merge → release. Nothing merges red.
 - Commit messages: conventional prefixes in the repo's own voice — lowercase,
   declarative, a body that says *why* ("cycles close on empty, and every gram

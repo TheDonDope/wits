@@ -6,7 +6,7 @@ description: Re-record the demo GIFs in wits/assets from the *.tape files with v
 # Tapes
 
 Each `assets/*.gif` is recorded from a `*.tape` at the repository root and must
-show what the README beside it says.
+show what the docs beside it say (README.md, docs/terminal.md, docs/browser.md).
 
 | tape | shows | depends on |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ and read it:
 ffmpeg -loglevel error -y -sseof -0.5 -i assets/wits-bundle.gif -frames:v 1 -update 1 <scratchpad>/last.png
 ```
 
-Then open the PNG with Read and check every figure on screen against README.md.
+Then open the PNG with Read and check every figure on screen against the doc that shows the GIF.
 For the tour, pull a few frames from the middle as well (`-ss <seconds>`).
 
 ## Don't commit a render that changed nothing

@@ -1,8 +1,9 @@
 # wits-ui
 
 The browser interface to wits: Angular 22 and Angular Material, served by
-`wits-server` (`cmd/wits-server`, `pkg/api`). See the main README's
-"In a browser" for what it shows and how it guards the data.
+`wits-server` (`cmd/wits-server`, `pkg/api`). See
+[docs/browser.md](../docs/browser.md) for what it shows and how it guards the
+data, and the **User guide** on its own menu (`/guide`) for every page.
 
 ```sh
 npm ci
