@@ -1,4 +1,5 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,9 +11,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { addsUp, pictureOf, readInvoice } from '../data/invoice';
-import { InvoiceReading, PriceLine, UnpricedEntry } from '../data/models';
+import { InvoiceReading, PriceLine, PricedPreview, UnpricedEntry } from '../data/models';
 import { Wits } from '../data/wits';
-import { Row, VAT, rowCents } from './fill-form';
+import { VAT } from './fill-form';
 
 /** One pickup's purchases without a price: the strains of one prescription. */
 export interface Pickup {
@@ -51,28 +52,26 @@ export function byFill(entries: UnpricedEntry[]): Pickup[] {
   return [...out.values()].sort((a, b) => b.fill - a.fill);
 }
 
-function row(l: UnpricedEntry, p: Priced | undefined): Row {
-  return { id: 0, name: '', grams: l.grams, perGram: p?.perGram ?? null, total: p?.total, inclVAT: p?.inclVAT };
+/** A fill's prices in cents, as the server priced them: each line's, and the fill's — `typed` the prices typed in before VAT, `vat` what was added to them, `invoice` the lines that had their VAT already. */
+export interface Sums {
+  lines: Record<string, number>;
+  typed: number;
+  vat: number;
+  invoice: number;
+  total: number;
 }
 
-/**
- * A fill's prices in cents: every line by rowCents, as the fill form and the
- * server (lineCents) work it, and the fill's total — `typed` the prices typed
- * in before VAT, `vat` what is added to them, the invoice's lines as printed.
- */
-export function fillCents(lines: UnpricedEntry[], priced: Partial<Record<string, Priced>>, vat: boolean):
-  { lines: Record<string, number>; typed: number; vat: number; invoice: number; total: number } {
-  const out = { lines: {} as Record<string, number>, typed: 0, vat: 0, invoice: 0, total: 0 };
-  for (const l of lines) {
-    const r = row(l, priced[l.hash]);
-    const cents = rowCents(r, vat);
-    out.lines[l.hash] = cents;
-    out.total += cents;
-    if (r.inclVAT) {
-      out.invoice += cents;
+/** Adds up the prices the server worked out for a fill's lines. */
+export function sumsOf(preview: PricedPreview | undefined): Sums {
+  const out: Sums = { lines: {}, typed: 0, vat: 0, invoice: 0, total: 0 };
+  for (const l of preview?.lines ?? []) {
+    out.lines[l.purchase] = l.cents;
+    out.total += l.cents;
+    if (l.vat_cents) {
+      out.typed += l.cents - l.vat_cents;
+      out.vat += l.vat_cents;
     } else {
-      out.typed += rowCents(r, false);
-      out.vat += cents - rowCents(r, false);
+      out.invoice += l.cents;
     }
   }
   return out;
@@ -86,11 +85,11 @@ export function fillCents(lines: UnpricedEntry[], priced: Partial<Record<string,
 export function priceLines(lines: UnpricedEntry[], priced: Partial<Record<string, Priced>>, vat: boolean, giveUp = false): PriceLine[] {
   return lines.map((l) => {
     const p = priced[l.hash];
-    if (p?.inclVAT && p.perGram) {
-      return { purchase: l.hash, total: (rowCents(row(l, p), vat) / 100).toFixed(2), note: p.note };
+    if (p?.inclVAT && p.total !== undefined) {
+      return { purchase: l.hash, total: (p.total / 100).toFixed(2), note: p.note };
     }
     if (p?.perGram) {
-      return { purchase: l.hash, per_gram: String(p.perGram) };
+      return { purchase: l.hash, per_gram: String(p.perGram), with_vat: p.inclVAT ? true : undefined, note: p.note };
     }
     return giveUp ? { purchase: l.hash, unknown: true } : { purchase: l.hash, per_gram: '' };
   });
@@ -340,7 +339,16 @@ export class PickupCard implements OnInit, OnDestroy {
   protected readonly notes = signal<string[]>([]);
   /** Whether what is left without a price has none to be had, and is asked about no more. */
   protected readonly giveUp = signal(false);
-  protected readonly sums = computed(() => fillCents(this.pickup().lines, this.priced(), this.vat()));
+  /**
+   * The fill's prices as the server would write them, rehearsed as they are
+   * typed (?dry=1): VAT added where it is due, rounded once, none of it
+   * worked out here.
+   */
+  private readonly rehearsal = httpResource<PricedPreview>(() => {
+    const lines = priceLines(this.pickup().lines, this.priced(), this.vat()).filter((l) => Boolean(l.per_gram) || Boolean(l.total));
+    return lines.length ? { url: '/api/price/fill?dry=1', method: 'POST', body: { lines, vat: this.vat() } } : undefined;
+  });
+  protected readonly sums = computed(() => sumsOf(this.rehearsal.hasValue() ? this.rehearsal.value() : undefined));
   private handedOver = false;
 
   ngOnInit(): void {

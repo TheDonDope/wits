@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { InvoiceReading, UnpricedEntry } from '../data/models';
-import { byFill, fillCents, fromInvoice, priceLines } from './pickup';
+import { byFill, fromInvoice, priceLines, sumsOf } from './pickup';
 
 function bought(hash: string, fill: number, product: string, grams = 20): UnpricedEntry {
   return {
@@ -20,14 +20,20 @@ describe('a fill priced together', () => {
     expect(fills.map((f) => [f.fill, f.lines.length, f.grams])).toEqual([[30, 3, 60], [29, 1, 20]]);
   });
 
-  it('works out the prices as the server does: 20 g at 5,80 € with VAT is 138,04 €', () => {
-    const sums = fillCents([sun, doughnut, papaya], { a: { perGram: 5.8 }, b: { perGram: 5.84 } }, true);
-    expect(sums.lines).toEqual({ a: 13804, b: 13899, c: 0 });
-    expect(sums.typed).toBe(23280);
-    expect(sums.vat).toBe(27703 - 23280);
-    expect(sums.total).toBe(27703);
+  it('sends the prices typed, and adds up the server’s: 20 g at 5,80 € with VAT is 138,04 €', () => {
     expect(priceLines([sun, papaya], { a: { perGram: 5.8 } }, true)).toEqual([
       { purchase: 'a', per_gram: '5.8' }, { purchase: 'c', per_gram: '' }]);
+    const sums = sumsOf({ message: '', lines: [
+      { purchase: 'a', cents: 13804, vat_cents: 2204 }, { purchase: 'b', cents: 13899, vat_cents: 2219 }] });
+    expect(sums.lines).toEqual({ a: 13804, b: 13899 });
+    expect(sums.typed).toBe(23280);
+    expect(sums.vat).toBe(4423);
+    expect(sums.total).toBe(27703);
+  });
+
+  it('says a price has its VAT in it already once an invoice’s line is changed', () => {
+    expect(priceLines([doughnut], { b: { perGram: 5.84, inclVAT: true } }, true)).toEqual([
+      { purchase: 'b', per_gram: '5.84', with_vat: true }]);
   });
 
   it('takes an invoice’s lines by the match, at its totals, with no VAT added', () => {
@@ -43,7 +49,7 @@ describe('a fill priced together', () => {
     const { priced, notes } = fromInvoice(byFill([sun, doughnut, papaya])[0], reading, true);
     expect(Object.keys(priced).sort()).toEqual(['a', 'b']);
     expect(notes).toEqual(['Something else is not in this prescription']);
-    const sums = fillCents([sun, doughnut, papaya], priced, true);
+    const sums = sumsOf({ message: '', lines: [{ purchase: 'a', cents: 11600, vat_cents: 0 }, { purchase: 'b', cents: 11680, vat_cents: 0 }] });
     expect(sums.invoice).toBe(23280);
     expect(sums.vat).toBe(0);
     expect(priceLines([doughnut], priced, true)).toEqual([{ purchase: 'b', total: '116.80', note: 'invoice 2608' }]);

@@ -3,13 +3,17 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/TheDonDope/wits/pkg/prices"
+	"github.com/TheDonDope/wits/pkg/record"
+	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
 func TestUnpricedComeByTheirFill(t *testing.T) {
@@ -247,4 +251,29 @@ func TestCostsBreakDownByStrainAndPharmacy(t *testing.T) {
 	assert.Equal(t, "2026", c.Years[0].Key)
 	assert.Equal(t, c.Cents, c.Years[0].Cents, "The years add up to what was paid")
 	assert.Len(t, c.Strains, 5)
+}
+
+func TestADryPricingSaysEachLinesPriceAndWritesNone(t *testing.T) {
+	s, r := server(t, "")
+	ws, err := workspace.Read(r)
+	require.NoError(t, err)
+	filled, err := ws.Recorder.Fill([]record.FillLine{
+		{Name: "NICE 32/1 Morning Sun", Grams: 20},
+		{Name: "All Nations 29/1 Mac Doughnut", Grams: 20},
+	}, time.Now().AddDate(0, 0, -1), "")
+	require.NoError(t, err)
+
+	w := call(t, s, "POST", "/api/price/fill?dry=1", `{"vat": true, "lines": [
+		{"purchase": "`+filled[0].Event.Hash+`", "per_gram": "5,80"},
+		{"purchase": "`+filled[1].Event.Hash+`", "per_gram": "5,84", "with_vat": true}]}`)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	p := decodeInto[pricedPreview](t, w)
+	require.Len(t, p.Lines, 2)
+	assert.Equal(t, int64(13804), p.Lines[0].Cents, "20 g at 5.80 € before VAT, 19% added")
+	assert.Equal(t, int64(2204), p.Lines[0].VAT)
+	assert.Equal(t, int64(11680), p.Lines[1].Cents, "with its VAT already, none added")
+	assert.Zero(t, p.Lines[1].VAT)
+	_, err = os.Stat(r.PricesPath())
+	assert.True(t, os.IsNotExist(err), "Should write no price")
 }

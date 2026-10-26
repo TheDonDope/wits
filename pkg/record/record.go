@@ -30,6 +30,19 @@ type Recorder struct {
 	products *catalog.Catalog
 	devices  *catalog.Devices
 	state    *ledger.State
+	// dry rehearses: every entry is built and checked as it would be
+	// written, against the journal as it stands, and nothing is written —
+	// not the journal, the catalog nor the price log (Dry).
+	dry bool
+}
+
+// Dry is a recorder that rehearses: what it is asked to record is built and
+// checked exactly as it would be, refused in the same words, and returned
+// without being written. A screen shows it before it is committed to.
+func (r *Recorder) Dry() *Recorder {
+	c := *r
+	c.dry = true
+	return &c
 }
 
 // New returns a recorder over the given repository state.
@@ -81,6 +94,18 @@ func newProduct(c *catalog.Catalog, name, slug string) (*catalog.Product, error)
 // under its lock, and adopts what was written, so everything sharing this
 // recorder's catalog — the screens included — sees it.
 func (r *Recorder) changeProducts(change func(*catalog.Catalog) error) error {
+	if r.dry {
+		// A rehearsal changes its own copy, read as the file stands.
+		c, err := catalog.Load(r.repo.ProductsPath())
+		if err != nil {
+			return err
+		}
+		if err := change(c); err != nil {
+			return err
+		}
+		r.products = c
+		return nil
+	}
 	fresh, err := r.repo.UpdateProducts(change)
 	if err != nil {
 		return err
@@ -202,34 +227,67 @@ func (r *Recorder) check(slug string, grams float64, account journal.Account) er
 // were not there yet while today's balance looks fine — a grind dated before
 // the fill it draws on. check only sees today; impossible sees every day.
 func (r *Recorder) write(build func() ([]journal.Event, error)) ([]journal.Event, error) {
+	if r.dry {
+		return r.rehearse(build)
+	}
 	stored, err := r.repo.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
 		r.state = ledger.Fold(events)
 		batch, err := build()
 		if err != nil {
 			return nil, err
 		}
-		// Taken after the builder, which dates corrections with its own now.
-		now := time.Now()
-		for i := range batch {
-			if batch[i].OccurredAt.IsZero() {
-				batch[i].OccurredAt = now
-			}
-			if err := notAhead(batch[i], now); err != nil {
-				return nil, err
-			}
-			// The journal fills the accounts in on append; the replay needs
-			// them now, or the entry moves nothing and takes nothing.
-			if batch[i].From == "" && batch[i].To == "" {
-				batch[i].From, batch[i].To, _ = journal.Flow(batch[i].Type)
-			}
-		}
-		return batch, r.impossible(batch)
+		return batch, r.finish(batch)
 	})
 	if err != nil {
 		return nil, err
 	}
 	r.state = ledger.Fold(append(slices.Clip(r.state.Events), stored...))
 	return stored, nil
+}
+
+// finish dates what the builder left undated, fills in the accounts, and
+// refuses an entry dated ahead or one that takes grams that were not there.
+func (r *Recorder) finish(batch []journal.Event) error {
+	// Taken after the builder, which dates corrections with its own now.
+	now := time.Now()
+	for i := range batch {
+		if batch[i].OccurredAt.IsZero() {
+			batch[i].OccurredAt = now
+		}
+		if err := notAhead(batch[i], now); err != nil {
+			return err
+		}
+		// The journal fills the accounts in on append; the replay needs
+		// them now, or the entry moves nothing and takes nothing.
+		if batch[i].From == "" && batch[i].To == "" {
+			batch[i].From, batch[i].To, _ = journal.Flow(batch[i].Type)
+		}
+	}
+	return r.impossible(batch)
+}
+
+// rehearse is write without the writing: the builder runs against the
+// journal as it stands, every check is made — the journal's own included —
+// and the batch comes back unchained.
+func (r *Recorder) rehearse(build func() ([]journal.Event, error)) ([]journal.Event, error) {
+	events, err := r.repo.Journal().Events()
+	if err != nil {
+		return nil, err
+	}
+	r.state = ledger.Fold(events)
+	batch, err := build()
+	if err != nil {
+		return nil, err
+	}
+	if err := r.finish(batch); err != nil {
+		return nil, err
+	}
+	for _, e := range batch {
+		if err := e.Validate(); err != nil {
+			return nil, err
+		}
+	}
+	return batch, nil
 }
 
 // ErrAhead is why an entry dated after the moment it is written is refused:
@@ -770,6 +828,9 @@ func (r *Recorder) PriceAll(paid []prices.Price, at time.Time) ([]prices.Price, 
 		}
 		checked[i] = prices.Price{Purchase: e.Hash, At: at, Cents: p.Cents, Unknown: p.Unknown,
 			Seller: strings.TrimSpace(p.Seller), Note: strings.TrimSpace(p.Note)}
+	}
+	if r.dry {
+		return checked, nil
 	}
 	out := make([]prices.Price, 0, len(checked))
 	for _, p := range checked {

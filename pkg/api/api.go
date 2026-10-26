@@ -253,16 +253,25 @@ func jsonBody(w http.ResponseWriter, r *http.Request) bool {
 }
 
 // write decodes a JSON body and records it through a fresh workspace's
-// recorder, answering with the entry it wrote.
+// recorder, answering with the entry it wrote — or, asked with ?dry=1, with
+// what it would write and do, writing nothing (dry.go).
 func (s *Server) write(do func(*workspace.Workspace, *http.Request) (journal.Event, string, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws, ok := s.writable(w, r)
 		if !ok {
 			return
 		}
+		rehearsed := dry(r)
+		if rehearsed {
+			r, _ = rehearsing(ws, r)
+		}
 		e, message, err := do(ws, r)
 		if err != nil {
 			fail(w, http.StatusBadRequest, err)
+			return
+		}
+		if rehearsed {
+			reply(w, http.StatusOK, previewOf(ws, []journal.Event{e}, message, nil))
 			return
 		}
 		reply(w, http.StatusCreated, written{Entry: entryOf(e, ws, nil), Message: message})
@@ -276,9 +285,17 @@ func (s *Server) batch(do func(*workspace.Workspace, *http.Request) ([]journal.E
 		if !ok {
 			return
 		}
+		var lines *[]previewLine
+		if dry(r) {
+			r, lines = rehearsing(ws, r)
+		}
 		events, message, err := do(ws, r)
 		if err != nil {
 			fail(w, http.StatusBadRequest, err)
+			return
+		}
+		if lines != nil {
+			reply(w, http.StatusOK, previewOf(ws, events, message, *lines))
 			return
 		}
 		out := flushed{Entries: make([]entry, 0, len(events)), Message: message}

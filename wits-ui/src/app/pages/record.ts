@@ -1,5 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { httpResource } from '@angular/common/http';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { Device, DeviceMode, Dimension, Entry, ForgottenPlan, Jar, Written } from '../data/models';
+import { Accounts, Device, DeviceMode, Dimension, Entry, ForgottenPlan, Jar, Preview, Written } from '../data/models';
 import { CATEGORIES, heats, needsHeat, sessionWith } from '../data/devices';
 import { Choice, ChoiceInput } from '../inputs/choice';
 import { FlowLine, FlowPreview } from '../inputs/flow';
@@ -70,6 +70,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
     MatIconModule,
     MatInputModule,
     MatTabsModule,
+    NgTemplateOutlet,
     ScaleInput,
     ScoreDots,
     TempDial,
@@ -109,9 +110,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
               <w-grams label="ground" [max]="held()" [lately]="recent()" [offerAll]="true" [value]="grams()" (valueChange)="grams.set($event)" />
               <w-when [value]="date()" (valueChange)="date.set($event)" />
             </div>
-            @if (flow().length) {
-              <w-flow [lines]="flow()" />
-            }
+            <ng-container *ngTemplateOutlet="rehearsed" />
           </div>
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>air</mat-icon><span>Session</span></span></ng-template>
@@ -151,9 +150,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
                 <w-when [value]="date()" (valueChange)="date.set($event)" />
               </div>
             </div>
-            @if (flow().length) {
-              <w-flow [lines]="flow()" />
-            }
+            <ng-container *ngTemplateOutlet="rehearsed" />
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Note</mat-label>
               <textarea matInput rows="2" [ngModel]="note()" (ngModelChange)="note.set($event)"
@@ -216,9 +213,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
                 [offerAll]="avbMode() === 'use'" [value]="grams()" (valueChange)="grams.set($event)" />
               <w-when [value]="date()" (valueChange)="date.set($event)" />
             </div>
-            @if (flow().length) {
-              <w-flow [lines]="flow()" />
-            }
+            <ng-container *ngTemplateOutlet="rehearsed" />
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Note</mat-label>
               <input matInput [ngModel]="note()" (ngModelChange)="note.set($event)" placeholder="Butter, a tincture" />
@@ -226,6 +221,14 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
           </div>
         </mat-tab>
       </mat-tab-group>
+
+      <ng-template #rehearsed>
+        @if (refusal()) {
+          <p class="refused"><mat-icon>report</mat-icon>Would be refused: {{ refusal() }}</p>
+        } @else if (flow().length) {
+          <w-flow [lines]="flow()" />
+        }
+      </ng-template>
 
       @if (error()) {
         <div class="error"><mat-icon>block</mat-icon>{{ error() }}</div>
@@ -254,6 +257,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
     .ask.lead { color: var(--mat-sys-on-surface); font-weight: 600; }
     .said { margin-top: 0; }
     .weighed { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--w-good); font-size: 13px; }
+    .refused { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 13px; color: var(--w-warn); }
     .why { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; margin: 0; }
     .why mat-icon { font-size: 18px; width: 18px; height: 18px; flex: none; }
     .forgot { display: grid; gap: 8px; }
@@ -408,28 +412,36 @@ export class RecordDialog {
     });
   });
   /** What the entry does to the jar, account by account, before it is recorded. */
+  /**
+   * The entry the form would record, rehearsed by the server as it is typed:
+   * what it would do to each jar, or why it would be refused — worked out
+   * by the recorder, never here.
+   */
+  private readonly rehearsal = httpResource<Preview>(() => {
+    const e = this.entry();
+    this.wits.version();
+    return e && (this.grams() ?? 0) > 0 ? { url: `/api/${e.what}?dry=1`, method: 'POST', body: e.body } : undefined;
+  });
+  /** Why the entry would be refused, said before Record is pressed. */
+  protected readonly refusal = computed(() => {
+    const err = this.rehearsal.error() as HttpErrorResponse | undefined;
+    return (err?.error as { error?: string } | null)?.error ?? '';
+  });
   protected readonly flow = computed<FlowLine[]>(() => {
-    const g = this.grams() ?? 0;
-    const j = this.jar();
-    if (g <= 0) {
+    const p = this.rehearsal.hasValue() ? this.rehearsal.value() : undefined;
+    if (!p || this.refusal()) {
       return [];
     }
-    switch (this.tab()) {
-      case 0:
-        return j ? [
-          { label: 'sealed', before: j.storage, after: Math.max(0, j.storage - g), tone: 'var(--w-storage)' },
-          { label: 'ground', before: j.stash, after: j.stash + g, tone: 'var(--w-stash)' },
-        ] : [];
-      case 1:
-        return j ? [{ label: 'ground', before: j.stash, after: Math.max(0, j.stash - g), tone: 'var(--w-stash)' }] : [];
-      case 4: {
-        const held = this.avbHeld();
-        const after = this.avbMode() === 'collect' ? held + g : Math.max(0, held - g);
-        return [{ label: 'AVB jar', before: held, after, tone: 'var(--w-avb)' }];
+    const sum = (k: keyof Accounts, when: 'before' | 'after') => p.jars.reduce((s, j) => s + j[when][k], 0);
+    const lines: FlowLine[] = [];
+    for (const [k, label, tone] of FLOWS) {
+      const before = sum(k, 'before');
+      const after = sum(k, 'after');
+      if (Math.abs(after - before) >= 0.005) {
+        lines.push({ label, before, after, tone });
       }
-      default:
-        return [];
     }
+    return lines;
   });
   /** The device emptied: the one picked, or the only one with sessions waiting. */
   protected readonly emptied = computed(() => {
@@ -614,39 +626,57 @@ export class RecordDialog {
     }
   }
 
-  private send(): Promise<Written | { message: string }> {
+  /** The entry a grind, a session or AVB would record, as the API takes it: rehearsed as typed, and sent on Record. */
+  private readonly entry = computed<{ what: string; body: object } | null>(() => {
     const grams = this.grams() ?? 0;
     const day = this.date();
     const date = day ? isoDay(day) : undefined;
+    const note = this.note() || undefined;
     switch (this.tab()) {
       case 0:
-        return this.wits.grind({ product: this.product(), grams, date });
+        return this.product() ? { what: 'grind', body: { product: this.product(), grams, date } } : null;
       case 1:
-        return this.wits.sesh({
-          product: this.product(),
-          grams,
-          device: this.device() || undefined,
-          temperature: this.range() ? this.temp() : undefined,
-          mode: this.mode() || undefined,
-          heater: this.heater() || undefined,
-          setting: this.setting().trim() || undefined,
-          timer: this.timed() ? (this.timer() ?? undefined) : undefined,
-          note: this.note() || undefined,
-          date,
-        });
+        return this.product() ? {
+          what: 'sesh',
+          body: {
+            product: this.product(), grams, device: this.device() || undefined, temperature: this.range() ? this.temp() : undefined,
+            mode: this.mode() || undefined, heater: this.heater() || undefined, setting: this.setting().trim() || undefined,
+            timer: this.timed() ? (this.timer() ?? undefined) : undefined, note, date,
+          },
+        } : null;
+      case 4:
+        return this.avbMode() === 'collect'
+          ? { what: 'avb/collect', body: { grams, device: this.emptied(), note, date } }
+          : { what: 'avb/use', body: { grams, note, date } };
+      default:
+        return null;
+    }
+  });
+
+  private send(): Promise<Written | { message: string }> {
+    const day = this.date();
+    const date = day ? isoDay(day) : undefined;
+    switch (this.tab()) {
       case 2: {
         const fill = this.fill();
         return fill ? this.wits.fill({ ...fill.request(), date }) : Promise.reject(new Error('the fill form is not open'));
       }
-      case 4:
-        return this.avbMode() === 'collect'
-          ? this.wits.collectAVB({ grams, device: this.emptied(), note: this.note() || undefined, date })
-          : this.wits.useAVB({ grams, note: this.note() || undefined, date });
-      default:
-        return this.wits.weigh({ product: this.product(), account: this.account(), weighed: grams });
+      case 3:
+        return this.wits.weigh({ product: this.product(), account: this.account(), weighed: this.grams() ?? 0 });
+      default: {
+        const e = this.entry();
+        return e ? this.wits.submit<Written | { message: string }>(e.what, e.body) : Promise.reject(new Error('pick the jar first'));
+      }
     }
   }
 }
+
+/** The accounts a rehearsal's jars are drawn by, what each is called, and its colour. */
+const FLOWS: [keyof Accounts, string, string][] = [
+  ['storage', 'sealed', 'var(--w-storage)'],
+  ['stash', 'ground', 'var(--w-stash)'],
+  ['avb', 'AVB jar', 'var(--w-avb)'],
+];
 
 /** What an account's grams are called on a jar's tile. */
 const ACCOUNT_WORDS: Record<string, string> = { storage: 'sealed', stash: 'ground', avb: 'vaped' };

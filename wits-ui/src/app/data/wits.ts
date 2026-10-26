@@ -93,6 +93,11 @@ export class Wits {
     return this.post<InvoiceReading>('invoice', { text });
   }
 
+  /** Records an entry of the kind named, as the API takes it. */
+  submit<T = Written>(what: string, body: object): Promise<T> {
+    return this.write<T>(what, body);
+  }
+
   weigh(body: { product: string; account: string; weighed: number }) {
     return this.write('weigh', body);
   }
