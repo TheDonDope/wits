@@ -116,6 +116,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/price/fill", s.priceFill)
 	mux.HandleFunc("GET /api/report.pdf", s.report)
 	mux.HandleFunc("GET /api/carry", s.carry)
+	mux.HandleFunc("GET /api/pack", s.pack)
+	mux.HandleFunc("GET /api/review", s.year)
 	mux.HandleFunc("GET /api/strains", s.read(strainsOf))
 	mux.HandleFunc("GET /api/terpenes", s.read(terpenesOf))
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))

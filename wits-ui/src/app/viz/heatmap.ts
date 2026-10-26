@@ -99,6 +99,8 @@ export class Heatmap {
   /** Only the last weeks, as one row; all years when not given. */
   readonly weeks = input<number | null>(null);
   readonly tone = input('var(--w-accent)');
+  /** One year's row alone, the year on one card's; every year when not given. */
+  readonly year = input<number | null>(null);
 
   protected readonly width = hostWidth();
   protected readonly glowId = `heat-glow-${Math.random().toString(36).slice(2, 8)}`;
@@ -119,8 +121,11 @@ export class Heatmap {
     return [0.25, 0.5, 0.75].map((q) => quantile(vals, q) ?? 0);
   });
 
+  /** One year on a narrow screen: two half years, so all of it fits. */
+  private readonly halves = computed(() => this.year() !== null && this.width() < 560);
+
   protected readonly cell = computed(() => {
-    const cols = this.weeks() ?? 53;
+    const cols = this.weeks() ?? (this.halves() ? 27 : 53);
     const usable = this.width() - (this.weeks() ? 0 : LEFT + RIGHT);
     return Math.max(Math.min(Math.floor(usable / cols) - GAP, 18), 6);
   });
@@ -138,10 +143,15 @@ export class Heatmap {
     if (!dates.length) {
       return [];
     }
-    const first = Number(dates[0].slice(0, 4));
-    const rows: Row[] = [];
+    const only = this.year();
     const step = (this.cell() + GAP) * 7 + 34;
-    for (let year = today.getFullYear(), i = 0; year >= first; year--, i++) {
+    if (only !== null && this.halves()) {
+      return [this.row('', new Date(only, 0, 1), new Date(only, 5, 30), 18, LEFT),
+        this.row('', new Date(only, 6, 1), new Date(only, 11, 31), 18 + step, LEFT)];
+    }
+    const first = only ?? Number(dates[0].slice(0, 4));
+    const rows: Row[] = [];
+    for (let year = only ?? today.getFullYear(), i = 0; year >= first; year--, i++) {
       rows.push(this.row(String(year), new Date(year, 0, 1), new Date(year, 11, 31), 18 + i * step, LEFT));
     }
     return rows;

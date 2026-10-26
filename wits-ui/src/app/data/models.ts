@@ -501,3 +501,72 @@ export interface Findings {
   sources: TerpeneSource[];
   suggested: string[];
 }
+
+/** The year on one card, as wits review gathers it: every figure the year's own. */
+export interface YearReview {
+  year: number;
+  years: number[];
+  from: string;
+  to: string;
+  days: number;
+  running: boolean;
+  ground: number;
+  grind_days: number;
+  per_grind_day: number;
+  sessions: number;
+  seshed: number;
+  dispensed: number;
+  pickups: number;
+  products: number;
+  months: number[];
+  daily: Day[];
+  strains: { name: string; ground: number; share: number }[];
+  busiest: Day | null;
+  break: { from: string; to: string; days: number; breaks: number } | null;
+  best_temperature: { label: string; mean: number; count: number } | null;
+  best_strain: { label: string; mean: number; count: number } | null;
+  device: { name: string; sessions: number; seshed: number } | null;
+  terpene: { name: string; flavors: string[] | null; share: number } | null;
+  /** Cents. */
+  paid: number;
+  priced: number;
+  /** Cents a gram. */
+  per_gram: number;
+  dearest: YearBought | null;
+  cheapest: YearBought | null;
+  bought: YearBought[];
+}
+
+export interface YearBought {
+  at: string;
+  name: string;
+  seller: string;
+  grams: number;
+  cents: number;
+  per_gram: number;
+}
+
+/** What to take on a trip, as wits pack plans it, signed for exactly that. */
+export interface Packing {
+  days: number;
+  margin: number;
+  mode: 'even' | 'oldest';
+  rate: number;
+  need: number;
+  packed: number;
+  shelf: number;
+  short: boolean;
+  lines: {
+    name: string;
+    stash: number;
+    sealed: number;
+    held_stash: number;
+    held_sealed: number;
+    days: number;
+    fills: { day: string; grams: number }[];
+  }[];
+  statement: string;
+  url: string;
+  fingerprint: string;
+  qr: string;
+}

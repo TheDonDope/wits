@@ -14,6 +14,7 @@ does the same here.
 - [When the ledger and the scale disagree](#when-the-ledger-and-the-scale-disagree)
 - [The repository](#the-repository) · [Bundles](#bundles) · [More than one device](#more-than-one-device)
 - [For the prescriber](#for-the-prescriber) · [A chain others can check](#a-chain-others-can-check) · [What I carry](#what-i-carry)
+- [Packing for a trip](#packing-for-a-trip) · [The year, on one card](#the-year-on-one-card)
 - [What it costs](#what-it-costs) · [AVB](#avb) · [Temperatures](#temperatures)
 
 ## Recording, day to day
@@ -165,6 +166,8 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits seal` | Sign the journal's head; `--timestamp` anchors it with OpenTimestamps, `--upgrade` fetches the proof |
 | `wits verify <file.seal>` | Check a seal, or a statement from `wits carry`: its signature, the journal it seals, its timestamp |
 | `wits carry` | What is held, against the fills that dispensed it, signed; `--out` a QR code (.svg, .png) or the statement (.txt) |
+| `wits pack --days <n>` | What to take on a trip, from which jars, signed for exactly that; `--margin`, `--oldest`, `--out` |
+| `wits review [year]` | The year on one card: the grams, the strains, the longest break, the best temperature, the dearest gram |
 | `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
 
 Every command takes `--help`, and `buy`, `grind` and `sesh` take `--date`.
@@ -458,6 +461,84 @@ learns from the fingerprint the patient gave their doctor, or the one on a
 sealed report. A phone makes a key of its own the first time, so its
 fingerprint differs from the computer's until the computer's
 `.wits/seal.key` is brought to it.
+
+## Packing for a trip
+
+`wits pack --days 10` is what to take for ten days away: the days at the rate
+the refill planner runs on, this fill's grams a day with grinding, with
+`--margin` per cent on top (20 unless given), rounded up to a tenth of a
+gram. It is drawn from the jars on the shelf evenly, every jar giving about
+the same grams, so the trip has a mix of them and the jars go down together;
+each jar's ground grams go before its sealed ones. `--oldest` takes the
+oldest fill's jars first instead. Nothing is recorded: grind what the plan
+says to, as usual.
+
+```console
+$ wits pack --days 10
+Take 23.20 g: 10 days at 1.93 g a day, with 20 % to spare.
+
+PRODUCT                            GROUND  SEALED  TAKE   DAYS  LEFT
+420 Evolution 27/1 Ice Cream Cake  4.60g   0.00g   4.60g  2.4   7.07g
+Enua 36/1 Citrus Slap              4.60g   0.00g   4.60g  2.4   5.01g
+All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
+NICE 32/1 Morning Sun              3.40g   1.20g   4.60g  2.4   10.17g
+Sumo 25/1 Papaya Bomb              2.26g   2.44g   4.70g  2.4   10.50g
+
+Drawn evenly, about the same from every jar, ground before sealed. Grind the sealed grams before you go.
+```
+
+The plan is signed as a statement of what is carried, the way `wits carry`
+signs the shelf, but for exactly the grams packed: `--out trip.svg` writes
+its QR code, `--out trip.txt` the statement, and `wits verify` checks either.
+A shelf that holds less than the trip wants says so, and packs it all.
+
+## The year, on one card
+
+`wits review` is the year in wits, to today in a year still running;
+`wits review 2025` a year gone by. Every figure is the year's own, and is one
+the report, the effect log or the price log already computes: the grams and
+the days, month by month, the strains, the busiest day, the longest break (a
+week or more with nothing ground and no session, the tolerance curve's rule),
+the temperature band rated best overall (on five ratings at least), the
+strain rated best, the device most used, the terpene most of the grams led
+with, and what it cost, from the cheapest gram to the dearest.
+
+```console
+$ wits review 2025
+╭─────────────────────────────────────────────────────────────╮
+│  2025 in wits                                               │
+│  446.34 g ground on 221 of 365 days · 2.02 g an active day  │
+│  11 prescriptions · 309 sessions · 25 strains               │
+╰─────────────────────────────────────────────────────────────╯
+
+  Jan  █████████████▍                    28.36 g
+  Feb  ██████████████▏                   30.00 g
+  Mar  ██████████████▏                   30.00 g
+  Apr                                     0.00 g
+  May  █████████▎                        19.73 g
+  Jun  █████████████████████▌            45.68 g
+  Jul  ███████████████▎                  32.43 g
+  Aug  ███████████████████▊              42.07 g
+  Sep  █████████████████████▎            45.13 g
+  Oct  ███████████████████████▌          49.96 g
+  Nov  █████████████████████████▉        55.00 g
+  Dec  ████████████████████████████████  67.98 g  ← the most
+
+  Strains              1  Cannabis 1A 16/1 White Widow, 58.36 g (13 %)
+                       2  Cannamedical Hybrid Classic 18/1 MAC 3, 50.00 g (11 %)
+                       3  Cantourage 25/1 MAC 1+, 40.00 g (9 %)
+  Busiest day          Tue 2 December, 8.10 g ground
+  Longest break        53 days, 21 March to 12 May (2 breaks in all)
+  Best temperature     190–199 °C, 4.2 overall over 67 ratings
+  Rated best           Cannamedical Hybrid Classic 18/1 MAC 3, 4.5 overall over 76 ratings
+  Most used            Storz & Bickel Venty, 130 sessions and 30.96 g
+  Terpene of the year  Limonene — citrus, lemon, orange, 60 % of the grams ground
+  Paid                 3203.10 € for 460.00 g with a price, 6.96 € a gram
+  Dearest gram         10.99 €, Pedanios 22/1 DNK Ghost Train Haze on 6 February
+  Cheapest gram        3.99 €, Canopy Bakerstreeet 22/1 Hindu Kush on 30 September
+```
+
+The browser draws the same, with more room: **Insights → Year**.
 
 ## What it costs
 

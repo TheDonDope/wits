@@ -11,6 +11,7 @@ the command beside each that does the same in a terminal.
 - [Recording a fill](#recording-a-fill) · [Pricing the fills](#pricing-the-fills)
 - [The jars, the journal and the replay](#the-jars-the-journal-and-the-replay)
 - [Effects, and the map of the strains](#effects-and-the-map-of-the-strains) · [Devices](#devices)
+- [The year, on one card](#the-year-on-one-card) · [Packing for a trip](#packing-for-a-trip)
 - [A demo, to look around](#a-demo-to-look-around) · [Which repository](#which-repository)
 - [Keys, themes and small screens](#keys-themes-and-small-screens) · [What it talks to](#what-it-talks-to)
 - [On the phone](#on-the-phone)
@@ -339,6 +340,36 @@ mode's temperature and timer. A manual vaporizer or glass also asks what
 heated it, and at which of the heater's settings: an induction heater's
 wattage. The Journal shows it all, as in "Vestratto Tornado · heated with YLL
 3.0 at 45 W".
+
+## The year, on one card
+
+![2025, on one card](../assets/wits-ui-year.png)
+
+**Insights → Year** is the year in wits, `wits review` with more room: the
+year in big numerals with what was ground and on how many days, then a card
+for each finding. The months as bars, the busiest lit; every day of the year
+as a calendar; the strains of the year ranked, the first crowned; the terpene
+most of the grams led with, as a ring and its flavours; the longest break
+opened out on the year's line; the temperature rated best on a vaporizer's
+dial; the strain rated best in stars; the device of the year; and what it
+cost, every priced purchase on one line from the cheapest gram to the
+dearest. The cards rise in turn. A year still running says "and counting",
+and the months to come stand as outlines. On the demo, 2025 is 446.3 g on
+221 of 365 days, a 53-day break in spring, 190–199 °C rated best at 4.2 over
+67 ratings, and a gram from €3.99 to €10.99. `?year=2025` opens a year.
+
+## Packing for a trip
+
+![Ten days away, packed evenly](../assets/wits-ui-trip.png)
+
+**Shelf → Trip** is `wits pack`. Pick the days away — a weekend, a week,
+two, or anything to six weeks on the slider — how much to take on top, and
+whether to draw **evenly**, every jar giving about the same so they go down
+together, or **oldest first**. It says what to take, lays the trip out day by
+day with a jar a colour and the margin hatched past the day you are back,
+shows each jar with the grams it gives lit in it (ground first, then sealed,
+which wants grinding before you go), and signs a QR code for exactly what is
+packed. Nothing is recorded.
 
 ## A demo, to look around
 

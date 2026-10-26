@@ -1474,7 +1474,7 @@ elsewhere shows within a tick.
 ### The user guide — User guide, on the menu, and the docs split
 
 **User guide**, first on the header's menu (⋮) and linked from the `?` sheet,
-opens `/guide`: eighteen sections from how wits thinks to the phone, each with
+opens `/guide`: eighteen sections (twenty since the year and the trip) from how wits thinks to the phone, each with
 what the page is for, the steps, pictures of it, a button that opens it (or
 the Record tab it means), and **the same, in a terminal**: the commands with
 what they printed on the demo, and the terminal interface's keys, with a
@@ -1510,6 +1510,40 @@ the eight newest entries that tell the story, newest at the right, each one
 moved along by a transition as long as one step, so it keeps pace from 1.2 to
 20 a second. Live, it shows the last entries recorded. It was looked
 at in Aurora and Paper, and fits 375 px on the phone.
+
+### The year, on one card — `wits review`, Insights → Year
+
+`pkg/review` gathers a year: the report's range figures over the days from
+New Year to New Year's Eve (or today, the year still running), the effect
+log's temperature bands, the price insights' purchases, and two findings of
+its own — the longest break, a week or more with nothing ground and no
+session as the tolerance curve has it, counted by calendar date since an
+entry keeps the zone it was written in; and the terpene of the year, the
+dominant terpene of each grind's product weighted by its grams. A band is
+named best only on five ratings or more. `wits review [year]` draws it as a
+card in the terminal, the months as bars of eighths; `GET /api/review?year=`
+serves it; **Insights → Year** draws it as a hero and twelve-column bento of
+cards (`viz/year-months`, `temp-gauge`, `break-line`, `price-strip`, the
+heatmap with a `year` of its own, split in half years on a phone). On the
+demo, 2025: 446.34 g on 221 of 365 days, a 53-day break, 190–199 °C at 4.2
+over 67 ratings, Limonene leading 60 % of the grams, a gram from 3.99 € to
+10.99 €. A fifth Insights page made the phone's sub-tabs page with arrows,
+so on a phone they drop their icons and all five fit 375 px.
+
+### Packing for a trip — `wits pack`, Shelf → Trip
+
+`pkg/pack` plans days away at the refill planner's rate (`PlanRefill`'s
+fill rate with grinding) with a margin, rounded up to a tenth of a gram,
+from the jars on the shelf as `wits carry` lists them. Evenly, by default:
+the need shared over the jars, a jar holding less than its share giving all
+it has and the rest shared again, the shares rounded down to tenths and the
+tenths left over one each to the jars that keep the most, so they add up to
+the need and the jars come out level. Or oldest first, by the day of each
+jar's oldest fill on the shelf. Each jar's ground grams go before its
+sealed. The plan is signed as a carry statement of exactly the grams packed
+(`wits pack --out`, and the page's QR code), and `wits verify` checks it.
+Nothing is recorded. On the demo, ten days at 1.93 g a day with 20 % is
+23.20 g, 4.60 or 4.70 g from each of five jars.
 
 ---
 
@@ -1633,21 +1667,6 @@ two timestamps. Three things only a ledger like this one can do.
   in a total.
 
 ### Later · hardware and delight
-
-#### 🔹 The year, on one card
-
-- **Status**: Planned
-- Once a year, one page or a short film from the same replay as Film on the
-  Jars page: the grams, the strains, the longest break, the temperature rated
-  best, the dearest gram and the cheapest. Every figure is one the report or
-  `wits costs` already computes, labelled with its scope.
-
-#### 🔹 Packing for a trip — `wits pack`
-
-- **Status**: Planned
-- `wits pack --days 10` is the grams to take at the rate the refill planner
-  runs on, with a margin, drawn from the jars oldest first, and a `wits carry`
-  statement for exactly those grams rather than the whole shelf.
 
 #### 🔹 The scale over USB or Bluetooth
 

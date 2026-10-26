@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -385,4 +386,40 @@ func TestLabel(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnsupportedMediaType, w.Code)
 	})
+}
+
+func TestPack(t *testing.T) {
+	s, _ := server(t, "")
+
+	w := call(t, s, "GET", "/api/pack?days=3&margin=0", "")
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	out := decodeInto[packOut](t, w)
+	assert.Equal(t, 2.0, out.Rate, "2 g ground on the one day with grinding")
+	assert.Equal(t, 6.0, out.Packed)
+	require.Len(t, out.Lines, 1)
+	assert.Equal(t, 1.5, out.Lines[0].Stash, "The stash first, all of it")
+	assert.Equal(t, 4.5, out.Lines[0].Sealed)
+	c, err := seal.ParseCarry(out.URL)
+	require.NoError(t, err)
+	require.NoError(t, c.Verify())
+	require.Len(t, c.Items, 1)
+	assert.Equal(t, 4.5, c.Items[0].Sealed, "Signed for what is packed, not the whole jar")
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/pack?days=0", "").Code)
+}
+
+func TestReview(t *testing.T) {
+	s, _ := server(t, "")
+	year := time.Now().AddDate(0, 0, -4).Year() // the grind's
+
+	w := call(t, s, "GET", "/api/review?year="+strconv.Itoa(year), "")
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	out := decodeInto[yearOut](t, w)
+	assert.Equal(t, year, out.Year)
+	assert.Contains(t, out.Years, year)
+	assert.Equal(t, 2.0, out.Ground)
+	require.Len(t, out.Strains, 1)
+	assert.Equal(t, "Enua 22/1 Wedding Cake", out.Strains[0].Name)
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/review?year=next", "").Code)
 }

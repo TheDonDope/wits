@@ -7,8 +7,8 @@ describe('the tabs', () => {
   it('are four, and every page is in one of them, in the order h and l step', () => {
     expect(TABS.map((t) => t.label)).toEqual(['Dashboard', 'I forgot to', 'Shelf', 'Insights']);
     expect(PAGES.map((p) => p.path)).toEqual([
-      '/', '/forgot', '/shelf/jars', '/shelf/journal', '/shelf/devices',
-      '/insights/analysis', '/insights/effects', '/insights/history', '/insights/costs',
+      '/', '/forgot', '/shelf/jars', '/shelf/journal', '/shelf/devices', '/shelf/trip',
+      '/insights/analysis', '/insights/effects', '/insights/history', '/insights/costs', '/insights/year',
     ]);
   });
 
