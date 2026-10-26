@@ -2,6 +2,15 @@
 ## [Unreleased]
 
 
+<a name="v0.105.0"></a>
+## [v0.105.0] - 2026-10-26
+### Chore
+- **vhs:** re-record wits-reconcile.gif, where a light jar is now a grind forgotten
+
+### Feat
+- **weigh:** grams do not vanish — a light jar was a grind forgotten, light ground was sessions
+
+
 <a name="v0.104.0"></a>
 ## [v0.104.0] - 2026-10-26
 ### Build
@@ -9,6 +18,7 @@
 - **deps-dev:** bump electron from 44.9.1 to 45.0.0 in /desktop
 
 ### Docs
+- update changelog for v0.104.0
 - one blank line before the session paragraph
 - **diary:** what the day held
 - **roadmap:** ready for anyone — a first launch, a short path, plain words, German and other currencies
@@ -1276,7 +1286,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.104.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.105.0...HEAD
+[v0.105.0]: https://github.com/TheDonDope/wits/compare/v0.104.0...v0.105.0
 [v0.104.0]: https://github.com/TheDonDope/wits/compare/v0.103.0...v0.104.0
 [v0.103.0]: https://github.com/TheDonDope/wits/compare/v0.102.0...v0.103.0
 [v0.102.0]: https://github.com/TheDonDope/wits/compare/v0.101.0...v0.102.0
