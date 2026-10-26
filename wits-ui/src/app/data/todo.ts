@@ -5,6 +5,9 @@ import { Wits } from './wits';
 /** How long after a session a rating is still asked for: past it, nobody remembers. */
 export const RATE_DAYS = 7;
 
+/** How long after a strain was last used it is still asked to be rated as a whole. */
+export const RATE_STRAIN_DAYS = 90;
+
 /**
  * What was forgotten, as the "I forgot to" page lists it and its tab counts
  * it: each a thing the ledger can show was left undone, and none that it
@@ -40,6 +43,19 @@ export class Todo {
     return missing.sort((a, b) => sealed(a) - sealed(b) || b.last_seen.localeCompare(a.last_seen));
   });
 
+  /**
+   * Strains used in the last 90 days with no rating as a whole, the most
+   * lately used first. Counted: each clears when it is rated, or once it is
+   * three months unused and no longer remembered.
+   */
+  readonly strains = computed(() => {
+    const since = Date.now() - RATE_STRAIN_DAYS * 86_400_000;
+    return this.wits.jars.value()
+      .filter((j) => !j.rating && j.last_used !== undefined && new Date(j.last_used).getTime() >= since)
+      .sort((a, b) => (b.last_used ?? '').localeCompare(a.last_used ?? ''));
+  });
+
   /** Everything counted, for the tab. */
-  readonly count = computed(() => this.rate().length + this.pickups() + this.stashes().length + this.avb().length);
+  readonly count = computed(() =>
+    this.rate().length + this.pickups() + this.stashes().length + this.avb().length + this.strains().length);
 }

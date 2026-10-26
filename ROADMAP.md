@@ -685,6 +685,39 @@ for every gram. Every page measures 375 px on the phone. On a computer, the
 clock goes below 1100 px and the tab labels below 780; measured every 20 px
 from 641 to 1920, no tab bar pages and no page scrolls sideways.
 
+### A strain rated as a whole — the Shelf, I forgot to, `wits describe --rating`
+
+A session's rating says what that session did; nothing said what a strain is
+thought of as a whole, the thing a next prescription is chosen by. A strain
+now has a rating of its own (`catalog.StrainRating`): overall, taste and aroma,
+1 to 5 each or left out, whether you would have it again, a line, and when. It
+lives with the product in the catalog, as its terpenes do, not in the effect
+log, which names a session by its hash, and it is written under the
+catalog's lock through `Recorder.RateStrain`, which checks it (a score past 5,
+or a rating that says nothing, is refused). Rated again, the newer stands.
+
+- **Bundles**, format 9: `sr=overall/taste/aroma/again/when` and `sn=` for
+  the line. A restore gives it back, as checked on the demo.
+- **Sync**: a pull took the remote's copy of any product that differed, which
+  would have dropped a rating made here and not yet pushed. Of two ratings
+  the one given last now stays (`newerRating`). `sameProduct` printed the
+  product to compare it, and a rating would have printed as a pointer, so it
+  compares ratings by value. A rating taken away on one device and still
+  there on the other comes back on pull; there is no tombstone for it.
+- **The command line**: `wits describe <product> --rating "overall=4 taste=5"
+  --again yes --say "…"`, `--unrate`, and a `Rated:` line in what describe
+  shows.
+- **The browser** (`PUT /api/jars/{slug}/rating`): **Rate** on a Shelf card
+  opens the form over it, a jar's page has it inline, and **I forgot to**
+  asks after every strain used in the last 90 days with no rating, counted on
+  the tab: each clears when rated, or once it has gone three months unused.
+  "Used" is a grind or a session (`last_used`): the stashes cleared in the
+  demo wrote an entry against every jar the same day, and "last seen" said all
+  53 were used that morning. On the demo it asks after six.
+
+`readProduct` reached complexity 16 with the rating, so its four plain text
+attributes are read from a table.
+
 ### What a strain is like, by its terpenes — the map, the jar, `wits like`
 
 With terpenes written down for 50 of the demo's 53 products, the map of the

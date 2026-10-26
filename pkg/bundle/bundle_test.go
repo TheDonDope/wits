@@ -407,7 +407,7 @@ func TestADeviceAndASessionsModeTravel(t *testing.T) {
 	}
 	var buf bytes.Buffer
 	require.NoError(t, Write(&buf, Contents{Devices: devices, Events: events}))
-	assert.True(t, strings.HasPrefix(buf.String(), "wits-bundle 8\n"))
+	assert.True(t, strings.HasPrefix(buf.String(), fmt.Sprintf("wits-bundle %d\n", Version)))
 
 	got, err := Read(&buf)
 
@@ -461,4 +461,39 @@ func TestTerpenesTravelInTheBundle(t *testing.T) {
 	require.Len(t, got.Products.Products, 1)
 	assert.Equal(t, []string{"β-Caryophyllen", "Limonen", "Myrcen"}, got.Products.Products[0].Terpenes,
 		"Should bring the terpenes back, in their order: every format before 6 dropped them")
+}
+
+// TestStrainRatingTravelsInTheBundle: a strain's own rating comes back as it
+// went, its line with spaces in it and its moment to the second; a strain
+// with only a line, or never rated, too.
+func TestStrainRatingTravelsInTheBundle(t *testing.T) {
+	at := time.Date(2026, 10, 26, 9, 30, 0, 0, time.UTC)
+	products := &catalog.Catalog{Products: []*catalog.Product{
+		{Slug: "a", Name: "A", Rating: &catalog.StrainRating{Overall: 4, Taste: 5, Again: catalog.AgainYes, Note: "lemon, then pepper", At: at}},
+		{Slug: "b", Name: "B", Rating: &catalog.StrainRating{Aroma: 2, Again: catalog.AgainNo, At: at}},
+		{Slug: "c", Name: "C"},
+	}}
+	var buf bytes.Buffer
+	require.NoError(t, Write(&buf, Contents{Products: products}))
+	assert.Contains(t, buf.String(), " sr=4/5/0/y/")
+
+	got, err := Read(&buf)
+	require.NoError(t, err)
+	byslug := map[string]*catalog.Product{}
+	for _, p := range got.Products.Products {
+		byslug[p.Slug] = p
+	}
+	require.NotNil(t, byslug["a"].Rating)
+	assert.Equal(t, catalog.StrainRating{Overall: 4, Taste: 5, Again: catalog.AgainYes, Note: "lemon, then pepper", At: at},
+		*withUTC(byslug["a"].Rating))
+	assert.Equal(t, catalog.AgainNo, byslug["b"].Rating.Again)
+	assert.Equal(t, 2, byslug["b"].Rating.Aroma)
+	assert.Nil(t, byslug["c"].Rating)
+}
+
+// withUTC is a rating with its moment in UTC, to compare.
+func withUTC(r *catalog.StrainRating) *catalog.StrainRating {
+	c := *r
+	c.At = c.At.UTC()
+	return &c
 }

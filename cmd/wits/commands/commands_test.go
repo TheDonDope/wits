@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/seal"
@@ -1007,4 +1008,36 @@ func TestDescribeAndLike(t *testing.T) {
 	out, err = run(t, dir, Like, "Enua")
 	require.NoError(t, err)
 	assert.Regexp(t, `\d+ %  Khiron 20/1 Wedding Cake — shares Caryophyllen, Limonen\n`, out)
+}
+
+// TestDescribeRatesTheStrain: a strain is rated as a whole, shown, rated
+// again over the first, refused a score past 5 or a rating that says nothing,
+// and its rating taken away.
+func TestDescribeRatesTheStrain(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Describe, "Enua")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Rated: not yet")
+
+	out, err = run(t, dir, Describe, "Enua", "--rating", "overall=4, taste=5", "--again", "yes", "--say", "lemon, then pepper")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Rated: overall 4, taste 5 · again — lemon, then pepper (")
+
+	out, err = run(t, dir, Describe, "Enua", "--rating", "aroma=2", "--again", "no")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Rated: aroma 2 · not again (", "the newer rating stands, whole")
+
+	_, err = run(t, dir, Describe, "Enua", "--rating", "overall=6")
+	require.ErrorContains(t, err, "a score is 1 to 5")
+	_, err = run(t, dir, Describe, "Enua", "--rating", "")
+	require.ErrorIs(t, err, catalog.ErrNothingRated)
+	_, err = run(t, dir, Describe, "Enua", "--rating", "colour=3")
+	require.ErrorContains(t, err, "not \"colour\"")
+
+	out, err = run(t, dir, Describe, "Enua", "--unrate")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Rated: not yet")
 }

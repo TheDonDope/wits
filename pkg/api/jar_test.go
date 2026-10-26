@@ -157,3 +157,27 @@ func TestStrainsAndTerpenes(t *testing.T) {
 	assert.Contains(t, terps[i].Flavors, "lemon")
 	assert.Equal(t, 175, terps[i].BoilingPoint)
 }
+
+// TestRateStrain: a strain rated as a whole shows on its jar, in the list and
+// in full; a score past 5 is refused; clear takes the rating away.
+func TestRateStrain(t *testing.T) {
+	s, _ := server(t, "")
+	w := call(t, s, http.MethodPut, "/api/jars/wcake-221/rating", `{"overall":4,"taste":5,"again":"yes","note":" lemon "}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "overall 4, taste 5 · again — lemon")
+
+	j := decodeInto[jarDetail](t, call(t, s, http.MethodGet, "/api/jars/wcake-221", ""))
+	require.NotNil(t, j.Rating)
+	assert.Equal(t, 4, j.Rating.Overall)
+	assert.Equal(t, "yes", j.Rating.Again)
+	assert.Equal(t, "lemon", j.Rating.Note)
+	assert.False(t, j.Rating.At.IsZero())
+	assert.Equal(t, 5, decodeInto[[]jar](t, call(t, s, http.MethodGet, "/api/jars", ""))[0].Rating.Taste)
+
+	assert.Equal(t, http.StatusBadRequest, call(t, s, http.MethodPut, "/api/jars/wcake-221/rating", `{"overall":6}`).Code)
+	assert.Equal(t, http.StatusBadRequest, call(t, s, http.MethodPut, "/api/jars/wcake-221/rating", `{}`).Code)
+	assert.Equal(t, http.StatusNotFound, call(t, s, http.MethodPut, "/api/jars/nothing/rating", `{"overall":3}`).Code)
+
+	require.Equal(t, http.StatusCreated, call(t, s, http.MethodPut, "/api/jars/wcake-221/rating", `{"clear":true}`).Code)
+	assert.Nil(t, decodeInto[jarDetail](t, call(t, s, http.MethodGet, "/api/jars/wcake-221", "")).Rating)
+}

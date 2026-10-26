@@ -93,6 +93,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/jars/{slug}", s.jarAt)
 	mux.HandleFunc("GET /api/jars/{slug}/research", s.research)
 	mux.HandleFunc("PUT /api/jars/{slug}/terpenes", s.terpenes)
+	mux.HandleFunc("PUT /api/jars/{slug}/rating", s.rateStrain)
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
 	mux.HandleFunc("POST /api/devices", s.addDevice)
@@ -1014,25 +1015,30 @@ func (s *Server) journal(w http.ResponseWriter, r *http.Request) {
 
 // jar is one product across its lifetime — the jar's scope.
 type jar struct {
-	Slug         string    `json:"slug"`
-	Name         string    `json:"name"`
-	Manufacturer string    `json:"manufacturer,omitempty"`
-	Cultivar     string    `json:"cultivar,omitempty"`
-	THC          float64   `json:"thc,omitempty"`
-	CBD          float64   `json:"cbd,omitempty"`
-	Terpenes     []string  `json:"terpenes"`
-	Storage      float64   `json:"storage"`
-	Stash        float64   `json:"stash"`
-	AVB          float64   `json:"avb"`
-	Bought       float64   `json:"bought"`
-	Ground       float64   `json:"ground"`
-	Fills        int       `json:"fills"`
-	LastSeen     time.Time `json:"last_seen"`
+	Slug         string   `json:"slug"`
+	Name         string   `json:"name"`
+	Manufacturer string   `json:"manufacturer,omitempty"`
+	Cultivar     string   `json:"cultivar,omitempty"`
+	THC          float64  `json:"thc,omitempty"`
+	CBD          float64  `json:"cbd,omitempty"`
+	Terpenes     []string `json:"terpenes"`
+	// Rating is the strain rated as a whole, apart from any one session.
+	Rating   *strainRating `json:"rating,omitempty"`
+	Storage  float64       `json:"storage"`
+	Stash    float64       `json:"stash"`
+	AVB      float64       `json:"avb"`
+	Bought   float64       `json:"bought"`
+	Ground   float64       `json:"ground"`
+	Fills    int           `json:"fills"`
+	LastSeen time.Time     `json:"last_seen"`
+	// LastUsed is when it was last ground or had in a session: what a person
+	// remembers it by, where LastSeen counts any entry, a cleared stash too.
+	LastUsed time.Time `json:"last_used,omitzero"`
 }
 
 func jarsOf(ws *workspace.Workspace) any {
 	bought, ground := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
-	fills, seen := map[string]int{}, map[string]time.Time{}
+	fills, seen, used := map[string]int{}, map[string]time.Time{}, map[string]time.Time{}
 	for _, e := range ws.State.Standing {
 		switch e.Type {
 		case journal.Purchase:
@@ -1040,6 +1046,9 @@ func jarsOf(ws *workspace.Workspace) any {
 			fills[e.Product]++
 		case journal.Grind:
 			ground[e.Product] += journal.CG(e.Grams)
+		}
+		if (e.Type == journal.Grind || e.Type == journal.Sesh) && e.OccurredAt.After(used[e.Product]) {
+			used[e.Product] = e.OccurredAt
 		}
 		if e.OccurredAt.After(seen[e.Product]) {
 			seen[e.Product] = e.OccurredAt
@@ -1053,7 +1062,7 @@ func jarsOf(ws *workspace.Workspace) any {
 		b := ws.State.Balances[slug]
 		j := jar{Slug: slug, Name: ws.ProductName(slug), Storage: b.Storage, Stash: b.Stash, AVB: b.AVB,
 			Bought: bought[slug].Grams(), Ground: ground[slug].Grams(), Fills: fills[slug], LastSeen: seen[slug],
-			Terpenes: []string{}}
+			LastUsed: used[slug], Terpenes: []string{}}
 		describe(&j, ws.Products, slug)
 		out = append(out, j)
 	}
@@ -1066,6 +1075,7 @@ func describe(j *jar, products *catalog.Catalog, slug string) {
 	if p := products.Exact(slug); p != nil {
 		j.Manufacturer, j.Cultivar, j.THC, j.CBD = p.Manufacturer, p.Cultivar, p.THC, p.CBD
 		j.Terpenes = append(j.Terpenes, p.Terpenes...)
+		j.Rating = ratingOf(p.Rating)
 	}
 }
 

@@ -363,7 +363,9 @@ func mergeCatalogs(r *repo.Repo, theirs bundle.Contents) (products, devices []st
 }
 
 // takeProducts adds or replaces each of the remote's products that this
-// catalog lacks or holds differently.
+// catalog lacks or holds differently. A strain's own rating is the one given
+// last, wherever: a rating made here and not yet pushed outlives an older one
+// pulled over it.
 func takeProducts(c *catalog.Catalog, theirs bundle.Contents) []string {
 	var took []string
 	for _, p := range products(theirs) {
@@ -372,6 +374,10 @@ func takeProducts(c *catalog.Catalog, theirs bundle.Contents) []string {
 		case i < 0:
 			c.Products = append(c.Products, p)
 		case !sameProduct(c.Products[i], p):
+			p.Rating = newerRating(c.Products[i].Rating, p.Rating)
+			if sameProduct(c.Products[i], p) {
+				continue
+			}
 			c.Products[i] = p
 		default:
 			continue
@@ -403,11 +409,33 @@ func takeDevices(c *catalog.Devices, theirs bundle.Contents) []string {
 // whatever zone it was read back in.
 func sameProduct(a, b *catalog.Product) bool {
 	x, y := *a, *b
-	if !x.AddedAt.Equal(y.AddedAt) || !slices.Equal(x.Terpenes, y.Terpenes) {
+	if !x.AddedAt.Equal(y.AddedAt) || !slices.Equal(x.Terpenes, y.Terpenes) || !sameRating(x.Rating, y.Rating) {
 		return false
 	}
-	x.AddedAt, x.Terpenes, y.Terpenes = y.AddedAt, nil, nil
+	x.AddedAt, x.Terpenes, y.Terpenes, x.Rating, y.Rating = y.AddedAt, nil, nil, nil, nil
 	return fmt.Sprint(x) == fmt.Sprint(y)
+}
+
+// sameRating compares two strain ratings by value, their moments as moments.
+func sameRating(a, b *catalog.StrainRating) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	x, y := *a, *b
+	if !x.At.Equal(y.At) {
+		return false
+	}
+	x.At = y.At
+	return x == y
+}
+
+// newerRating is whichever of two strain ratings was given last; one is
+// newer than none.
+func newerRating(ours, theirs *catalog.StrainRating) *catalog.StrainRating {
+	if ours != nil && (theirs == nil || ours.At.After(theirs.At)) {
+		return ours
+	}
+	return theirs
 }
 
 // sameDevice compares two devices field by field, their modes by value.

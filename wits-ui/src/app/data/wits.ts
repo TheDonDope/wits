@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 
 import {
-  Avb, Costs, Cycle, Findings, Strain, Day, Terpene, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
+  Avb, Costs, Cycle, Findings, Strain, StrainRating, Day, Terpene, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
 } from './models';
 
 /**
@@ -144,6 +144,18 @@ export class Wits {
     try {
       const out = await firstValueFrom(this.http.put<{ message: string; terpenes: string[] }>(
         `/api/jars/${encodeURIComponent(slug)}/terpenes`, { terpenes }));
+      this.version.update((v) => v + 1);
+      return out;
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
+  /** Rates a strain as a whole, apart from any one session; null takes the rating away. */
+  async rateStrain(slug: string, rating: StrainRating | null): Promise<{ message: string; rating?: StrainRating }> {
+    try {
+      const out = await firstValueFrom(this.http.put<{ message: string; rating?: StrainRating }>(
+        `/api/jars/${encodeURIComponent(slug)}/rating`, rating ?? { clear: true }));
       this.version.update((v) => v + 1);
       return out;
     } catch (err) {

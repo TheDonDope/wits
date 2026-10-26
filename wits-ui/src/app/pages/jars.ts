@@ -20,6 +20,7 @@ import { FILM, record } from '../viz/film';
 import { GlassJar } from '../viz/glass-jar';
 import { Transport, replayKeys } from '../viz/transport';
 import { CarryDialog } from './carry';
+import { RateStrainDialog, RateStrainData, ratingLine } from './strain-rating';
 import { Confirm, ConfirmDialog } from './confirm';
 
 /**
@@ -96,6 +97,16 @@ import { Confirm, ConfirmDialog } from './confirm';
               @if (j.thc) { <span class="chip thc">THC {{ j.thc }}%</span> }
               @if (j.cbd) { <span class="chip cbd">CBD {{ j.cbd }}%</span> }
               <span class="chip">{{ j.fills }} {{ j.fills === 1 ? 'fill' : 'fills' }}</span>
+              @if (j.rating; as r) {
+                <span class="chip rated" [title]="line(r)">
+                  @if (r.overall) { <mat-icon>star</mat-icon>{{ r.overall }} }
+                  @if (r.again === 'yes') { <mat-icon>thumb_up</mat-icon> } @else if (r.again === 'no') { <mat-icon>thumb_down</mat-icon> }
+                </span>
+              }
+              <button type="button" class="rate" (click)="rate(j, $event)" (keydown.enter)="$event.stopPropagation()"
+                [attr.aria-label]="(j.rating ? 'Rate again ' : 'Rate ') + j.name" [disabled]="!replay.live()">
+                <mat-icon>{{ j.rating ? 'edit' : 'star_rate' }}</mat-icon>{{ j.rating ? '' : 'Rate' }}
+              </button>
             </div>
             <dl>
               <div><dt>sealed</dt><dd class="num" style="color: var(--w-storage)">{{ j.storage | number: '1.2-2' }}</dd></div>
@@ -137,6 +148,14 @@ import { Confirm, ConfirmDialog } from './confirm';
     .chip { font: 600 10px/1.8 var(--w-font); padding: 0 8px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); color: var(--w-dim); }
     .chip.thc { background: color-mix(in srgb, var(--w-accent) 12%, transparent); color: var(--w-accent); }
     .chip.cbd { background: color-mix(in srgb, var(--w-storage) 14%, transparent); color: var(--w-storage); }
+    .chip.rated { display: inline-flex; align-items: center; gap: 2px; background: color-mix(in srgb, var(--w-accent) 14%, transparent);
+      color: var(--w-accent); }
+    .chip mat-icon, .rate mat-icon { font-size: 12px; width: 12px; height: 12px; }
+    .rate { display: inline-flex; align-items: center; gap: 3px; padding: 0 8px; border-radius: 99px; cursor: pointer;
+      font: 600 10px/1.8 var(--w-font); border: 1px dashed color-mix(in srgb, var(--w-primary) 50%, transparent);
+      background: transparent; color: var(--w-primary); }
+    .rate:hover { background: color-mix(in srgb, var(--w-primary) 12%, transparent); }
+    .rate:disabled { display: none; }
     dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin: 4px 0 0; }
     dl div { display: grid; gap: 1px; min-width: 0; }
     dt { font: 600 9px var(--w-font); letter-spacing: .1em; text-transform: uppercase; color: var(--w-dim); }
@@ -341,6 +360,16 @@ export class Jars {
       } },
       ...replayKeys(this.replay).map((b) => (b.keys.includes(' ') ? { ...b, keys: ['p'] } : b)),
     ];
+  }
+
+  protected readonly line = ratingLine;
+
+  /** Opens the rating of a strain as a whole, over its card, without opening the jar. */
+  protected rate(j: Jar, event: Event): void {
+    event.stopPropagation();
+    this.dialog.open<RateStrainDialog, RateStrainData>(RateStrainDialog, {
+      data: { slug: j.slug, name: j.name, rating: j.rating }, maxWidth: 'min(460px, 94vw)',
+    });
   }
 
   /** Opens a jar in full. A jar the replay shows as it stood is opened as it stands now. */

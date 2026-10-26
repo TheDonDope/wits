@@ -617,6 +617,21 @@ func (r *Recorder) Terpenes(ref string, terpenes []string) (*catalog.Product, er
 	return r.changeProduct(ref, func(product *catalog.Product) { product.Terpenes = terpenes })
 }
 
+// RateStrain writes down what a strain is thought of as a whole, at the
+// moment given; nil clears the rating.
+func (r *Recorder) RateStrain(ref string, rating *catalog.StrainRating, at time.Time) (*catalog.Product, error) {
+	if rating != nil {
+		if err := rating.Validate(); err != nil {
+			return nil, err
+		}
+		rated := *rating
+		rated.Note = strings.TrimSpace(rated.Note)
+		rated.At = at.Truncate(time.Second)
+		rating = &rated
+	}
+	return r.changeProduct(ref, func(product *catalog.Product) { product.Rating = rating })
+}
+
 // ErrNothingToCollect is why a collection is refused when no session has been
 // through the device since it was last emptied.
 var ErrNothingToCollect = errors.New("no session has been through it since it was last emptied")

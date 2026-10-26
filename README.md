@@ -246,7 +246,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it, `--price` for what it cost |
 | `wits price <purchase> <euros>` | Write down what a purchase cost; `wits reconcile purchases` walks every one without |
 | `wits costs` | What the prescriptions cost: per gram, by fill, by month, and per session that helped |
-| `wits describe <product>` | What is known about a product; `--terpenes` writes down its profile, dominant first |
+| `wits describe <product>` | What is known about a product; `--terpenes` writes down its profile, dominant first; `--rating "overall=4 taste=5" --again yes` rates the strain as a whole |
 | `wits like <product>` | The products most like one, by name, cannabinoids and terpenes |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--mode`, `--timer`, `--heater`, `--setting`, `--note` |
@@ -768,6 +768,7 @@ Everything left undone that the ledger can show, each section there only
 while there is some, and the tab counts them:
 
 - sessions of the last week waiting for a rating;
+- strains used in the last 90 days not yet rated as a whole;
 - pickups still to be priced;
 - stashes left behind, where a jar has nothing sealed left but its stash
   still holds grams, all ticked and cleared together;
@@ -805,6 +806,15 @@ offers to price that fill from it. Within two weeks, it asks whether it is
 that fill. Only an invoice that matches no fill adds its strains as a new one.
 
 ### The jars, the journal and the replay
+
+A strain can be rated as a whole, apart from any one session: overall, its
+taste and its aroma, 1 to 5 each or left out, whether you would have it again,
+and a line about it. **Rate** on its card on the Shelf, its own page, or
+**I forgot to**, which asks after every strain used in the last 90 days that
+has no rating; on the command line, `wits describe wedding --rating
+"overall=4 taste=5" --again yes --say "lemon, then pepper"`. Rated again, the
+newer rating stands. It is kept with the product, travels in bundles and
+syncs: of two devices' ratings of one strain, the one given last stays.
 
 The jars are a gallery, every product a card across its life; tick the cards
 — or **Select all** — and **Clear stash** records their stashes as consumed,

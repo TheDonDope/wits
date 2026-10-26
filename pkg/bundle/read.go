@@ -513,18 +513,15 @@ func readProduct(text string, line int) (string, *catalog.Product, error) {
 	}
 	slug := unescape(parts[1])
 	p := &catalog.Product{Slug: slug, Name: slug}
+	words := map[string]*string{"n": &p.Name, "m": &p.Manufacturer, "c": &p.Cultivar, "o": &p.Country}
 	for _, attr := range parts[2:] {
 		key, value := field(attr)
+		if dst, ok := words[key]; ok {
+			*dst = unescape(value)
+			continue
+		}
 		var err error
 		switch key {
-		case "n":
-			p.Name = unescape(value)
-		case "m":
-			p.Manufacturer = unescape(value)
-		case "c":
-			p.Cultivar = unescape(value)
-		case "o":
-			p.Country = unescape(value)
 		case "thc":
 			p.THC, err = strconv.ParseFloat(value, 64)
 		case "cbd":
@@ -537,6 +534,8 @@ func readProduct(text string, line int) (string, *catalog.Product, error) {
 			p.Radiated = value == "1"
 		case "tp":
 			p.Terpenes = catalog.ParseTerpenes(unescape(value))
+		case "sr", "sn":
+			err = readStrainRating(p, key, value)
 		case "a":
 			var at int64
 			if at, err = parseNum(value); err == nil {
@@ -550,6 +549,33 @@ func readProduct(text string, line int) (string, *catalog.Product, error) {
 		}
 	}
 	return slug, p, nil
+}
+
+// readStrainRating decodes a strain's own rating: its scores, again and when
+// (sr), or its line (sn), whichever comes first making the rating.
+func readStrainRating(p *catalog.Product, key, value string) error {
+	if p.Rating == nil {
+		p.Rating = &catalog.StrainRating{}
+	}
+	if key == "sn" {
+		p.Rating.Note = unescape(value)
+		return nil
+	}
+	f := strings.Split(value, "/")
+	if len(f) != 5 {
+		return fmt.Errorf("a rating is five fields, not %d", len(f))
+	}
+	scores := []*int{&p.Rating.Overall, &p.Rating.Taste, &p.Rating.Aroma}
+	for i, s := range scores {
+		var err error
+		if *s, err = strconv.Atoi(f[i]); err != nil {
+			return err
+		}
+	}
+	p.Rating.Again = map[string]catalog.Again{"y": catalog.AgainYes, "n": catalog.AgainNo}[f[3]]
+	at, err := parseNum(f[4])
+	p.Rating.At = time.Unix(at, 0)
+	return err
 }
 
 // readDevice decodes a device header entry.
