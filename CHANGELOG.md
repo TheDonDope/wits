@@ -2,9 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.101.0"></a>
+## [v0.101.0] - 2026-10-26
+### Docs
+- **diary:** the same, in a terminal
+
+### Feat
+- **replay:** the record in time, and a tape that keeps pace
+
+
 <a name="v0.100.0"></a>
 ## [v0.100.0] - 2026-10-26
 ### Docs
+- update changelog for v0.100.0
 - one blank line between paragraphs, as the split should have left them
 - **diary:** tasted, and thought of as a whole
 
@@ -1228,7 +1238,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.100.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.101.0...HEAD
+[v0.101.0]: https://github.com/TheDonDope/wits/compare/v0.100.0...v0.101.0
 [v0.100.0]: https://github.com/TheDonDope/wits/compare/v0.99.0...v0.100.0
 [v0.99.0]: https://github.com/TheDonDope/wits/compare/v0.98.0...v0.99.0
 [v0.98.0]: https://github.com/TheDonDope/wits/compare/v0.97.0...v0.98.0
