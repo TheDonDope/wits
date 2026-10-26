@@ -6,6 +6,7 @@ import { FlowPreview } from './flow';
 import { GramsInput } from './grams';
 import { ScaleInput } from './scale';
 import { TempDial } from './temp-dial';
+import { TempRange } from './temp-range';
 
 /** The component's element, typed. */
 function host(f: ComponentFixture<unknown>): HTMLElement {
@@ -124,5 +125,21 @@ describe('FlowPreview', () => {
     f.detectChanges();
     const kept = [...host(f).querySelectorAll<HTMLElement>('.kept')].map((e) => e.style.width);
     expect(kept).toEqual(['95%', '10%']);
+  });
+});
+
+describe('TempRange', () => {
+  it('keeps the thumbs from passing each other', () => {
+    const f = TestBed.createComponent(TempRange);
+    f.componentInstance.from.set(40);
+    f.componentInstance.to.set(210);
+    f.detectChanges();
+    const [lo, hi] = host(f).querySelectorAll<HTMLInputElement>('input[type=range]');
+    lo.value = '230';
+    lo.dispatchEvent(new Event('input'));
+    expect(f.componentInstance.from()).toBe(210);
+    hi.value = '20';
+    hi.dispatchEvent(new Event('input'));
+    expect(f.componentInstance.to()).toBe(210);
   });
 });

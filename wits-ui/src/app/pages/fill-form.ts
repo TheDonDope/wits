@@ -1,18 +1,16 @@
 import { DecimalPipe, PercentPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { addsUp, readInvoice } from '../data/invoice';
 import { readLabel } from '../data/label';
 import { FillLine, InvoiceReading, LabelReading } from '../data/models';
 import { Wits } from '../data/wits';
+import { Choice, ChoiceInput } from '../inputs/choice';
+import { WhenInput } from '../inputs/when';
+import { GlassJar } from '../viz/glass-jar';
+import { tone } from '../viz/tones';
 
 /** The VAT added to a price a gram typed in, in percent: Germany's, which medical cannabis pays in full. */
 export const VAT = 19;
@@ -46,6 +44,15 @@ interface Read {
 
 let nextRow = 0;
 
+/** The amounts that come up most, four at most, smallest first. */
+function sizes(grams: number[]): number[] {
+  const count = new Map<number, number>();
+  for (const g of grams) {
+    count.set(g, (count.get(g) ?? 0) + 1);
+  }
+  return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 4).map(([g]) => g).sort((a, b) => a - b);
+}
+
 function blank(): Row {
   return { id: ++nextRow, name: '', grams: null, perGram: null };
 }
@@ -78,35 +85,31 @@ export function rowCents(r: Row, vat: boolean): number {
  */
 @Component({
   selector: 'w-fill-form',
-  providers: [provideNativeDateAdapter()],
-  imports: [
-    DecimalPipe,
-    FormsModule,
-    PercentPipe,
-    MatButtonModule,
-    MatDatepickerModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatSlideToggleModule,
-  ],
+  imports: [ChoiceInput, DecimalPipe, GlassJar, PercentPipe, MatButtonModule, MatIconModule, WhenInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="label">
-      <button mat-stroked-button type="button" (click)="pdf.click()" [disabled]="reading() !== null">
-        <mat-icon>receipt_long</mat-icon>Read invoices
+    <div class="readers">
+      <button type="button" class="reader" [class.over]="over()" [disabled]="reading() !== null" (click)="pdf.click()"
+        (dragover)="drag($event, true)" (dragleave)="drag($event, false)" (drop)="dropped($event)">
+        <mat-icon>receipt_long</mat-icon>
+        <strong>Read invoices</strong>
+        <span class="dim">The pharmacy's PDFs — pick them, or drop them here. Every strain and price, read.</span>
       </button>
       <input #pdf type="file" accept="application/pdf,.pdf" multiple hidden (change)="readInvoices(pdf)" />
-      <button mat-stroked-button type="button" (click)="photo.click()" [disabled]="reading() !== null">
-        <mat-icon>photo_camera</mat-icon>Read the label
+      <button type="button" class="reader" [disabled]="reading() !== null" (click)="photo.click()">
+        <mat-icon>photo_camera</mat-icon>
+        <strong>Read the label</strong>
+        <span class="dim">A photo of the jar's label: the product and its grams.</span>
       </button>
       <input #photo type="file" accept="image/*" capture="environment" hidden (change)="readPhoto(photo)" />
-      @if (reading() !== null) {
-        <span class="dim num">reading… {{ reading() | percent }}</span>
-      } @else {
-        <span class="dim">Read on this device; nothing is sent but its text.</span>
-      }
     </div>
+    @if (reading() !== null) {
+      <div class="progress" role="progressbar" [attr.aria-valuenow]="(reading() ?? 0) * 100" aria-valuemin="0" aria-valuemax="100">
+        <div [style.width.%]="(reading() ?? 0) * 100"></div><span class="dim num">reading… {{ reading() | percent }}</span>
+      </div>
+    } @else {
+      <p class="dim local"><mat-icon>lock</mat-icon>Read on this device; nothing is sent but its text.</p>
+    }
     @for (inv of invoices(); track $index) {
       <div class="read">
         <mat-icon>{{ addsUp(inv.reading) ? 'receipt_long' : 'error' }}</mat-icon>
@@ -175,95 +178,171 @@ export function rowCents(r: Row, vat: boolean): number {
       </div>
     }
 
+    <datalist id="fill-jars">
+      @for (j of wits.jars.value(); track j.slug) {
+        <option [value]="j.name"></option>
+      }
+    </datalist>
     @for (l of rows(); track l.id; let i = $index) {
-      <div class="strain">
-        <mat-form-field appearance="outline" class="name" subscriptSizing="dynamic">
-          <mat-label>{{ rows().length > 1 ? 'Strain ' + (i + 1) : 'Product, as on the label' }}</mat-label>
-          <input matInput [ngModel]="l.name" (ngModelChange)="edit(l.id, { name: $event })" placeholder="Enua 22/1 Wedding Cake" />
-          @if (l.printed && l.printed !== l.name) {
-            <mat-hint>On the invoice: {{ l.printed }}</mat-hint>
+      <div class="strain" [style.--tone]="toneOf(i)">
+        <w-jar class="glass" [capacity]="capacity()" [layers]="[{ grams: l.grams ?? 0, color: toneOf(i), label: 'dispensed' }]" />
+        <div class="body">
+          <div class="top">
+            <label class="name">
+              <span class="eyebrow">{{ rows().length > 1 ? 'strain ' + (i + 1) : 'product, as on the label' }}</span>
+              <input list="fill-jars" [value]="l.name" (input)="edit(l.id, { name: text($event) })" placeholder="Enua 22/1 Wedding Cake" />
+            </label>
+            <button mat-icon-button type="button" class="x" (click)="remove(l.id)" [disabled]="rows().length === 1"
+              [attr.aria-label]="'Remove strain ' + (i + 1)"><mat-icon>close</mat-icon></button>
+          </div>
+          @if (l.name.trim()) {
+            <p class="kind" [class.new]="!jarOf(l)">
+              <mat-icon>{{ jarOf(l) ? 'inventory_2' : 'fiber_new' }}</mat-icon>
+              {{ jarOf(l) ? 'already a jar' : 'a new product' }}
+              @if (l.printed && l.printed !== l.name) { <span class="dim">· on the invoice: {{ l.printed }}</span> }
+            </p>
           }
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="g" subscriptSizing="dynamic">
-          <mat-label>Amount</mat-label>
-          <input matInput type="number" min="0.01" step="0.01" [ngModel]="l.grams" (ngModelChange)="edit(l.id, { grams: $event, total: undefined })" />
-          <span matTextSuffix>g</span>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="pg" subscriptSizing="dynamic">
-          <mat-label>Price a gram</mat-label>
-          <input matInput type="number" min="0" step="0.01" [ngModel]="l.perGram" (ngModelChange)="edit(l.id, { perGram: $event, total: undefined })" />
-          <span matTextSuffix>€</span>
-        </mat-form-field>
-        <span class="total num" [class.dim]="!cents(l)">{{ cents(l) ? euros(cents(l)) : '—' }}</span>
-        <button mat-icon-button type="button" class="x" (click)="remove(l.id)" [disabled]="rows().length === 1" [attr.aria-label]="'Remove strain ' + (i + 1)">
-          <mat-icon>close</mat-icon>
-        </button>
+          <div class="figures">
+            <label class="fig">
+              <span class="eyebrow">grams</span>
+              <span class="w-box big"><input type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0"
+                [value]="l.grams ?? ''" (input)="number($event, l.id, 'grams')" /><span class="unit">g</span></span>
+            </label>
+            <label class="fig">
+              <span class="eyebrow">a gram{{ l.inclVAT ? ', with VAT' : vat() ? ', before VAT' : '' }}</span>
+              <span class="w-box big"><input type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"
+                [value]="l.perGram ?? ''" (input)="number($event, l.id, 'perGram')" /><span class="unit">€</span></span>
+            </label>
+            <span class="line num" [class.dim]="!cents(l)">{{ cents(l) ? euros(cents(l)) : '—' }}</span>
+          </div>
+          <div class="chips">
+            @for (g of packsFor(l); track g) {
+              <button type="button" class="chip" [class.on]="l.grams === g" (click)="edit(l.id, { grams: g, total: undefined })">{{ g }} g</button>
+            }
+            @if (lastPaid(l); as p) {
+              <button type="button" class="chip paid" [class.on]="l.inclVAT && l.perGram === p / 100" (click)="paid(l.id, p)"
+                [attr.aria-label]="'The price a gram paid last time, ' + euros(p) + ' with VAT'">
+                <mat-icon>history</mat-icon>last time {{ euros(p) }}/g
+              </button>
+            }
+          </div>
+        </div>
       </div>
     }
-    <div class="more">
-      <button mat-button type="button" (click)="add()"><mat-icon>add</mat-icon>Add a strain</button>
-    </div>
+    <button mat-stroked-button type="button" class="add" (click)="add()"><mat-icon>add</mat-icon>Add a strain</button>
 
-    <div class="vat">
-      <mat-slide-toggle [checked]="vat()" (change)="vat.set($event.checked)">Add 19% VAT (Germany)</mat-slide-toggle>
-      @if (fromInvoice()) {
-        <span class="dim">The invoice’s prices include VAT already; it is added only to prices typed in.</span>
+    <w-choice label="the prices typed in" [options]="vatChoices" [value]="vat() ? 'add' : 'with'" (valueChange)="vat.set($event === 'add')" />
+    @if (fromInvoice()) {
+      <p class="dim note">A price marked with VAT — an invoice’s, or last time’s — has it already; it is added only to the others.</p>
+    }
+    <div class="receipt">
+      <span class="eyebrow">the prescription</span>
+      @if (totalGrams() > 0) {
+        <div class="split" aria-hidden="true">
+          @for (l of rows(); track l.id; let i = $index) {
+            @if ((l.grams ?? 0) > 0) {
+              <div [style.flex-grow]="l.grams" [style.background]="toneOf(i)" [title]="l.name"></div>
+            }
+          }
+        </div>
       }
-    </div>
-    <dl class="sum">
+      @for (l of rows(); track l.id; let i = $index) {
+        @if (l.name.trim() || (l.grams ?? 0) > 0) {
+          <div class="row"><i [style.background]="toneOf(i)"></i><span class="what">{{ l.name.trim() || 'strain ' + (i + 1) }}</span>
+            <span class="num">{{ l.grams ?? 0 | number: '1.0-2' }} g</span><span class="num">{{ cents(l) ? euros(cents(l)) : '—' }}</span></div>
+        }
+      }
       @if (vat() && typedCents()) {
-        <div><dt>{{ fromInvoice() ? 'Typed in, before VAT' : 'Before VAT' }}</dt><dd class="num">{{ euros(typedCents()) }}</dd></div>
-        <div><dt>VAT 19%</dt><dd class="num">{{ euros(vatCents()) }}</dd></div>
+        <div class="row sub"><i></i><span class="what">{{ fromInvoice() ? 'Typed in, before VAT' : 'Before VAT' }}</span><span></span>
+          <span class="num">{{ euros(typedCents()) }}</span></div>
+        <div class="row sub"><i></i><span class="what">VAT 19%</span><span></span><span class="num">{{ euros(vatCents()) }}</span></div>
       }
-      <div class="all"><dt>The prescription</dt><dd class="num">{{ totalGrams() | number: '1.0-2' }} g · {{ totalCents() ? euros(totalCents()) : 'no price' }}</dd></div>
-    </dl>
+      <div class="row all"><i></i><span class="what">Together</span><span class="num">{{ totalGrams() | number: '1.0-2' }} g</span>
+        <span class="num">{{ totalCents() ? euros(totalCents()) : 'no price' }}</span></div>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>When</mat-label>
-      <input matInput [matDatepicker]="picker" [ngModel]="date()" (ngModelChange)="date.set($event)" placeholder="now" />
-      <mat-datepicker-toggle matIconSuffix [for]="picker" />
-      <mat-datepicker #picker />
-      @if (invoiceDates().length > 1) {
-        <mat-hint>The invoices are dated {{ invoiceDates().join(', ') }}: a prescription is one pickup, on the day set here.</mat-hint>
-      }
-    </mat-form-field>
+    <w-when [value]="date()" (valueChange)="date.set($event)" />
+    @if (invoiceDates().length > 1) {
+      <p class="dim note">The invoices are dated {{ invoiceDates().join(', ') }}: a prescription is one pickup, on the day set here.</p>
+    }
   `,
   styles: `
     @use 'breakpoints' as bp;
-    :host { display: grid; gap: 4px; }
+    :host { display: grid; gap: 14px; }
     mat-icon { vertical-align: middle; }
-    .label { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
-    .label mat-icon { margin-right: 6px; }
+    .eyebrow { font-size: 11px; }
+    .dim { color: var(--w-dim); }
+    .note { margin: -6px 0 0; font-size: 12px; }
+    .readers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .reader { display: grid; gap: 4px; justify-items: start; text-align: left; padding: 16px; border-radius: 16px; cursor: pointer;
+      border: 1.5px dashed var(--w-glass-edge); background: color-mix(in srgb, var(--w-primary) 5%, transparent); color: inherit;
+      font: inherit; transition: border-color .2s, background .2s; }
+    .reader:hover:not(:disabled), .reader.over { border-color: var(--w-primary); background: color-mix(in srgb, var(--w-primary) 14%, transparent); }
+    .reader:disabled { opacity: .6; cursor: progress; }
+    .reader mat-icon { font-size: 28px; width: 28px; height: 28px; color: var(--w-primary); }
+    .reader strong { font: 600 15px var(--w-head); }
+    .reader .dim { font-size: 12px; line-height: 1.45; }
+    .local { display: flex; align-items: center; gap: 6px; margin: -6px 0 0; font-size: 12px; }
+    .local mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    .progress { position: relative; height: 22px; border-radius: 99px; overflow: hidden; background: color-mix(in srgb, var(--w-fg) 6%, transparent); }
+    .progress div { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--w-primary) 40%, transparent); transition: width .3s; }
+    .progress span { position: relative; display: block; text-align: center; font-size: 12px; line-height: 22px; }
     .read { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; border: 1px solid var(--w-glass-edge);
-      border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
+      border-radius: 14px; padding: 12px 14px; background: color-mix(in srgb, var(--w-fg) 3%, transparent); }
+    .read > mat-icon { color: var(--w-primary); }
     .read p { margin: 0 0 4px; }
     .known { color: var(--mat-sys-on-surface); }
     .choose { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
     .read pre { white-space: pre-wrap; font: 12px var(--w-mono); max-height: 160px; overflow: auto; margin: 6px 0 0; }
-    /* A strain is a card: its name across with the way to remove it, its figures under it. */
-    .strain { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(76px, auto) 40px;
-      grid-template-areas: 'name name name x' 'g pg total total'; gap: 4px 10px; align-items: center;
-      padding: 12px 8px 8px 12px; margin-bottom: 10px; border: 1px solid var(--w-glass-edge); border-radius: 14px; }
-    .strain .name { grid-area: name; }
-    .strain .g { grid-area: g; }
-    .strain .pg { grid-area: pg; }
-    .strain .total { grid-area: total; text-align: right; font-size: 14px; padding-right: 8px; }
-    .strain .x { grid-area: x; }
-    /* A phone: the line's total on a line of its own. */
+    /* A strain is a card: its jar, filling as its grams are typed, beside its name, its figures and its chips. */
+    .strain { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px;
+      border-radius: 18px; border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--w-glass-edge));
+      background: linear-gradient(135deg, color-mix(in srgb, var(--tone) 8%, transparent), transparent 60%); }
+    .glass { width: 52px; height: 73px; margin-top: 6px; }
+    .body { display: grid; gap: 8px; min-width: 0; }
+    .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: start; }
+    .name { display: grid; gap: 2px; min-width: 0; }
+    .name input { width: 100%; min-width: 0; border: 0; border-bottom: 1px solid var(--w-glass-edge); background: none; color: inherit;
+      font: 600 17px var(--w-head); padding: 4px 0 6px; outline: 0; }
+    .name input:focus { border-bottom-color: var(--w-primary); }
+    .name input::placeholder { color: color-mix(in srgb, var(--w-fg) 25%, transparent); font-weight: 400; }
+    .kind { display: flex; align-items: center; gap: 4px; margin: -2px 0 0; font-size: 12px; color: var(--w-good); }
+    .kind.new { color: var(--w-accent); }
+    .kind mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    .figures { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+    .fig { display: grid; gap: 2px; min-width: 0; }
+    .big input[type='number'] { font-size: 22px; }
+    .line { font-size: 17px; font-weight: 600; padding-bottom: 8px; text-align: right; min-width: 9ch; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--w-glass-edge);
+      background: none; color: inherit; font: 500 12px var(--w-num); cursor: pointer; }
+    .chip:hover { border-color: var(--w-primary); }
+    .chip.on { border-color: var(--w-primary); background: color-mix(in srgb, var(--w-primary) 18%, transparent); }
+    .chip mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .add { justify-self: start; }
+    .receipt { display: grid; gap: 6px; padding: 14px 16px; border-radius: 4px 4px 14px 14px; border-top: 2px dashed var(--w-glass-edge);
+      background: color-mix(in srgb, var(--w-fg) 4%, transparent); font-size: 13px; }
+    .split { display: flex; gap: 2px; height: 8px; border-radius: 99px; overflow: hidden; margin: 2px 0 4px; }
+    .split div { flex-basis: 0; transition: flex-grow .35s; }
+    .receipt .row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 10ch; gap: 10px; align-items: center; }
+    .receipt i { width: 8px; height: 8px; border-radius: 2px; }
+    .receipt .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .receipt .num { text-align: right; }
+    .receipt .sub { color: var(--w-dim); font-size: 12px; }
+    .receipt .all { border-top: 1px solid var(--w-glass-edge); padding-top: 8px; margin-top: 2px; font-weight: 600; font-size: 15px; }
     @include bp.phone {
-      .strain { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; grid-template-areas: 'name name x' 'g pg pg' 'total total total'; }
+      .reader { padding: 12px; }
+      .reader .dim { display: none; }
+      .strain { grid-template-columns: 40px minmax(0, 1fr); gap: 10px; padding: 12px; }
+      .glass { width: 40px; height: 56px; }
+      .figures { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .line { grid-column: 1 / -1; padding: 0; }
     }
-    .more { margin: -2px 0 8px; }
-    .vat { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 4px 0 6px; }
-    .vat .dim { font-size: 12px; }
-    .sum { display: grid; gap: 2px; margin: 4px 0 14px; padding: 10px 12px; border: 1px solid var(--w-glass-edge); border-radius: 12px; }
-    .sum div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--w-dim); }
-    .sum dd { margin: 0; }
-    .sum .all { color: var(--mat-sys-on-surface); font-weight: 600; font-size: 15px; }
+    @media (prefers-reduced-motion: reduce) { .reader, .progress div, .split div { transition: none; } }
   `,
 })
 export class FillForm {
-  private readonly wits = inject(Wits);
+  protected readonly wits = inject(Wits);
 
   /** The day picked up: the dialog's, set from the latest invoice read. */
   readonly date = model<Date | null>(null);
@@ -299,6 +378,76 @@ export class FillForm {
     this.rows().reduce((sum, r) => sum + (r.inclVAT ? 0 : this.cents(r)), 0) - this.typedCents(),
   );
   protected readonly totalGrams = computed(() => this.rows().reduce((sum, r) => sum + (r.grams ?? 0), 0));
+
+  protected readonly vatChoices: Choice[] = [
+    { value: 'add', label: 'are before VAT', icon: 'add_circle', hint: '19% added' },
+    { value: 'with', label: 'include VAT', icon: 'check_circle' },
+  ];
+  /** Whether invoices are being dragged over their reader. */
+  protected readonly over = signal(false);
+  /** The jars on the shelf by their names, to tell a jar already known from a new product. */
+  private readonly known = computed(() => new Map(this.wits.jars.value().map((j) => [j.name.toLowerCase(), j.slug])));
+  /** Every purchase that stands, newest first. */
+  private readonly purchases = computed(() =>
+    this.wits.journal.value().entries.filter((e) => e.type === 'purchase' && !e.corrected));
+  /** The sizes bought most, four of them, smallest first: what a pharmacy packs. */
+  private readonly packs = computed(() => sizes(this.purchases().map((e) => e.grams)));
+  /** Every strain's jar, drawn against the largest, and 20 g at least, so a 5 g jar reads as one. */
+  protected readonly capacity = computed(() => Math.max(20, ...this.rows().map((r) => r.grams ?? 0)));
+
+  protected toneOf(i: number): string {
+    return tone(i);
+  }
+
+  /** The jar a strain already is, by its name. */
+  protected jarOf(r: Row): string | undefined {
+    return this.known().get(r.name.trim().toLowerCase());
+  }
+
+  /** The sizes this jar was bought in, or the ones bought most when it is new. */
+  protected packsFor(r: Row): number[] {
+    const slug = this.jarOf(r);
+    const own = slug ? sizes(this.purchases().filter((e) => e.product === slug).map((e) => e.grams)) : [];
+    return own.length ? own : this.packs();
+  }
+
+  /** What a gram of this jar cost the last time, in cents with VAT. */
+  protected lastPaid(r: Row): number | undefined {
+    const slug = this.jarOf(r);
+    return slug ? this.wits.costs.value()?.bought.filter((b) => b.product === slug).at(-1)?.per_gram : undefined;
+  }
+
+  /** The price a gram paid last time, which has its VAT in it already. */
+  protected paid(id: number, cents: number): void {
+    this.edit(id, { perGram: cents / 100, inclVAT: true, total: undefined });
+  }
+
+  protected text(e: Event): string {
+    return (e.target as HTMLInputElement).value;
+  }
+
+  /** A figure typed; half a number — "1." on its way to "1.5" — keeps what was there. */
+  protected number(e: Event, id: number, field: 'grams' | 'perGram'): void {
+    const el = e.target as HTMLInputElement;
+    if (el.validity.badInput) {
+      return;
+    }
+    const v = el.value === '' ? null : Number(el.value);
+    this.edit(id, field === 'grams' ? { grams: v, total: undefined } : { perGram: v, total: undefined });
+  }
+
+  protected drag(e: DragEvent, over: boolean): void {
+    e.preventDefault();
+    this.over.set(over);
+  }
+
+  /** Invoices dropped on their reader are read like those picked; anything not a PDF is passed over. */
+  protected async dropped(e: DragEvent): Promise<void> {
+    e.preventDefault();
+    this.over.set(false);
+    const files = [...(e.dataTransfer?.files ?? [])].filter((f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+    await this.readFiles(files);
+  }
 
   protected cents(r: Row): number {
     return rowCents(r, this.vat());
@@ -346,6 +495,11 @@ export class FillForm {
   protected async readInvoices(input: HTMLInputElement): Promise<void> {
     const files = [...(input.files ?? [])];
     input.value = '';
+    await this.readFiles(files);
+  }
+
+  /** Reads invoices, one after the other, and adds their strains to the fill. */
+  private async readFiles(files: File[]): Promise<void> {
     if (!files.length) {
       return;
     }

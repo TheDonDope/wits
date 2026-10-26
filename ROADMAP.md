@@ -1647,7 +1647,21 @@ come in the order the account holds most. Every colour is the theme's, and
 reduced motion stills the transitions. On the demo a session recorded through
 it — Morning Sun, the Venty, the dial stepped from 180 to 185 °C, 0.20 g —
 was written as a session of 0.20 g on the Venty at 185 °C. The Prescription
-tab is FillForm's, as it was.
+tab followed (`pages/fill-form.ts`): the readers are drop zones, invoices
+dropped as well as picked; each strain a card with a jar filling as its grams
+are typed, its name suggested from the shelf (a `datalist`) and said to be a
+jar already or a new product, the sizes it was bought in a tap away, and
+*last time*'s price a gram — with its VAT, so the row is marked so; VAT as
+pills; the prescription a receipt, strain by strain, with its grams split as a
+bar. On the demo 20 g of Morning Sun at 5.80 € and 15 g of a new Pink Kush at
+8.50 € before VAT read 267.73 € and were written down as 116.00 € and
+151.73 €. So did Add a device (`pages/device-form.ts`): presets and categories
+as tiles, power, heating, use, water and retired as pills, load and auto-off
+as chips beside a box, the range as one band with two thumbs
+(`inputs/temp-range.ts`), the usual temperature on the session's dial with
+the modes marked, each mode a card; a Venty added from its preset with a
+3-minute auto-off was written with its range, 180 °C, its modes, 0.15 g and
+180 s. The boxes are one global style, `.w-field` and `.w-box`.
 
 ---
 

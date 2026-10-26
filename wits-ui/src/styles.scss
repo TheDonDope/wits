@@ -245,3 +245,68 @@ body {
     }
   }
 }
+
+// A field drawn as a quiet box, its name small above it — the Record dialog's
+// and the device form's inputs (inputs/, pages/fill-form.ts, device-form.ts).
+.w-field {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+
+  > .eyebrow {
+    font-size: 11px;
+  }
+}
+
+.w-box {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--w-fg) 5%, transparent);
+
+  &:focus-within {
+    border-color: var(--w-primary);
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: inherit;
+    font: 500 15px var(--w-font);
+    appearance: textfield;
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input[type='number'] {
+    text-align: right;
+    font: 600 18px var(--w-num);
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: color-mix(in srgb, var(--w-fg) 25%, transparent);
+  }
+
+  .unit {
+    color: var(--w-dim);
+    font: 500 13px var(--w-num);
+  }
+}

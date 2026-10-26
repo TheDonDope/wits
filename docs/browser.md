@@ -166,8 +166,20 @@ the jars with no terpene profile, since one no page names would never clear.
 
 A fill holds one strain or several, each with its grams and its price a gram,
 and records as one: all of them or none, each with its price written down.
-**Add 19% VAT (Germany)**, on unless switched off, adds the tax to the prices
-typed in.
+**The prices typed in are before VAT** (19 % added, the default) or **include
+VAT**.
+
+Each strain is a card with a glass jar that fills as its grams are typed. Its
+name is suggested from the jars on the shelf, and says whether it is **already
+a jar** or **a new product**. The sizes the jar was bought in — or, for a new
+one, the sizes bought most — are a tap away, and **last time** puts in the
+price a gram paid last time, which has its VAT in it already. Under the
+strains, the prescription is a receipt: each strain with its grams and price,
+the VAT, and together; on the demo 20 g of Morning Sun at last time's 5.80 €
+and 15 g of a new Pink Kush at 8.50 € before VAT come to 35 g and 267.73 €,
+written down as 116.00 € and 151.73 €. Invoices can be dropped on **Read
+invoices** as well as picked. **When** is now, yesterday or another day, and
+reading invoices sets it to the day of the latest.
 
 **Read the label** takes a photograph of the pharmacy label and fills in the
 product and the grams, matched to a jar you already have when it is one. The
@@ -383,6 +395,12 @@ vaporizer's or glass's **load** is what one fill usually holds — 0.15 g on
 the Venty, Mighty+, Frolic, Tornado, Anvil and Tempest presets, 0.1 g on the
 Simrell and the Hydro — and sizes a session you forgot to record, until your
 own sessions say.
+
+The form draws what it asks: presets and the five categories as tiles, power,
+heating, use and water as pills, a load and the auto-off as the usual values a
+tap away beside a box for any other, the range a device can be set to as one
+band with a thumb at each end, how it is usually set on the same dial a
+session turns, with its modes marked, and each mode a card of its own.
 
 A device has:
 

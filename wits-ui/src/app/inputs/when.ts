@@ -47,8 +47,13 @@ export class WhenInput {
     { value: 'yesterday', label: 'Yesterday', icon: 'history' },
     { value: 'day', label: 'Another day', icon: 'calendar_month' },
   ];
-  /** What is chosen: now, yesterday, or another day, whose day the calendar holds. */
-  protected readonly kind = signal<'now' | 'yesterday' | 'day'>('now');
+  /** What was chosen by hand; until then, what the value says — an invoice's day, set from outside, included. */
+  private readonly chosen = signal<'now' | 'yesterday' | 'day' | null>(null);
+  protected readonly kind = computed(() => {
+    const v = this.value();
+    const by = !v ? 'now' : isoDay(v) === isoDay(yesterday()) ? 'yesterday' : 'day';
+    return this.chosen() ?? by;
+  });
   protected readonly day = computed(() => {
     const v = this.value();
     return v ? isoDay(v) : '';
@@ -56,14 +61,14 @@ export class WhenInput {
 
   protected pick(kind: string): void {
     if (kind === 'now') {
-      this.kind.set('now');
+      this.chosen.set(null);
       this.value.set(null);
     } else if (kind === 'yesterday') {
-      this.kind.set('yesterday');
+      this.chosen.set(null);
       this.value.set(yesterday());
     } else {
-      // Another day starts from yesterday, picked again on the calendar.
-      this.kind.set('day');
+      // Another day starts from the day set, or yesterday, picked again on the calendar.
+      this.chosen.set('day');
       this.value.set(this.value() ?? yesterday());
     }
   }
