@@ -24,6 +24,10 @@ type Contents struct {
 	Products *catalog.Catalog
 	Devices  *catalog.Devices
 	Events   []journal.Event
+	// Shapes is where an entry stands when it does not simply follow the
+	// one before it — brought in from another device, or a merge — by
+	// position; nil for a journal no merge touched (journal.Shapes).
+	Shapes []journal.Shape
 	// Ratings is the effect log, superseded ratings included.
 	Ratings []effects.Rating
 	// Prices is the price log, superseded prices included.
@@ -69,7 +73,12 @@ func Write(w io.Writer, c Contents) error {
 	fmt.Fprintln(out, separator)
 
 	cur := cursor{offset: -1 << 30, recordedOffset: -1 << 30}
-	for _, e := range c.Events {
+	shapes := journal.Shapes(c.Events)
+	for i, e := range c.Events {
+		cur.shape = journal.Shape{}
+		if i < len(shapes) {
+			cur.shape = shapes[i]
+		}
 		if err := cur.write(out, e, products.index, devices.index, notes.index); err != nil {
 			return err
 		}
@@ -88,6 +97,9 @@ func Write(w io.Writer, c Contents) error {
 type cursor struct {
 	occurred, recorded     int64
 	offset, recordedOffset int
+	// shape is where the event being written stands, when it does not
+	// simply follow the one before it.
+	shape journal.Shape
 }
 
 // write encodes one event as a line, relative to the cursor, and moves it on.
@@ -120,9 +132,24 @@ func (c *cursor) write(out io.Writer, e journal.Event, products, devices, notes 
 		c.recordedOffset = off
 	}
 	writeRefs(out, e, devices, notes)
+	writeShape(out, c.shape)
 	fmt.Fprint(out, "\n")
 	c.occurred, c.recorded = occurred, recorded
 	return nil
+}
+
+// writeShape appends where an event stands when it does not simply follow
+// the one before it: the positions of the entries it names, and its
+// sequence number. Format 11 added them.
+func writeShape(out io.Writer, s journal.Shape) {
+	for _, f := range []struct {
+		key   string
+		value int
+	}{{"pv", s.Prev}, {"mg", s.Merge}, {"sq", s.Seq}} {
+		if f.value != 0 {
+			fmt.Fprintf(out, " %s=%s", f.key, num(int64(f.value)))
+		}
+	}
 }
 
 // writeRefs appends the attributes an event has only sometimes: its device,

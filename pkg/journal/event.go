@@ -46,6 +46,9 @@ const (
 	AVBUse Type = "avb-use"
 	// Adjust corrects a balance for a spill or a scale correction.
 	Adjust Type = "adjust"
+	// Merge joins two devices' histories: it moves no grams, and names the
+	// head of each, so one later hash covers every entry of both.
+	Merge Type = "merge"
 )
 
 // flows maps each event type to the accounts it moves grams between.
@@ -56,6 +59,7 @@ var flows = map[Type][2]Account{
 	AVBCollect: {Consumed, AVB},
 	AVBUse:     {AVB, External},
 	Adjust:     {External, External},
+	Merge:      {External, External},
 }
 
 // Centigrams is an amount in hundredths of a gram: the precision a jeweller's
@@ -94,7 +98,9 @@ func Flow(t Type) (from, to Account, ok bool) {
 //
 // An event has no identifier of its own. Its hash names it, the way a commit
 // hash names a commit, which is what lets a bundle be restored into a journal
-// that verifies against the one it came from.
+// that verifies against the one it came from. Nothing is ever chained again —
+// two devices' histories are joined by a merge entry, not rewritten — so the
+// name an entry is given is the one it keeps, on every device.
 //
 // Field order is significant: the hash is taken over the JSON encoding, and
 // encoding/json emits fields in declaration order.
@@ -119,7 +125,10 @@ type Event struct {
 	Timer   int    `json:"timer,omitempty"`
 	Note    string `json:"note,omitempty"`
 	Reverts string `json:"reverts,omitempty"`
-	Prev    string `json:"prev"`
+	// Merge is a merge's second parent: the head of the history it joined
+	// to the one Prev names. Empty, and left out, on every other entry.
+	Merge string `json:"merge,omitempty"`
+	Prev  string `json:"prev"`
 	Hash    string `json:"hash"`
 }
 
@@ -131,6 +140,12 @@ func (e Event) Validate() error {
 	}
 	if e.Type != Adjust && (e.From != from || e.To != to) {
 		return fmt.Errorf("event type %q moves %s -> %s, not %s -> %s", e.Type, from, to, e.From, e.To)
+	}
+	if e.Type == Merge || e.Merge != "" {
+		if e.Type != Merge || e.Merge == "" || e.Grams != 0 {
+			return fmt.Errorf("a merge names the head it joins and moves no grams")
+		}
+		return nil
 	}
 	if e.Grams <= 0 {
 		return fmt.Errorf("grams must be positive, got %v", e.Grams)

@@ -31,12 +31,13 @@ func Restore(r *repo.Repo, contents *Contents, step func(string)) error {
 		return err
 	}
 	step("writing " + count(len(contents.Events), "event") + " to the journal")
-	if _, err := r.Journal().AppendWith(func(events []journal.Event) ([]journal.Event, error) {
-		if len(events) > 0 {
-			return nil, fmt.Errorf("journal already holds %d events; restore into an empty repository", len(events))
-		}
-		return contents.Events, nil
-	}); err != nil {
+	// Chained as they stood, merges and all, and written as they are, so the
+	// journal hashes as the one bundled did.
+	chained, err := journal.Chain(contents.Events, contents.Shapes)
+	if err != nil {
+		return err
+	}
+	if err := r.Journal().Import(chained); err != nil {
 		return err
 	}
 	step("verifying the chain")

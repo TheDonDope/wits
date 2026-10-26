@@ -269,8 +269,8 @@ func reportPull(out io.Writer, done remote.Pulled) {
 		return
 	}
 	fmt.Fprintf(out, "Pulled %s and %s%s.\n", entries(done.Fetched), plural(done.Ratings, "rating"), andPrices(done.Prices))
-	if done.Rechained > 0 {
-		fmt.Fprintf(out, "Chained %s of this device's on top, with new hashes.\n", entries(done.Rechained))
+	if done.Joined {
+		fmt.Fprintln(out, "Merged with this device's own, which keep their hashes.")
 	}
 	if took := append(slices.Clone(done.Products), done.Devices...); len(took) > 0 && len(took) <= 5 {
 		fmt.Fprintf(out, "Took the remote's %s.\n", strings.Join(took, ", "))

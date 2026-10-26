@@ -42,7 +42,7 @@ func Read(r io.Reader) (*Contents, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.Events, err = rd.events(refs); err != nil {
+	if c.Events, c.Shapes, err = rd.events(refs); err != nil {
 		return nil, err
 	}
 	if c.Ratings, c.Prices, c.Seals, err = rd.logs(); err != nil {
@@ -128,8 +128,9 @@ func (t *refs) entry(c *Contents, text string, line int) error {
 }
 
 // events reads the event lines after the separator.
-func (rd *reader) events(t refs) ([]journal.Event, error) {
+func (rd *reader) events(t refs) ([]journal.Event, []journal.Shape, error) {
 	var events []journal.Event
+	var shapes []journal.Shape
 	var st state
 	for {
 		text, ok := rd.next()
@@ -144,12 +145,18 @@ func (rd *reader) events(t refs) ([]journal.Event, error) {
 		}
 		e, next, err := readEvent(text, rd.line, t, st)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		st = next
+		if next.shape != (journal.Shape{}) {
+			for len(shapes) < len(events) {
+				shapes = append(shapes, journal.Shape{})
+			}
+			shapes = append(shapes, next.shape)
+		}
 		events = append(events, e)
 	}
-	return events, rd.sc.Err()
+	return events, shapes, rd.sc.Err()
 }
 
 // logs reads what follows the events, if the bundle carries anything there:
@@ -286,12 +293,28 @@ type state struct {
 	recorded       int64
 	offset         int
 	recordedOffset int
+	// shape is where the event just read stands, when it does not simply
+	// follow the one before it.
+	shape journal.Shape
+}
+
+// shapeAttr reads a position or a sequence number into the event's shape.
+func shapeAttr(set func(*journal.Shape, int)) func(*journal.Event, *state, state, string, refs) error {
+	return func(_ *journal.Event, out *state, _ state, v string, _ refs) error {
+		n, err := parseNum(v)
+		if err != nil || n < 1 {
+			return fmt.Errorf("unreadable position %q", v)
+		}
+		set(&out.shape, int(n))
+		return nil
+	}
 }
 
 // readEvent decodes one event line against the running decode state.
 func readEvent(text string, line int, t refs, in state) (journal.Event, state, error) {
 	var e journal.Event
 	out := in
+	out.shape = journal.Shape{}
 
 	parts := strings.Fields(text)
 	if len(parts) < 3 {
@@ -307,6 +330,10 @@ func readEvent(text string, line int, t refs, in state) (journal.Event, state, e
 		return e, out, errorf(line, "event refers to product %q, which the header does not define", parts[0][1:])
 	}
 	e.Product = t.products[pi]
+	if e.Type == journal.Merge {
+		// A merge names no product; its index is a placeholder.
+		e.Product = ""
+	}
 	delta, err := parseNum(parts[1])
 	if err != nil {
 		return e, out, errorf(line, "unreadable time delta %q", parts[1])
@@ -344,6 +371,9 @@ func readEvent(text string, line int, t refs, in state) (journal.Event, state, e
 // the event or the running state. A table rather than a switch: each one is
 // a line to read, not a branch to follow.
 var eventAttrs = map[string]func(e *journal.Event, out *state, in state, value string, t refs) error{
+	"pv": shapeAttr(func(s *journal.Shape, n int) { s.Prev = n }),
+	"mg": shapeAttr(func(s *journal.Shape, n int) { s.Merge = n }),
+	"sq": shapeAttr(func(s *journal.Shape, n int) { s.Seq = n }),
 	"r": func(_ *journal.Event, out *state, in state, v string, _ refs) error {
 		d, err := parseNum(v)
 		if err != nil {

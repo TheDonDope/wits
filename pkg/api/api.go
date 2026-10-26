@@ -1039,7 +1039,7 @@ func (s *Server) journal(w http.ResponseWriter, r *http.Request) {
 		if q.Get("type") != "" && string(e.Type) != q.Get("type") {
 			continue
 		}
-		if q.Get("all") == "" && undone[e.Hash] {
+		if q.Get("all") == "" && (undone[e.Hash] || e.Type == journal.Merge) {
 			continue
 		}
 		out = append(out, entryOf(e, ws, undone))

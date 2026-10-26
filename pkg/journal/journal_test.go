@@ -552,8 +552,8 @@ func copied(t *testing.T, j *Journal) *Journal {
 	return other
 }
 
-func TestRebase(t *testing.T) {
-	none := func(Rebased) error { return nil }
+func TestMerge(t *testing.T) {
+	none := func(Merged) error { return nil }
 
 	t.Run("TakesWhatItLacksAsItIs", func(t *testing.T) {
 		phone := testJournal(t)
@@ -565,45 +565,65 @@ func TestRebase(t *testing.T) {
 		theirs, err := phone.Events()
 		require.NoError(t, err)
 
-		done, err := deck.Rebase(theirs, none)
+		done, err := deck.Merge(theirs, none)
 
 		require.NoError(t, err)
-		assert.Equal(t, 1, done.Fetched, "Should take the one entry it lacked")
-		assert.Empty(t, done.Moved, "Should chain none of its own again")
+		assert.Equal(t, Merged{Fetched: 1}, done, "Should take the one entry it lacked, and need no merge")
 		ours, err := deck.Events()
 		require.NoError(t, err)
 		assert.Equal(t, theirs, ours, "Should hold exactly the other copy")
-		assert.NoFileExists(t, deck.Path()+".orig", "Should only append, keeping nothing aside")
 	})
 
-	t.Run("ChainsItsOwnOnTopOfTheirs", func(t *testing.T) {
+	t.Run("JoinsTwoHistoriesRewritingNeither", func(t *testing.T) {
 		phone := testJournal(t)
 		_, err := phone.Append(grind(1, 1))
 		require.NoError(t, err)
 		deck := copied(t, phone)
-		_, err = phone.Append(grind(2, 2))
+		theirs2, err := phone.Append(grind(2, 2))
 		require.NoError(t, err)
 		mine, err := deck.Append(grind(3, 3))
 		require.NoError(t, err)
-		undo, err := deck.Append(Event{Type: Adjust, Product: "wcake", Grams: 3, From: Stash, To: Storage,
-			OccurredAt: grind(0, 4).OccurredAt, Reverts: mine.Hash})
+		before, err := deck.Events()
 		require.NoError(t, err)
 		theirs, err := phone.Events()
 		require.NoError(t, err)
 
-		done, err := deck.Rebase(theirs, none)
+		done, err := deck.Merge(theirs, none)
 
 		require.NoError(t, err)
-		require.NoError(t, deck.Verify(), "Should leave a chain that verifies")
+		assert.Equal(t, Merged{Fetched: 1, Joined: true}, done)
+		require.NoError(t, deck.Verify(), "Should leave a journal that verifies")
 		ours, err := deck.Events()
 		require.NoError(t, err)
 		require.Len(t, ours, 4)
-		assert.Equal(t, theirs, ours[:2], "Should keep the other copy's entries as they are")
-		assert.Equal(t, 3.0, ours[2].Grams, "Should put its own after them")
-		assert.Equal(t, done.Moved[mine.Hash], ours[2].Hash, "Should say what the entry's hash became")
-		assert.Equal(t, done.Moved[undo.Hash], ours[3].Hash, "Should say what the undo's hash became")
-		assert.Equal(t, ours[2].Hash, ours[3].Reverts, "Should point the undo at the new hash")
-		assert.FileExists(t, deck.Path()+".orig", "Should keep the journal as it was")
+		assert.Equal(t, before, ours[:2], "Should keep its own entries as they were, hashes and all")
+		assert.Equal(t, theirs2, ours[2], "Should take theirs as it is")
+		join := ours[3]
+		assert.Equal(t, Merge, join.Type)
+		assert.Equal(t, theirs2.Hash, join.Prev, "Should join their head")
+		assert.Equal(t, mine.Hash, join.Merge, "and its own")
+		assert.Zero(t, join.Grams)
+
+		// The phone pulls the merge back, and holds the same entries.
+		back, err := phone.Merge(ours, none)
+		require.NoError(t, err)
+		assert.Equal(t, Merged{Fetched: 2}, back, "Should take the deck's entry and the merge, needing none of its own")
+		require.NoError(t, phone.Verify())
+		again, err := phone.Events()
+		require.NoError(t, err)
+		assert.Equal(t, join.Hash, again[len(again)-1].Hash, "Should end in the same head")
+
+		assert.True(t, Holds(again, join.Hash, 4), "Should hold the merge's head over all four, on either device")
+		assert.True(t, Holds(again, mine.Hash, 2), "and a seal the deck made of its own head before, at another line here")
+		assert.False(t, Holds(again, mine.Hash, 3), "but not one that claims to cover more than it does")
+
+		// Chained back from a bundle, as a restore does.
+		restored, err := Chain(stripped(ours), Shapes(ours))
+		require.NoError(t, err)
+		assert.Equal(t, ours, restored, "Should rebuild every hash, merge and all")
+		fresh := testJournal(t)
+		require.NoError(t, fresh.Import(restored))
+		assert.NoError(t, fresh.Verify())
 	})
 
 	t.Run("LeavesAJournalThatIsAheadAlone", func(t *testing.T) {
@@ -616,13 +636,13 @@ func TestRebase(t *testing.T) {
 		theirs, err := phone.Events()
 		require.NoError(t, err)
 
-		done, err := deck.Rebase(theirs, none)
+		done, err := deck.Merge(theirs, none)
 
 		require.NoError(t, err)
 		assert.Zero(t, done.Fetched, "Should have nothing to take")
 		ours, err := deck.Events()
 		require.NoError(t, err)
-		assert.Len(t, ours, 2, "Should keep its own entry")
+		assert.Len(t, ours, 2, "Should keep its own entry, and add no merge")
 	})
 
 	t.Run("RefusesABrokenChain", func(t *testing.T) {
@@ -633,7 +653,7 @@ func TestRebase(t *testing.T) {
 		require.NoError(t, err)
 		theirs[0].Grams = 5
 
-		_, err = testJournal(t).Rebase(theirs, none)
+		_, err = testJournal(t).Merge(theirs, none)
 
 		assert.ErrorIs(t, err, ErrBrokenChain, "Should not take entries that do not hash to their hashes")
 	})
@@ -646,10 +666,61 @@ func TestRebase(t *testing.T) {
 		require.NoError(t, err)
 		deck := testJournal(t)
 
-		_, err = deck.Rebase(theirs, func(Rebased) error { return errors.New("stop") })
+		_, err = deck.Merge(theirs, func(Merged) error { return errors.New("stop") })
 
 		assert.EqualError(t, err, "stop", "Should return what then returns")
 	})
+
+	t.Run("CutsAwayAnUnfinishedLine", func(t *testing.T) {
+		phone := testJournal(t)
+		_, err := phone.Append(grind(1, 1))
+		require.NoError(t, err)
+		deck := copied(t, phone)
+		_, err = phone.Append(grind(2, 2))
+		require.NoError(t, err)
+		theirs, err := phone.Events()
+		require.NoError(t, err)
+		torn(t, deck.Path())
+
+		_, err = deck.Merge(theirs, none)
+
+		require.NoError(t, err)
+		assert.NoError(t, deck.Verify(), "Should not glue the fetched entry onto the fragment")
+	})
+}
+
+// stripped is events as a bundle carries them: no sequence numbers, links or hashes.
+func stripped(events []Event) []Event {
+	out := make([]Event, len(events))
+	for i, e := range events {
+		e.Seq, e.Prev, e.Hash, e.Merge = 0, "", "", ""
+		out[i] = e
+	}
+	return out
+}
+
+func TestVerifyRefusesAnEntryNoHeadCovers(t *testing.T) {
+	j := testJournal(t)
+	first, err := j.Append(grind(1, 1))
+	require.NoError(t, err)
+	_, err = j.Append(grind(2, 2))
+	require.NoError(t, err)
+	// A second entry chained onto the first, written by hand: two heads.
+	stray := grind(3, 3)
+	stray.Seq = 3
+	stray.From, stray.To = Storage, Stash
+	stray.Hash, err = stray.sum(first.Hash)
+	require.NoError(t, err)
+	stray.Prev = first.Hash
+	f, err := os.OpenFile(j.Path(), os.O_APPEND|os.O_WRONLY, 0600)
+	require.NoError(t, err)
+	line, err := Marshal(stray)
+	require.NoError(t, err)
+	_, err = f.Write(append(line, '\n'))
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	assert.ErrorIs(t, j.Verify(), ErrBrokenChain, "Should refuse a journal whose last hash does not cover every entry")
 }
 
 func TestChain(t *testing.T) {
@@ -661,27 +732,11 @@ func TestChain(t *testing.T) {
 	stored, err := j.Events()
 	require.NoError(t, err)
 
-	chained, err := Chain([]Event{grind(1, 1), grind(2, 2)})
+	chained, err := Chain([]Event{grind(1, 1), grind(2, 2)}, nil)
 
 	require.NoError(t, err)
 	for i := range stored {
 		assert.Equal(t, stored[i].Hash, chained[i].Hash, "Should hash entry %d as appending it did", i+1)
 	}
-}
-
-func TestRebaseCutsAwayAnUnfinishedLine(t *testing.T) {
-	phone := testJournal(t)
-	_, err := phone.Append(grind(1, 1))
-	require.NoError(t, err)
-	deck := copied(t, phone)
-	_, err = phone.Append(grind(2, 2))
-	require.NoError(t, err)
-	theirs, err := phone.Events()
-	require.NoError(t, err)
-	torn(t, deck.Path())
-
-	_, err = deck.Rebase(theirs, func(Rebased) error { return nil })
-
-	require.NoError(t, err)
-	assert.NoError(t, deck.Verify(), "Should not glue the fetched entry onto the fragment")
+	assert.Nil(t, Shapes(stored), "Should need no shape for a journal no merge touched")
 }

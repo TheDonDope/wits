@@ -64,7 +64,11 @@ export class Entries {
       return entries;
     });
     this.everything = computed(() => ({ entries: all().map((x) => x.e), total: this.recorded().length }));
-    this.standing = computed(() => ({ entries: all().filter((x) => !x.undone).map((x) => x.e), total: this.recorded().length }));
+    // A merge moves nothing, and stands in no list of what happened; a replay folds it as the nothing it is.
+    this.standing = computed(() => ({
+      entries: all().filter((x) => !x.undone && x.e.type !== 'merge').map((x) => x.e),
+      total: this.recorded().length,
+    }));
   }
 
   /** Reads what was recorded since; a read asked for while one runs is made once it is done. */

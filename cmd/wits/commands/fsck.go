@@ -127,7 +127,7 @@ func sealProblems(ws *workspace.Workspace) []string {
 		switch {
 		case err != nil:
 			problems = append(problems, fmt.Sprintf("seal %s: %v", f.Name, err))
-		case s.Entries < 1 || s.Entries > len(events) || events[s.Entries-1].Hash != s.Head:
+		case !journal.Holds(events, s.Head, s.Entries):
 			problems = append(problems, fmt.Sprintf("seal %s seals %s at entry %d, which the journal does not hold there",
 				f.Name, shortHash(s.Head), s.Entries))
 		case len(f.OTS) > 0:
