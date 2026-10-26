@@ -39,13 +39,21 @@ jobs:
         with:
           node-version: '26'
           cache: npm
-          cache-dependency-path: wits-ui/package-lock.json
+          cache-dependency-path: |
+            wits-ui/package-lock.json
+            desktop/package-lock.json
+
+      # NSS, NSPR and ALSA, which the image carries for systems without them,
+      # and a display for its window to be checked on.
+      - name: Install what the window needs
+        run: sudo apt-get update && sudo apt-get install -y libnss3 libasound2t64 xvfb
 
       - name: Build the AppImage
         run: VERSION="$TAG" ./appimage.sh
 
       # Run as a person would: it makes its repository, serves the interface,
-      # finds itself running, and answers as the command line.
+      # finds itself running, opens its window on it, and answers as the
+      # command line.
       - name: Check the AppImage
         run: VERSION="$TAG" ./appimage.sh check
 

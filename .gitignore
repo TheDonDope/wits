@@ -26,3 +26,5 @@ vendor/
 Thumbs.db
 # The AppImage's AppDir, assembled by appimage.sh
 /build
+# The desktop window's Electron, installed by appimage.sh
+/desktop/node_modules

@@ -141,8 +141,9 @@ serve: server ui
 demo-seed:
 	./demo-bundle.sh
 
-# wits as an AppImage: the server, the command line and the interface in one
-# file, dist/wits-<version>-x86_64.AppImage, checked by running it. The
+# wits as an AppImage: the server, the command line and the interface in a
+# window of its own (Electron), in one file, dist/wits-<version>-x86_64.AppImage,
+# checked by running it. The
 # release workflow builds the same for every release and attaches it.
 appimage:
 	VERSION=$(shell git describe --tags --always --dirty) ./appimage.sh

@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 #
-# Builds wits as an AppImage: the server, the command line, and the browser
-# interface bundled beside them, in one file that runs on any x86-64 Linux.
+# Builds wits as an AppImage: the server, the command line, and the interface
+# in a window of its own — Electron, carrying its Chromium — in one file that
+# runs on any x86-64 Linux.
 #
 #   ./appimage.sh            dist/wits-<version>-x86_64.AppImage, and its SHA256SUMS
 #   VERSION=v1.2.0 ./appimage.sh
 #   ./appimage.sh check      run the image built, in a throwaway home: a first
 #                            launch makes its repository and serves the
-#                            interface, a second finds it running, cli answers
+#                            interface, a second finds it running, the window
+#                            loads it (given a display, or xvfb-run), cli answers
 #
 # Needs Go, Node with npm, and the network once, for appimagetool and the
-# AppImage runtime: both pinned to a release and checked against its SHA-256,
-# kept under $WITS_TOOLS (default ~/.cache/wits-dev).
+# AppImage runtime — both pinned to a release and checked against its SHA-256,
+# kept under $WITS_TOOLS (default ~/.cache/wits-dev) — and for Electron, pinned
+# in desktop/package-lock.json. NSS, NSPR and ALSA are taken from the build
+# machine and carried: Chromium needs them, and some systems (SteamOS) lack them.
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -52,8 +56,40 @@ check() {
 	[ -d "$home/wits/.wits" ] || { echo "✗ no repository made in $home/wits" >&2; exit 1; }
 	curl -fs "http://$addr/" | grep -q '<title>wits</title>' || { echo "✗ the interface is not served" >&2; exit 1; }
 	"$image" | grep -q 'already running' || { echo "✗ a second launch did not find the first" >&2; exit 1; }
+	window "$image"
 	"$image" cli --version | grep -q "$version" || { echo "✗ cli does not report $version" >&2; exit 1; }
-	step "checked: $image serves, makes its repository, knows it runs, and answers as cli"
+	step "checked: $image serves, makes its repository, knows it runs, opens its window on it, and answers as cli"
+}
+
+# window opens the image's window on the server running, and checks it loads
+# the interface: on the display there is, or on one xvfb-run makes. Chromium
+# without any display is not tried — headless, it crashes before it loads.
+window() {
+	local run=()
+	if [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
+		command -v xvfb-run >/dev/null || { step "window not checked: no display, and no xvfb-run"; return; }
+		run=(xvfb-run -a)
+	fi
+	env -u WITS_NO_BROWSER WITS_SMOKE=1 "${run[@]}" "$1" 2>&1 | grep -q 'wits-desktop: loaded wits' ||
+		{ echo "✗ the window did not load the interface" >&2; exit 1; }
+}
+
+# carried is what Chromium links against that a system may not have: NSS (and
+# the modules it loads itself), NSPR, and ALSA.
+carried=(libnspr4.so libplc4.so libplds4.so libnss3.so libnssutil3.so libsmime3.so libssl3.so
+	libsoftokn3.so libfreebl3.so libfreeblpriv3.so libasound.so.2)
+
+# library finds one on the build machine: where LD_LIBRARY_PATH says first
+# (./doctor.sh env, on a Steam Deck), then the system's own folders — Debian's
+# keep NSS's modules in an nss/ of their own.
+library() {
+	local dirs=() dir
+	IFS=: read -ra dirs <<<"${LD_LIBRARY_PATH:-}"
+	for dir in "${dirs[@]}" /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/nss /usr/lib64 /usr/lib; do
+		[ -n "$dir" ] && [ -e "$dir/$1" ] && { echo "$dir/$1"; return; }
+	done
+	echo "✗ $1 is not on this machine, and the image carries it: install NSS and ALSA (or ./doctor.sh install)" >&2
+	exit 1
 }
 
 # fetch downloads a file once, and refuses one that is not what was pinned.
@@ -87,7 +123,7 @@ ldflags="-s -w -X $pkg.Version=$version -X $pkg.CommitSHA=$(git rev-parse --shor
 ldflags+=" -X $pkg.CommitDate=$(git --no-pager log -1 --pretty='format:%cd' --date='format:%Y-%m-%dT%H:%M:%S')"
 
 rm -rf "$appdir"
-mkdir -p "$appdir/usr/bin" "$appdir/usr/share/wits" "$appdir/usr/share/applications" \
+mkdir -p "$appdir/usr/bin" "$appdir/usr/lib" "$appdir/usr/share/wits" "$appdir/usr/share/applications" \
 	"$appdir/usr/share/icons/hicolor/512x512/apps" "$out"
 
 # Static binaries: nothing from the system they land on but its kernel.
@@ -107,6 +143,28 @@ cp -rL wits-ui/dist/wits-ui/browser "$appdir/usr/share/wits/ui"
 # The phone's engine, if a `make wasm` left one in public/: the server's
 # interface never loads it, so it is 13 MB the AppImage need not carry.
 rm -f "$appdir/usr/share/wits/ui/wits.wasm" "$appdir/usr/share/wits/ui/wasm_exec.js"
+
+# The window: Electron's own build, with wits' shell as its app. Its default
+# app and every locale but English are left out — the interface is English.
+(
+	cd desktop
+	npm ci --no-audit --no-fund >/dev/null
+	# npm runs no install script unasked, and Electron's fetches its build.
+	node node_modules/electron/install.js
+)
+step "adding the window: Electron $(node -p 'require("./desktop/node_modules/electron/package.json").version')"
+shell="$appdir/usr/lib/wits-desktop"
+cp -r desktop/node_modules/electron/dist "$shell"
+mv "$shell/electron" "$shell/wits-desktop"
+rm -f "$shell/resources/default_app.asar"
+find "$shell/locales" -name '*.pak' ! -name 'en-US.pak' -delete
+mkdir -p "$shell/resources/app" "$shell/lib"
+cp desktop/main.js desktop/package.json "$shell/resources/app/"
+for lib in "${carried[@]}"; do
+	cp -L "$(library "$lib")" "$shell/lib/$lib"
+done
+# Debian's NSS looks for its modules in nss/ beside it; this one, in its own folder.
+ln -s . "$shell/lib/nss"
 
 cp packaging/appimage/AppRun "$appdir/AppRun"
 chmod +x "$appdir/AppRun"
