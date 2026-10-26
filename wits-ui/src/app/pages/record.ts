@@ -628,30 +628,38 @@ export class RecordDialog {
 
   /** The entry a grind, a session or AVB would record, as the API takes it: rehearsed as typed, and sent on Record. */
   private readonly entry = computed<{ what: string; body: object } | null>(() => {
-    const grams = this.grams() ?? 0;
     const day = this.date();
     const date = day ? isoDay(day) : undefined;
-    const note = this.note() || undefined;
     switch (this.tab()) {
       case 0:
-        return this.product() ? { what: 'grind', body: { product: this.product(), grams, date } } : null;
+        return this.product() ? { what: 'grind', body: { product: this.product(), grams: this.grams() ?? 0, date } } : null;
       case 1:
-        return this.product() ? {
-          what: 'sesh',
-          body: {
-            product: this.product(), grams, device: this.device() || undefined, temperature: this.range() ? this.temp() : undefined,
-            mode: this.mode() || undefined, heater: this.heater() || undefined, setting: this.setting().trim() || undefined,
-            timer: this.timed() ? (this.timer() ?? undefined) : undefined, note, date,
-          },
-        } : null;
+        return this.product() ? { what: 'sesh', body: this.session(date) } : null;
       case 4:
-        return this.avbMode() === 'collect'
-          ? { what: 'avb/collect', body: { grams, device: this.emptied(), note, date } }
-          : { what: 'avb/use', body: { grams, note, date } };
+        return this.avbEntry(date);
       default:
         return null;
     }
   });
+
+  /** A session as the API takes it: the jar, the grams, and what it was had with. */
+  private session(date: string | undefined): object {
+    return {
+      product: this.product(), grams: this.grams() ?? 0, device: this.device() || undefined,
+      temperature: this.range() ? this.temp() : undefined, mode: this.mode() || undefined,
+      heater: this.heater() || undefined, setting: this.setting().trim() || undefined,
+      timer: this.timed() ? (this.timer() ?? undefined) : undefined, note: this.note() || undefined, date,
+    };
+  }
+
+  /** AVB weighed out of a device, or used up, as the API takes it. */
+  private avbEntry(date: string | undefined): { what: string; body: object } {
+    const grams = this.grams() ?? 0;
+    const note = this.note() || undefined;
+    return this.avbMode() === 'collect'
+      ? { what: 'avb/collect', body: { grams, device: this.emptied(), note, date } }
+      : { what: 'avb/use', body: { grams, note, date } };
+  }
 
   private send(): Promise<Written | { message: string }> {
     const day = this.date();
