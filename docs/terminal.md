@@ -179,7 +179,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits show [entry]` | One entry in full: what it moved, the jar before and after, what corrects it |
 | `wits revert <entry>` | Undo an entry by recording a correction |
 | `wits reconcile [account] [product] [weight]` | Make an account agree with the scale; interactive with no arguments |
-| `wits device add <name>` / `list` | Register a vaporizer and its temperature range; list them |
+| `wits device add <name>` / `list` | Register a vaporizer, its temperature range and its load (`--load 0.15`); list them |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
 | `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
@@ -275,6 +275,38 @@ ledger's figure beside the prompt, and a blank reading skips a jar; `wits reconc
 written until every question is answered. In the interface this is `r`, on any
 screen — it weighs the jars ticked on the storage screen, the one under the
 cursor, or otherwise the fullest one, since that is the one worth checking.
+
+### Forgotten, not lost
+
+Grams do not vanish. A jar lighter than the ledger says was most likely
+ground, and the grind never recorded; ground grams that are gone were most
+likely vaped. So a reading short of the ledger is offered as what was
+forgotten — the interactive form asks, `Forgotten` the default, and
+`--forgot` says yes up front:
+
+```console
+$ wits reconcile storage nice-morning-sun-321 10.5 --dry-run
+storage holds 11.37g by the ledger and 10.50g on the scale: -0.87g
+Forgotten rather than lost? --forgot records a grind of 0.87 g on Fri 23 Oct, just after the jar's last entry.
+
+$ wits reconcile storage nice-morning-sun-321 10.5 --forgot
+[9a12b3c] forgotten grind of 0.87g of nice-morning-sun-321, Fri 23 Oct 00:01
+Now weigh what is ground: wits reconcile stash nice-morning-sun-321 <weight>
+
+$ wits reconcile stash nice-morning-sun-321 7.5 --forgot --dry-run
+nice-morning-sun-321: would record 13 sessions of about 0.15 g, 23 Oct – 26 Oct, with the Storz & Bickel Mighty+
+```
+
+A forgotten grind is dated just after the jar's last entry, and forgotten
+sessions are spread from then until now, so no entry already recorded loses
+a gram to them. A session takes the size your last thirty sessions most often
+took, had as the last one was — its device, mode and temperature. With no
+session on record it takes a **load** of your gear (`wits device add
+<name> --load 0.15`), and with none of that, one a day. A shortfall that
+would take more than 30 sessions is a leftover, or lost, and is refused as
+forgotten. Each entry carries the note "forgotten, worked out at the scale",
+and a predicted session is never asked to be rated. In the interface the
+weighing forms ask the same question.
 
 ## The repository
 

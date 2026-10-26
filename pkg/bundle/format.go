@@ -19,10 +19,11 @@ import (
 // version 7 a price's pharmacy and a price not to be had, which 6 dropped,
 // and version 8 what a device is (its category, maker, model and the rest)
 // and a session's mode, heater and setting, and version 9 a strain's own
-// rating: its scores, whether it would be had again, a line, and when.
+// rating: its scores, whether it would be had again, a line, and when, and
+// version 10 a device's load, in centigrams.
 const (
 	Magic   = "wits-bundle"
-	Version = 9
+	Version = 10
 )
 
 // separator ends the header and begins the events; ratingsSeparator ends the

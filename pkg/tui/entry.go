@@ -71,6 +71,7 @@ type entryForm struct {
 	// the ones above — the account rode in device, the CBD in temp — which
 	// worked until anyone had to read commit and say what device meant there.
 	account      string // reconcile: which account is on the scale
+	forgot       bool   // reconcile: a short reading is a grind or sessions forgotten
 	manufacturer string // describe
 	cultivar     string // describe
 	thc, cbd     string // describe
@@ -260,6 +261,11 @@ func (f *entryForm) Update(msg tea.Msg, a *App) (*entryForm, tea.Cmd) {
 		case entryPrices:
 			summary, err := f.commitPrices(a)
 			return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
+		case entryReconcile:
+			if f.forgot && len(f.plan(a, f.product, f.amount)) > 0 {
+				summary, err := f.commitForgotten(a)
+				return nil, func() tea.Msg { return entryDoneMsg{summary: summary, err: err} }
+			}
 		}
 		e, err := f.commit(a)
 		return nil, func() tea.Msg { return entryDoneMsg{event: e, err: err} }
@@ -423,8 +429,76 @@ func newReconcileForm(slug string, a *App, account journal.Account) *entryForm {
 		huh.NewInput().Title("On the scale").Description("Grams").
 			Value(&f.amount).Validate(nonNegativeGrams),
 		huh.NewInput().Title("Why").Description("Optional — spilled, unlogged, misread").Value(&f.note),
-	)))
+	), forgottenGroup(f, func() string {
+		if planned := f.plan(a, slug, f.amount); len(planned) > 0 {
+			return record.ForgottenWords(planned, a.data.Devices)
+		}
+		return ""
+	})))
 	return f
+}
+
+// forgottenGroup asks whether a short reading was a grind — or, weighing
+// the ground, sessions — never logged, and says what would be recorded. It
+// shows only when there is a shortfall to put down to one; yes is the
+// default, because grams do not vanish into thin air.
+//
+// The words are set when the form asks whether to show the question, the
+// moment the readings are in, rather than through huh's TitleFunc, which
+// answers on a later command and showed a blank question until it did; and
+// the group is made as tall as they are, since it was sized when it was
+// made, with nothing to say yet.
+func forgottenGroup(f *entryForm, words func() string) *huh.Group {
+	f.forgot = true
+	ask := huh.NewConfirm().Affirmative("Forgotten").Negative("Lost").Value(&f.forgot)
+	group := huh.NewGroup(ask)
+	return group.WithHideFunc(func() bool {
+		said := words()
+		if said == "" {
+			return true
+		}
+		title := "Less than the ledger says — was a grind forgotten?"
+		if f.account == string(journal.Stash) {
+			title = "Less than the ledger says — were sessions forgotten?"
+		}
+		ask.Title(title).Description("Forgotten records " + said + ". Lost records the grams as gone.")
+		group.WithHeight(lipgloss.Height(group.Content()) + 2)
+		return false
+	})
+}
+
+// plan is what a reading of one jar would be put down to, or nothing when
+// it is not short — or the account is not drawn on by a grind or a session.
+func (f *entryForm) plan(a *App, slug, reading string) []journal.Event {
+	weighed, err := ledger.ParseGrams(reading)
+	if strings.TrimSpace(reading) == "" || err != nil {
+		return nil
+	}
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	planned, err := rec.Forgotten(slug, journal.Account(f.account), weighed)
+	if err != nil {
+		return nil
+	}
+	return planned
+}
+
+// commitForgotten records what a short reading is put down to, and says so;
+// after a grind, it asks for the ground to be weighed next.
+func (f *entryForm) commitForgotten(a *App) (string, error) {
+	weighed, err := ledger.ParseGrams(f.amount)
+	if err != nil {
+		return "", err
+	}
+	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
+	written, err := rec.RecordForgotten(f.product, journal.Account(f.account), weighed)
+	if err != nil {
+		return "", err
+	}
+	said := record.ForgottenWords(written, a.data.Devices)
+	if f.account == string(journal.Storage) {
+		return "recorded " + said + " — weigh the ground next", nil
+	}
+	return "recorded " + said, nil
 }
 
 // nonNegativeGrams accepts zero, because an empty jar is a real reading.
@@ -475,8 +549,21 @@ func newWeighManyForm(slugs []string, a *App, account journal.Account) *entryFor
 				Validate(optionalWeight),
 		))
 	}
+	groups = append(groups, forgottenGroup(f, func() string { return f.plans(a) }))
 	f.form = a.dress(huh.NewForm(groups...))
 	return f
+}
+
+// plans says what every short reading of the weigh-many form would be put
+// down to, a line a jar, or nothing when none is short.
+func (f *entryForm) plans(a *App) string {
+	var lines []string
+	for i, slug := range f.slugs {
+		if planned := f.plan(a, slug, f.readings[i]); len(planned) > 0 {
+			lines = append(lines, "\n· "+a.data.ProductName(slug)+": "+record.ForgottenWords(planned, a.data.Devices))
+		}
+	}
+	return strings.Join(lines, "")
 }
 
 // commitMany records the collected readings and sums up what changed. A jar
@@ -486,7 +573,7 @@ func (f *entryForm) commitMany(a *App) (string, error) {
 	rec := record.New(a.data.Repo, a.data.Products, a.data.Devices, a.data.State)
 	account := journal.Account(f.account)
 
-	adjusted, matched, skipped := 0, 0, 0
+	adjusted, matched, skipped, forgotten := 0, 0, 0, 0
 	for i, slug := range f.slugs {
 		reading := strings.TrimSpace(f.readings[i])
 		if reading == "" {
@@ -496,6 +583,13 @@ func (f *entryForm) commitMany(a *App) (string, error) {
 		weighed, err := ledger.ParseGrams(reading)
 		if err != nil {
 			return "", err
+		}
+		if f.forgot && len(f.plan(a, slug, reading)) > 0 {
+			if _, err := rec.RecordForgotten(slug, account, weighed); err != nil {
+				return "", err
+			}
+			forgotten++
+			continue
 		}
 		_, err = rec.Reconcile(slug, account, weighed, "")
 		if errors.Is(err, record.ErrNothingToReconcile) {
@@ -509,6 +603,13 @@ func (f *entryForm) commitMany(a *App) (string, error) {
 	}
 
 	parts := []string{fmt.Sprintf("adjusted %s", plural(adjusted, "jar"))}
+	if forgotten > 0 {
+		what := "grind"
+		if account == journal.Stash {
+			what = "sessions"
+		}
+		parts = append(parts, fmt.Sprintf("%d put down to a forgotten %s", forgotten, what))
+	}
 	if matched > 0 {
 		parts = append(parts, fmt.Sprintf("%d already matched", matched))
 	}

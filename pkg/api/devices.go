@@ -31,12 +31,14 @@ type deviceFields struct {
 	Water       bool   `json:"water,omitempty"`
 	Modes       []mode `json:"modes"`
 	AutoOff     int    `json:"auto_off,omitempty"`
-	Cents       int64  `json:"cents,omitempty"`
-	Shop        string `json:"shop,omitempty"`
-	BoughtOn    string `json:"bought_on,omitempty"`
-	Link        string `json:"link,omitempty"`
-	Notes       string `json:"notes,omitempty"`
-	Retired     bool   `json:"retired,omitempty"`
+	// Load is the grams one fill holds, as it is usually loaded.
+	Load     float64 `json:"load,omitempty"`
+	Cents    int64   `json:"cents,omitempty"`
+	Shop     string  `json:"shop,omitempty"`
+	BoughtOn string  `json:"bought_on,omitempty"`
+	Link     string  `json:"link,omitempty"`
+	Notes    string  `json:"notes,omitempty"`
+	Retired  bool    `json:"retired,omitempty"`
 }
 
 // mode is a device's mode as the client reads it: a name, and how it heats.
@@ -65,7 +67,7 @@ func fieldsOf(d *catalog.Device) deviceFields {
 	}
 	return deviceFields{Name: d.Name, Kind: d.Kind, MinTemp: d.MinTemp, MaxTemp: d.MaxTemp, DefaultTemp: d.DefaultTemp,
 		Category: d.Is(), Maker: d.Maker, Model: d.Model, Country: d.Country, Power: d.Power, Signature: d.Signature,
-		Use: d.Use, Water: d.Water, Modes: modes, AutoOff: d.AutoOff, Cents: d.Cents, Shop: d.Shop, BoughtOn: d.BoughtOn, Link: d.Link,
+		Use: d.Use, Water: d.Water, Modes: modes, AutoOff: d.AutoOff, Load: d.Load, Cents: d.Cents, Shop: d.Shop, BoughtOn: d.BoughtOn, Link: d.Link,
 		Notes: d.Notes, Retired: d.Retired}
 }
 
@@ -80,7 +82,7 @@ func (f deviceFields) toDevice() *catalog.Device {
 	t := strings.TrimSpace
 	return &catalog.Device{Name: t(f.Name), Kind: t(f.Kind), MinTemp: f.MinTemp, MaxTemp: f.MaxTemp, DefaultTemp: f.DefaultTemp,
 		Category: t(f.Category), Maker: t(f.Maker), Model: t(f.Model), Country: t(f.Country), Power: t(f.Power),
-		Signature: t(f.Signature), Use: t(f.Use), Water: f.Water, Modes: modes, AutoOff: f.AutoOff, Cents: f.Cents, Shop: t(f.Shop),
+		Signature: t(f.Signature), Use: t(f.Use), Water: f.Water, Modes: modes, AutoOff: f.AutoOff, Load: journal.CG(f.Load).Grams(), Cents: f.Cents, Shop: t(f.Shop),
 		BoughtOn: t(f.BoughtOn), Link: t(f.Link), Notes: t(f.Notes), Retired: f.Retired}
 }
 

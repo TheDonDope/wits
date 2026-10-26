@@ -16,6 +16,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
 )
 
@@ -199,6 +200,7 @@ type deviceForm struct {
 
 	name, kind    string
 	min, max, def string
+	load          string
 }
 
 // newDeviceForm builds the add or edit form. A nil device means adding.
@@ -207,6 +209,9 @@ func newDeviceForm(d *catalog.Device, a *App) *deviceForm {
 	if d != nil {
 		f.name, f.kind = d.Name, d.Kind
 		f.min, f.max, f.def = itoaBlank(d.MinTemp), itoaBlank(d.MaxTemp), itoaBlank(d.DefaultTemp)
+		if d.Load > 0 {
+			f.load = strconv.FormatFloat(d.Load, 'f', -1, 64)
+		}
 	}
 	f.form = a.dress(huh.NewForm(huh.NewGroup(
 		huh.NewInput().Title("Name").Value(&f.name).Validate(required("a name")),
@@ -215,6 +220,8 @@ func newDeviceForm(d *catalog.Device, a *App) *deviceForm {
 		huh.NewInput().Title("Highest temperature").Description("°C").Value(&f.max).Validate(optionalInt),
 		huh.NewInput().Title("Default temperature").Description("°C, used when a session gives none").
 			Value(&f.def).Validate(optionalInt),
+		huh.NewInput().Title("A load holds").Description("Grams, as usually filled — sizes a session you forgot to record").
+			Value(&f.load).Validate(optionalLoad),
 	)))
 	return f
 }
@@ -317,6 +324,7 @@ func (f *deviceForm) apply(devices *catalog.Devices) error {
 		d.Name = strings.TrimSpace(f.name)
 		d.Kind = strings.TrimSpace(f.kind)
 		d.MinTemp, d.MaxTemp, d.DefaultTemp = atoiBlank(f.min), atoiBlank(f.max), atoiBlank(f.def)
+		d.Load = loadOf(f.load)
 		return validTemps(d)
 
 	default:
@@ -326,6 +334,7 @@ func (f *deviceForm) apply(devices *catalog.Devices) error {
 			MinTemp:     atoiBlank(f.min),
 			MaxTemp:     atoiBlank(f.max),
 			DefaultTemp: atoiBlank(f.def),
+			Load:        loadOf(f.load),
 		}
 		if err := validTemps(d); err != nil {
 			return err
@@ -527,4 +536,21 @@ func (f *rateForm) commit(a *App) (string, error) {
 	}
 	return fmt.Sprintf("rated %.2f g of %s: %s", f.session.Grams,
 		a.data.ProductName(f.session.Product), effects.Summary(r.Scores)), nil
+}
+
+// optionalLoad accepts a load in grams, or nothing.
+func optionalLoad(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	return nonNegativeGrams(s)
+}
+
+// loadOf reads a load typed in grams, to the centigram; blank is none.
+func loadOf(s string) float64 {
+	g, err := ledger.ParseGrams(s)
+	if strings.TrimSpace(s) == "" || err != nil {
+		return 0
+	}
+	return journal.CG(g).Grams()
 }

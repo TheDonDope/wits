@@ -392,7 +392,7 @@ func TestADeviceAndASessionsModeTravel(t *testing.T) {
 	yll := &catalog.Device{Slug: "yll-3", Name: "YLL 3.0", Category: catalog.Induction, Power: catalog.Electric,
 		Modes: []catalog.Mode{{Name: "30 W"}, {Name: "45 W, gentle"}, {Name: "60 W"}}, Retired: true}
 	frolic := &catalog.Device{Slug: "frolic", Name: "Limelight Herb Frolic", Power: catalog.Electric, Use: catalog.BothUses,
-		AutoOff: 300, Modes: []catalog.Mode{{Name: "On demand", Signature: catalog.Convection, Temp: 165},
+		AutoOff: 300, Load: 0.15, Modes: []catalog.Mode{{Name: "On demand", Signature: catalog.Convection, Temp: 165},
 			{Name: "Session", Signature: catalog.Hybrid, Temp: 185, Timer: 420}}}
 	pipe := &catalog.Device{Slug: "bubbler", Name: "Bubbler", Category: catalog.Glass, Water: true}
 	devices := &catalog.Devices{Devices: []*catalog.Device{tornado, yll, pipe, frolic}}

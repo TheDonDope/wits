@@ -107,6 +107,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/grind", s.write(grind))
 	mux.HandleFunc("POST /api/sesh", s.write(sesh))
 	mux.HandleFunc("POST /api/weigh", s.write(weigh))
+	mux.HandleFunc("GET /api/weigh/forgotten", s.forgottenAt)
+	mux.HandleFunc("POST /api/weigh/forgotten", s.batch(weighForgotten))
 	mux.HandleFunc("POST /api/undo", s.write(undo))
 	mux.HandleFunc("POST /api/flush", s.flush)
 	mux.HandleFunc("GET /api/avb", s.read(avbOf))
@@ -698,7 +700,9 @@ func effectsOf(ws *workspace.Workspace) any {
 		if r, ok := latest[e.Hash]; ok {
 			out.Rated = append(out.Rated, rated{Hash: r.Hash, At: r.At, Scores: r.Scores, Note: r.Note,
 				Session: entryOf(e, ws, nil)})
-		} else if len(out.Unrated) < 12 {
+		} else if len(out.Unrated) < 12 && e.Note != record.ForgottenNote {
+			// A session worked out at the scale was not remembered when it
+			// happened; how it went is not remembered either.
 			out.Unrated = append(out.Unrated, entryOf(e, ws, nil))
 		}
 	}

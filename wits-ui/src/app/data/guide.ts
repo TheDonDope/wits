@@ -215,7 +215,7 @@ Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, 
       '<b>Price a pickup</b> — type the prices, or scan the invoice. <b>Add invoices</b> takes many PDFs at once and prices every fill they match.',
       '<b>Leftovers</b>, where a jar has nothing sealed left but still holds ground grams: tick and clear them together.',
       '<b>AVB waiting</b> in a device, with <b>Collect</b>.',
-      'Offered but not counted: the sealed jars to <b>Weigh</b>, and the jars with no <b>terpene profile</b> — <b>Research all</b> looks them up on the web, and nothing is written until you keep one.',
+      'Offered but not counted: the jars to weigh against the scale — <b>Sealed</b>, and <b>Ground</b> for any used in the last month — and the jars with no <b>terpene profile</b> — <b>Research all</b> looks them up on the web, and nothing is written until you keep one.',
     ],
     shots: [web('forgot', '/forgot', 'I forgot to: sessions of the last week waiting for a rating', 'Three sessions waiting for a rating, and six strains.')],
     page: { path: '/forgot', label: 'Open I forgot to' },
@@ -309,20 +309,22 @@ Rated       overall 4, sleep 5` },
     group: 'The shelf',
     title: 'When the scale disagrees',
     icon: 'scale',
-    lead: 'Ledgers drift: a little is spilled, a session goes unlogged. The past is not edited to hide it, because nobody knows which entry was wrong. The difference is recorded, and the jar agrees with the scale again.',
+    lead: 'Ledgers drift: a session goes unlogged, a grind is forgotten. Grams do not vanish, so less than the ledger says is offered as what was forgotten; anything else is recorded as a difference, and the jar agrees with the scale again. The past is not edited.',
     steps: [
-      'Press <b>Record → Weigh</b>, or <kbd>r</kbd> anywhere.',
-      'Pick what is on the scale — sealed, ground, or already vaped — and the jar.',
-      'Type what the scale reads. The ledger’s figure is beside it; a reading that agrees writes nothing.',
+      'Press <b>Record → Weigh</b>, or <kbd>r</kbd> anywhere — or <b>Sealed</b> and <b>Ground</b> under <b>I forgot to</b>.',
+      'Pick the jar and what is on the scale — sealed, ground, or already vaped.',
+      'Type what the scale reads. The ledger’s figure is under it; a reading that agrees writes nothing.',
+      'Less than the ledger? <b>I forgot to record a grind</b> (sealed) or <b>sessions</b> (ground) writes them, dated after the jar’s last entry; <b>It went missing</b> records the grams as lost. After a grind, weigh what is ground next — the dialog stays for it.',
     ],
     record: { tab: 3, label: 'Weigh a jar' },
     cli: [
       { cmd: 'wits reconcile storage sumo 12.4 --dry-run', out: `storage holds 12.44g by the ledger and 12.40g on the scale: -0.04g
 
 Dry run. Nothing was written. Re-run without --dry-run to record it.` },
-      { cmd: 'wits reconcile', note: 'With no arguments it asks: which account, which jars, then each reading in turn. Nothing is written until every question is answered.' },
+      { cmd: 'wits reconcile', note: 'With no arguments it asks: which account, which jars, then each reading in turn, and of a jar found short whether a grind or sessions were forgotten. Nothing is written until every question is answered.' },
+      { cmd: 'wits reconcile stash sumo 6.5 --forgot', note: 'Puts a shortfall down to forgotten sessions — of the usual size, or your gear’s load — without asking.' },
     ],
-    tui: [{ keys: ['r'], does: 'weighs the ticked jars, the one under the cursor, or the fullest' }],
+    tui: [{ keys: ['r'], does: 'weighs the ticked jars, the one under the cursor, or the fullest; a jar found short asks whether something was forgotten' }],
   },
   {
     id: 'devices',
@@ -331,13 +333,13 @@ Dry run. Nothing was written. Re-run without --dry-run to record it.` },
     icon: 'air',
     lead: '<b>Shelf → Devices</b> lists what a session is had with, what heats a manual one, and the grinders. <b>Add a device</b> starts from a preset — the Venty, the Mighty+, the Herb Frolic, the Tornado and more — or from nothing.',
     body: [
-      'A device has its maker, how it heats, its temperature range and its modes, each with its own temperature and timer. Its card shows what it has done: sessions and grams, when it was last used, and its price per session so far. A retired device is kept, since its sessions name it.',
+      'A device has its maker, how it heats, its temperature range and its modes, each with its own temperature and timer, and for a vaporizer or glass what <b>a load holds</b> — 0.15 g on most presets, 0.1 g on the Simrells — which sizes a session you forgot to record. Its card shows what it has done: sessions and grams, when it was last used, and its price per session so far. A retired device is kept, since its sessions name it.',
       'Wits knows the boiling point of every cannabinoid and terpene, so a number on a dial reads as what it releases — up to the point it starts producing benzene.',
     ],
     shots: [web('devices', '/shelf/devices', 'The devices page: vaporizers with their sessions and grams', 'Every device by what it is for, with what it has done.')],
     page: { path: '/shelf/devices', label: 'Open the devices' },
     cli: [
-      { cmd: 'wits device add "Volcano Hybrid" --min 40 --max 230 --default 185' },
+      { cmd: 'wits device add "Volcano Hybrid" --min 40 --max 230 --default 185 --load 0.15' },
       { cmd: 'wits temps 190', out: `COMPOUND         BOILS AT  EFFECTS
 THCA             120°C     anti-inflammatory, anti-epileptic, anti-proliferic
 Nerolidol        122°C     sedative, anti-fungal, anti-malarial, anti-parasitic, skin penetration enhancer

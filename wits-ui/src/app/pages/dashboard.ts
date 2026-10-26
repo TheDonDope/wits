@@ -9,12 +9,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
 
 import { openDemo } from '../data/demo';
+import { CATEGORIES } from '../data/devices';
 import { Wits } from '../data/wits';
 import { CountUp } from '../viz/count-up';
 import { FillRing } from '../viz/fill-ring';
 import { GlassJar } from '../viz/glass-jar';
 import { Heatmap } from '../viz/heatmap';
 import { ProjectionChart } from '../viz/projection-chart';
+import { DeviceForm } from './device-form';
 import { openRecord } from './record';
 import { TodayCard } from './today';
 
@@ -173,6 +175,19 @@ import { TodayCard } from './today';
               <strong>Record your first prescription</strong>
               <span class="dim">What the pharmacy handed you: each strain and its grams. A photo of the label or the invoice fills it in.</span>
             </button>
+            <button class="way" (click)="addGear()">
+              <mat-icon>air</mat-icon>
+              <strong>Add your gear</strong>
+              <span class="dim">The vaporizers, grinders, heaters and glass you already have, so a session can say what it was had with.</span>
+              @if (gear().length) {
+                <span class="gear">
+                  @for (d of gear(); track d.slug) {
+                    <span class="chip"><mat-icon>{{ icon(d.category) }}</mat-icon>{{ d.name }}</span>
+                  }
+                  <span class="dim">Add another</span>
+                </span>
+              }
+            </button>
             <a class="way" routerLink="/repository">
               <mat-icon>table_view</mat-icon>
               <strong>Bring a spreadsheet across</strong>
@@ -276,7 +291,7 @@ import { TodayCard } from './today';
     .hello { display: grid; gap: 10px; max-width: 64ch; }
     .hello h1 { margin: 0; font: 600 clamp(26px, 3.2vw, 38px)/1.15 var(--w-head); }
     .hello p { margin: 0; line-height: 1.6; }
-    .ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
     .way { display: grid; gap: 8px; align-content: start; padding: 20px; border-radius: calc(var(--w-radius) * 0.8); text-align: left;
       border: 1px solid var(--w-glass-edge); background: color-mix(in srgb, var(--w-fg) 3%, transparent); color: inherit;
       font: inherit; text-decoration: none; cursor: pointer; transition: border-color .2s, transform .2s; }
@@ -285,6 +300,11 @@ import { TodayCard } from './today';
     .way mat-icon { font-size: 30px; width: 30px; height: 30px; color: var(--w-primary); }
     .way strong { font: 600 17px var(--w-head); }
     .way .dim { font-size: 13px; line-height: 1.5; }
+    .gear { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+    .gear .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px 2px 6px; border-radius: 99px; font-size: 12px;
+      background: color-mix(in srgb, var(--w-primary) 14%, transparent); }
+    .gear .chip mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .gear .dim { font-size: 12px; }
     .guide { display: inline-flex; gap: 8px; align-items: center; color: var(--w-primary); text-decoration: none; font-size: 14px; }
     @include bp.phone {
       .welcome { padding: 22px 18px; }
@@ -316,8 +336,19 @@ export class Dashboard {
   protected readonly fresh = computed(() => this.wits.place.value()?.entries === 0);
   protected readonly seeding = signal(false);
 
+  /** The gear added so far, while the journal is still empty. */
+  protected readonly gear = computed(() => this.wits.devices.value().filter((d) => !d.retired));
+
   protected record(tab: number): void {
     openRecord(this.dialog, { tab });
+  }
+
+  protected addGear(): void {
+    this.dialog.open(DeviceForm, { maxWidth: 'min(720px, 94vw)', autoFocus: 'first-tabbable' });
+  }
+
+  protected icon(category: string): string {
+    return CATEGORIES.find((c) => c.id === category)?.icon ?? 'devices';
   }
 
   protected async demo(): Promise<void> {

@@ -342,6 +342,8 @@ func TestDeviceForm(t *testing.T) {
 	m = typeText(m, "230")
 	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // max -> default
 	m = typeText(m, "185")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // default -> load
+	m = typeText(m, "0.15")
 	_, msgs := send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	var saved bool
@@ -358,6 +360,7 @@ func TestDeviceForm(t *testing.T) {
 	require.Len(t, devices.Devices, 1)
 	assert.Equal(t, "Volcano Hybrid", devices.Devices[0].Name, "Should have written it to the catalog")
 	assert.Equal(t, 230, devices.Devices[0].MaxTemp, "Should keep the range")
+	assert.Equal(t, 0.15, devices.Devices[0].Load, "Should keep what a load holds")
 	assert.Equal(t, 185, devices.Devices[0].DefaultTemp, "Should keep the default")
 }
 

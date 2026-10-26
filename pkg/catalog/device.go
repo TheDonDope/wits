@@ -83,12 +83,15 @@ type Device struct {
 	Modes []Mode `yaml:"modes,omitempty"`
 	// AutoOff is how long, in seconds, the device stays on unused before it
 	// turns itself off: a session's end, when nothing else ends it.
-	AutoOff  int    `yaml:"auto_off,omitempty"`
-	Cents    int64  `yaml:"cents,omitempty"`
-	Shop     string `yaml:"shop,omitempty"`
-	BoughtOn string `yaml:"bought_on,omitempty"` // YYYY-MM-DD
-	Link     string `yaml:"link,omitempty"`
-	Notes    string `yaml:"notes,omitempty"`
+	AutoOff int `yaml:"auto_off,omitempty"`
+	// Load is how many grams one fill of the device holds, as it is usually
+	// loaded: what a session on it takes, when no session on record says.
+	Load     float64 `yaml:"load,omitempty"`
+	Cents    int64   `yaml:"cents,omitempty"`
+	Shop     string  `yaml:"shop,omitempty"`
+	BoughtOn string  `yaml:"bought_on,omitempty"` // YYYY-MM-DD
+	Link     string  `yaml:"link,omitempty"`
+	Notes    string  `yaml:"notes,omitempty"`
 	// Retired is a device no longer used: kept, since sessions name it.
 	Retired bool `yaml:"retired,omitempty"`
 }

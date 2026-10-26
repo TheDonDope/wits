@@ -648,6 +648,10 @@ func deviceAttr(d *catalog.Device, key, value string) error {
 		d.Cents, err = strconv.ParseInt(value, 10, 64)
 	case "ao":
 		d.AutoOff, err = strconv.Atoi(value)
+	case "ld":
+		var cg int64
+		cg, err = strconv.ParseInt(value, 10, 64)
+		d.Load = journal.Centigrams(cg).Grams()
 	case "mo":
 		d.Modes, err = readModes(unescape(value))
 	case "w":

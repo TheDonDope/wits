@@ -250,7 +250,7 @@ func writeDevice(out io.Writer, d *catalog.Device) {
 	numbers := []struct {
 		key   string
 		value int64
-	}{{"lo", int64(d.MinTemp)}, {"hi", int64(d.MaxTemp)}, {"df", int64(d.DefaultTemp)}, {"pr", d.Cents}, {"ao", int64(d.AutoOff)}}
+	}{{"lo", int64(d.MinTemp)}, {"hi", int64(d.MaxTemp)}, {"df", int64(d.DefaultTemp)}, {"pr", d.Cents}, {"ao", int64(d.AutoOff)}, {"ld", int64(journal.CG(d.Load))}}
 	for _, n := range numbers {
 		if n.value != 0 {
 			fmt.Fprintf(out, " %s=%d", n.key, n.value)

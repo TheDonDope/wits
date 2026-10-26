@@ -33,6 +33,16 @@ command line shows within a few seconds. There are four tabs — **Dashboard**,
 (Analysis, Effects, History, Costs) — and **Record**, always in reach, to
 grind, record a session, a fill or a weighing.
 
+**Weigh** shows the ledger's figure under the reading. A reading less than
+it is offered as what was forgotten — **I forgot to record a grind** for what
+is sealed, **I forgot to record sessions** for what is ground, saying what
+would be written: the grind and its day, or how many sessions of about what,
+over which days, with which device, and what sized them (your sessions, your
+gear's load, or one a day). **It went missing** records the grams as lost, as
+before. After a forgotten grind the dialog stays open on what is ground of
+the same jar, to be weighed next. Too much short to be sessions anybody
+forgets (more than 30) says so and is recorded as lost.
+
 ## The desktop window
 
 The window is [Electron](https://www.electronjs.org/), so the AppImage
@@ -55,8 +65,9 @@ user guide explains them. The header says nothing about the journal's hash
 chain unless it was changed outside wits.
 
 A repository with nothing in it opens on a welcome rather than an empty page:
-record the first prescription, bring a spreadsheet across, or look around in
-the demo. Record opens on Prescription while the shelf is empty.
+record the first prescription, add your gear — the vaporizers, grinders,
+heaters and glass you already have, each shown on the card once added —
+bring a spreadsheet across, or look around in the demo. Record opens on Prescription while the shelf is empty.
 
 ## The dashboard
 
@@ -126,8 +137,10 @@ while there is some, and the tab counts them:
 - AVB waiting in a device, with **Collect**.
 
 On the workbook it counts 50: two pickups and 48 stashes left behind,
-1,154.00 g. Two more are offered but not counted: the jars still sealed, with
-**Weigh**, since a weighing that agrees with the ledger writes nothing; and
+1,154.00 g. Two more are offered but not counted: the jars to weigh against
+the scale, with **Sealed** and **Ground** — every jar still sealed, and what
+is ground of any used in the last 30 days — since a weighing that agrees with
+the ledger writes nothing; and
 the jars with no terpene profile, since one no page names would never clear.
 **Research all** looks those up one after another, a pause between, and
 **Keep all found** writes down every profile it found at once.
@@ -350,7 +363,11 @@ Storz & Bickel Venty and Mighty+, the Limelight Herb Frolic, the Vestratto
 Tornado and Anvil, the Mad Heaters Tempest, the Simrell and the Simrell
 Hydro, the YLL 3.0, the Blazer PT-4000 and PB-207, the Brilliant Cut and
 Aroma 3 grinders, and dry and water glass. A preset fills in what could be
-found out about the device; what couldn't stays empty for you to fill.
+found out about the device; what couldn't stays empty for you to fill. A
+vaporizer's or glass's **load** is what one fill usually holds — 0.15 g on
+the Venty, Mighty+, Frolic, Tornado, Anvil and Tempest presets, 0.1 g on the
+Simrell and the Hydro — and sizes a session you forgot to record, until your
+own sessions say.
 
 A device has:
 
