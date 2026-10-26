@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 	"time"
 )
@@ -236,20 +235,79 @@ func seal(e Event, seq int, tip string) (Event, error) {
 	return e, err
 }
 
+// Shape is where an entry stands among a list's when it does not simply
+// follow the one before it: the position, counted from 1, of the entry its
+// Prev names, of the one its Merge names, and its Seq. Zero is the plain
+// case — the entry before, no merge, its own position. Only entries brought
+// in from another device, and the merges that join them, have one.
+type Shape struct {
+	Prev, Merge, Seq int
+}
+
 // Chain seals entries one onto the next from the start of a journal, as
-// appending them to an empty one would: what a bundle's entries hash to once
-// restored, read without restoring them.
-func Chain(events []Event) ([]Event, error) {
+// appending them to an empty one would — or, for an entry with a shape, onto
+// the entries its shape names: what a bundle's entries hash to once restored,
+// read without restoring them. shapes is by position, and may be shorter.
+func Chain(events []Event, shapes []Shape) ([]Event, error) {
 	out := make([]Event, len(events))
-	tip := ""
 	for i, e := range events {
+		var sh Shape
+		if i < len(shapes) {
+			sh = shapes[i]
+		}
+		prev := ""
+		switch {
+		case sh.Prev > 0 && sh.Prev <= i:
+			prev = out[sh.Prev-1].Hash
+		case sh.Prev != 0:
+			return nil, fmt.Errorf("%w: entry %d names an entry after it", ErrBrokenChain, i+1)
+		case i > 0:
+			prev = out[i-1].Hash
+		}
+		if sh.Merge > 0 {
+			if sh.Merge > i {
+				return nil, fmt.Errorf("%w: entry %d merges an entry after it", ErrBrokenChain, i+1)
+			}
+			e.Merge = out[sh.Merge-1].Hash
+		}
+		seq := i
+		if sh.Seq > 0 {
+			seq = sh.Seq - 1
+		}
 		var err error
-		if out[i], err = seal(e, i, tip); err != nil {
+		if out[i], err = seal(e, seq, prev); err != nil {
 			return nil, err
 		}
-		tip = out[i].Hash
 	}
 	return out, nil
+}
+
+// Shapes is what Chain needs to rebuild events as they stand: the shape of
+// every entry that does not simply follow the one before it, by position —
+// nil for a journal no merge ever touched.
+func Shapes(events []Event) []Shape {
+	at := map[string]int{}
+	var out []Shape
+	for i, e := range events {
+		var sh Shape
+		if i > 0 && e.Prev != events[i-1].Hash {
+			sh.Prev = at[e.Prev]
+		}
+		if e.Merge != "" {
+			sh.Merge = at[e.Merge]
+		}
+		if e.Seq != i+1 {
+			sh.Seq = e.Seq
+		}
+		if sh != (Shape{}) {
+			for len(out) < i {
+				out = append(out, Shape{})
+			}
+			out = append(out, sh)
+		}
+		at[e.Hash] = i + 1
+	}
+	return out
 }
 
 // withDefaults fills in the fields a caller may leave to the journal: the
@@ -313,27 +371,90 @@ func (j *Journal) Verify() error {
 	if err != nil {
 		return err
 	}
-	var prev string
+	links := newLinks()
 	for n, line := range lines {
 		var e Event
 		if err := json.Unmarshal(line, &e); err != nil {
 			return fmt.Errorf("journal line %d is not valid JSON: %w", n+1, err)
 		}
-		if e.Prev != prev {
-			return fmt.Errorf("%w: event %d expects prev %q but the chain is at %q", ErrBrokenChain, e.Seq, e.Prev, prev)
+		if err := links.follows(e, n); err != nil {
+			return err
 		}
 		stored := []byte(`,"hash":"` + e.Hash + `"}`)
 		if !bytes.HasSuffix(line, stored) {
 			return fmt.Errorf("%w: event %d does not end in its hash", ErrBrokenChain, e.Seq)
 		}
 		payload := append(bytes.Clone(line[:len(line)-len(stored)]), `,"hash":""}`...)
-		sum := sha256.Sum256(append([]byte(prev), payload...))
+		sum := sha256.Sum256(append([]byte(e.Prev), payload...))
 		if want := hex.EncodeToString(sum[:]); e.Hash != want {
 			return fmt.Errorf("%w: event %d has hash %q but hashes to %q", ErrBrokenChain, e.Seq, e.Hash, want)
 		}
-		prev = e.Hash
+		links.add(e)
+	}
+	return links.oneHead()
+}
+
+// links checks that entries are chained as a journal's must be: each naming
+// as its Prev — and a merge as its Merge too — an entry that comes before
+// it, the first alone naming none; and that every entry but the last is
+// named by one after it, so the last one's hash covers them all.
+type links struct {
+	seen, named map[string]bool
+	last        string
+}
+
+func newLinks() *links { return &links{seen: map[string]bool{}, named: map[string]bool{}} }
+
+// follows reports whether the n-th entry, counted from 0, names only entries before it.
+func (l *links) follows(e Event, n int) error {
+	switch {
+	case n == 0 && e.Prev != "":
+		return fmt.Errorf("%w: the first entry names %q before it", ErrBrokenChain, e.Prev)
+	case n > 0 && !l.seen[e.Prev]:
+		return fmt.Errorf("%w: event %d expects prev %q, which comes nowhere before it", ErrBrokenChain, e.Seq, e.Prev)
+	case e.Merge != "" && !l.seen[e.Merge]:
+		return fmt.Errorf("%w: event %d merges %q, which comes nowhere before it", ErrBrokenChain, e.Seq, e.Merge)
 	}
 	return nil
+}
+
+func (l *links) add(e Event) {
+	l.seen[e.Hash], l.named[e.Prev] = true, true
+	if e.Merge != "" {
+		l.named[e.Merge] = true
+	}
+	l.last = e.Hash
+}
+
+// oneHead reports whether every entry but the last is named by a later one.
+func (l *links) oneHead() error {
+	for h := range l.seen {
+		if h != l.last && !l.named[h] {
+			return fmt.Errorf("%w: %.7s is named by no entry after it, so no head covers it", ErrBrokenChain, h)
+		}
+	}
+	return nil
+}
+
+// linked checks events read from elsewhere — another device's copy, a
+// bundle — as Verify checks the file: each chained onto what it names, and
+// hashing to its own hash.
+func linked(events []Event) error {
+	l := newLinks()
+	for i, e := range events {
+		if err := l.follows(e, i); err != nil {
+			return err
+		}
+		sum, err := e.sum(e.Prev)
+		if err != nil {
+			return err
+		}
+		if e.Hash != sum {
+			return fmt.Errorf("%w: entry %d of the other copy", ErrBrokenChain, i+1)
+		}
+		l.add(e)
+	}
+	return l.oneHead()
 }
 
 // read loads and decodes the whole journal, returning the events and how
@@ -384,104 +505,123 @@ func (j *Journal) lines() ([][]byte, int64, error) {
 	return lines, int64(len(data)), nil
 }
 
-// Rebased is what a Rebase did: how many of the other chain's entries this
-// journal lacked, and which of its own it chained again on top of them, by
-// the hash each had and the hash it has now.
-type Rebased struct {
-	Fetched int
-	Moved   map[string]string
+// Holds reports whether events hold a head sealed after the given number of
+// entries: the head is among them, and it covers exactly that many — itself
+// and every entry it names, and they theirs. A merged journal holds the same
+// entries on every device, though not at the same lines, so a seal is
+// checked by what its head covers, not by where it stands.
+func Holds(events []Event, head string, entries int) bool {
+	at := map[string]Event{}
+	for _, e := range events {
+		at[e.Hash] = e
+	}
+	if _, ok := at[head]; !ok {
+		return false
+	}
+	covered := map[string]bool{}
+	for todo := []string{head}; len(todo) > 0; {
+		h := todo[len(todo)-1]
+		todo = todo[:len(todo)-1]
+		e, ok := at[h]
+		if !ok || covered[h] {
+			continue
+		}
+		covered[h] = true
+		todo = append(todo, e.Prev)
+		if e.Merge != "" {
+			todo = append(todo, e.Merge)
+		}
+	}
+	return len(covered) == entries
 }
 
-// Rebase brings in another device's copy of the journal. The entries the two
-// share are kept; the ones only the other holds are taken as they are, hashes
-// and all; and the ones only this journal holds are chained again on top of
-// them, the way git rebases a branch that was never pushed. Those get new
-// hashes — a hash names a place in the chain — and an undo among them is
-// pointed at the new hash of what it undoes. The journal is rewritten whole,
-// atomically, and the old one kept beside it as journal.ndjson.orig.
+// Merged is what a Merge did: how many of the other copy's entries this
+// journal lacked, and whether a merge entry joined the two heads.
+type Merged struct {
+	Fetched int
+	Joined  bool
+}
+
+// Merge brings in another device's copy of the journal. Its entries this
+// journal lacks are appended as they are, hashes and all; if this journal
+// holds entries the other lacks too, a merge entry follows them, naming both
+// heads, as git merges two branches rather than rebasing one. Nothing already
+// here is rewritten: every entry keeps the hash it was given, so what rates,
+// prices or seals it still names it, on every device. Appended only, like
+// every other write.
 //
-// then runs under the journal's lock once the journal is written, so the
-// effect log can follow the sessions that moved before anything else can
-// record against their old hashes.
-func (j *Journal) Rebase(onto []Event, then func(Rebased) error) (Rebased, error) {
+// then runs under the journal's lock once the journal is written.
+func (j *Journal) Merge(theirs []Event, then func(Merged) error) (Merged, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	release, err := j.lock()
 	if err != nil {
-		return Rebased{}, err
+		return Merged{}, err
 	}
 	defer release()
-	if err := chained(onto); err != nil {
-		return Rebased{}, err
+	if err := linked(theirs); err != nil {
+		return Merged{}, err
 	}
-	// prime, not read: it cuts away a write that never finished, which a
-	// fast-forward would otherwise append onto.
+	// prime, not read: it cuts away a write that never finished.
 	local, err := j.prime(true)
 	if err != nil {
-		return Rebased{}, err
+		return Merged{}, err
 	}
-	k := shared(local, onto)
-	done := Rebased{Fetched: len(onto) - k, Moved: map[string]string{}}
-	if done.Fetched > 0 {
-		if err := j.rewrite(local, onto, k, done.Moved); err != nil {
-			return Rebased{}, err
+	ours := map[string]bool{}
+	for _, e := range local {
+		ours[e.Hash] = true
+	}
+	held := map[string]bool{}
+	var batch []Event
+	for _, e := range theirs {
+		held[e.Hash] = true
+		if !ours[e.Hash] {
+			batch = append(batch, e)
 		}
+	}
+	done := Merged{Fetched: len(batch)}
+	if len(batch) == 0 {
+		return done, then(done)
+	}
+	if n := len(local); n > 0 && !held[local[n-1].Hash] {
+		join, err := seal(Event{Type: Merge, From: External, To: External, Merge: local[n-1].Hash,
+			OccurredAt: time.Now(), RecordedAt: time.Now()}, len(local)+len(batch), batch[len(batch)-1].Hash)
+		if err != nil {
+			return Merged{}, err
+		}
+		batch = append(batch, join)
+		done.Joined = true
+	}
+	j.primed = false
+	if err := j.write(encode(batch)); err != nil {
+		return Merged{}, err
 	}
 	return done, then(done)
 }
 
-// rewrite puts onto in place of the journal's first k entries, the ones
-// after them chained on top, recording in moved each hash that changed.
-func (j *Journal) rewrite(local, onto []Event, k int, moved map[string]string) error {
-	j.primed = false
-	if k == len(local) {
-		return j.write(encode(onto[k:]))
-	}
-	merged := slices.Clone(onto)
-	for _, e := range local[k:] {
-		if to, ok := moved[e.Reverts]; ok {
-			e.Reverts = to
-		}
-		old := e.Hash
-		e.Seq, e.Prev = len(merged)+1, merged[len(merged)-1].Hash
-		var err error
-		if e.Hash, err = e.sum(e.Prev); err != nil {
-			return err
-		}
-		moved[old] = e.Hash
-		merged = append(merged, e)
-	}
-	if err := copyFile(j.path, j.path+".orig"); err != nil {
+// Import writes a whole journal into an empty one as it stands — every entry
+// with the hash it has, merges and all — after checking it chains: what a
+// restore writes, so the journal it makes verifies against the one bundled.
+func (j *Journal) Import(events []Event) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	release, err := j.lock()
+	if err != nil {
 		return err
 	}
-	return WriteFile(j.path, encode(merged))
-}
-
-// chained reports whether events form a whole chain from the start: each
-// numbered in turn, naming the one before, and hashing to its own hash.
-func chained(events []Event) error {
-	prev := ""
-	for i, e := range events {
-		sum, err := e.sum(prev)
-		if err != nil {
-			return err
-		}
-		if e.Seq != i+1 || e.Prev != prev || e.Hash != sum {
-			return fmt.Errorf("%w: entry %d of the other copy", ErrBrokenChain, i+1)
-		}
-		prev = e.Hash
+	defer release()
+	local, err := j.prime(true)
+	if err != nil {
+		return err
 	}
-	return nil
-}
-
-// shared is how many entries two chains begin with in common. Each hash
-// covers everything before it, so the first that differs ends what is shared.
-func shared(a, b []Event) int {
-	k := 0
-	for k < len(a) && k < len(b) && a[k].Hash == b[k].Hash {
-		k++
+	if len(local) > 0 {
+		return fmt.Errorf("journal already holds %d events; restore into an empty repository", len(local))
 	}
-	return k
+	if err := linked(events); err != nil {
+		return err
+	}
+	j.primed = false
+	return j.write(encode(events))
 }
 
 // encode writes events as they are stored, a line each.
@@ -493,16 +633,4 @@ func encode(events []Event) []byte {
 		buf.WriteByte('\n')
 	}
 	return buf.Bytes()
-}
-
-// copyFile copies a file whole, atomically; a missing one copies nothing.
-func copyFile(from, to string) error {
-	data, err := os.ReadFile(from)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return WriteFile(to, data)
 }

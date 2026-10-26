@@ -20,10 +20,14 @@ import (
 // and version 8 what a device is (its category, maker, model and the rest)
 // and a session's mode, heater and setting, and version 9 a strain's own
 // rating: its scores, whether it would be had again, a line, and when, and
-// version 10 a device's load, in centigrams.
+// version 10 a device's load, in centigrams, and version 11 when each field
+// of a product or a device was last changed (ch=), and a journal two devices
+// merged: a merge entry (j), and where an entry does not simply follow the
+// one before it, the positions of the entries it names (pv=, mg=) and its
+// sequence number (sq=).
 const (
 	Magic   = "wits-bundle"
-	Version = 10
+	Version = 11
 )
 
 // separator ends the header and begins the events; ratingsSeparator ends the
@@ -44,6 +48,7 @@ var typeCodes = map[journal.Type]byte{
 	journal.AVBCollect: 'c',
 	journal.AVBUse:     'u',
 	journal.Adjust:     'a',
+	journal.Merge:      'j',
 }
 
 // typeOf reverses typeCodes.

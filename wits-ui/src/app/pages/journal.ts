@@ -25,6 +25,7 @@ export const KINDS: Record<Entry['type'], { icon: string; tone: string; verb: st
   'avb-collect': { icon: 'savings', tone: 'var(--w-avb)', verb: 'collected AVB' },
   'avb-use': { icon: 'bakery_dining', tone: 'var(--w-avb)', verb: 'used AVB' },
   adjust: { icon: 'tune', tone: 'var(--w-dim)', verb: 'adjusted' },
+  merge: { icon: 'merge', tone: 'var(--w-dim)', verb: 'merged another device' },
 };
 
 type Row = { day: string; entry?: undefined } | { day?: undefined; entry: Entry };

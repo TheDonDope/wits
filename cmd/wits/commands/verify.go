@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/TheDonDope/wits/pkg/journal"
 	"io"
 	"os"
 	"strings"
@@ -77,7 +78,7 @@ func verifyHead(out io.Writer, f seal.Seal) error {
 	if err != nil {
 		return err
 	}
-	if f.Entries < 1 || f.Entries > len(events) || events[f.Entries-1].Hash != f.Head {
+	if !journal.Holds(events, f.Head, f.Entries) {
 		return fmt.Errorf("the journal here does not hold the sealed head %s at entry %d", shortHash(f.Head), f.Entries)
 	}
 	fmt.Fprintf(out, "✓ the journal here holds what was sealed: %s, up to %s\n", entries(f.Entries), shortHash(f.Head))

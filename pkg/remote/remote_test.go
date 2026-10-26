@@ -67,15 +67,28 @@ func sesh(g float64, day int) journal.Event {
 	return journal.Event{Type: journal.Sesh, Grams: g, OccurredAt: july.AddDate(0, 0, day), RecordedAt: july.AddDate(0, 0, day)}
 }
 
-// same reports whether two repositories hold the same journal and effect log,
-// byte for byte.
+// same reports whether two repositories hold the same journal — the same
+// entries, hashes and all, ending in the same head, though a merged one may
+// hold them in another order — and the same effect log, byte for byte.
 func same(t *testing.T, a, b *repo.Repo) {
 	t.Helper()
-	for _, path := range []func(*repo.Repo) string{(*repo.Repo).JournalPath, (*repo.Repo).EffectsPath} {
-		x, _ := os.ReadFile(path(a))
-		y, _ := os.ReadFile(path(b))
-		assert.Equal(t, string(x), string(y), "Should hold the same %s", filepath.Base(path(a)))
+	hashes := func(r *repo.Repo) []string {
+		events, err := r.Journal().Events()
+		require.NoError(t, err)
+		out := make([]string, len(events))
+		for i, e := range events {
+			out[i] = e.Hash
+		}
+		return out
 	}
+	x, y := hashes(a), hashes(b)
+	if len(x) > 0 && len(y) > 0 {
+		assert.Equal(t, x[len(x)-1], y[len(y)-1], "Should end in the same head")
+	}
+	assert.ElementsMatch(t, x, y, "Should hold the same entries")
+	ex, _ := os.ReadFile(a.EffectsPath())
+	ey, _ := os.ReadFile(b.EffectsPath())
+	assert.Equal(t, string(ex), string(ey), "Should hold the same %s", filepath.Base(a.EffectsPath()))
 }
 
 func TestPushAndPull(t *testing.T) {
@@ -120,13 +133,12 @@ func TestPushAndPull(t *testing.T) {
 		_, err = Pull(phone)
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, pulled.Rechained, "Should chain the deck's session again on top")
+		assert.True(t, pulled.Joined, "Should join the two histories")
 		same(t, deck, phone)
 		ratings, err := phone.Effects().All()
 		require.NoError(t, err)
-		events, err := phone.Journal().Events()
-		require.NoError(t, err)
-		assert.Equal(t, events[2].Hash, ratings[0].Session, "Should rate the session by its new hash")
+		assert.Equal(t, mine[0].Hash, ratings[0].Session, "Should rate the session by the hash it was given, which no pull changes")
+		require.NoError(t, phone.Journal().Verify())
 	})
 
 	t.Run("NamesAClash", func(t *testing.T) {
@@ -145,7 +157,7 @@ func TestPushAndPull(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, pulled.Clashes, 1, "Should name the grind that took grams that were not there")
-		assert.Equal(t, 1.5, pulled.Clashes[0].Event.Grams)
+		assert.Equal(t, 2.0, pulled.Clashes[0].Event.Grams, "the one brought in, which comes after this device's own")
 	})
 
 	t.Run("TakesTheRemotesLaterChange", func(t *testing.T) {
@@ -274,14 +286,12 @@ func TestPricesTravelAndFollowTheirPurchase(t *testing.T) {
 	_, err = Pull(phone)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, pulled.Rechained)
+	assert.True(t, pulled.Joined)
 	assert.Equal(t, 1, pushed.Prices, "Should push the price")
 	paid, err := phone.Prices().All()
 	require.NoError(t, err)
-	events, err := phone.Journal().Events()
-	require.NoError(t, err)
 	require.Len(t, paid, 1)
-	assert.Equal(t, events[2].Hash, paid[0].Purchase, "Should price the purchase by its new hash")
+	assert.Equal(t, mine[0].Hash, paid[0].Purchase, "Should price the purchase by the hash it was given")
 	x, _ := os.ReadFile(deck.PricesPath())
 	y, _ := os.ReadFile(phone.PricesPath())
 	assert.Equal(t, string(x), string(y), "Should end with the same price log")

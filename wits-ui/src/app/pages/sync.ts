@@ -62,8 +62,8 @@ import { Wits } from '../data/wits';
         <div class="report">
           <p>
             Pulled {{ count(d.pulled.fetched, 'entry', 'entries') }} and {{ count(d.pulled.ratings, 'rating', 'ratings') }}@if (d.pulled.prices) {, with {{ count(d.pulled.prices, 'price', 'prices') }}}.
-            @if (d.pulled.rechained) {
-              Chained {{ count(d.pulled.rechained, 'entry', 'entries') }} of this phone’s on top, with new hashes.
+            @if (d.pulled.joined) {
+              Merged with this phone’s own, which keep their hashes.
             }
             Pushed {{ count(d.pushed.events, 'entry', 'entries') }}.
           </p>

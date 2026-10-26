@@ -16,7 +16,7 @@ export const dayOf = (e: Entry) => e.occurred_at.slice(0, 10);
  * balances stay true, but never get a frame of their own — the terminal's
  * skippable().
  */
-export const skippable = (e: Entry) => e.type === 'adjust';
+export const skippable = (e: Entry) => e.type === 'adjust' || e.type === 'merge';
 
 export interface Held {
   storage: number;

@@ -384,6 +384,9 @@ func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 	if original.Type == journal.Adjust {
 		return journal.Event{}, fmt.Errorf("%s is already a correction", short(hash))
 	}
+	if original.Type == journal.Merge {
+		return journal.Event{}, fmt.Errorf("%s joins two devices' histories and moves nothing; there is nothing to undo", short(hash))
+	}
 	if r.RevertOf(original.Hash) != nil {
 		return journal.Event{}, fmt.Errorf("%s has already been corrected", short(hash))
 	}

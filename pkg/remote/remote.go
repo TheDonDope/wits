@@ -134,7 +134,7 @@ func Fetch(dir string, id *age.X25519Identity) (*bundle.Contents, error) {
 	}
 	// A bundle carries no hashes: they follow from the entries, as a restore
 	// recomputes them.
-	if c.Events, err = journal.Chain(c.Events); err != nil {
+	if c.Events, err = journal.Chain(c.Events, c.Shapes); err != nil {
 		return nil, err
 	}
 	if c.Ratings, err = effects.Chain(c.Ratings); err != nil {
@@ -241,7 +241,9 @@ func holds(ours, theirs bundle.Contents) bool {
 	if len(theirs.Events) > len(ours.Events) || len(theirs.Ratings) > len(ours.Ratings) {
 		return false
 	}
-	if n := len(theirs.Events); n > 0 && ours.Events[n-1].Hash != theirs.Events[n-1].Hash {
+	// A merged journal holds the remote's entries, though not always where
+	// the remote holds them: their head is ours, and with it everything it covers.
+	if n := len(theirs.Events); n > 0 && !slices.ContainsFunc(ours.Events, func(e journal.Event) bool { return e.Hash == theirs.Events[n-1].Hash }) {
 		return false
 	}
 	if n := len(theirs.Ratings); n > 0 && ours.Ratings[n-1].Hash != theirs.Ratings[n-1].Hash {
@@ -268,9 +270,11 @@ func holds(ours, theirs bundle.Contents) bool {
 
 // Pulled is what a pull brought in.
 type Pulled struct {
-	// Fetched is the remote's entries this device lacked; Rechained, this
-	// device's own, chained again on top of them with new hashes.
-	Fetched, Rechained int
+	// Fetched is the remote's entries this device lacked; Joined, whether
+	// this device held entries the remote lacked too, and a merge entry
+	// joined the two — nothing of either is rewritten.
+	Fetched int
+	Joined  bool
 	// Ratings, Prices and Seals are the remote's ratings, prices and seals
 	// this device lacked, a seal counted too when its proof had got further.
 	Ratings, Prices, Seals int
@@ -284,7 +288,7 @@ type Pulled struct {
 
 // Pull brings the remote's repository into this one: its catalogs first, so
 // every entry names a product this device knows, then the journal and the
-// effect log, rebased. Clashes are kept, both entries standing as written,
+// effect log — the journal merged, the logs rebased. Clashes are kept, both entries standing as written,
 // and returned; the recorder refuses anything more on a clashed jar until
 // one of them is undone.
 func Pull(r *repo.Repo) (Pulled, error) {
@@ -304,18 +308,20 @@ func Pull(r *repo.Repo) (Pulled, error) {
 	if done.Products, done.Devices, err = mergeCatalogs(r, *theirs); err != nil {
 		return done, err
 	}
-	rebased, err := r.Journal().Rebase(theirs.Events, func(rb journal.Rebased) error {
+	// No entry moves, so what the logs name stays named as it was.
+	none := map[string]string{}
+	merged, err := r.Journal().Merge(theirs.Events, func(journal.Merged) error {
 		var rerr error
-		if done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings, rb.Moved); rerr != nil {
+		if done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings, none); rerr != nil {
 			return rerr
 		}
-		done.Prices, _, rerr = r.Prices().Rebase(theirs.Prices, rb.Moved)
+		done.Prices, _, rerr = r.Prices().Rebase(theirs.Prices, none)
 		return rerr
 	})
 	if err != nil {
 		return done, err
 	}
-	done.Fetched, done.Rechained = rebased.Fetched, len(rebased.Moved)
+	done.Fetched, done.Joined = merged.Fetched, merged.Joined
 	if done.Seals, err = mergeSeals(r, theirs.Seals); err != nil {
 		return done, err
 	}
@@ -323,20 +329,15 @@ func Pull(r *repo.Repo) (Pulled, error) {
 	if err != nil {
 		return done, err
 	}
-	done.Clashes = fresh(ledger.Shortfalls(before), ledger.Shortfalls(after), rebased.Moved)
+	done.Clashes = fresh(ledger.Shortfalls(before), ledger.Shortfalls(after))
 	return done, nil
 }
 
-// fresh is the shortfalls in after that were not in before, an entry that was
-// chained again known by its new hash.
-func fresh(before, after []ledger.Shortfall, moved map[string]string) []ledger.Shortfall {
+// fresh is the shortfalls in after that were not in before.
+func fresh(before, after []ledger.Shortfall) []ledger.Shortfall {
 	had := map[string]bool{}
 	for _, s := range before {
-		hash := s.Event.Hash
-		if to, ok := moved[hash]; ok {
-			hash = to
-		}
-		had[hash] = true
+		had[s.Event.Hash] = true
 	}
 	var out []ledger.Shortfall
 	for _, s := range after {

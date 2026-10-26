@@ -793,7 +793,7 @@ func TestSyncCommands(t *testing.T) {
 	assert.ErrorContains(t, err, "wits pull first", "Should not write over the phone's grind")
 	out, err = run(t, deck, Pull)
 	require.NoError(t, err)
-	assert.Contains(t, out, "Chained 1 entry of this device's on top, with new hashes.")
+	assert.Contains(t, out, "Merged with this device's own, which keep their hashes.")
 
 	out, err = run(t, deck, Pull)
 	require.NoError(t, err)

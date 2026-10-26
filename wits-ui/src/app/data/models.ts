@@ -53,7 +53,8 @@ export interface Shelf {
 
 export interface Entry {
   hash: string;
-  type: 'purchase' | 'grind' | 'sesh' | 'avb-collect' | 'avb-use' | 'adjust';
+  /** A merge joins two devices' histories, and moves no grams. */
+  type: 'purchase' | 'grind' | 'sesh' | 'avb-collect' | 'avb-use' | 'adjust' | 'merge';
   occurred_at: string;
   recorded_at: string;
   product?: string;

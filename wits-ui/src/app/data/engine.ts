@@ -15,7 +15,7 @@ import { ENGINE } from './mode';
 /** What a pull brought in, as wits-wasm reports it. */
 export interface Pulled {
   fetched: number;
-  rechained: number;
+  joined: boolean;
   ratings: number;
   prices: number;
   products: string;

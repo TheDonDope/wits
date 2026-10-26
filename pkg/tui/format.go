@@ -19,6 +19,7 @@ var glyphs = map[journal.Type]string{
 	journal.AVBCollect: "◇",
 	journal.AVBUse:     "▽",
 	journal.Adjust:     "±",
+	journal.Merge:      "⑂",
 }
 
 // verbs are how each event type reads in a sentence.
@@ -29,6 +30,7 @@ var verbs = map[journal.Type]string{
 	journal.AVBCollect: "collected",
 	journal.AVBUse:     "used AVB",
 	journal.Adjust:     "adjusted",
+	journal.Merge:      "merged another device's",
 }
 
 // eventColor gives an event the colour of the account it moves grams into, so
