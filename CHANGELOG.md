@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.103.0"></a>
+## [v0.103.0] - 2026-10-26
+### Docs
+- **diary:** a year looked back on, a trip packed for
+
+### Feat
+- **today:** the day so far, and the THC that went through the device
+
+
 <a name="v0.102.0"></a>
 ## [v0.102.0] - 2026-10-26
+### Docs
+- update changelog for v0.102.0
+
 ### Feat
 - **delight:** the year on one card, and a trip packed evenly
 
@@ -1248,7 +1260,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.102.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.103.0...HEAD
+[v0.103.0]: https://github.com/TheDonDope/wits/compare/v0.102.0...v0.103.0
 [v0.102.0]: https://github.com/TheDonDope/wits/compare/v0.101.0...v0.102.0
 [v0.101.0]: https://github.com/TheDonDope/wits/compare/v0.100.0...v0.101.0
 [v0.100.0]: https://github.com/TheDonDope/wits/compare/v0.99.0...v0.100.0
