@@ -2,8 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.95.0"></a>
+## [v0.95.0] - 2026-10-26
+### Feat
+- **demo:** seed with demo data — a year of it, priced, rated and looked up, on the menu
+
+### Refactor
+- **demo:** the generator's choices in small named steps, which Codacy can count
+
+
 <a name="v0.94.0"></a>
 ## [v0.94.0] - 2026-10-26
+### Docs
+- update changelog for v0.94.0
+
 ### Fix
 - **research:** the phone looks terpenes up through a reader, since its page may read no other site
 
@@ -1163,7 +1175,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.94.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.95.0...HEAD
+[v0.95.0]: https://github.com/TheDonDope/wits/compare/v0.94.0...v0.95.0
 [v0.94.0]: https://github.com/TheDonDope/wits/compare/v0.93.0...v0.94.0
 [v0.93.0]: https://github.com/TheDonDope/wits/compare/v0.92.0...v0.93.0
 [v0.92.0]: https://github.com/TheDonDope/wits/compare/v0.91.0...v0.92.0
