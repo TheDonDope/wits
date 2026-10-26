@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -56,7 +56,10 @@ export class App {
   protected readonly version = VERSION;
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
+  private readonly snack = inject(MatSnackBar);
   protected readonly now = signal(new Date());
+  /** Whether the demo is being opened: restoring it takes a moment, on a phone a few. */
+  protected readonly seeding = signal(false);
   /** The four tabs; a phone's dock holds the same four, Record raised between them. */
   protected readonly links = TABS;
   protected readonly aside = ASIDE;
@@ -72,6 +75,26 @@ export class App {
     const path = this.url().split('?')[0].split('#')[0];
     return [...PAGES, ...ASIDE].find((l) => l.path !== '/' && path.startsWith(l.path)) ?? PAGES[0];
   });
+
+  /**
+   * Opens the demo — the workbook with its invoices' prices, every device, a
+   * year of rated sessions and every jar's terpenes — in a repository of its
+   * own, leaving yours as it is; the Repository page goes back to it.
+   */
+  protected async demo(): Promise<void> {
+    this.seeding.set(true);
+    this.snack.open('Opening the demo…');
+    try {
+      const place = await this.wits.demo();
+      await this.router.navigateByUrl('/');
+      this.snack.open(`The demo is open, in ${place.path}: ${String(place.entries)} entries. Repository goes back to yours.`, 'OK',
+        { duration: 8000 });
+    } catch (e) {
+      this.snack.open((e as Error).message, 'OK', { duration: 8000 });
+    } finally {
+      this.seeding.set(false);
+    }
+  }
 
   constructor() {
     const tick = setInterval(() => {

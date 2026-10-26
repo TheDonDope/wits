@@ -1,0 +1,3594 @@
+wits-bundle 8
+P0 cannamedical-hybrid-classic-mac-3-181 n=Cannamedical\sHybrid\sClassic\s18/1\sMAC\s3 m=Cannamedical\sHybrid\sClassic c=MAC\s3 thc=18 cbd=1 tp=Limonene,Farnesene,Myrcene,Linalool,Pinene a=1792973444
+P1 cantourage-mac1-251 n=Cantourage\s25/1\sMAC1+ m=Cantourage c=MAC1+ thc=25 cbd=1 tp=Limonene,Linalool,Pinene,Caryophyllene,Myrcene a=1792973444
+P2 pedanios-dnk-ghost-train-haze-221 n=Pedanios\s22/1\sDNK\sGhost\sTrain\sHaze m=Pedanios c=DNK\sGhost\sTrain\sHaze thc=22 cbd=1 tp=Limonene,Terpinolene,Myrcene,Pinene,Eucalyptol a=1792973444
+P3 mediprocan-lunaris-paradiso-231 n=Mediprocan\sLunaris\s23/1\sParadiso m=Mediprocan\sLunaris c=Paradiso thc=23 cbd=1 tp=Limonene,Caryophyllene,Nerolidol a=1792973444
+P4 imc-hindu-kush-201 n=Quantity\sIMC\s20/1\sHindu\sKush m=Quantity\sIMC c=Hindu\sKush thc=20 cbd=1 tp=Myrcene,Caryophyllene,Limonene,Pinene,Ocimene a=1792973444
+P5 420-evolution-ca-flm-frozen-lemon-mints-271 n=420\sEvolution\s27/1\sCA\sFLM\sFrozen\sLemon\sMints m=420\sEvolution c=CA\sFLM\sFrozen\sLemon\sMints thc=27 cbd=1 tp=Limonene,Myrcene,Caryophyllene,Ocimene,Terpinolene a=1792973444
+P6 imc-t01-hindu-kush-201 n=IMC\s20/1\sT01\sHindu\sKush m=IMC c=T01\sHindu\sKush thc=20 cbd=1 tp=Ocimene,Terpinolene,Pinene,Nerolidol,Caryophyllene a=1792973444
+P7 all-nations-lemon-tartz-211 n=All\sNations\s21/1\sLemon\sTartz m=All\sNations c=Lemon\sTartz thc=21 cbd=1 tp=Limonene,Linalool,Caryophyllene,Nerolidol a=1792973444
+P8 avaay-blueberry-haze-161 n=Quantity\sAVAAY\s16/1\sBlueberry\sHaze m=Quantity\sAVAAY c=Blueberry\sHaze thc=16 cbd=1 tp=Myrcene,Pinene,Caryophyllene,Limonene,Linalool a=1792973444
+P9 enua-black-cherry-punch-221 n=enua\s22/1\sBlack\sCherry\sPunch m=enua c=Black\sCherry\sPunch thc=22 cbd=1 tp=Limonene,Caryophyllene,Linalool,Myrcene,Pinene a=1792973444
+P10 cannamedical-strawberry-og-241 n=Cannamedical\s24/1\sStrawberry\sOG m=Cannamedical c=Strawberry\sOG thc=24 cbd=1 tp=Myrcene,Pinene,Ocimene,Caryophyllene a=1792973444
+P11 enua-citrus-slap-361 n=Enua\s36/1\sCitrus\sSlap m=Enua c=Citrus\sSlap thc=36 cbd=1 tp=Myrcene,Humulene,Limonene a=1792973444
+P12 cansativa-vanilla-cake-261 n=Cansativa\sVanilla\sCake\s26/1 m=Cansativa\sVanilla\sCake thc=26 cbd=1 tp=Caryophyllene,Limonene,Myrcene,Pinene,Terpinolene a=1792973444
+P13 cannabis-1a-white-widow-161 n=Cannabis\s1A\s16/1\sWhite\sWidow m=Cannabis\s1A c=White\sWidow thc=16 cbd=1 tp=Myrcene,Pinene,Caryophyllene,Humulene,Limonene a=1792973444
+P14 cannamedical-indica-forte-sm-pineapple-express-241 n=Cannamedical\sIndica\sForte\sSM\s24/1\sPineapple\sExpress m=Cannamedical\sIndica\sForte\sSM c=Pineapple\sExpress thc=24 cbd=1 tp=Caryophyllene,Myrcene,Limonene,Ocimene,Pinene a=1792973444
+P15 420-evolution-ice-cream-cake-271 n=420\sEvolution\s27/1\sIce\sCream\sCake m=420\sEvolution c=Ice\sCream\sCake thc=27 cbd=1 tp=Limonene,Myrcene,Linalool,Caryophyllene,Farnesene a=1792973444
+P16 truu-gt-crumbled-lime-251 n=TRUU\sGT\s25/1\sCrumbled\sLime m=TRUU\sGT c=Crumbled\sLime thc=25 cbd=1 tp=Limonene,Caryophyllene,Farnesene,Linalool,Myrcene a=1792973444
+P17 cantourage-mac-1-251 n=Cantourage\s25/1\sMAC\s1+ m=Cantourage c=MAC\s1+ thc=25 cbd=1 tp=Limonene,Pinene,Linalool,Caryophyllene,Myrcene a=1792973444
+P18 cansativa-sonic-lemon-fuel-331 n=Cansativa\s33/1\sSonic\sLemon\sFuel m=Cansativa c=Sonic\sLemon\sFuel thc=33 cbd=1 tp=Limonene,Humulene,Myrcene,Caryophyllene,Farnesene a=1792973444
+P19 nice-munson-281 n=NICE\s28/1\sMunson m=NICE c=Munson thc=28 cbd=1 tp=Caryophyllene,Myrcene,Pinene,Humulene,Limonene a=1792973444
+P20 cannamedical-lemon-cookie-281 n=Cannamedical\s28/1\sLemon\sCookie m=Cannamedical c=Lemon\sCookie thc=28 cbd=1 tp=Caryophyllene,Myrcene,Humulene,Limonene a=1792973444
+P21 khiron-wedding-cake-201 n=Khiron\s20/1\sWedding\sCake m=Khiron c=Wedding\sCake thc=20 cbd=1 tp=Caryophyllene,Limonene,Linalool,Nerolidol,Humulene a=1792973444
+P22 canopy-jack-haze-211 n=Canopy\s21/1\sJack\sHaze m=Canopy c=Jack\sHaze thc=21 cbd=1 tp=Limonene,Caryophyllene,Myrcene,Terpinolene,Pinene a=1792973444
+P23 cannabistada-gorilla-glue-4-221 n=Quantity\sCannabiStada\s22/1\sGorilla\sGlue\s#4 m=Quantity\sCannabiStada c=Gorilla\sGlue\s#4 thc=22 cbd=1 tp=Caryophyllene,Limonene,Myrcene a=1792973444
+P24 420-evolution-ca-mac-mac1-221 n=420\sEvolution\s22/1\sCA\sMAC:\sMAC1 m=420\sEvolution c=CA\sMAC:\sMAC1 thc=22 cbd=1 tp=Limonene,Caryophyllene,Linalool,Pinene,Farnesene a=1792973444
+P25 nice-morning-sun-321 n=NICE\s32/1\sMorning\sSun m=NICE c=Morning\sSun thc=32 cbd=1 tp=Limonene,Myrcene,Terpinolene a=1792973444
+P26 sumo-papaya-bomb-251 n=Sumo\s25/1\sPapaya\sBomb m=Sumo c=Papaya\sBomb thc=25 cbd=1 tp=Myrcene,Caryophyllene,Limonene,Pinene,Linalool a=1792973444
+P27 gr-nhorn-gorilla-glue-4-221 n=Quantity\sGrünhorn\s22/1\sGorilla\sGlue\s#4 m=Quantity\sGrünhorn c=Gorilla\sGlue\s#4 thc=22 cbd=1 tp=Caryophyllene,Limonene,Myrcene,Pinene,Humulene a=1792973444
+P28 canopy-bakerstreeet-hindu-kush-221 n=Canopy\sBakerstreeet\s22/1\sHindu\sKush m=Canopy\sBakerstreeet c=Hindu\sKush thc=22 cbd=1 tp=Ocimene,Terpinolene,Myrcene,Pinene,Guaiol a=1792973444
+P29 all-nations-mac-doughnut-291 n=All\sNations\s29/1\sMac\sDoughnut m=All\sNations c=Mac\sDoughnut thc=29 cbd=1 tp=Limonene,Caryophyllene,Linalool,Myrcene a=1792973444
+P30 enua-wedding-cake-221 n=Enua\s22/1\sWedding\sCake m=Enua c=Wedding\sCake thc=22 cbd=1 tp=Myrcene,Caryophyllene,Limonene,Humulene,Linalool a=1792973444
+P31 420-evolution-ca-bul-bucket-list-301 n=420\sEvolution\s30/1\sCA\sBUL\sBucket\sList m=420\sEvolution c=CA\sBUL\sBucket\sList thc=30 cbd=1 tp=Limonene,Pinene,Caryophyllene,Myrcene,Humulene a=1792973444
+P32 canify-pt-ku-master-kush-dab-221 n=Canify\s22/1\sPT\sKu.\sMaster\sKush\sDAB m=Canify c=PT\sKu.\sMaster\sKush\sDAB thc=22 cbd=1 tp=Bisabolol,Caryophyllene,Limonene,Nerolidol,Linalool a=1792973444
+P33 cannamedical-hybrid-ultra-dk-ghost-train-haze-281 n=Cannamedical\sHybrid\sUltra\sDK\s28/1\sGhost\sTrain\sHaze m=Cannamedical\sHybrid\sUltra\sDK c=Ghost\sTrain\sHaze thc=28 cbd=1 tp=Limonene,Myrcene,Terpinolene,Caryophyllene,Pinene a=1792973444
+P34 420-natural-ca-gg-201 n=Quantity\s420\sNatural\s20/1\sCA\sGG m=Quantity\s420\sNatural c=CA\sGG thc=20 cbd=1 a=1792973444
+P35 avaay-scg-super-citra-g-271 n=Avaay\s27/1\sSCG:\sSuper\sCitra\sG. m=Avaay c=SCG:\sSuper\sCitra\sG thc=27 cbd=1 a=1792973444
+P36 tweed-jack-herer-271 n=Tweed\s27/1\sJack\sHerer m=Tweed c=Jack\sHerer thc=27 cbd=1 tp=Caryophyllene,Humulene,Terpinolene,Limonene,Pinene a=1792973444
+P37 all-nations-mac-daddy-211 n=All\sNations\s21/1\sMac\sDaddy m=All\sNations c=Mac\sDaddy thc=21 cbd=1 tp=Humulene,Limonene,Myrcene,Farnesene a=1792973444
+P38 cnbs-fk-florida-kush-301 n=CNBS\sFK\s30/1:\sFlorida\sKush. m=CNBS\sFK c=Florida\sKush thc=30 cbd=1 tp=Myrcene,Caryophyllene,Limonene,Linalool,Pinene a=1792973444
+P39 pretty-smalls-lt-lemon-tartz-211 n=Pretty\sSmalls\sLT\s21/1\sLemon\sTartz m=Pretty\sSmalls\sLT c=Lemon\sTartz thc=21 cbd=1 tp=Caryophyllene,Limonene,Linalool,Nerolidol a=1792973444
+P40 420-evolution-mac-1-221 n=420\sEvolution\s22/1\sMAC\s1 m=420\sEvolution c=MAC\s1 thc=22 cbd=1 tp=Limonene,Pinene,Caryophyllene,Linalool,Farnesene a=1792973444
+P41 cansativa-hawaiian-rain-221 n=Cansativa\s22/1\sHawaiian\sRain m=Cansativa c=Hawaiian\sRain thc=22 cbd=1 tp=Caryophyllene,Humulene,Limonene,Linalool,Myrcene a=1792973444
+P42 cannamedical-diamond-mints-281 n=Cannamedical\s28/1\sDiamond\sMints m=Cannamedical c=Diamond\sMints thc=28 cbd=1 tp=Limonene a=1792973444
+P43 enua-lemonade-haze-301 n=Enua\s30/1\sLemonade\sHaze m=Enua c=Lemonade\sHaze thc=30 cbd=1 tp=Limonene,Caryophyllene,Linalool a=1792973444
+P44 all-nations-mac-doughnut-gm-251 n=All\sNations\sMac\sDoughnut\sGM\s25/1 m=All\sNations\sMac\sDoughnut\sGM thc=25 cbd=1 tp=Limonene,Linalool,Caryophyllene,Myrcene a=1792973444
+P45 cannamedical-sativa-forte-amsterdam-amnesia-241 n=Cannamedical\sSativa\sForte\s24/1\sAmsterdam\sAmnesia m=Cannamedical\sSativa\sForte c=Amsterdam\sAmnesia thc=24 cbd=1 a=1792973444
+P46 enua-super-alient-mints-ca-221 n=enua\s22/1\sSuper\sAlient\sMints\sCA m=enua c=Super\sAlient\sMints\sCA thc=22 cbd=1 tp=Myrcene,Pinene,Humulene a=1792973444
+P47 all-nations-lemon-tartz-251 n=All\sNations\s25/1\sLemon\sTartz m=All\sNations c=Lemon\sTartz thc=25 cbd=1 tp=Limonene,Linalool,Caryophyllene,Nerolidol a=1792973444
+P48 weeco-frosted-lemon-angel-231 n=WEECO\s23/1\sFrosted\sLemon\sAngel m=WEECO c=Frosted\sLemon\sAngel thc=23 cbd=1 tp=Limonene,Myrcene,Caryophyllene,Linalool,Humulene a=1792973444
+P49 420-evolution-ca-mac-mac1-251 n=420\sEvolution\s25/1\sCA\sMAC:\sMAC1 m=420\sEvolution c=CA\sMAC:\sMAC1 thc=25 cbd=1 tp=Limonene,Pinene,Caryophyllene,Linalool,Myrcene a=1792973444
+P50 barongo-mac3-271 n=Barongo\s27/1\sMAC3 m=Barongo c=MAC3 thc=27 cbd=1 tp=Limonene,Farnesene,Caryophyllene,Myrcene,Linalool a=1792973444
+P51 cannamedical-hybrid-ultra-ghost-train-haze-281 n=Cannamedical\s28/1\sHybrid\sUltra\sGhost\sTrain\sHaze m=Cannamedical c=Hybrid\sUltra\sGhost\sTrain\sHaze thc=28 cbd=1 tp=Limonene,Caryophyllene,Myrcene a=1792973444
+P52 tilray-spotlight-porto-blueberry-181 n=Tilray\s18/1\sSpotlight\sPorto\sBlueberry m=Tilray c=Spotlight\sPorto\sBlueberry thc=18 cbd=1 tp=Myrcene,Pinene,Linalool,Nerolidol,Humulene a=1792973444
+D0 storz-bickel-venty n=Storz\s&\sBickel\sVenty c=vaporizer mk=Storz\s&\sBickel md=Venty co=Germany pw=electric sg=hybrid us=both mo=Base|Boost|Superboost|Permanent\sboost lo=40 hi=210 df=180
+D1 storz-bickel-mighty n=Storz\s&\sBickel\sMighty+ c=vaporizer mk=Storz\s&\sBickel md=Mighty+ co=Germany pw=electric sg=hybrid us=session mo=Base|Super\sBoost lo=40 hi=210 df=180
+D2 limelight-herb-frolic n=Limelight\sHerb\sFrolic c=vaporizer mk=Limelight\sHerb md=Frolic pw=electric sg=convection us=both mo=On\sdemand@convection@165|Session@hybrid@185@420
+D3 aroma-3 n=Aroma\s3 c=grinder mk=Old\sMate\sDesigns md=Aroma\s3 pw=manual
+D4 blazer-pb-207 n=Blazer\sPB-207 c=torch mk=Blazer md=PB-207
+D5 blazer-pt-4000 n=Blazer\sPT-4000 c=torch mk=Blazer md=PT-4000
+D6 brilliant-cut-grinder n=Brilliant\sCut\sGrinder c=grinder mk=Grinders\sFor\sLife md=Brilliant\sCut co=Canada pw=manual
+D7 glass-pipe n=Glass\spipe c=glass pw=manual
+D8 mad-heaters-tempest n=Mad\sHeaters\sTempest c=vaporizer mk=Mad\sHeaters md=Tempest pw=manual us=on-demand
+D9 rig n=Rig c=glass pw=manual w=1
+D10 simrell-hydro n=Simrell\sHydro c=vaporizer mk=The\sSimrell\sCollection md=Hydro co=USA pw=manual us=on-demand
+D11 the-simrell n=The\sSimrell c=vaporizer mk=The\sSimrell\sCollection md=The\sSimrell co=USA pw=manual sg=hybrid us=on-demand
+D12 vestratto-anvil n=Vestratto\sAnvil c=vaporizer mk=Vestratto md=Anvil pw=manual us=on-demand
+D13 vestratto-tornado n=Vestratto\sTornado c=vaporizer mk=Vestratto md=Tornado pw=manual sg=convection us=on-demand nt=Heated\sby\sinduction:\sa\scopper\scoil\sinside\sheats\sthe\sair\sdrawn\sthrough.
+D14 yll-3-0 n=YLL\s3.0 c=induction-heater mk=YLL md=3.0 pw=electric nt=Adjustable\swattage,\sa\s60\ss\stimeout.\sAdd\sthe\ssettings\syou\suse\sas\smodes,\sand\sa\ssession\sasks\swhich.
+N0 imported\sfrom\s2023-12
+N1 imported\sfrom\s2024-06
+N2 imported\sfrom\s2024-01
+N3 imported\sfrom\s2024-05
+N4 imported\sfrom\s2024-02
+N5 imported\sfrom\s2024-03
+N6 imported\sfrom\s2024-04
+N7 imported\sfrom\s2023-10
+N8 imported\sfrom\s2024-07
+N9 imported\sfrom\s2024-08
+N10 imported\sfrom\s2023-11
+N11 imported\sfrom\s2025-09
+N12 imported\sfrom\s2025-08
+N13 clean\shistory:\sconsumed\sat\ssome\spoint
+N14 imported\sfrom\s2025-07
+N15 imported\sfrom\s2025-10
+N16 imported\sfrom\s2025-11
+N17 imported\sfrom\s2025-12
+N18 imported\sfrom\s2025-05
+N19 imported\sfrom\s2026-07
+N20 imported\sfrom\s2026-01
+N21 imported\sfrom\s2025-01
+N22 imported\sfrom\s2025-02
+N23 imported\sfrom\s2025-06
+N24 imported\sfrom\s2026-02
+N25 imported\sfrom\s2025-03
+N26 imported\sfrom\s2026-03
+N27 imported\sfrom\s2026-06
+N28 imported\sfrom\s2024-12-2
+N29 imported\sfrom\s2026-08
+N30 imported\sfrom\s2024-12-1
+N31 from\s10\ssessions,\s2.35g
+N32 from\s11\ssessions,\s2.57g
+N33 from\s11\ssessions,\s2.61g
+N34 from\s11\ssessions,\s2.70g
+N35 from\s11\ssessions,\s2.55g
+N36 from\s11\ssessions,\s2.72g
+N37 from\s13\ssessions,\s2.89g
+N38 from\s10\ssessions,\s2.50g
+N39 from\s11\ssessions,\s2.33g
+N40 from\s11\ssessions,\s2.42g
+N41 from\s11\ssessions,\s2.67g
+N42 from\s9\ssessions,\s1.96g
+N43 from\s10\ssessions,\s2.33g
+N44 from\s11\ssessions,\s2.44g
+N45 from\s11\ssessions,\s2.64g
+N46 from\s11\ssessions,\s2.76g
+N47 from\s12\ssessions,\s2.60g
+N48 from\s12\ssessions,\s2.84g
+N49 from\s12\ssessions,\s3.16g
+N50 from\s13\ssessions,\s3.10g
+N51 from\s8\ssessions,\s1.87g
+N52 from\s10\ssessions,\s2.07g
+N53 from\s10\ssessions,\s2.20g
+N54 from\s10\ssessions,\s2.30g
+N55 from\s10\ssessions,\s2.34g
+N56 from\s10\ssessions,\s2.41g
+N57 from\s10\ssessions,\s2.43g
+N58 from\s10\ssessions,\s2.48g
+N59 from\s10\ssessions,\s2.55g
+N60 from\s10\ssessions,\s2.72g
+N61 from\s11\ssessions,\s2.43g
+N62 from\s11\ssessions,\s2.47g
+N63 from\s11\ssessions,\s2.50g
+N64 from\s11\ssessions,\s2.52g
+N65 from\s11\ssessions,\s2.58g
+N66 from\s11\ssessions,\s2.63g
+N67 from\s11\ssessions,\s2.66g
+N68 from\s11\ssessions,\s2.68g
+N69 from\s12\ssessions,\s2.48g
+N70 from\s12\ssessions,\s2.51g
+N71 from\s12\ssessions,\s2.54g
+N72 from\s12\ssessions,\s2.74g
+N73 from\s12\ssessions,\s2.76g
+N74 from\s12\ssessions,\s2.77g
+N75 from\s12\ssessions,\s2.86g
+N76 from\s12\ssessions,\s2.98g
+N77 from\s12\ssessions,\s3.09g
+N78 from\s13\ssessions,\s2.82g
+N79 from\s13\ssessions,\s2.90g
+N80 from\s13\ssessions,\s3.02g
+N81 from\s14\ssessions,\s3.44g
+N82 from\s6\ssessions,\s1.36g
+N83 from\s7\ssessions,\s1.61g
+N84 from\s7\ssessions,\s1.82g
+N85 from\s8\ssessions,\s1.68g
+N86 from\s8\ssessions,\s1.95g
+N87 from\s9\ssessions,\s1.93g
+N88 from\s9\ssessions,\s2.03g
+N89 from\s9\ssessions,\s2.09g
+N90 from\s9\ssessions,\s2.11g
+N91 from\s9\ssessions,\s2.12g
+N92 from\s9\ssessions,\s2.28g
+N93 from\s10\ssessions,\s2.46g
+N94 from\s11\ssessions,\s2.20g
+N95 from\s11\ssessions,\s2.51g
+N96 from\s7\ssessions,\s1.56g
+N97 from\s9\ssessions,\s1.74g
+N98 from\s9\ssessions,\s2.38g
+N99 from\s7\ssessions,\s1.73g
+--
+b4 1696809600 1200 r=1792973444 z=0 zr=60 n=7
+b23 0 1500 n=7
+b8 0 1000 n=7
+g4 86400 133 n=7
+g23 0 135 n=7
+g8 0 136 n=7
+g4 86400 59 n=7
+g23 0 72 n=7
+g8 0 34 n=7
+g4 86400 24 n=7
+g23 0 19 n=7
+g8 0 36 n=7
+g4 86400 24 n=7
+g23 0 43 n=7
+g8 0 42 n=7
+g4 86400 70 n=7
+g23 0 53 n=7
+g8 0 113 n=7
+g4 86400 37 n=7
+g23 0 79 n=7
+g8 0 75 n=7
+g4 86400 39 n=7
+g8 0 52 n=7
+g4 86400 38 n=7
+g23 0 39 n=7
+g8 0 38 n=7
+g4 86400 40 n=7
+g23 0 58 n=7
+g8 0 54 n=7
+g4 86400 43 n=7
+g23 0 55 n=7
+g8 0 40 n=7
+g4 86400 55 n=7
+g23 0 110 n=7
+g8 0 90 n=7
+g4 86400 73 n=7
+g23 0 73 n=7
+g8 0 58 n=7
+g4 86400 73 n=7
+g23 0 86 n=7
+g8 0 73 n=7
+g4 86400 42 n=7
+g23 0 46 n=7
+g8 0 37 n=7
+g4 86400 55 n=7
+g23 0 50 n=7
+g8 0 41 n=7
+g4 86400 38 n=7
+g23 0 42 n=7
+g8 0 36 n=7
+g4 86400 55 n=7
+g23 0 72 n=7
+g8 0 45 n=7
+g4 86400 74 n=7
+g23 0 75 n=7
+g4 86400 86 n=7
+g23 0 88 n=7
+g4 86400 52 n=7
+g23 0 55 n=7
+g4 86400 90 n=7
+g23 0 73 n=7
+g23 86400 177 n=7
+b4 345600 1200 n=10
+b23 0 1500 n=10
+b8 0 1000 n=10
+g23 0 200 n=10
+g23 86400 143 n=10
+g23 86400 144 n=10
+g23 86400 143 n=10
+g23 86400 138 n=10
+g4 86400 142 n=10
+g8 0 139 n=10
+g4 86400 85 n=10
+g23 0 85 n=10
+g8 0 83 n=10
+g4 86400 88 n=10
+g23 0 95 n=10
+g8 0 89 n=10
+g4 86400 55 n=10
+g23 0 38 n=10
+g8 0 41 n=10
+g4 86400 39 n=10
+g23 0 39 n=10
+g8 0 37 n=10
+g4 86400 73 n=10
+g23 0 58 n=10
+g8 0 53 n=10
+g4 86400 54 n=10
+g23 0 54 n=10
+g8 0 55 n=10
+g4 86400 72 n=10
+g23 0 57 n=10
+g8 0 54 n=10
+g4 86400 56 n=10
+g23 0 55 n=10
+g8 0 56 n=10
+g4 86400 58 n=10
+g23 0 56 n=10
+g8 0 62 n=10
+g4 86400 59 n=10
+g23 0 94 n=10
+g8 0 40 n=10
+g4 86400 55 n=10
+g23 0 42 n=10
+g8 0 41 n=10
+g4 86400 80 n=10
+g23 0 59 n=10
+g8 0 72 n=10
+g4 86400 102 n=10
+g8 0 82 n=10
+g4 86400 88 n=10
+g8 0 72 n=10
+g4 86400 94 n=10
+g8 0 24 n=10
+b4 950400 2000 n=0
+b27 0 2500 n=0
+b8 0 1500 n=0
+g4 0 176 n=0
+g27 0 204 n=0
+g8 0 179 n=0
+g4 86400 39 n=0
+g27 0 44 n=0
+g8 0 37 n=0
+g4 86400 92 n=0
+g27 0 100 n=0
+g8 0 88 n=0
+g27 86400 46 n=0
+g8 0 39 n=0
+g4 86400 60 n=0
+g27 0 53 n=0
+g8 0 46 n=0
+g4 86400 65 n=0
+g27 0 118 n=0
+g8 0 43 n=0
+g4 86400 110 n=0
+g27 0 41 n=0
+g8 0 55 n=0
+g4 86400 18 n=0
+g27 0 54 n=0
+g8 0 77 n=0
+g4 86400 68 n=0
+g27 0 21 n=0
+g4 86400 51 n=0
+g27 0 51 n=0
+g8 0 51 n=0
+g4 86400 48 n=0
+g27 0 47 n=0
+g8 0 62 n=0
+g4 86400 67 n=0
+g27 0 45 n=0
+g8 0 56 n=0
+g4 86400 166 n=0
+g27 0 57 n=0
+g8 0 44 n=0
+g4 86400 57 n=0
+g27 0 85 n=0
+g8 0 54 n=0
+g4 86400 27 n=0
+g27 0 124 n=0
+g8 0 42 n=0
+g4 86400 51 n=0
+g27 0 145 n=0
+g8 0 46 n=0
+g4 86400 61 n=0
+g27 0 87 n=0
+g8 0 44 n=0
+g4 86400 44 n=0
+g27 0 65 n=0
+g8 0 49 n=0
+g4 259200 96 n=0
+g27 0 94 n=0
+g8 0 88 n=0
+g4 86400 44 n=0
+g27 0 46 n=0
+g8 0 44 n=0
+g4 86400 49 n=0
+g27 0 65 n=0
+g8 0 43 n=0
+g4 86400 58 n=0
+g27 0 56 n=0
+g8 0 43 n=0
+g27 86400 117 n=0
+g4 86400 117 n=0
+g8 0 102 n=0
+g4 86400 100 n=0
+g27 0 98 n=0
+g4 86400 119 n=0
+g27 0 169 n=0
+g8 86400 102 n=0
+g4 86400 160 n=0
+g27 86400 110 n=0
+g8 86400 66 n=0
+g4 86400 57 n=0
+g27 0 104 n=0
+g27 259200 141 n=0
+g27 86400 113 n=0
+b4 518400 1500 n=2
+b34 0 1500 n=2
+b8 0 1500 n=2
+g4 86400 12 n=2
+g34 0 55 n=2
+g8 0 60 n=2
+g4 86400 59 n=2
+g8 0 54 n=2
+g4 86400 58 n=2
+g34 0 68 n=2
+g8 0 60 n=2
+g4 86400 73 n=2
+g34 0 67 n=2
+g8 0 65 n=2
+g4 86400 62 n=2
+g34 0 56 n=2
+g8 0 97 n=2
+g4 86400 69 n=2
+g34 0 75 n=2
+g8 0 68 n=2
+g4 86400 60 n=2
+g34 0 62 n=2
+g8 0 65 n=2
+g4 86400 60 n=2
+g34 0 75 n=2
+g8 0 63 n=2
+g4 86400 75 n=2
+g8 0 65 n=2
+g4 86400 58 n=2
+g34 0 53 n=2
+g8 0 59 n=2
+g4 86400 67 n=2
+g34 0 77 n=2
+g8 0 65 n=2
+g4 86400 60 n=2
+g8 0 66 n=2
+g4 86400 57 n=2
+g34 0 56 n=2
+g4 86400 57 n=2
+g34 0 60 n=2
+g8 0 58 n=2
+g4 86400 122 n=2
+g34 0 56 n=2
+g8 0 62 n=2
+g4 86400 58 n=2
+g34 0 60 n=2
+g8 0 59 n=2
+g4 86400 56 n=2
+g34 0 60 n=2
+g8 0 61 n=2
+g4 86400 62 n=2
+g34 0 59 n=2
+g8 0 49 n=2
+g4 86400 61 n=2
+g34 0 60 n=2
+g8 0 58 n=2
+g4 86400 61 n=2
+g34 0 57 n=2
+g8 0 55 n=2
+g4 86400 63 n=2
+g34 0 60 n=2
+g8 0 70 n=2
+g4 86400 62 n=2
+g34 0 61 n=2
+g8 0 60 n=2
+g4 86400 128 n=2
+g34 0 116 n=2
+g8 0 64 n=2
+g34 86400 129 n=2
+g8 0 56 n=2
+g34 86400 78 n=2
+g8 0 61 n=2
+b6 345600 1500 n=4
+b2 0 1500 n=4
+b5 0 1500 n=4
+g6 0 55 n=4
+g2 0 144 n=4
+g5 0 54 n=4
+g6 86400 53 n=4
+g2 0 56 n=4
+g5 0 56 n=4
+g6 86400 63 n=4
+g2 0 68 n=4
+g5 0 63 n=4
+g6 86400 48 n=4
+g2 0 110 n=4
+g5 0 99 n=4
+g6 86400 54 n=4
+g2 0 55 n=4
+g5 0 53 n=4
+g6 86400 45 n=4
+g2 0 51 n=4
+g5 0 54 n=4
+g6 86400 57 n=4
+g2 0 51 n=4
+g5 0 57 n=4
+g6 86400 100 n=4
+g2 0 100 n=4
+g5 0 100 n=4
+g6 86400 99 n=4
+g2 0 46 n=4
+g5 0 50 n=4
+g6 86400 40 n=4
+g6 86400 52 n=4
+g2 0 100 n=4
+g5 0 100 n=4
+g6 86400 73 n=4
+g2 0 75 n=4
+g5 0 74 n=4
+g6 86400 68 n=4
+g5 0 59 n=4
+g6 86400 60 n=4
+g2 0 48 n=4
+g5 0 57 n=4
+g6 86400 57 n=4
+g6 86400 125 n=4
+g2 0 60 n=4
+g5 0 111 n=4
+g6 86400 65 n=4
+g2 0 70 n=4
+g5 0 71 n=4
+g6 86400 52 n=4
+g2 0 57 n=4
+g5 0 52 n=4
+g6 86400 78 n=4
+g2 0 80 n=4
+g5 0 83 n=4
+g6 86400 60 n=4
+g2 0 70 n=4
+g5 0 76 n=4
+g2 86400 62 n=4
+g5 0 69 n=4
+g6 86400 65 n=4
+g2 0 66 n=4
+g5 0 60 n=4
+g6 86400 63 n=4
+g2 0 63 n=4
+g5 0 102 n=4
+g6 86400 68 n=4
+g2 0 68 n=4
+b6 0 1500 n=5
+b2 0 1500 n=5
+b5 0 1500 n=5
+g6 86400 50 n=5
+g2 0 54 n=5
+g5 0 51 n=5
+g6 86400 102 n=5
+g2 0 106 n=5
+g5 0 107 n=5
+g6 172800 50 n=5
+g2 0 54 n=5
+g5 0 53 n=5
+g6 86400 53 n=5
+g2 0 56 n=5
+g5 0 53 n=5
+g6 86400 52 n=5
+g2 0 55 n=5
+g5 0 55 n=5
+g6 86400 61 n=5
+g2 0 114 n=5
+g5 0 118 n=5
+g6 86400 100 n=5
+g2 0 128 n=5
+g5 0 132 n=5
+g6 86400 55 n=5
+g2 0 64 n=5
+g5 0 53 n=5
+g6 86400 56 n=5
+g2 0 54 n=5
+g5 0 66 n=5
+g6 86400 52 n=5
+g2 0 43 n=5
+g5 0 55 n=5
+g6 86400 64 n=5
+g2 0 62 n=5
+g5 0 58 n=5
+g6 86400 88 n=5
+g2 0 117 n=5
+g5 0 89 n=5
+g2 86400 49 n=5
+g5 0 59 n=5
+g6 86400 71 n=5
+g2 0 85 n=5
+g5 0 101 n=5
+g6 86400 57 n=5
+g2 0 72 n=5
+g5 0 54 n=5
+g2 172800 50 n=5
+g5 0 58 n=5
+g6 86400 121 n=5
+g2 0 51 n=5
+g5 0 53 n=5
+g6 86400 102 n=5
+g2 0 124 n=5
+g5 0 117 n=5
+g6 86400 80 n=5
+g2 0 66 n=5
+g5 0 66 n=5
+g2 86400 96 n=5
+g5 0 60 n=5
+g6 86400 160 n=5
+g5 0 42 n=5
+g6 86400 126 n=5
+b6 691200 1500 n=6
+b2 0 1500 n=6
+b5 0 1500 n=6
+g6 0 51 n=6
+g2 0 58 n=6
+g5 0 57 n=6
+g6 86400 99 n=6
+g2 0 107 n=6
+g5 0 122 n=6
+g2 86400 56 n=6
+g5 0 59 n=6
+g6 86400 78 n=6
+g2 0 42 n=6
+g5 0 75 n=6
+g2 172800 82 n=6
+g6 86400 53 n=6
+g2 0 125 n=6
+g5 0 125 n=6
+g2 86400 69 n=6
+g5 0 80 n=6
+g6 86400 58 n=6
+g2 0 64 n=6
+g5 0 55 n=6
+g6 86400 59 n=6
+g2 0 69 n=6
+g5 0 71 n=6
+g6 86400 82 n=6
+g2 0 63 n=6
+g5 0 48 n=6
+g6 86400 260 n=6
+g2 0 54 n=6
+g5 0 57 n=6
+g6 86400 61 n=6
+g2 0 69 n=6
+g5 0 75 n=6
+g6 86400 60 n=6
+g2 0 74 n=6
+g5 0 76 n=6
+g6 86400 48 n=6
+g2 0 75 n=6
+g5 0 58 n=6
+g6 86400 48 n=6
+g2 0 58 n=6
+g5 0 59 n=6
+g6 86400 69 n=6
+g2 0 69 n=6
+g5 0 74 n=6
+g6 86400 87 n=6
+g2 0 103 n=6
+g5 0 102 n=6
+g2 86400 53 n=6
+g5 0 69 n=6
+g6 86400 81 n=6
+g2 0 85 n=6
+g5 0 76 n=6
+g2 86400 64 n=6
+g5 0 67 n=6
+g6 86400 66 n=6
+g2 0 61 n=6
+g5 0 59 n=6
+g6 86400 184 n=6
+g5 0 36 n=6
+g6 86400 56 n=6
+b6 432000 1500 n=3
+b2 0 1500 n=3
+b5 0 1500 n=3
+g6 0 51 n=3
+g2 0 58 n=3
+g5 0 62 n=3
+g6 86400 55 n=3
+g2 0 53 n=3
+g5 0 59 n=3
+g2 86400 81 n=3
+g5 0 83 n=3
+g6 86400 58 n=3
+g2 0 46 n=3
+g5 0 52 n=3
+g6 86400 45 n=3
+g2 0 66 n=3
+g5 0 59 n=3
+g6 86400 60 n=3
+g2 0 71 n=3
+g5 0 59 n=3
+g6 86400 52 n=3
+g2 0 62 n=3
+g5 0 65 n=3
+g6 86400 57 n=3
+g2 0 75 n=3
+g5 0 80 n=3
+g6 86400 65 n=3
+g2 0 71 n=3
+g5 0 73 n=3
+g6 86400 55 n=3
+g2 0 71 n=3
+g5 0 74 n=3
+g6 86400 67 n=3
+g2 0 69 n=3
+g5 0 69 n=3
+g6 86400 64 n=3
+g2 0 67 n=3
+g5 0 70 n=3
+g6 86400 78 n=3
+g2 0 74 n=3
+g5 0 80 n=3
+g6 86400 62 n=3
+g2 0 69 n=3
+g5 0 72 n=3
+g6 86400 59 n=3
+g2 0 74 n=3
+g5 0 72 n=3
+g6 86400 74 n=3
+g2 0 71 n=3
+g5 0 69 n=3
+g6 86400 98 n=3
+g2 0 62 n=3
+g5 0 96 n=3
+g6 86400 62 n=3
+g2 0 69 n=3
+g5 0 71 n=3
+g6 86400 69 n=3
+g2 0 68 n=3
+g5 0 69 n=3
+g2 86400 68 n=3
+g5 0 69 n=3
+g6 86400 75 n=3
+g2 0 76 n=3
+g5 0 74 n=3
+g6 86400 66 n=3
+g2 0 79 n=3
+g5 0 23 n=3
+g6 86400 83 n=3
+g6 86400 76 n=3
+g6 86400 69 n=3
+b32 0 1500 n=1
+b2 0 1500 n=1
+b31 0 1500 n=1
+g32 0 62 n=1
+g2 0 62 n=1
+g31 0 64 n=1
+g32 86400 69 n=1
+g2 0 73 n=1
+g31 0 74 n=1
+g32 86400 61 n=1
+g2 0 71 n=1
+g31 0 77 n=1
+g32 172800 60 n=1
+g2 0 63 n=1
+g31 0 64 n=1
+g32 86400 55 n=1
+g2 0 51 n=1
+g31 0 55 n=1
+g32 86400 66 n=1
+g2 0 69 n=1
+g31 0 69 n=1
+g32 86400 59 n=1
+g2 0 60 n=1
+g31 0 65 n=1
+g32 86400 53 n=1
+g2 0 61 n=1
+g31 0 62 n=1
+g32 86400 72 n=1
+g2 0 75 n=1
+g31 0 75 n=1
+g32 172800 73 n=1
+g2 0 74 n=1
+g31 0 76 n=1
+g32 86400 74 n=1
+g2 0 76 n=1
+g31 0 79 n=1
+g32 86400 68 n=1
+g2 0 63 n=1
+g31 0 62 n=1
+g32 86400 51 n=1
+g2 0 54 n=1
+g31 0 52 n=1
+g2 86400 63 n=1
+g31 0 67 n=1
+g32 86400 63 n=1
+g2 0 69 n=1
+g31 0 55 n=1
+g32 86400 69 n=1
+g32 86400 72 n=1
+g2 0 62 n=1
+g31 0 75 n=1
+g32 86400 68 n=1
+g2 0 70 n=1
+g31 0 84 n=1
+g2 86400 55 n=1
+g31 0 60 n=1
+g32 86400 62 n=1
+g2 0 51 n=1
+g31 0 54 n=1
+g32 172800 59 n=1
+g2 0 61 n=1
+g31 0 66 n=1
+g32 86400 58 n=1
+g2 0 53 n=1
+g31 0 56 n=1
+g2 86400 71 n=1
+g31 0 56 n=1
+g32 86400 46 n=1
+g2 0 57 n=1
+g31 0 53 n=1
+g32 86400 60 n=1
+g2 0 36 n=1
+g32 86400 120 n=1
+b24 1468800 1500 n=8
+b2 0 1500 n=8
+b35 0 1500 n=8
+g24 86400 64 n=8
+g2 0 63 n=8
+g35 0 57 n=8
+g24 86400 64 n=8
+g2 0 67 n=8
+g35 0 69 n=8
+g24 172800 70 n=8
+g2 0 86 n=8
+g35 0 79 n=8
+g24 86400 63 n=8
+g35 0 78 n=8
+g24 86400 70 n=8
+g2 0 91 n=8
+g35 0 78 n=8
+g24 86400 73 n=8
+g2 0 80 n=8
+g35 0 74 n=8
+g24 172800 68 n=8
+g2 0 66 n=8
+g35 0 76 n=8
+g24 345600 79 n=8
+g2 0 78 n=8
+g35 0 75 n=8
+g24 86400 80 n=8
+g2 0 80 n=8
+g35 0 80 n=8
+g24 172800 77 n=8
+g2 0 85 n=8
+g35 0 86 n=8
+g24 86400 73 n=8
+g2 0 77 n=8
+g35 0 78 n=8
+g24 86400 80 n=8
+g2 0 80 n=8
+g35 0 83 n=8
+g24 86400 78 n=8
+g2 0 83 n=8
+g35 0 82 n=8
+g24 86400 70 n=8
+g2 0 71 n=8
+g35 0 74 n=8
+g24 86400 143 n=8
+g2 0 81 n=8
+g35 0 10 n=8
+g24 86400 70 n=8
+g2 0 76 n=8
+g35 0 78 n=8
+g24 86400 100 n=8
+g2 0 101 n=8
+g35 0 104 n=8
+g24 86400 178 n=8
+g2 0 235 n=8
+g35 0 239 n=8
+b24 86400 1500 n=9
+b2 0 1500 n=9
+b38 0 1500 n=9
+g24 0 60 n=9
+g2 0 61 n=9
+g38 0 67 n=9
+g24 86400 69 n=9
+g2 0 75 n=9
+g38 0 83 n=9
+g24 86400 90 n=9
+g2 0 92 n=9
+g38 0 99 n=9
+g24 86400 81 n=9
+g2 0 87 n=9
+g38 0 87 n=9
+g24 86400 155 n=9
+g2 0 154 n=9
+g38 0 156 n=9
+g24 86400 93 n=9
+g2 0 96 n=9
+g38 0 96 n=9
+g24 86400 153 n=9
+g2 0 95 n=9
+g38 0 97 n=9
+g24 86400 105 n=9
+g2 0 106 n=9
+g38 0 113 n=9
+g24 86400 96 n=9
+g2 0 97 n=9
+g38 0 101 n=9
+g24 86400 102 n=9
+g2 0 95 n=9
+g38 0 97 n=9
+g24 86400 93 n=9
+g2 0 101 n=9
+g38 0 102 n=9
+g24 86400 51 n=9
+g2 0 53 n=9
+g38 0 58 n=9
+g24 86400 53 n=9
+g2 0 54 n=9
+g38 0 57 n=9
+g24 86400 57 n=9
+g2 0 62 n=9
+g38 0 63 n=9
+g24 86400 59 n=9
+g2 0 61 n=9
+g38 0 70 n=9
+g24 86400 103 n=9
+g2 0 118 n=9
+g38 0 104 n=9
+g24 86400 80 n=9
+g2 0 93 n=9
+g38 0 50 n=9
+b49 8640000 500 n=30
+b51 0 500 n=30
+g49 0 52 n=30
+g51 0 51 n=30
+g49 86400 54 n=30
+g51 0 57 n=30
+g49 86400 55 n=30
+g51 0 62 n=30
+g49 86400 48 n=30
+g51 0 54 n=30
+g49 86400 61 n=30
+g51 0 60 n=30
+g49 86400 70 n=30
+g51 0 69 n=30
+g49 86400 64 n=30
+g51 0 77 n=30
+g49 172800 96 n=30
+g51 0 70 n=30
+b13 0 1000 n=28
+b52 0 500 n=28
+g13 0 8 n=28
+g52 0 27 n=28
+g13 86400 67 n=28
+g52 0 65 n=28
+g13 86400 83 n=28
+g52 0 80 n=28
+g13 86400 78 n=28
+g52 0 81 n=28
+g13 86400 76 n=28
+g52 0 82 n=28
+g13 86400 83 n=28
+g52 0 78 n=28
+g13 86400 93 n=28
+g52 0 87 n=28
+g13 172800 177 n=28
+g13 86400 105 n=28
+g13 86400 80 n=28
+g13 86400 80 n=28
+g13 86400 70 n=28
+b13 691200 2000 n=21
+b48 0 500 n=21
+b17 0 500 n=21
+g13 0 164 n=21
+g13 86400 94 n=21
+g13 86400 97 n=21
+g48 0 40 n=21
+g17 0 56 n=21
+g13 172800 158 n=21
+g48 0 31 n=21
+g13 86400 87 n=21
+g48 0 56 n=21
+g17 0 47 n=21
+g48 86400 98 n=21
+g13 86400 100 n=21
+g17 0 76 n=21
+g13 86400 89 n=21
+g48 0 57 n=21
+g17 0 68 n=21
+g13 86400 95 n=21
+g48 0 61 n=21
+g17 0 49 n=21
+g48 86400 41 n=21
+g17 0 50 n=21
+g13 86400 100 n=21
+g13 86400 99 n=21
+g48 0 53 n=21
+g17 0 51 n=21
+g13 86400 108 n=21
+g17 0 55 n=21
+g13 86400 122 n=21
+g17 0 48 n=21
+g13 86400 99 n=21
+g48 0 63 n=21
+g13 86400 110 n=21
+g13 86400 112 n=21
+g13 86400 120 n=21
+g13 86400 102 n=21
+g13 86400 144 n=21
+b13 1468800 2000 n=22
+b2 0 500 n=22
+b17 0 500 n=22
+g13 0 214 n=22
+g2 0 38 n=22
+g17 0 40 n=22
+g13 86400 91 n=22
+g2 0 66 n=22
+g2 86400 61 n=22
+g17 0 47 n=22
+g13 86400 120 n=22
+g17 0 53 n=22
+g13 172800 92 n=22
+g2 0 71 n=22
+g17 0 58 n=22
+g13 86400 85 n=22
+g17 0 56 n=22
+g13 86400 92 n=22
+g2 0 64 n=22
+g17 86400 46 n=22
+g13 86400 102 n=22
+g17 0 55 n=22
+g13 86400 93 n=22
+g2 0 54 n=22
+g17 86400 64 n=22
+g13 86400 110 n=22
+g2 0 53 n=22
+g17 86400 81 n=22
+g2 86400 93 n=22
+g13 86400 106 n=22
+g13 86400 125 n=22
+g13 86400 122 n=22
+g13 86400 123 n=22
+g13 86400 134 n=22
+g13 86400 143 n=22
+g13 86400 117 n=22
+g13 86400 131 n=22
+b13 259200 2000 n=25
+b47 0 500 n=25
+b50 0 500 n=25
+g13 0 234 n=25
+g47 0 54 n=25
+g50 0 52 n=25
+g47 86400 52 n=25
+g13 86400 91 n=25
+g47 0 55 n=25
+g50 0 59 n=25
+g13 172800 106 n=25
+g47 0 60 n=25
+g50 0 66 n=25
+g13 86400 117 n=25
+g47 0 55 n=25
+g13 86400 93 n=25
+g47 0 53 n=25
+g50 0 60 n=25
+g47 86400 57 n=25
+g50 0 68 n=25
+g13 86400 105 n=25
+g47 0 75 n=25
+g50 0 76 n=25
+g13 86400 109 n=25
+g47 0 39 n=25
+g50 0 61 n=25
+g13 86400 117 n=25
+g50 0 58 n=25
+g13 86400 132 n=25
+g13 86400 120 n=25
+g13 86400 129 n=25
+g13 86400 147 n=25
+g13 86400 239 n=25
+g13 86400 121 n=25
+g13 86400 140 n=25
+b33 4665600 1000 n=18
+b39 0 1000 n=18
+b40 0 1000 n=18
+g39 0 58 n=18
+g40 0 42 n=18
+g33 86400 67 n=18
+g39 0 59 n=18
+g40 86400 45 n=18
+g33 172800 39 n=18
+g39 0 45 n=18
+g33 86400 47 n=18
+g40 0 47 n=18
+g39 86400 52 n=18
+g40 0 57 n=18
+g33 172800 79 n=18
+g39 0 45 n=18
+g39 172800 53 n=18
+g40 0 73 n=18
+g33 86400 77 n=18
+g39 0 64 n=18
+g39 86400 75 n=18
+g40 0 82 n=18
+g33 86400 91 n=18
+g39 0 61 n=18
+g39 86400 58 n=18
+g40 0 69 n=18
+g33 172800 86 n=18
+g39 0 57 n=18
+g40 0 96 n=18
+g39 86400 78 n=18
+g40 0 97 n=18
+g39 86400 97 n=18
+g40 0 77 n=18
+g33 86400 68 n=18
+g40 0 70 n=18
+g39 86400 94 n=18
+g40 0 111 n=18
+g33 86400 113 n=18
+g39 0 64 n=18
+g39 172800 40 n=18
+g40 0 75 n=18
+g33 86400 66 n=18
+g40 0 59 n=18
+g33 86400 124 n=18
+g33 172800 143 n=18
+b33 86400 1000 n=23
+b46 0 1000 n=23
+b44 0 1000 n=23
+g33 0 100 n=23
+g46 0 70 n=23
+g44 0 56 n=23
+g33 86400 100 n=23
+g46 0 54 n=23
+g44 0 52 n=23
+g33 86400 100 n=23
+g46 0 76 n=23
+g44 0 59 n=23
+g33 86400 100 n=23
+g46 0 62 n=23
+g44 0 62 n=23
+g33 86400 100 n=23
+g46 0 63 n=23
+g44 0 59 n=23
+g33 86400 100 n=23
+g46 0 58 n=23
+g44 0 58 n=23
+g33 86400 100 n=23
+g46 0 146 n=23
+g44 0 173 n=23
+g33 86400 100 n=23
+g33 86400 100 n=23
+g46 0 92 n=23
+g44 0 89 n=23
+g33 86400 100 n=23
+g46 0 121 n=23
+g44 0 136 n=23
+g46 86400 86 n=23
+g44 0 98 n=23
+g46 172800 85 n=23
+g44 0 88 n=23
+g46 86400 87 n=23
+g44 0 70 n=23
+b42 345600 1000 n=14
+b41 0 1000 n=14
+b17 0 1500 n=14
+g42 0 43 n=14
+g41 0 58 n=14
+g41 86400 63 n=14
+g17 0 73 n=14
+g42 86400 53 n=14
+g17 0 95 n=14
+g41 86400 78 n=14
+g17 0 78 n=14
+g42 86400 74 n=14
+g17 0 86 n=14
+g41 172800 82 n=14
+g17 0 104 n=14
+g42 172800 84 n=14
+g17 0 87 n=14
+g41 172800 75 n=14
+g17 0 93 n=14
+g42 86400 103 n=14
+g17 0 90 n=14
+g41 172800 77 n=14
+g17 0 77 n=14
+g42 86400 98 n=14
+g17 0 105 n=14
+g41 86400 76 n=14
+g17 0 86 n=14
+g42 172800 80 n=14
+g17 0 97 n=14
+g42 86400 52 n=14
+g41 0 58 n=14
+g41 259200 65 n=14
+g17 0 65 n=14
+g42 86400 85 n=14
+g17 0 97 n=14
+g41 172800 84 n=14
+g17 0 75 n=14
+g42 86400 50 n=14
+g41 0 80 n=14
+g41 86400 83 n=14
+g17 0 92 n=14
+g42 86400 100 n=14
+g41 0 76 n=14
+g42 86400 85 n=14
+g17 0 52 n=14
+g42 86400 93 n=14
+g41 86400 45 n=14
+g17 0 48 n=14
+b43 259200 1000 n=12
+b37 0 1500 n=12
+b17 0 1500 n=12
+g37 0 82 n=12
+g17 0 70 n=12
+g43 86400 60 n=12
+g37 0 72 n=12
+g43 86400 80 n=12
+g17 0 87 n=12
+g37 86400 92 n=12
+g17 0 90 n=12
+g43 86400 76 n=12
+g37 0 89 n=12
+g37 86400 78 n=12
+g17 0 80 n=12
+g43 86400 83 n=12
+g17 0 81 n=12
+g37 86400 87 n=12
+g17 0 88 n=12
+g43 86400 86 n=12
+g17 0 86 n=12
+g37 86400 84 n=12
+g17 0 94 n=12
+g43 86400 92 n=12
+g37 0 86 n=12
+g37 86400 103 n=12
+g17 0 109 n=12
+g43 86400 89 n=12
+g37 0 92 n=12
+g43 86400 89 n=12
+g37 0 75 n=12
+g17 0 177 n=12
+g37 172800 100 n=12
+g17 0 97 n=12
+g43 86400 93 n=12
+g37 0 77 n=12
+g43 172800 70 n=12
+g17 0 62 n=12
+g37 86400 73 n=12
+g17 0 74 n=12
+g43 518400 69 n=12
+g37 0 75 n=12
+g37 172800 76 n=12
+g17 0 88 n=12
+g43 86400 72 n=12
+g17 0 80 n=12
+g43 86400 41 n=12
+g37 0 159 n=12
+g17 0 137 n=12
+b36 0 2000 n=11
+b7 0 1500 n=11
+b45 0 1000 n=11
+g36 172800 82 n=11
+g7 0 87 n=11
+g45 0 49 n=11
+g36 86400 200 n=11
+g7 0 73 n=11
+g36 86400 111 n=11
+g7 0 95 n=11
+g36 86400 104 n=11
+g7 0 82 n=11
+g45 0 57 n=11
+g36 86400 100 n=11
+g7 0 100 n=11
+g36 172800 109 n=11
+g7 0 94 n=11
+g45 0 63 n=11
+g36 86400 107 n=11
+g7 0 89 n=11
+g36 86400 92 n=11
+g7 0 93 n=11
+g7 86400 67 n=11
+g45 0 84 n=11
+g36 86400 95 n=11
+g7 0 106 n=11
+g45 0 82 n=11
+g36 172800 101 n=11
+g7 0 85 n=11
+g45 0 100 n=11
+g36 172800 103 n=11
+g7 0 110 n=11
+g45 0 111 n=11
+g36 86400 102 n=11
+g7 0 103 n=11
+g45 0 119 n=11
+g36 172800 106 n=11
+g7 0 106 n=11
+g45 0 94 n=11
+g36 172800 86 n=11
+g7 0 58 n=11
+g45 0 85 n=11
+g36 172800 106 n=11
+g7 0 91 n=11
+g45 0 83 n=11
+g36 86400 111 n=11
+g7 0 61 n=11
+g45 0 73 n=11
+g36 86400 160 n=11
+g36 172800 125 n=11
+b28 518400 2500 n=15
+b0 0 1500 n=15
+b1 0 1500 n=15
+g28 0 423 n=15
+g0 0 81 n=15
+g28 172800 92 n=15
+g1 0 97 n=15
+g28 86400 107 n=15
+g0 0 103 n=15
+g28 172800 97 n=15
+g1 0 103 n=15
+g28 86400 101 n=15
+g0 0 93 n=15
+g28 86400 106 n=15
+g1 0 92 n=15
+g28 86400 99 n=15
+g0 0 96 n=15
+g28 86400 118 n=15
+g1 0 115 n=15
+g0 86400 113 n=15
+g1 0 120 n=15
+g28 86400 140 n=15
+g0 0 134 n=15
+g1 0 135 n=15
+g28 259200 135 n=15
+g0 0 131 n=15
+g1 0 132 n=15
+g28 86400 130 n=15
+g0 0 125 n=15
+g1 0 122 n=15
+g28 172800 150 n=15
+g0 0 144 n=15
+g1 0 148 n=15
+g28 172800 131 n=15
+g0 0 129 n=15
+g1 0 130 n=15
+g0 172800 126 n=15
+g1 0 129 n=15
+g28 172800 129 n=15
+g0 0 127 n=15
+g1 0 129 n=15
+g0 86400 98 n=15
+g1 0 48 n=15
+g28 172800 261 n=15
+g28 172800 163 n=15
+g28 259200 118 n=15
+b3 86400 2500 n=16
+b7 0 1500 n=16
+b0 0 1500 n=16
+g3 0 133 n=16
+g3 259200 119 n=16
+g3 86400 123 n=16
+g7 0 88 n=16
+g0 0 85 n=16
+g3 172800 131 n=16
+g7 0 96 n=16
+g0 0 92 n=16
+g3 86400 107 n=16
+g7 0 104 n=16
+g0 0 97 n=16
+g3 86400 159 n=16
+g7 0 161 n=16
+g0 0 155 n=16
+g3 172800 137 n=16
+g7 0 124 n=16
+g0 0 110 n=16
+g3 172800 150 n=16
+g7 0 133 n=16
+g0 86400 151 n=16
+g3 86400 174 n=16
+g7 0 152 n=16
+g3 86400 151 n=16
+g7 0 142 n=16
+g3 86400 157 n=16
+g7 0 146 n=16
+g0 86400 155 n=16
+g3 172800 109 n=16
+g0 0 103 n=16
+g3 172800 153 n=16
+g7 0 118 n=16
+g0 0 133 n=16
+g3 172800 160 n=16
+g0 0 131 n=16
+g3 172800 128 n=16
+g0 0 120 n=16
+g3 86400 146 n=16
+g7 0 150 n=16
+g3 86400 156 n=16
+g0 0 147 n=16
+g3 172800 107 n=16
+g7 0 86 n=16
+g0 0 21 n=16
+b14 172800 2000 n=17
+b0 0 2000 n=17
+b1 0 2000 n=17
+g14 0 599 n=17
+g0 0 102 n=17
+g1 0 109 n=17
+g14 172800 120 n=17
+g0 0 112 n=17
+g1 0 106 n=17
+g0 86400 115 n=17
+g1 0 110 n=17
+g14 86400 101 n=17
+g0 0 91 n=17
+g1 0 117 n=17
+g0 86400 126 n=17
+g1 0 100 n=17
+g0 172800 132 n=17
+g1 0 122 n=17
+g0 86400 135 n=17
+g1 0 127 n=17
+g0 86400 132 n=17
+g1 0 130 n=17
+g14 172800 161 n=17
+g0 0 161 n=17
+g1 0 153 n=17
+g0 86400 119 n=17
+g1 0 126 n=17
+g0 172800 138 n=17
+g1 0 77 n=17
+g14 86400 173 n=17
+g0 0 125 n=17
+g1 0 123 n=17
+g0 172800 155 n=17
+g1 0 153 n=17
+g0 86400 177 n=17
+g1 0 133 n=17
+g14 86400 102 n=17
+g14 86400 98 n=17
+g14 86400 98 n=17
+g14 86400 98 n=17
+g14 86400 98 n=17
+g14 86400 152 n=17
+g0 0 180 n=17
+g1 0 145 n=17
+g1 86400 169 n=17
+g14 86400 200 n=17
+b9 172800 2000 n=20
+b0 0 2000 n=20
+b16 0 2000 n=20
+g9 0 84 n=20
+g16 0 440 n=20
+g9 86400 137 n=20
+g16 0 137 n=20
+g0 86400 100 n=20
+g16 0 100 n=20
+g9 259200 134 n=20
+g0 0 139 n=20
+g9 432000 146 n=20
+g16 0 139 n=20
+g0 86400 147 n=20
+g9 345600 141 n=20
+g0 0 152 n=20
+g9 259200 176 n=20
+g0 0 171 n=20
+g16 0 159 n=20
+g9 86400 160 n=20
+g0 0 158 n=20
+g9 518400 125 n=20
+g9 86400 105 n=20
+g0 0 90 n=20
+g9 518400 162 n=20
+g0 0 162 n=20
+b10 0 2000 n=24
+b12 0 2000 n=24
+b18 0 2000 n=24
+g10 0 72 n=24
+g12 0 61 n=24
+g9 172800 93 n=20
+g0 0 100 n=20
+g18 0 68 n=24
+g9 86400 97 n=20
+g0 0 100 n=20
+g12 0 105 n=24
+g9 172800 163 n=20
+g0 0 179 n=20
+g9 86400 147 n=20
+g0 0 150 n=20
+g9 172800 130 n=20
+g0 0 352 n=20
+g16 345600 210 n=20
+g12 86400 127 n=24
+g10 86400 151 n=24
+g12 0 149 n=24
+g12 86400 171 n=24
+g16 432000 168 n=20
+g12 0 121 n=24
+g10 86400 164 n=24
+g12 0 183 n=24
+g12 518400 340 n=24
+g10 86400 174 n=24
+g12 86400 284 n=24
+b21 86400 1000 n=26
+b22 0 1000 n=26
+b19 0 1000 n=26
+g10 345600 175 n=24
+g12 0 167 n=24
+g12 86400 178 n=24
+g10 86400 154 n=24
+g12 0 114 n=24
+g10 345600 178 n=24
+g18 86400 113 n=24
+g21 0 147 n=26
+g18 86400 202 n=24
+g18 86400 403 n=24
+g18 432000 412 n=24
+g18 172800 181 n=24
+g18 86400 267 n=24
+g18 259200 268 n=24
+g10 86400 260 n=24
+g18 0 86 n=24
+g19 86400 141 n=26
+g10 86400 144 n=24
+g21 0 123 n=26
+g10 86400 152 n=24
+g16 86400 297 n=20
+g10 0 150 n=24
+g16 86400 350 n=20
+g10 0 226 n=24
+g22 432000 154 n=26
+g19 86400 133 n=26
+g22 86400 140 n=26
+g21 86400 40 n=26
+g22 0 111 n=26
+g19 0 45 n=26
+g21 345600 105 n=26
+g21 86400 124 n=26
+g22 0 58 n=26
+g19 0 109 n=26
+g19 86400 128 n=26
+g22 86400 153 n=26
+g19 0 123 n=26
+g21 86400 152 n=26
+g22 0 89 n=26
+g19 0 72 n=26
+g21 86400 102 n=26
+g22 0 84 n=26
+g19 0 112 n=26
+g21 86400 102 n=26
+g22 0 110 n=26
+g19 0 65 n=26
+g21 86400 105 n=26
+g22 0 101 n=26
+g19 0 72 n=26
+b30 4924800 500 n=27
+b20 0 1000 n=27
+b1 0 1000 n=27
+g1 0 35 n=27
+g30 172800 37 n=27
+g20 0 77 n=27
+g20 86400 73 n=27
+g1 0 53 n=27
+g20 86400 80 n=27
+g1 0 172 n=27
+g20 86400 83 n=27
+g20 86400 105 n=27
+g1 0 91 n=27
+g1 86400 83 n=27
+g1 345600 75 n=27
+g30 86400 108 n=27
+g20 0 120 n=27
+g1 0 102 n=27
+g20 864000 90 n=27
+g1 0 94 n=27
+b15 86400 2000 n=19
+b11 0 2000 n=19
+b1 0 2000 n=19
+g1 86400 103 n=27
+g20 86400 137 n=27
+g30 86400 132 n=27
+g20 0 178 n=27
+g1 518400 99 n=27
+g30 86400 161 n=27
+g20 0 57 n=27
+g1 0 93 n=27
+g30 86400 62 n=27
+g15 432000 98 n=19
+g1 0 82 n=19
+g11 86400 135 n=19
+g1 0 108 n=19
+g1 86400 87 n=19
+g15 345600 98 n=19
+g11 0 156 n=19
+g15 86400 114 n=19
+g1 0 119 n=19
+g1 86400 113 n=19
+g15 432000 122 n=19
+g11 0 103 n=19
+g1 0 191 n=19
+g1 259200 106 n=19
+g15 345600 154 n=19
+g11 0 179 n=19
+g1 86400 116 n=19
+g15 86400 151 n=19
+g1 0 141 n=19
+g1 86400 139 n=19
+g11 432000 134 n=19
+g1 0 149 n=19
+g11 518400 131 n=19
+g1 0 150 n=19
+b25 86400 2000 n=29
+b29 0 2000 n=29
+b26 0 2000 n=29
+g15 86400 114 n=19
+g1 0 89 n=19
+g11 432000 116 n=19
+g1 0 78 n=19
+g11 86400 143 n=19
+g1 0 161 n=19
+g1 86400 171 n=19
+g11 432000 122 n=19
+g11 691200 217 n=19
+g11 86400 172 n=19
+g15 86400 156 n=19
+g11 432000 152 n=19
+g15 86400 145 n=19
+g15 86400 127 n=19
+g26 0 134 n=29
+g25 86400 132 n=29
+g29 0 147 n=29
+g25 86400 126 n=29
+g29 0 134 n=29
+g26 0 120 n=29
+g15 604800 154 n=19
+g26 86400 154 n=29
+g29 86400 163 n=29
+g25 86400 169 n=29
+g29 86400 169 n=29
+g25 86400 140 n=29
+g25 432000 146 n=29
+g26 0 157 n=29
+g26 259200 141 n=29
+g29 172800 145 n=29
+g25 86400 150 n=29
+s28 -31033860 27 r=2 z=60 d=2 t=185 m=Session tm=420
+s28 81780 18 d=1 t=190
+s28 70860 26 r=1 d=0 t=195
+s28 -147120 32 d=1 t=195
+s28 299460 24 d=0 t=200
+s28 51180 17 d=1 t=190
+s28 -5340 24 d=2 t=165 m=On\sdemand
+s3 178980 20 d=1 t=180
+s3 -116100 28 d=0 t=195
+s3 -106500 23 d=1 t=185
+s3 211560 16 d=1 t=190
+s3 174300 29 d=1 t=190
+s3 -81360 20 d=0 t=190
+s3 89640 24 d=1 t=180
+s3 -3120 30 d=1 t=195
+s3 -26520 16 d=2 t=165 m=On\sdemand
+s3 113520 28 d=2 t=165 m=On\sdemand
+s3 81840 26 d=0 t=185
+s7 -214620 17 d=0 t=180
+s7 219300 27 d=0 t=180
+s7 -181620 20 d=2 t=185 m=Session tm=420
+s0 74100 17 d=2 t=185 m=Session tm=420
+s0 -11580 32 d=1 t=195
+c0 3600 17 d=1 n=56
+c28 0 36 d=1 n=56
+c3 0 76 d=1 n=56
+s3 195720 30 d=2 t=185 m=Session tm=420
+s3 -92280 27 r=1 d=2 t=185 m=Session tm=420
+s3 188040 26 d=2 t=185 m=Session tm=420
+s3 -111120 22 d=2 t=185 m=Session tm=420
+s7 19680 31 d=0 t=195
+s7 86760 24 d=1 t=180
+s7 -137040 17 d=0 t=190
+s0 132000 20 d=2 t=185 m=Session tm=420
+c7 13320 9 d=2 n=32
+c0 0 16 d=2 n=32
+c28 0 22 d=2 n=32
+c3 0 64 d=2 n=32
+s0 -191340 27 d=0 t=175
+s0 71880 18 d=0 t=175
+c7 28020 43 d=0 n=33
+c0 0 21 d=0 n=33
+c28 0 23 d=0 n=33
+c3 0 34 d=0 n=33
+s3 138540 29 d=0 t=190
+s3 -87360 30 d=0 t=175
+s3 21480 18 d=2 t=165 m=On\sdemand
+s7 -97380 31 d=0 t=185
+s7 109920 26 d=0 t=175
+s7 -29460 24 d=0 t=195
+s0 27060 32 d=1 t=180
+s0 -43980 27 d=0 t=180
+s0 17340 25 d=0 t=185
+s3 182880 30 d=0 t=195
+s3 20340 30 d=2 t=165 m=On\sdemand
+s3 -182520 16 d=0 t=195
+s3 -12960 30 r=1 d=1 t=185
+s7 187140 16 d=0 t=180
+s7 -193080 22 d=2 t=185 m=Session tm=420
+s7 23700 20 d=0 t=175
+c7 172980 42 d=0 n=57
+c0 0 26 d=0 n=57
+c3 0 52 d=0 n=57
+s7 -195600 16 d=0 t=175
+s0 14340 31 d=2 t=165 m=On\sdemand
+s0 13860 16 d=1 t=185
+s0 -9000 32 d=0 t=200
+s0 179400 22 d=1 t=185
+s3 720 22 d=0 t=175
+s3 -52440 20 d=0 t=190
+s3 54480 29 d=2 t=165 m=On\sdemand
+s3 162600 30 d=2 t=185 m=Session tm=420
+s7 -88440 26 d=0 t=190
+s7 94440 28 d=0 t=175
+s7 -85080 29 d=1 t=180
+s0 -88140 17 d=0 t=190
+s0 90240 27 d=0 t=190
+s0 81720 28 d=1 t=185
+s3 90780 30 d=1 t=190
+s3 58260 29 d=0 t=195
+s3 24780 27 d=0 t=180
+s3 -80040 23 r=1 d=2 t=185 m=Session tm=420
+s7 -140520 26 d=1 t=180
+s7 51300 20 d=0 t=175
+s7 73260 22 d=1 t=185
+s7 3300 27 d=2 t=185 m=Session tm=420
+s0 88440 19 d=1 t=195
+s0 -36840 18 d=0 t=175
+s0 87000 31 d=1 t=180
+c7 3600 49 d=1 n=77
+c0 0 72 d=1 n=77
+c3 0 29 d=1 n=77
+s3 116580 31 d=1 t=190
+s3 -74820 16 d=0 t=185
+c7 3600 49 d=0 n=54
+c0 0 41 d=0 n=54
+c3 0 63 d=0 n=54
+s3 -101280 23 d=1 t=185
+s3 9360 17 d=0 t=180
+s7 -7200 17 d=2 t=185 m=Session tm=420
+s7 172920 26 d=0 t=180
+s7 -1380 25 d=0 t=200
+s7 -83460 26 d=2 t=185 m=Session tm=420
+s3 151140 25 d=0 t=175
+s3 -8460 29 d=2 t=165 m=On\sdemand
+s3 -56700 20 d=0 t=185
+s3 -84960 28 d=0 t=175
+s7 61200 28 r=1 d=0 t=175
+s7 22980 27 d=2 t=165 m=On\sdemand
+c7 61080 59 d=2 n=98
+c3 0 86 d=2 n=98
+s7 -60120 17 d=0 t=175
+s7 -85080 19 d=2 t=185 m=Session tm=420
+s3 172500 21 d=1 t=195
+s3 -81180 29 d=1 t=190
+s3 53040 24 d=2 t=185 m=Session tm=420
+s3 -56820 17 d=2 t=165 m=On\sdemand
+s7 -15660 26 d=1 t=185
+s7 188460 30 d=2 t=165 m=On\sdemand
+s7 6060 27 d=1 t=180
+s7 -22620 27 d=0 t=175
+s0 -97740 29 d=2 t=165 m=On\sdemand
+s0 192180 25 d=1 t=190
+s0 -76380 25 d=0 t=175
+s0 87840 18 d=0 t=180
+s3 -2220 24 d=0 t=195
+s3 -16200 20 d=0 t=195
+c7 22020 76 d=0 n=35
+c0 0 26 d=0 n=35
+c3 0 55 d=0 n=35
+s3 163440 29 d=1 t=195
+s0 -93720 30 d=1 t=180
+s0 -21780 16 r=1 d=0 t=175
+s0 37920 28 d=1 t=180
+s3 249060 26 d=1 t=180
+c7 3600 25 d=1 n=60
+c0 0 38 d=1 n=60
+c3 0 63 d=1 n=60
+s3 -213540 24 d=1 t=180
+s3 169920 26 d=0 t=185
+s7 -89340 18 d=1 t=195
+s7 -38520 26 d=2 t=185 m=Session tm=420
+s7 143160 15 d=1 t=190
+s7 -56940 30 d=0 t=175
+s0 3840 20 d=0 t=180
+s0 -96600 22 d=0 t=195
+s0 85440 17 d=1 t=190
+s0 91380 19 d=1 t=195
+s3 -30240 30 d=0 t=200
+s3 23940 17 d=2 t=185 m=Session tm=420
+s3 88440 26 d=0 t=200
+s3 -17220 30 d=2 t=165 m=On\sdemand
+s0 25140 19 d=0 t=200
+s0 -97620 15 d=0 t=200
+s0 92880 22 d=1 t=190
+s3 170400 30 r=1 d=1 t=185
+s3 96360 26 d=0 t=175
+s3 -420 24 d=2 t=165 m=On\sdemand
+s0 -174600 16 d=1 t=195
+s0 55320 22 d=0 t=195
+c7 123300 16 d=0 n=64
+c0 0 61 d=0 n=64
+c3 0 57 d=0 n=64
+s0 -14280 24 d=0 t=200
+s0 2820 16 d=2 t=165 m=On\sdemand
+s3 69720 19 d=0 t=185
+s3 -12360 29 d=0 t=185
+s3 -135660 19 d=0 t=200
+s3 -9900 30 d=2 t=165 m=On\sdemand
+s7 9600 15 d=2 t=165 m=On\sdemand
+s7 -9900 24 d=2 t=165 m=On\sdemand
+s7 127440 17 d=2 t=165 m=On\sdemand
+c7 3600 79 d=2 n=65
+c0 0 32 d=2 n=65
+c3 0 71 d=2 n=65
+s7 46200 27 d=0 t=175
+s3 -80220 17 d=1 t=180
+s3 64140 20 d=0 t=185
+s3 10440 31 d=0 t=185
+s3 -90420 29 d=2 t=165 m=On\sdemand
+s0 10500 20 r=1 d=1 t=195
+s0 85440 24 d=1 t=195
+s0 -94980 27 d=1 t=180
+c0 98580 73 d=1 n=96
+c3 0 32 d=1 n=96
+s0 840 19 d=2 t=165 m=On\sdemand
+s3 37440 19 d=0 t=175
+s3 135060 21 d=1 t=185
+s3 2460 28 d=2 t=185 m=Session tm=420
+s7 74520 22 d=1 t=195
+s7 -163500 25 d=0 t=180
+s0 2640 25 d=0 t=175
+c7 3600 28 d=0 n=86
+c0 0 13 d=0 n=86
+c3 0 64 d=0 n=86
+s14 317520 21 d=1 t=180
+s14 -160980 17 d=1 t=180
+s14 48240 20 d=1 t=195
+s14 121020 30 d=0 t=200
+s0 -96600 19 d=2 t=165 m=On\sdemand
+s0 15120 28 d=1 t=180
+s0 -109080 31 d=0 t=190
+s1 66000 30 d=1 t=185
+s1 135660 19 d=0 t=175
+s1 -8040 17 d=1 t=190
+s14 49440 18 r=1 d=0 t=195
+s14 127380 25 d=0 t=180
+s14 -165720 17 d=1 t=185
+s14 148380 21 d=1 t=185
+s0 10740 25 d=2 t=165 m=On\sdemand
+s0 5040 28 d=1 t=180
+c7 3600 11 d=1 n=40
+c0 0 27 d=1 n=40
+c14 0 46 d=1 n=40
+c1 0 23 d=1 n=40
+c3 0 10 d=1 n=40
+s0 -21540 22 d=2 t=185 m=Session tm=420
+s1 -71220 20 d=0 t=175
+s1 93840 25 d=1 t=180
+s1 -1260 21 d=1 t=180
+s0 38040 28 d=2 t=165 m=On\sdemand
+s0 44220 26 d=2 t=185 m=Session tm=420
+s0 -14640 19 d=0 t=175
+s1 -67980 19 d=0 t=195
+s1 -24360 21 d=1 t=180
+s1 27060 20 d=1 t=180
+s14 164940 16 d=2 t=185 m=Session tm=420
+s14 -87480 32 d=0 t=190
+s14 44820 17 d=1 t=185
+s0 -146160 17 r=1 d=1 t=190
+s0 155460 26 d=1 t=185
+s1 -54060 22 d=1 t=185
+s1 -75720 24 d=0 t=175
+s1 35520 24 d=1 t=195
+s1 134160 18 d=0 t=195
+s0 -16860 28 d=1 t=195
+s0 13020 22 d=0 t=185
+c0 7440 32 d=0 n=74
+c14 0 47 d=0 n=74
+c1 0 45 d=0 n=74
+s0 -8340 23 d=2 t=185 m=Session tm=420
+s0 -3600 25 d=1 t=195
+s1 -87300 30 d=0 t=200
+s1 186960 30 d=0 t=175
+s1 -92820 27 d=2 t=165 m=On\sdemand
+c0 3600 91 d=2 n=43
+c14 0 9 d=2 n=43
+c1 0 15 d=2 n=43
+c3 0 16 d=2 n=43
+s0 74700 24 d=1 t=185
+c0 3600 67 d=1 n=90
+c14 0 11 d=1 n=90
+c1 0 59 d=1 n=90
+s0 179280 16 d=0 t=190
+s0 5460 20 d=2 t=185 m=Session tm=420
+s1 -88500 31 d=1 t=195
+s1 720 26 d=1 t=190
+s1 -34380 32 r=1 d=0 t=185
+s0 22080 24 d=0 t=185
+s0 72060 31 d=0 t=185
+s0 -95040 22 d=0 t=175
+s0 182160 16 d=2 t=165 m=On\sdemand
+s1 -172620 15 d=0 t=200
+s1 61260 22 d=1 t=185
+s1 44220 26 d=2 t=165 m=On\sdemand
+s0 79260 29 d=2 t=185 m=Session tm=420
+s0 -37800 16 d=1 t=185
+s0 114480 20 d=0 t=185
+s0 -198000 31 d=1 t=185
+s1 14160 31 d=1 t=195
+s1 205320 23 d=2 t=165 m=On\sdemand
+s1 -185520 15 d=2 t=165 m=On\sdemand
+s1 103800 25 d=2 t=185 m=Session tm=420
+s14 61560 26 d=0 t=180
+s14 103740 17 d=1 t=190
+s14 -86520 19 d=0 t=185
+s14 88740 22 r=1 d=0 t=190
+c0 3600 53 d=0 n=32
+c14 0 32 d=0 n=32
+c1 0 36 d=0 n=32
+s0 84420 30 d=1 t=190
+s0 -96900 29 d=2 t=165 m=On\sdemand
+s0 72000 26 d=0 t=185
+s0 -65700 23 d=2 t=185 m=Session tm=420
+s1 88200 29 d=0 t=175
+s1 -134340 25 d=0 t=175
+s1 -54900 28 d=1 t=190
+s1 81720 31 d=0 t=195
+s0 110940 17 d=0 t=200
+s0 -120600 25 d=0 t=195
+s0 121320 29 d=1 t=180
+s1 -49500 20 d=2 t=185 m=Session tm=420
+s1 47520 18 d=1 t=185
+s1 -84180 31 d=0 t=185
+s0 157200 25 d=2 t=165 m=On\sdemand
+c0 3600 78 d=2 n=95
+c1 0 60 d=2 n=95
+s0 169860 30 d=0 t=200
+s0 -172020 27 d=0 t=185
+s1 47160 20 r=1 d=1 t=195
+s1 46860 31 d=2 t=165 m=On\sdemand
+s14 5400 24 d=2 t=165 m=On\sdemand
+s14 -13800 30 d=1 t=190
+s14 48120 15 d=1 t=190
+c0 3600 61 d=1 n=81
+c14 0 35 d=1 n=81
+c1 0 100 d=1 n=81
+s14 21960 22 d=0 t=175
+c0 16320 69 d=0 n=84
+c14 0 15 d=0 n=84
+c1 0 41 d=0 n=84
+s0 -1560 31 d=1 t=185
+s0 -87900 31 d=1 t=185
+s0 97980 21 d=2 t=165 m=On\sdemand
+s1 -98760 17 d=0 t=195
+s1 63960 20 d=1 t=190
+s1 117780 16 d=1 t=190
+s1 -27120 28 d=0 t=185
+s0 18660 25 d=2 t=185 m=Session tm=420
+s0 151020 21 d=2 t=165 m=On\sdemand
+s0 -135120 23 r=1 d=1 t=195
+s0 -28140 26 d=2 t=185 m=Session tm=420
+s1 98220 19 d=0 t=180
+s1 -72360 16 d=1 t=190
+s1 119700 28 d=0 t=195
+s1 -124740 18 d=2 t=165 m=On\sdemand
+s0 81300 25 d=1 t=195
+s0 182880 26 d=0 t=195
+s0 2400 29 d=0 t=190
+s0 -1560 17 d=0 t=185
+s1 -91860 23 d=1 t=195
+s1 1920 19 d=2 t=185 m=Session tm=420
+s1 -120420 21 d=0 t=180
+s1 116160 25 d=0 t=180
+s14 149880 17 d=1 t=195
+s14 -149040 19 d=1 t=185
+s14 -15000 17 d=1 t=195
+c0 167640 46 d=1 n=52
+c14 0 31 d=1 n=52
+c1 0 44 d=1 n=52
+s14 -67140 32 d=1 t=190
+s14 182400 16 r=1 d=0 t=190
+c0 3600 44 d=0 n=89
+c14 0 10 d=0 n=89
+c1 0 75 d=0 n=89
+s14 49680 30 d=2 t=165 m=On\sdemand
+s14 -70740 17 d=1 t=185
+s14 77760 17 d=2 t=185 m=Session tm=420
+s14 -75780 18 d=2 t=165 m=On\sdemand
+c0 79380 47 d=2 n=63
+c14 0 45 d=2 n=63
+c1 0 34 d=2 n=63
+s14 -68460 30 d=0 t=185
+s14 139140 19 d=0 t=180
+s14 -49740 22 d=2 t=165 m=On\sdemand
+s14 84600 20 d=0 t=185
+s14 82080 31 d=0 t=190
+s14 -1260 17 d=0 t=175
+s14 -127080 29 d=1 t=180
+s0 212520 26 d=1 t=185
+s0 -128220 25 d=0 t=200
+s0 -69540 25 d=1 t=180
+s0 28440 31 d=0 t=180
+s1 45060 23 r=1 d=0 t=200
+s1 -67620 27 d=0 t=190
+s1 24660 26 d=1 t=185
+s1 207000 20 d=2 t=185 m=Session tm=420
+s1 -45480 27 d=2 t=165 m=On\sdemand
+s1 64980 25 d=2 t=185 m=Session tm=420
+s1 -169740 31 d=0 t=190
+s14 288780 22 d=0 t=180
+s14 -184440 26 d=0 t=200
+c0 188040 28 d=0 n=36
+c14 0 68 d=0 n=36
+c1 0 41 d=0 n=36
+s14 -102000 28 d=2 t=185 m=Session tm=420
+s14 -94740 22 d=0 t=195
+s9 370260 29 d=2 t=185 m=Session tm=420
+s9 -182100 26 d=2 t=165 m=On\sdemand
+s16 -23040 23 d=0 t=190
+s16 15660 32 d=0 t=185
+s16 77700 17 d=0 t=200
+s16 -97920 29 d=1 t=180
+s9 290460 28 d=1 t=180
+s9 -179400 22 r=1 d=1 t=195
+s9 -4380 26 d=2 t=165 m=On\sdemand
+s9 184500 19 d=0 t=180
+s16 -4740 23 d=1 t=180
+s16 -82080 19 d=2 t=185 m=Session tm=420
+s16 -81480 22 d=1 t=180
+s16 -53820 24 d=0 t=195
+s0 135120 28 d=2 t=185 m=Session tm=420
+c0 9120 15 d=2 n=38
+c14 0 26 d=2 n=38
+c1 0 37 d=2 n=38
+c9 0 42 d=2 n=38
+c16 0 10 d=2 n=38
+s0 -21000 25 d=0 t=180
+s0 -7140 24 d=0 t=180
+s16 57660 23 d=0 t=185
+s16 -57660 32 d=2 t=165 m=On\sdemand
+s16 63420 20 d=1 t=185
+c0 45480 25 d=1 n=41
+c14 0 22 d=1 n=41
+c1 0 13 d=1 n=41
+c9 0 24 d=1 n=41
+c16 0 45 d=1 n=41
+s9 343560 30 d=1 t=180
+s9 -201420 32 d=2 t=185 m=Session tm=420
+s9 203040 19 d=0 t=185
+s9 -88920 16 r=1 d=1 t=185
+s0 -85980 17 d=0 t=200
+s0 155460 25 d=0 t=185
+c0 23040 68 d=0 n=87
+c9 0 29 d=0 n=87
+c16 0 48 d=0 n=87
+s0 -183000 16 d=1 t=185
+s9 589380 19 d=0 t=190
+s9 -68340 27 d=1 t=185
+s9 -91980 29 d=0 t=180
+s9 184500 32 d=1 t=180
+s16 -102900 18 d=0 t=200
+s16 101820 19 d=1 t=185
+s16 -186360 20 d=1 t=195
+s16 187740 16 d=0 t=200
+s0 86340 22 d=0 t=190
+s0 -180060 18 d=0 t=175
+s0 151140 21 d=0 t=195
+s0 19140 31 d=0 t=175
+s9 262200 21 r=1 d=0 t=200
+s9 89940 18 d=0 t=200
+s9 -207840 20 d=0 t=190
+s9 107760 26 d=2 t=185 m=Session tm=420
+s0 90060 18 d=2 t=185 m=Session tm=420
+s0 -181440 24 d=2 t=185 m=Session tm=420
+s0 95400 29 d=0 t=180
+s0 -2520 18 d=2 t=185 m=Session tm=420
+s9 246360 25 d=2 t=185 m=Session tm=420
+s9 27300 18 d=1 t=180
+s9 65160 18 d=1 t=190
+s9 7740 31 d=2 t=185 m=Session tm=420
+s0 -158760 20 d=0 t=190
+c0 3600 82 d=0 n=78
+c9 0 62 d=0 n=78
+c16 0 20 d=0 n=78
+s0 80700 23 d=1 t=190
+s0 -85560 18 d=1 t=190
+s0 -11760 26 d=0 t=200
+s16 180720 17 d=0 t=190
+s16 -4020 22 r=1 d=0 t=175
+s16 -162900 19 d=0 t=175
+s16 78660 27 d=2 t=185 m=Session tm=420
+s9 87600 31 d=2 t=185 m=Session tm=420
+s9 -90660 19 d=2 t=165 m=On\sdemand
+s9 42540 23 d=0 t=180
+s9 111720 17 d=2 t=185 m=Session tm=420
+c0 3600 30 d=2 n=68
+c9 0 91 d=2 n=68
+c16 0 14 d=2 n=68
+s0 -95100 17 d=0 t=180
+s0 120600 28 d=2 t=165 m=On\sdemand
+s0 -97860 15 d=2 t=165 m=On\sdemand
+s0 73200 26 d=1 t=190
+s9 353040 26 d=0 t=175
+s9 10320 27 d=1 t=185
+c0 3600 37 d=1 n=79
+c9 0 74 d=1 n=79
+c16 0 17 d=1 n=79
+s9 79860 21 d=1 t=180
+s9 -26160 27 d=0 t=200
+s9 192480 29 d=0 t=200
+s9 -211320 17 r=1 d=2 t=185 m=Session tm=420
+s0 221460 27 d=1 t=195
+s0 -171900 19 d=2 t=185 m=Session tm=420
+s0 75120 15 d=0 t=195
+s9 533820 25 d=0 t=195
+s9 -85500 19 d=0 t=190
+c0 89100 20 d=0 n=53
+c9 0 94 d=0 n=53
+c16 0 24 d=0 n=53
+s9 82200 24 d=1 t=190
+s9 -178680 24 d=1 t=190
+s0 167640 27 d=1 t=180
+s0 -80400 30 d=1 t=180
+s0 76440 32 d=0 t=175
+s0 -31560 28 d=1 t=190
+s10 -39720 16 d=0 t=180
+s10 -21660 30 d=1 t=185
+s12 -79800 22 d=2 t=185 m=Session tm=420
+s12 13620 23 d=0 t=200
+s9 137400 30 r=1 d=2 t=165 m=On\sdemand
+s9 157980 26 d=2 t=165 m=On\sdemand
+s9 -57120 31 d=2 t=165 m=On\sdemand
+s0 55260 32 d=0 t=195
+s0 48720 25 d=0 t=195
+s0 -7020 28 d=0 t=180
+s18 -87840 23 d=0 t=190
+s18 6060 15 d=0 t=200
+s9 176460 24 d=0 t=180
+s9 -181260 29 d=0 t=190
+s9 135660 16 d=1 t=180
+s0 14760 28 d=1 t=195
+c0 3600 68 d=1 n=59
+c10 0 15 d=1 n=59
+c9 0 41 d=1 n=59
+s0 -153840 22 d=1 t=185
+s0 -4020 25 d=2 t=185 m=Session tm=420
+s12 179160 27 d=1 t=190
+s12 -196560 18 r=1 d=0 t=180
+s12 112080 30 d=2 t=165 m=On\sdemand
+c0 3600 43 d=2 n=92
+c12 0 31 d=2 n=92
+c9 0 62 d=2 n=92
+s12 88020 21 d=0 t=195
+s9 -13740 29 d=0 t=185
+c0 17340 69 d=0 n=46
+c18 0 23 d=0 n=46
+c12 0 23 d=0 n=46
+c9 0 49 d=0 n=46
+s9 69660 17 d=1 t=180
+s9 16140 20 d=0 t=200
+s9 60300 29 d=1 t=185
+s0 -64920 16 d=2 t=165 m=On\sdemand
+s0 57480 26 d=1 t=195
+s0 -147600 29 d=2 t=185 m=Session tm=420
+s0 176580 21 d=0 t=190
+s9 -83340 19 d=0 t=200
+s9 166380 31 d=0 t=200
+s9 -78900 15 d=1 t=190
+s9 -6060 31 d=0 t=195
+s0 61500 30 d=0 t=195
+s0 -60420 21 r=1 d=1 t=185
+s0 64980 20 d=0 t=185
+s0 11700 20 d=2 t=165 m=On\sdemand
+s9 16320 18 d=2 t=185 m=Session tm=420
+s9 70440 22 d=0 t=190
+s9 84480 25 d=1 t=180
+s0 -73080 20 d=1 t=185
+s0 66360 26 d=2 t=185 m=Session tm=420
+s0 -166140 17 d=0 t=175
+s0 14520 19 d=2 t=185 m=Session tm=420
+s16 516960 26 d=0 t=190
+s16 2100 23 d=2 t=185 m=Session tm=420
+s16 -171120 15 d=2 t=185 m=Session tm=420
+s16 148200 23 d=0 t=190
+s12 660 24 d=0 t=180
+c0 23760 43 r=1 d=0 n=48
+c12 0 12 d=0 n=48
+c9 0 61 d=0 n=48
+c16 0 24 d=0 n=48
+s12 -49440 23 d=1 t=185
+c0 3600 40 d=1 n=88
+c12 0 30 d=1 n=88
+c9 0 51 d=1 n=88
+s12 -88620 23 d=1 t=185
+s10 291840 18 d=1 t=195
+s10 -22080 15 d=2 t=165 m=On\sdemand
+s10 -135300 25 d=0 t=175
+s10 77880 26 d=2 t=165 m=On\sdemand
+s12 46080 26 d=2 t=165 m=On\sdemand
+c0 14940 53 d=2 n=39
+c10 0 20 d=2 n=39
+c12 0 13 d=2 n=39
+c9 0 9 d=2 n=39
+c16 0 18 d=2 n=39
+s12 9360 30 d=1 t=180
+s12 11280 24 d=2 t=165 m=On\sdemand
+s12 -34200 23 d=1 t=195
+s12 81720 19 d=1 t=195
+s12 -45000 20 d=1 t=195
+s12 3000 16 d=0 t=200
+s12 6540 30 d=0 t=200
+s16 489240 20 r=1 d=1 t=185
+s16 17700 31 d=1 t=180
+s16 -78180 25 d=0 t=190
+s16 -16200 22 d=0 t=175
+s12 -34020 27 d=2 t=185 m=Session tm=420
+s12 128880 23 d=0 t=190
+s12 -167340 20 d=0 t=175
+s12 80460 18 d=1 t=190
+s10 155400 24 d=1 t=190
+s10 25500 29 d=0 t=175
+s10 -95640 17 d=2 t=185 m=Session tm=420
+s10 -78840 23 d=2 t=185 m=Session tm=420
+s12 54960 15 d=0 t=195
+s12 113520 31 d=2 t=185 m=Session tm=420
+s12 -81360 24 d=0 t=195
+s12 78660 25 r=1 d=0 t=190
+s12 350640 22 d=2 t=165 m=On\sdemand
+s12 174720 22 d=0 t=180
+c10 3600 25 d=0 n=73
+c12 0 79 d=0 n=73
+c16 0 21 d=0 n=73
+s12 -170100 17 d=0 t=190
+s12 -9120 32 d=1 t=180
+c10 3600 22 d=1 n=31
+c12 0 74 d=1 n=31
+c16 0 27 d=1 n=31
+s10 81480 24 d=0 t=175
+s10 -17520 20 d=2 t=185 m=Session tm=420
+s10 25080 28 d=1 t=180
+s10 86820 25 d=2 t=165 m=On\sdemand
+s12 -2160 24 d=0 t=175
+s12 -300 27 d=0 t=200
+s12 -28620 20 d=0 t=190
+s12 121200 31 d=1 t=195
+s10 503640 21 r=1 d=0 t=190
+s10 -158640 16 d=0 t=185
+s10 142200 20 d=0 t=195
+s10 -158220 16 d=0 t=195
+s12 6840 22 d=0 t=200
+s12 46980 15 d=1 t=190
+s12 -38100 26 d=1 t=190
+s12 76800 15 d=1 t=185
+s12 180 29 d=2 t=165 m=On\sdemand
+s12 -16860 16 d=2 t=165 m=On\sdemand
+s12 191340 23 d=1 t=190
+s12 -80640 15 d=0 t=200
+s10 -6120 24 d=1 t=180
+s10 128520 19 d=1 t=185
+s10 21900 30 d=2 t=165 m=On\sdemand
+c10 3600 48 r=1 d=2 n=45
+c12 0 63 d=2 n=45
+s10 -4380 31 d=1 t=180
+s12 -153480 24 d=0 t=190
+s12 163860 30 d=1 t=180
+s12 -7860 28 d=2 t=185 m=Session tm=420
+s10 288300 24 d=1 t=195
+s10 -99000 20 d=0 t=180
+s10 179580 20 d=0 t=185
+c10 3600 101 d=0 n=97
+c12 0 55 d=0 n=97
+s10 -197100 16 d=1 t=195
+s18 272040 20 d=1 t=180
+c10 3600 62 d=1 n=80
+c18 0 9 d=1 n=80
+c12 0 62 d=1 n=80
+s18 -201060 22 d=2 t=185 m=Session tm=420
+s18 118380 22 d=0 t=200
+s21 -118200 23 d=2 t=165 m=On\sdemand
+s21 31140 17 r=1 d=2 t=185 m=Session tm=420
+s21 -6000 19 d=0 t=200
+s18 90060 32 d=0 t=175
+s18 -27480 30 d=1 t=185
+s18 181200 19 d=0 t=200
+s18 -152640 19 d=0 t=180
+s18 262440 25 d=2 t=185 m=Session tm=420
+s18 60 29 d=0 t=175
+s18 -96900 25 d=1 t=195
+s18 89400 19 d=2 t=165 m=On\sdemand
+s18 351120 28 d=1 t=195
+s18 -88440 30 d=1 t=185
+s18 8160 23 d=2 t=185 m=Session tm=420
+s18 120 30 d=0 t=200
+s18 157980 17 d=0 t=200
+s18 77880 31 d=2 t=185 m=Session tm=420
+s18 -75780 28 r=1 d=2 t=165 m=On\sdemand
+s18 94680 17 d=2 t=185 m=Session tm=420
+s18 167100 28 d=2 t=165 m=On\sdemand
+s18 -76500 27 d=0 t=185
+s18 -109440 31 d=2 t=185 m=Session tm=420
+c18 189540 104 d=2 n=45
+c21 0 19 d=2 n=45
+s18 -41880 20 d=0 t=200
+s18 220140 31 d=0 t=175
+c18 3600 119 d=0 n=99
+s18 -124680 15 d=2 t=185 m=Session tm=420
+s18 -10560 19 d=1 t=190
+s18 32940 21 d=0 t=185
+s10 159300 31 d=2 t=185 m=Session tm=420
+s10 57240 30 z=120 d=2 t=185 m=Session tm=420
+s10 44280 28 d=0 t=195
+s10 -81180 20 r=1 z=60 d=0 t=190
+s18 -5760 25 d=2 t=165 m=On\sdemand
+s18 -89520 27 d=0 t=190
+s19 234120 20 z=120 d=1 t=180
+s19 20820 19 d=1 t=195
+s19 17100 18 d=0 t=185
+s19 -181140 20 z=60 d=1 t=190
+s10 252780 24 z=120 d=0 t=175
+s10 360 22 d=2 t=185 m=Session tm=420
+s10 -210540 18 d=1 t=180
+s21 222720 23 d=0 t=175
+s21 -175920 18 d=0 t=175
+s21 -3180 18 d=2 t=165 m=On\sdemand
+s10 175620 17 d=0 t=195
+s10 -6420 20 d=2 t=185 m=Session tm=420
+s10 76140 18 d=2 t=165 m=On\sdemand
+s10 -74880 20 r=1 d=0 t=180
+c10 12240 68 d=0 n=85
+c21 0 25 d=0 n=85
+c19 0 11 d=0 n=85
+s16 167280 16 d=2 t=185 m=Session tm=420
+s16 -44100 23 d=0 t=185
+s16 -46380 22 d=1 t=195
+s16 -16080 21 d=0 t=195
+s10 104880 25 d=0 t=180
+s10 -172320 24 d=0 t=200
+s10 66360 19 d=1 t=190
+s10 -85260 24 d=1 t=195
+c10 106020 36 d=1 n=44
+c18 0 59 d=1 n=44
+c19 0 34 d=1 n=44
+c16 0 13 d=1 n=44
+s16 -4320 16 d=0 t=175
+s16 174840 22 d=1 t=185
+s16 -174060 23 d=1 t=190
+s16 128460 19 d=2 t=185 m=Session tm=420
+s10 -42240 32 r=1 d=1 t=190
+s10 86940 32 d=0 t=185
+s10 -106920 15 d=0 t=190
+s10 -71040 32 d=1 t=190
+s22 437100 25 d=2 t=165 m=On\sdemand
+s22 164820 19 d=0 t=200
+s22 -204300 19 d=1 t=190
+s22 34500 25 d=0 t=175
+s19 91380 21 d=2 t=165 m=On\sdemand
+s19 5460 23 d=1 t=180
+s19 -36720 19 d=1 t=180
+s22 158280 26 d=0 t=175
+s22 -36960 26 d=1 t=180
+s22 165300 16 d=1 t=180
+s22 -88980 32 r=1 d=0 t=180
+c10 3600 45 d=0 n=55
+c22 0 64 d=0 n=55
+c16 0 37 d=0 n=55
+s21 181740 16 d=1 t=195
+s22 -20460 23 d=1 t=185
+c10 24060 19 d=1 n=42
+c22 0 51 d=1 n=42
+c21 0 10 d=1 n=42
+c19 0 26 d=1 n=42
+c16 0 13 d=1 n=42
+s22 -177540 27 d=1 t=190
+s22 74580 17 d=0 t=185
+s19 7860 20 d=0 t=185
+s21 317520 26 d=1 t=185
+s21 -14280 30 d=1 t=185
+s21 103500 19 d=0 t=200
+s21 111120 22 d=1 t=180
+s21 -81900 21 d=0 t=195
+s21 -31140 32 d=0 t=180
+s21 -74400 15 d=0 t=180
+s22 71580 26 r=1 d=0 t=185
+s22 -73800 29 d=2 t=165 m=On\sdemand
+c10 3600 70 d=2 n=37
+c22 0 31 d=2 n=37
+c18 0 23 d=2 n=37
+c21 0 10 d=2 n=37
+c19 0 12 d=2 n=37
+c16 0 20 d=2 n=37
+s19 16320 22 d=1 t=180
+s19 166080 26 d=1 t=195
+s19 -6060 24 d=1 t=180
+s19 -99060 24 d=0 t=195
+s19 113520 23 d=1 t=190
+s19 -24480 30 d=0 t=175
+s19 63900 27 d=0 t=175
+s22 108060 23 d=2 t=165 m=On\sdemand
+s22 -180540 24 d=0 t=180
+c22 76080 38 d=0 n=35
+c21 0 49 d=0 n=35
+c19 0 57 d=0 n=35
+s22 75480 25 d=2 t=185 m=Session tm=420
+s19 -34440 25 d=0 t=195
+s19 44340 20 r=1 d=1 t=195
+s19 41700 21 d=0 t=185
+s21 80940 22 d=0 t=195
+s21 -173940 21 d=1 t=180
+s21 -15240 23 d=1 t=185
+s21 192540 16 d=2 t=185 m=Session tm=420
+s22 -81420 22 d=0 t=195
+s22 53940 15 d=0 t=200
+s19 -63540 19 d=0 t=180
+s19 -11820 26 d=2 t=165 m=On\sdemand
+s21 158640 21 d=0 t=190
+s21 35340 31 d=1 t=185
+s21 -108960 16 d=0 t=200
+s22 -83820 18 d=1 t=190
+c22 196380 11 r=1 d=1 n=75
+c21 0 92 d=1 n=75
+c19 0 70 d=1 n=75
+s22 -14520 25 d=2 t=165 m=On\sdemand
+s22 5220 17 d=1 t=195
+s19 -171120 21 d=2 t=165 m=On\sdemand
+s19 132660 16 d=0 t=195
+s19 -63540 29 d=2 t=165 m=On\sdemand
+s21 -1320 18 d=2 t=185 m=Session tm=420
+s21 187560 16 d=1 t=185
+s22 -185760 31 d=1 t=185
+s22 23160 21 d=2 t=165 m=On\sdemand
+s22 74700 19 d=0 t=175
+s19 81000 23 d=1 t=190
+s19 -33120 17 d=2 t=165 m=On\sdemand
+s21 -49080 20 d=1 t=195
+s21 10680 26 r=1 d=2 t=185 m=Session tm=420
+c22 42000 45 d=2 n=62
+c21 0 29 d=2 n=62
+c19 0 44 d=2 n=62
+s21 123360 30 d=0 t=195
+s22 -170760 16 d=2 t=165 m=On\sdemand
+s22 -30240 31 d=2 t=185 m=Session tm=420
+s22 30660 29 d=1 t=190
+s19 7500 22 d=0 t=180
+c22 166440 30 d=0 n=69
+c21 0 48 d=0 n=69
+c19 0 56 d=0 n=69
+s19 -201360 24 d=1 t=195
+s1 5084520 26 d=0 t=200
+s30 209460 23 d=2 t=185 m=Session tm=420
+s20 -84600 22 d=1 t=180
+s20 59160 19 d=2 t=165 m=On\sdemand
+s20 89820 16 r=1 d=0 t=195
+s20 -68640 20 d=1 t=190
+s1 45420 16 d=2 t=165 m=On\sdemand
+s20 46260 30 d=1 t=190
+s20 68100 18 d=0 t=185
+s20 -74520 16 d=0 t=190
+s1 -71760 27 d=0 t=185
+s1 -12480 29 d=2 t=185 m=Session tm=420
+s1 92460 21 d=0 t=185
+s1 -89160 16 d=0 t=190
+s20 259440 32 d=2 t=165 m=On\sdemand
+s20 -19680 24 d=1 t=195
+s20 -62460 26 r=1 d=1 t=180
+c20 66060 96 d=1 n=83
+c21 0 13 d=1 n=83
+c19 0 18 d=1 n=83
+s20 102360 16 d=1 t=185
+s20 -167460 25 d=2 t=185 m=Session tm=420
+s20 5880 16 d=0 t=180
+s1 155580 27 d=0 t=200
+s1 6480 25 d=2 t=165 m=On\sdemand
+s1 -215100 20 d=1 t=190
+s1 295740 21 d=0 t=195
+s1 -193380 24 d=1 t=195
+s1 551520 16 d=0 t=190
+c20 3600 37 d=0 n=94
+c1 0 85 d=0 n=94
+s1 -188880 21 d=2 t=165 m=On\sdemand
+s30 179940 19 r=1 d=1 t=180
+s30 -76860 31 d=0 t=195
+s30 159900 23 d=0 t=200
+s20 -3000 26 d=0 t=185
+s20 -22020 22 d=2 t=165 m=On\sdemand
+c20 3600 54 d=2 n=91
+c1 0 51 d=2 n=91
+c30 0 13 d=2 n=91
+s20 -141060 17 d=0 t=180
+s1 159420 24 d=2 t=165 m=On\sdemand
+s1 -126660 22 d=0 t=190
+s1 -33300 16 d=0 t=185
+s20 1031760 18 d=0 t=195
+s20 -88200 16 d=1 t=190
+s20 63420 17 d=0 t=185
+s1 -144540 17 d=1 t=185
+s1 172800 26 r=1 d=2 t=185 m=Session tm=420
+s1 160320 30 d=0 t=180
+s1 -18960 30 d=1 t=180
+s1 -161400 22 d=0 t=185
+c20 183960 44 d=0 n=82
+c1 0 37 d=0 n=82
+c30 0 17 d=0 n=82
+s20 -75480 24 d=1 t=185
+s20 142680 31 d=1 t=180
+s20 -60060 29 d=1 t=180
+s20 -6120 29 d=0 t=175
+s30 7020 28 d=0 t=195
+s30 -6540 17 d=0 t=180
+s30 161400 25 d=0 t=195
+s30 -79080 30 d=1 t=190
+s20 -81660 22 r=1 d=0 t=175
+s20 2700 17 d=0 t=185
+s20 7740 21 d=0 t=180
+s20 -9000 19 d=1 t=185
+s1 590640 19 d=2 t=165 m=On\sdemand
+s1 8520 32 d=1 t=185
+c20 3600 90 d=1 n=66
+c1 0 53 d=1 n=66
+c30 0 33 d=1 n=66
+s1 -4680 17 d=0 t=190
+s30 9300 29 d=2 t=185 m=Session tm=420
+s30 -4440 31 d=2 t=165 m=On\sdemand
+s30 93840 19 d=0 t=190
+s30 76440 24 d=2 t=165 m=On\sdemand
+s20 -85020 17 d=1 t=185
+s1 94380 32 r=1 d=2 t=165 m=On\sdemand
+s1 -184200 17 d=1 t=185
+s1 175860 24 d=0 t=185
+s30 -102420 24 d=0 t=185
+c20 106020 44 d=0 n=61
+c1 0 21 d=0 n=61
+c30 0 56 d=0 n=61
+s30 -91320 32 d=2 t=185 m=Session tm=420
+s15 443340 21 d=2 t=185 m=Session tm=420
+s15 36180 24 d=0 t=195
+s1 31080 25 d=2 t=185 m=Session tm=420
+s1 -115080 26 d=1 t=180
+s11 217320 31 d=2 t=185 m=Session tm=420
+s11 -87840 22 d=2 t=185 m=Session tm=420
+c15 91440 11 r=1 d=2 n=49
+c1 0 62 d=2 n=49
+c11 0 26 d=2 n=49
+c30 0 57 d=2 n=49
+s11 73800 24 d=1 t=180
+s11 -158280 26 d=1 t=190
+s1 -6180 26 d=0 t=190
+s1 1560 15 d=0 t=195
+s1 165180 24 d=2 t=185 m=Session tm=420
+s1 -107160 27 d=2 t=185 m=Session tm=420
+s1 6900 30 d=2 t=185 m=Session tm=420
+s15 537480 26 d=1 t=185
+s15 -4620 22 d=1 t=180
+s15 7800 28 d=2 t=185 m=Session tm=420
+s11 1500 16 d=0 t=175
+s11 -91800 20 d=2 t=165 m=On\sdemand
+s11 -8940 26 r=1 d=1 t=195
+s11 -85200 15 d=2 t=165 m=On\sdemand
+s15 257820 26 d=0 t=175
+s15 -4560 26 d=1 t=185
+s15 9720 20 d=1 t=180
+s1 -113100 32 d=0 t=185
+s1 113340 24 d=0 t=175
+s1 -129840 18 d=2 t=165 m=On\sdemand
+s1 -36120 27 d=1 t=185
+s1 168180 22 d=2 t=165 m=On\sdemand
+s1 82980 32 d=2 t=185 m=Session tm=420
+s1 -21900 30 d=1 t=180
+c15 3600 56 d=1 n=34
+c20 0 10 d=1 n=34
+c1 0 49 d=1 n=34
+c11 0 45 d=1 n=34
+s15 456480 32 d=0 t=195
+s15 -31080 22 r=1 d=0 t=195
+s15 27840 25 d=2 t=165 m=On\sdemand
+s11 -173460 17 d=1 t=180
+s11 85200 24 d=0 t=195
+s11 10500 19 d=1 t=195
+s1 -14640 29 d=2 t=185 m=Session tm=420
+s1 10380 17 d=1 t=185
+s1 6420 20 d=0 t=175
+c15 82440 56 d=0 n=33
+c1 0 63 d=0 n=33
+c11 0 21 d=0 n=33
+s1 -97980 17 d=0 t=175
+s1 347820 26 d=2 t=165 m=On\sdemand
+s1 -191580 17 d=1 t=195
+s15 451860 19 d=1 t=190
+s15 84720 32 r=1 d=0 t=180
+s15 -161460 27 d=0 t=200
+s15 -36060 22 d=0 t=180
+s11 196740 24 d=1 t=180
+s11 12240 25 d=1 t=190
+s11 -15000 20 d=1 t=185
+s11 -80340 28 d=0 t=185
+s1 2940 24 d=1 t=185
+s1 -13320 26 d=1 t=185
+s1 177360 25 d=0 t=185
+s1 -177660 22 d=1 t=180
+s15 270600 20 d=0 t=200
+s15 -175200 20 r=1 d=0 t=195
+s15 87600 24 d=1 t=195
+c15 3600 22 d=1 n=71
+c1 0 55 d=1 n=71
+c11 0 54 d=1 n=71
+s15 7140 26 d=1 t=190
+s1 81840 15 d=0 t=190
+s1 -4800 16 d=1 t=190
+s1 -173940 27 d=1 t=190
+s1 -4980 25 d=0 t=185
+s1 165060 31 d=2 t=185 m=Session tm=420
+c15 3600 29 d=2 n=34
+c1 0 98 d=2 n=34
+c11 0 19 d=2 n=34
+s1 8100 28 d=0 t=175
+s1 -21180 22 d=2 t=165 m=On\sdemand
+s1 106680 29 d=2 t=165 m=On\sdemand
+s11 347340 27 d=1 t=185
+s11 -131580 27 r=1 d=2 t=185 m=Session tm=420
+s11 115740 30 d=0 t=185
+c15 3600 54 d=0 n=36
+c1 0 42 d=0 n=36
+c11 0 26 d=0 n=36
+s11 -71940 24 d=2 t=185 m=Session tm=420
+s1 171960 32 d=2 t=185 m=Session tm=420
+s1 -186840 27 d=1 t=190
+s1 159000 27 d=0 t=195
+s1 -96480 32 d=1 t=195
+s11 615120 26 d=1 t=190
+s11 -145380 21 d=0 t=190
+s11 5100 25 d=2 t=165 m=On\sdemand
+s1 91620 29 d=1 t=190
+s1 -51060 17 r=1 d=2 t=185 m=Session tm=420
+s1 20580 21 d=2 t=165 m=On\sdemand
+s1 106620 21 d=1 t=190
+s15 84120 18 d=0 t=200
+s15 98220 23 d=0 t=185
+s15 -176340 28 d=0 t=180
+s1 -1020 27 d=2 t=185 m=Session tm=420
+s1 -9060 23 d=2 t=185 m=Session tm=420
+s11 528540 21 d=2 t=165 m=On\sdemand
+c1 3600 91 d=2 n=93
+c11 0 59 d=2 n=93
+s11 -10980 16 d=1 t=180
+s11 -84060 28 d=1 t=180
+c15 87660 13 r=1 d=1 n=58
+c1 0 64 d=1 n=58
+c11 0 49 d=1 n=58
+s1 91560 26 d=2 t=185 m=Session tm=420
+s1 -45720 27 d=1 t=185
+s11 -5700 30 d=2 t=185 m=Session tm=420
+s11 38820 25 d=1 t=185
+s11 74820 31 d=0 t=190
+s11 -84000 32 d=0 t=200
+s1 -69180 26 d=1 t=185
+s1 145860 23 d=0 t=195
+s1 -155220 17 d=0 t=180
+s1 88740 28 d=1 t=190
+s1 540 30 r=1 d=0 t=180
+s1 86640 19 d=2 t=165 m=On\sdemand
+s1 360 21 d=2 t=165 m=On\sdemand
+s1 85080 16 d=0 t=175
+c15 3600 35 d=0 n=67
+c1 0 56 d=0 n=67
+c11 0 42 d=0 n=67
+s11 262200 15 d=1 t=190
+s11 2520 16 d=2 t=185 m=Session tm=420
+s11 4200 18 d=2 t=185 m=Session tm=420
+s11 143580 24 d=1 t=190
+s11 539460 28 d=0 t=200
+s11 88260 17 d=0 t=185
+s11 -89280 16 d=2 t=165 m=On\sdemand
+s11 173220 18 d=0 t=200
+s11 -81420 31 r=1 d=0 t=185
+s11 174480 17 d=0 t=180
+s11 -105000 25 d=0 t=200
+s11 91260 23 d=1 t=180
+s15 82020 22 d=1 t=180
+s15 -70560 24 d=0 t=175
+s15 -9000 15 d=2 t=165 m=On\sdemand
+s15 -72420 24 d=2 t=165 m=On\sdemand
+s11 425700 19 d=2 t=165 m=On\sdemand
+s11 163320 23 d=2 t=165 m=On\sdemand
+s11 3840 23 d=1 t=190
+s11 -174660 26 d=0 t=190
+s15 271140 18 r=1 d=0 t=190
+s15 -88860 17 d=0 t=185
+s15 -28560 21 d=1 t=195
+s15 12060 29 d=1 t=190
+s15 14640 24 d=2 t=165 m=On\sdemand
+c15 3600 36 d=2 n=70
+c1 0 37 d=2 n=70
+c11 0 69 d=2 n=70
+s15 -45420 30 d=0 t=195
+s15 39180 20 d=1 t=180
+s26 2460 23 d=0 t=175
+c15 94500 48 d=0 n=72
+c11 0 88 d=0 n=72
+c26 0 13 d=0 n=72
+s26 -5880 27 d=1 t=185
+c15 3600 43 d=1 n=50
+c1 0 38 d=1 n=50
+c11 0 51 d=1 n=50
+c26 0 12 d=1 n=50
+s26 -28860 23 d=1 t=180
+s26 89760 16 r=1 d=0 t=185
+s25 -64740 21 d=0 t=175
+s25 -11580 26 d=0 t=190
+s25 181140 28 d=0 t=200
+s25 -85980 30 d=0 t=175
+s29 -8760 23 d=1 t=195
+s29 15960 27 d=0 t=200
+s29 -1140 21 d=2 t=185 m=Session tm=420
+s25 -19740 21 d=2 t=165 m=On\sdemand
+s25 21780 23 d=0 t=180
+s25 81420 18 d=1 t=190
+s29 -51300 31 d=0 t=190
+s29 138780 15 r=1 d=0 t=185
+s29 -182880 15 d=1 t=180
+s26 176460 19 d=1 t=185
+s26 -170460 25 d=1 t=185
+s26 -2400 17 d=1 t=190
+s26 5400 27 d=1 t=185
+s15 686940 20 d=2 t=165 m=On\sdemand
+s15 -92520 21 d=1 t=195
+s15 188160 17 d=0 t=190
+c15 3600 12 d=0 n=51
+c29 0 53 d=0 n=51
+c25 0 59 d=0 n=51
+c26 0 12 d=0 n=51
+s26 -143400 30 d=1 t=185
+s26 213480 23 d=0 t=185
+s26 -120 26 r=1 d=0 t=180
+s26 -3720 21 d=0 t=185
+s29 80400 27 d=1 t=185
+s29 15120 25 d=2 t=165 m=On\sdemand
+s29 -167820 28 d=0 t=200
+s29 -7680 29 d=2 t=165 m=On\sdemand
+s25 262140 22 d=1 t=190
+s25 -46680 28 d=0 t=175
+s25 26400 21 d=2 t=165 m=On\sdemand
+s25 -69660 26 d=2 t=165 m=On\sdemand
+s29 74520 16 d=1 t=190
+c15 19020 13 r=1 d=1 n=47
+c29 0 48 d=1 n=47
+c25 0 24 d=1 n=47
+c26 0 70 d=1 n=47
+s29 -51300 19 d=1 t=190
+s29 -85020 23 d=1 t=180
+s29 222360 32 d=0 t=190
+s25 -9600 17 d=1 t=180
+s25 7740 22 d=1 t=185
+s25 -87240 28 d=1 t=185
+s25 515580 31 d=0 t=185
+s25 -91500 23 d=1 t=190
+s25 54180 15 d=0 t=185
+s25 -51060 29 d=0 t=185
+s26 74160 27 d=1 t=195
+s26 -7320 27 d=2 t=165 m=On\sdemand
+s26 24660 16 r=1 d=0 t=175
+s26 -84600 26 d=1 t=185
+s26 292800 21 d=0 t=190
+s26 52020 31 d=0 t=190
+s26 -81600 25 d=0 t=190
+c29 85200 18 d=0 n=76
+c25 0 59 d=0 n=76
+c26 0 93 d=0 n=76
+s26 -85320 30 d=0 t=190
+s29 170700 25 d=0 t=185
+s29 141000 21 d=0 t=195
+s29 -151380 29 d=0 t=185
+s29 81660 22 d=2 t=165 m=On\sdemand
+s25 182520 19 r=1 z=60 d=0 t=195
+s25 -89280 23 z=120 d=2 t=165 m=On\sdemand
+c15 3600 11 d=2 n=31
+c29 0 53 d=2 n=31
+c25 0 49 d=2 n=31
+c26 0 15 d=2 n=31
+s25 94680 22 z=60 d=0 t=180
+s25 -188520 30 z=120 d=0 t=175
+a1 195854 3345 r=146 z=60 n=13 f=stash>external
+a20 0 395 n=13 f=stash>external
+a30 0 145 n=13 f=stash>external
+a21 0 441 n=13 f=stash>external
+a19 0 401 n=13 f=stash>external
+a22 0 374 n=13 f=stash>external
+a10 0 972 n=13 f=stash>external
+a18 0 1252 n=13 f=stash>external
+a16 0 1231 n=13 f=stash>external
+a12 0 980 n=13 f=stash>external
+a0 0 3712 n=13 f=stash>external
+a9 0 728 n=13 f=stash>external
+a14 0 1142 n=13 f=stash>external
+a3 0 868 n=13 f=stash>external
+a7 0 2017 n=13 f=stash>external
+a28 0 2332 n=13 f=stash>external
+a36 0 2000 n=13 f=stash>external
+a45 0 1000 n=13 f=stash>external
+a37 0 1500 n=13 f=stash>external
+a17 0 4000 n=13 f=stash>external
+a43 0 1000 n=13 f=stash>external
+a41 0 1000 n=13 f=stash>external
+a42 0 1000 n=13 f=stash>external
+a44 0 1000 n=13 f=stash>external
+a46 0 1000 n=13 f=stash>external
+a33 0 2000 n=13 f=stash>external
+a40 0 1000 n=13 f=stash>external
+a39 0 1000 n=13 f=stash>external
+a13 0 7000 n=13 f=stash>external
+a50 0 500 n=13 f=stash>external
+a47 0 500 n=13 f=stash>external
+a2 0 11000 n=13 f=stash>external
+a48 0 500 n=13 f=stash>external
+a52 0 500 n=13 f=stash>external
+a49 0 500 n=13 f=stash>external
+a51 0 500 n=13 f=stash>external
+a24 0 3000 n=13 f=stash>external
+a38 0 1500 n=13 f=stash>external
+a35 0 1500 n=13 f=stash>external
+a32 0 1500 n=13 f=stash>external
+a31 0 1500 n=13 f=stash>external
+a6 0 6000 n=13 f=stash>external
+a5 0 6000 n=13 f=stash>external
+a34 0 1500 n=13 f=stash>external
+a8 0 5000 n=13 f=stash>external
+a4 0 5900 n=13 f=stash>external
+a27 0 2500 n=13 f=stash>external
+a23 0 3000 n=13 f=stash>external
+==
+R 4a08df79457c43a0fe9dc13c296200e960486d4837026489ded5001aee874330 2026-10-26T01:10:46+01:00 overall:5,pain:4,sleep:5,calm:5
+R 6db06b7a5db3df03164e926effa731306c5931489b7689a667d35fa708c430a0 2026-10-26T01:10:47+01:00 overall:4,pain:4,mood:4
+R cc00d1249bd4307a22c0bef0b82cbbfa6ddac04265374c7e74368acdca85f6f9 2026-10-26T01:10:47+01:00 overall:4,sleep:5,calm:5
+R f096ec180d0264f99b8ee5746e88ff381fc0ec724d6edeaab21d124e4485f0b7 2026-10-26T01:10:47+01:00 overall:4,pain:4,mood:5,focus:4
+R 70caea078d55022466ba83593e8bac828d11ced5c244f37b6b51a64bea22c6f3 2026-10-26T01:10:47+01:00 overall:5,pain:5,sleep:5,calm:4
+R f5703fc1bbdb4ee9ec10b8ae59e556f42242d4a4e5b95391c0628494ba9c66e1 2026-10-26T01:10:47+01:00 overall:5,pain:4,sleep:5,calm:4
+R b8e3d1ae4613688dd9ec235e1455118ce3e8033b67b0d42539d48c5bffd779ed 2026-10-26T01:10:47+01:00 overall:4,pain:5,mood:4,appetite:4
+R 186d165390d09b1a83f7e9b46538ef58765a43cec6bd19a58ab4868e031a0b53 2026-10-26T01:10:47+01:00 overall:4,sleep:5,calm:4
+R fbd60182f3f8e28671d5c5f893ebf174490d17eec51aaebabfd1fa6e4c364f07 2026-10-26T01:10:47+01:00 overall:5,pain:5,sleep:5,calm:5
+R 1a8993fe3fd78500b509f1345af82279ab83172e66a142356ee31fedef688edc 2026-10-26T01:10:47+01:00 overall:4,pain:4,sleep:5,calm:4
+R d6a02f6707eccc2b344c2e4198019fc4bb2242093e5f0669e58a221e3f0a582d 2026-10-26T01:10:47+01:00 overall:5,pain:4,sleep:5,calm:5
+R 7bbd916608897d04b7cb947392ec19254c3c49a7ea473df087c72a08df2f12ca 2026-10-26T01:10:47+01:00 overall:3,pain:4,mood:4
+R 4508903ae389ee56c845fea833426f18a5e42816e7758de09be7c24d832a18a5 2026-10-26T01:10:47+01:00 overall:3,sleep:5,calm:5
+R b675cebb5a333e2ee43449e04a24d782791cf37660325ea1679cc5faea7634ca 2026-10-26T01:10:47+01:00 overall:5,sleep:5,calm:5
+R ab7dced328ec949819a95b14adfaac98bfdc481f3cfe7df2c23e9326774298a5 2026-10-26T01:10:47+01:00 overall:2,pain:2,mood:2,focus:4
+R 24b007de5240571bd902470435af112a1dbe92c783ca1f541d545220760be8b9 2026-10-26T01:10:47+01:00 overall:3,pain:2,sleep:4,calm:3
+R 4ce656904f0210ea291fb7bb22e7ae2dd1e8d573cb0ed1c5d88558939d7a10f5 2026-10-26T01:10:47+01:00 overall:4,pain:4,sleep:4,calm:3
+R 30e3c3a01974e61c07a1ceaeb0e04f280d86c27d60c45773e724a2870fe16537 2026-10-26T01:10:47+01:00 overall:4,pain:5,mood:4
+R d6b294128536c28a4421a89cab3cb6ca3317854beeb22d5f7dde223ca25544e4 2026-10-26T01:10:47+01:00 overall:5,pain:5,mood:5,appetite:5
+R 74328e8b71c3897f346fd7e2607ff615d6d6ad7442a454477131ea76a1902387 2026-10-26T01:10:47+01:00 overall:4,sleep:5,calm:5
+R fa58da87ca8bb223d71ffdde9fe1950c9c7e925e5dc62ecda5dec5af85ecdeee 2026-10-26T01:10:48+01:00 overall:4,sleep:5,calm:5
+R 02b0b66476c8f67176280c550a657ba66006f8844c170a034d2bd4e6f9510f21 2026-10-26T01:10:48+01:00 overall:5,sleep:5,calm:5
+R b96fb9cf7d1dbb1096d08bc75955f35119ee14d3d4607e539645deb1cb08e950 2026-10-26T01:10:48+01:00 overall:5,pain:4,mood:4,appetite:4
+R 3d9f5e6f95d9bc56f5147100e1fa8f1e43c1772ddfb74dc42687401087e350b5 2026-10-26T01:10:48+01:00 overall:3,pain:4,sleep:3,calm:4
+R f4173b40d3bd7783d97ff651e0874325b7fd5d1f38f3f36a9dd25e3ffd8b3b86 2026-10-26T01:10:48+01:00 overall:2,sleep:4,calm:4
+R ea378ef8872e0a4f33d73345d0a0b419fbe6010aef7d8aaa4fd0df8950078d78 2026-10-26T01:10:48+01:00 overall:5,pain:5,sleep:5,calm:5
+R 4baf697d664a482849e76acce9a11628da296a8055f549aa2ecf075f7248eaef 2026-10-26T01:10:48+01:00 overall:4,pain:5,mood:5,appetite:5
+R a4b5eb6154948ba6a143085e308edc3aa62dce3fdd0cc9872753d44c23689f60 2026-10-26T01:10:48+01:00 overall:4,pain:4,mood:4,appetite:4
+R 6f66ce6a8e072b42fadc5e44f505c0743bcdc21f53b11d802759a6476e0b2afc 2026-10-26T01:10:48+01:00 overall:4,pain:3,mood:3
+R b60d6376e260b689cc62b49dfb15a99a66b431c091a290a8abafac6c42c0b274 2026-10-26T01:10:48+01:00 overall:4,pain:5,sleep:5,calm:5
+R e0b5c8b7cd73659004083b690b07b4688d18c999e0c7617edbc6685df72880e9 2026-10-26T01:10:48+01:00 overall:4,pain:3,mood:4
+R def03ae52dbc0f17afbde34d54d590162e0e9b64be70a28b5a88013038e03ce9 2026-10-26T01:10:48+01:00 overall:3,sleep:4,calm:3
+R 891400e14bdced011e77878eacbeef47dade65acc784d9b7705c634998599b82 2026-10-26T01:10:48+01:00 overall:4,pain:5,sleep:5,calm:5
+R b173d01c067ca9d4d55934e0051bc6bb853d7d0c9f6d8573c4af0cff5d7dbf3b 2026-10-26T01:10:48+01:00 overall:4,pain:4,mood:4,focus:5
+R c92248f1036dd1f391085a791936006f6ff4520e485db7c382bf0ce218fbbcf2 2026-10-26T01:10:48+01:00 overall:5,pain:5,mood:5
+R 89ef248b10dadbd50932d3a4d4d9be4dde912dfcb23793d2108f5a0b16c900b0 2026-10-26T01:10:48+01:00 overall:5,pain:5,mood:4
+R 6d69783c9c1e88a1bd992809197028034c439a091cbe426da8f85dc2851a18c5 2026-10-26T01:10:48+01:00 overall:5,pain:3,sleep:5,calm:5
+R 82e6e5109f12f7e5c76be2e92e93270598db44bc60c0ff59cd908d3e92adaea7 2026-10-26T01:10:49+01:00 overall:5,pain:4,sleep:5,calm:5
+R bfc2fac297ae5de37f89f18250375c68a583162959eca063c239cf847a2c7d9c 2026-10-26T01:10:49+01:00 overall:3,pain:2,sleep:3,calm:3
+R 97ea2ae8f99f6d638cafbfb90cc49680ff8f4ec4c56ffcc582d06c6f64cc2888 2026-10-26T01:10:49+01:00 overall:4,pain:4,mood:4,appetite:4
+R f5c26240a7fea57fea7c11e6c0762f482fc83359ebfbc7777d3479a9cc047f65 2026-10-26T01:10:49+01:00 overall:3,pain:3,mood:3
+R 85b10b5c2672a863693ba30c6a103ba72e3d9a6a7af4e40a8324bc66480a92d4 2026-10-26T01:10:49+01:00 overall:4,sleep:5,calm:5
+R 6fa5fa09d8a06a8297572c064a035d9ae634552488541f64f973281fbb7e824f 2026-10-26T01:10:49+01:00 overall:3,pain:4,sleep:4,calm:3
+R 7157aa3d13283a9183e49dc759f8e5b342d0d0186f9d68ece7642397683bf4fc 2026-10-26T01:10:49+01:00 overall:4,pain:5,sleep:5,calm:5
+R d5642ded1552ffaee69897065c8cd8ee9c56169f4a7a6a7239e0cfb0db30940c 2026-10-26T01:10:49+01:00 overall:5,sleep:5,calm:4
+R ac12cd22a9de732282e5209e3f56a0c4e547112c6482159f5eda9ec38682a53a 2026-10-26T01:10:49+01:00 overall:4,mood:4,focus:5
+R d1bf2a5bff7b0cbd15f8511bf11aa7ebd954ab175d8d1e0a92e5dff7d4ca3776 2026-10-26T01:10:49+01:00 overall:4,sleep:5,calm:5
+R ef748e96a929490936385655d39e28aa49a88ccf229f6855a2c95c2a22abb680 2026-10-26T01:10:49+01:00 overall:3,pain:3,sleep:4,calm:3
+R 263f2c40723b1dcf4be3bcad580511b5e59df6289b48bae36ee197ca2f184d64 2026-10-26T01:10:49+01:00 overall:2,sleep:3,calm:3
+R 033eb1791a547c43ca48cc6d3fdd01bbe5674de7be9cdef9e161eee32b0aae9d 2026-10-26T01:10:49+01:00 overall:3,sleep:3,calm:3
+R 5044d0639f79d8dadb3d80c61c80ae2a48b7ee16b53e566e99912e475b336c56 2026-10-26T01:10:49+01:00 overall:5,sleep:5,calm:4
+R 9e8a8180107c5e88c75c1016e1ce998df1f3b957439fa81a1511c087f6cf5dbf 2026-10-26T01:10:49+01:00 overall:5,pain:4,sleep:5,calm:5
+R f9ed1b3fcc2d7eda7d2c7137a7df38c6edc52da01b8a5ac2fc4e462be6253644 2026-10-26T01:10:49+01:00 overall:5,pain:5,sleep:5,calm:5
+R fb5eea34b7d4b2dc12f8a197854353cac7fba3892d4ec03a9c8395a925593f53 2026-10-26T01:10:49+01:00 overall:5,pain:4,sleep:5,calm:4
+R d72003316128da3fab7a711ffbfe3b496e7b294247b0e2093ff73ddee51498bb 2026-10-26T01:10:49+01:00 overall:5,pain:5,mood:4,appetite:5
+R df390d5943c712a1a55d9fa2c4f22fd600b94fafa53e4dd5c254e94f82c4493a 2026-10-26T01:10:50+01:00 overall:3,sleep:5,calm:4
+R 72344211ff8f823c59b9dace00ae2d45ae48941f01d537a9c1c1bef3309aa5c1 2026-10-26T01:10:50+01:00 overall:4,sleep:5,calm:5
+R 45fb29031ca40e2feb2b2ca567bff862162e6f73189d122d78bca54585de9ad0 2026-10-26T01:10:50+01:00 overall:3,pain:2,mood:3,focus:3
+R 51899c2503f05e6293d76718c82731cdcf61cc4be8d4ef1fcd5c7be587b2a5a4 2026-10-26T01:10:50+01:00 overall:3,sleep:3,calm:4
+R b39543c40119d3e84aeaffa9fdfc904d883e4e9a5b0fd1190c23d8586e8b4cba 2026-10-26T01:10:50+01:00 overall:3,sleep:5,calm:3
+R 13cb825f5a3e2ea82006166dc925e607ddea17026989757a04fb94a7f61ebe43 2026-10-26T01:10:50+01:00 overall:3,sleep:4,calm:3
+R 36679317e85d76d8684ec03abd08acd4909022aafd1c712c4919dca9491f2357 2026-10-26T01:10:50+01:00 overall:5,sleep:5,calm:4
+R b54544170fd73c25a4301f1415b7df087dad48296974ff3d98a3463f5700970b 2026-10-26T01:10:50+01:00 overall:5,mood:4,focus:5
+R 132992cc4e0d80e24006feed4135255b817a234ac6b8cb42e78339ad2e0613c5 2026-10-26T01:10:50+01:00 overall:5,pain:5,mood:4,focus:4
+R e0732e24b910060f38be3038dd12ce63119f4a5b8a16451839bcc7aa3f92d1ec 2026-10-26T01:10:50+01:00 overall:5,sleep:5,calm:4
+R afd28a51a2341dad736e30a3caa2220808792af2f1f867af47e524663ff9dde1 2026-10-26T01:10:50+01:00 overall:4,pain:5,sleep:5,calm:4
+R 128865acb5ef9a1cf76ef2a7633a626059e036407fc18cc3c1b4c435fcfbbb1a 2026-10-26T01:10:50+01:00 overall:3,sleep:4,calm:3
+R f502efabc35bcdfae33b8c04df550bebd91ba072639df55a98060211b7e2fded 2026-10-26T01:10:50+01:00 overall:2,pain:3,sleep:4,calm:3
+R 0db782ddcce55eae6fe8b5c10ee3427e8a806fbb49526f22906670cd4546a0d3 2026-10-26T01:10:50+01:00 overall:3,pain:3,sleep:5,calm:4
+R ef1f7dcc31e1d9768a2ffa433f516c70bce8766c2b7ba831c187e3fa56409a27 2026-10-26T01:10:50+01:00 overall:4,pain:5,mood:4,appetite:4
+R 1e9d7ca03a63ac809fe33943505780b6d857ab8894ede06f3637a741252a7b16 2026-10-26T01:10:50+01:00 overall:5,pain:4,mood:4
+R 0ea871acfba8f4d65b23b3bf5c6225b3449208c9aa22aeb5cb3b935738aedb60 2026-10-26T01:10:51+01:00 overall:5,sleep:4,calm:4
+R 3cc5dad16fc5abc367dff1596a14161db59168b0eb0d27779feabf2cec6cdf90 2026-10-26T01:10:51+01:00 overall:3,pain:3,mood:3
+R 6be925083bb69efdaf35f9855da16465d3f498e7faa38de80dc8ddd9686067b2 2026-10-26T01:10:51+01:00 overall:3,sleep:3,calm:4
+R 2409bf472178b867ca6fb05fc397dd851db37a79514e20945a0ce8b6335d0c52 2026-10-26T01:10:51+01:00 overall:3,pain:3,sleep:5,calm:4
+R b15057595e82a75dbd94a5a2a02e038fcba91b8a7fd5f8da325bd5cd968c5a5c 2026-10-26T01:10:51+01:00 overall:4,pain:5,sleep:5,calm:4
+R 5559ecc1b1d97b2d453d28b42c473f719759749eb2ab3084cb0f6739576b47aa 2026-10-26T01:10:51+01:00 overall:5,pain:4,sleep:5,calm:5
+R 8b83902eca62074c11f0ef6a5f797a822ba590ed8ff12b3da58023affdbc74f2 2026-10-26T01:10:51+01:00 overall:4,pain:5,mood:5,appetite:4
+R 4f92ce5d5b3fb03853e067c3f57530493482ce24c2e895a346bd5426485ed7ec 2026-10-26T01:10:51+01:00 overall:5,sleep:4,calm:5
+R 7a5872ca23b6d4401102cc8ca47ce38af95b9d0ffdc7f792abccf19b30d7fc1b 2026-10-26T01:10:51+01:00 overall:3,sleep:4,calm:3
+R fc7840d9c83cda83bf16217afbc62fc598e3cfc2b5ac657126c73cc9062a6b94 2026-10-26T01:10:51+01:00 overall:3,pain:3,sleep:3,calm:4
+R a2a410ced628772e8e8d7289eacab384e7aff5d9ec0890ae2eea96f3c48fa44b 2026-10-26T01:10:51+01:00 overall:5,pain:5,sleep:5,calm:4
+R fbbd310a431e315a85eac1b86cde12e6ff836aa1451b905cf8ca3e24a2175b4e 2026-10-26T01:10:51+01:00 overall:4,pain:5,sleep:5,calm:5
+R aec9d6b20df42aa028dfccd7b9fd5f83ce0683058ea56fd6516df707136d6dc1 2026-10-26T01:10:51+01:00 overall:4,pain:4,sleep:5,calm:4
+R cb775a197a712e239fcd07c8fd6f946c4c827f2a29b4c7aababde5b5298410bc 2026-10-26T01:10:51+01:00 overall:4,pain:4,mood:4
+R ef34e0ae6ded986a793d8f7f762803e30b8c9694add109a23a2a81c241264874 2026-10-26T01:10:51+01:00 overall:5,pain:4,sleep:5,calm:4
+R d9e728ad66dfc65158cd225c5734abcc7b945105743c7045b6b54b1d1d92f52c 2026-10-26T01:10:51+01:00 overall:4,sleep:5,calm:5
+R 9a18be0fc4a3637811c594b95c1a0b463c603fd397cfb7803d0f4b4c1a14340f 2026-10-26T01:10:52+01:00 overall:5,pain:5,mood:5
+R f599379a05c58708ef699aa7c71c77f5db84bababf3ec293e140608ae884b081 2026-10-26T01:10:52+01:00 overall:5,pain:5,sleep:5,calm:4
+R 8788cc07ee9d59f363874fbb5f21c2be3d65ea1f8ee11a6a37a60ba9e1a497ed 2026-10-26T01:10:52+01:00 overall:4,pain:4,sleep:5,calm:5
+R b3f358602adcdce18a30fc1bb8bd932b87ccf8908b5e619b6a0e53519cbdbe0a 2026-10-26T01:10:52+01:00 overall:4,pain:5,mood:4,focus:4
+R eb1d2b7d40ae8522433e8580c8d3645bfb0556bee2bb5b2a8bf60f71406d222c 2026-10-26T01:10:52+01:00 overall:5,mood:4,focus:5
+R afb141e65ac661b19dc1262337a3587ffaec89a0aa4c6b23d43dc658b28ffeef 2026-10-26T01:10:52+01:00 overall:4,pain:3,mood:3,focus:3
+R ff8031a28ecb7c97adbbc0c7d45e56f715432a4e14022393466e212d00be0dab 2026-10-26T01:10:52+01:00 overall:4,pain:3,sleep:5,calm:4
+R a06fb7c50f8a687cc2b1358f7a4469a5a8c10c41c16c60e3582bca6b54b6645b 2026-10-26T01:10:52+01:00 overall:4,pain:3,mood:3
+R fd4ad39be0481e058c942f73cac01df24fa862a1166c408ade0d22adcdad86d4 2026-10-26T01:10:52+01:00 overall:4,sleep:5,calm:5
+R 82f08bcb579f8870800bb1a34f2b4e44075f6a8c94b639c586efe3071e44d4f8 2026-10-26T01:10:52+01:00 overall:5,sleep:5,calm:5
+R ec440e0d9766dbe6750c46039bcc4d8fcaa088539b737b35356e8ec01e5aa011 2026-10-26T01:10:52+01:00 overall:5,sleep:5,calm:5
+R 8528dd4da82f6b3964d31d9f5dfd17c487227fee4ce8d45902cd664ec227349e 2026-10-26T01:10:52+01:00 overall:4,pain:5,sleep:5,calm:5
+R f8af7a312373932ea4f6cb0338e7d5789ae035d6a64ff1a916973b31fcaab13e 2026-10-26T01:10:52+01:00 overall:4,sleep:4,calm:3
+R 657e00e2326a6e80f659bfda7e97c3e39f63a36185f5f6bced8957065b394b24 2026-10-26T01:10:52+01:00 overall:3,pain:4,mood:4
+R e1a7a96b94ac880680e47d620db82d1079459a76094287e9a9c0f35f69e285c6 2026-10-26T01:10:52+01:00 overall:4,pain:4,sleep:5,calm:5
+R d591a2f74c5fc6b8cb76ab05f561683239e6e75d9f9f48f008e5f2654698aa51 2026-10-26T01:10:52+01:00 overall:3,sleep:5,calm:4
+R 79697564e59bc8df93f8b87ff8e71e9fc0bcecaeebcf02932138791a613fbf2d 2026-10-26T01:10:53+01:00 overall:4,sleep:5,calm:5
+R 9060051e878c435229f5988c227a3f26fc1c9e4a5e18673649d24faa8f1ee2b9 2026-10-26T01:10:53+01:00 overall:4,pain:5,sleep:4,calm:5
+R bb18b305ddaca9c59cd474bde832830aa3e7057d52d116615ba21712718acd83 2026-10-26T01:10:53+01:00 overall:4,pain:4,sleep:5,calm:5
+R f7b7ffc33270b204f7d68ce30b7b1df8c2dd0773257476e33b81cd271f469491 2026-10-26T01:10:53+01:00 overall:5,pain:5,sleep:5,calm:5
+R f00dbd2e92aaee7823ff48d74decc05788a7e2931ff564a3661f9a219ce4d232 2026-10-26T01:10:53+01:00 overall:5,pain:5,mood:5,appetite:5
+R d60eeb2a4c36a5f937a2ea8551874974dd830f18e61b691661db8989433f225d 2026-10-26T01:10:53+01:00 overall:3,sleep:5,calm:4
+R e18cfb59ec366d7db0e2900157dd6db30d8e961c44b2d75f48bb66956693a19c 2026-10-26T01:10:53+01:00 overall:5,pain:5,sleep:5,calm:4
+R 10a1536e5bf29de7bc9d468cbb08cb609fcffcf68257a33dde9c9f79be4335d2 2026-10-26T01:10:53+01:00 overall:5,pain:5,mood:4
+R 82c599417058446241370a312610fb4c06daf6aa9c9c0b374875b7747d1b462b 2026-10-26T01:10:53+01:00 overall:5,pain:5,mood:4
+R f8f410ce4bbba88bbcefce2c31e5a2285b512743e79b628e6940b2007594493b 2026-10-26T01:10:53+01:00 overall:3,pain:4,sleep:4,calm:4
+R bdc679e53fb1d208299f1ade2d9fe8d7b47950cc5680b68f207e24284fff480a 2026-10-26T01:10:53+01:00 overall:4,sleep:4,calm:4
+R c6b7192ffa54768bd9a154b5459c8e0e3331a363a206a1f26083e9ba15bfe1b8 2026-10-26T01:10:53+01:00 overall:3,sleep:4,calm:3
+R 005e328cd1a81942493277387bc20eca5b85bc78394b9c434de95f115889b145 2026-10-26T01:10:53+01:00 overall:3,mood:3,focus:4
+R 74e792acff81990881000d12db28d1b86ea0d282e4e64e661a3fc24b31f16c06 2026-10-26T01:10:53+01:00 overall:5,pain:3,sleep:5,calm:5
+R d2a938ec34aa1f2ea8b9a4843cf658dfa1b32a29f85b758afd20f3bd57a23c46 2026-10-26T01:10:53+01:00 overall:5,pain:4,mood:5
+R 98a974fa5e67ca06a665fadc12ee4ee33e25c7e5d3dc3bc002f58be9e7fa377c 2026-10-26T01:10:53+01:00 overall:5,sleep:4,calm:4
+R 37125895dfb68bd8fc8da997c2bdc117b14c4aab86290b765a80fc1ace114b41 2026-10-26T01:10:54+01:00 overall:5,sleep:5,calm:4
+R 58512248a20c1f05ed9c89728aad9c43d981e2b2a754a613344361c4f6f81f03 2026-10-26T01:10:54+01:00 overall:4,sleep:5,calm:5
+R 65ea27a3431fd0a9ea66b2c28882e625d9d4ad55c5ffc3f68558599c717b463e 2026-10-26T01:10:54+01:00 overall:5,pain:3,mood:4,focus:5
+R bbd61d09fb69e5ce536ba3a2c58afc5a36967192a13cb7ef5544a6b6e4ccecfb 2026-10-26T01:10:54+01:00 overall:5,sleep:5,calm:5
+R c916ee52786eeeb157fa100ee01d1fa537e955faf7b816936974162fb3f1ac27 2026-10-26T01:10:54+01:00 overall:4,sleep:3,calm:3
+R 82d575ee43894488a860ca8d437a97cc5e055de2732b3972ae7b2952bf4ee01e 2026-10-26T01:10:54+01:00 overall:5,pain:5,sleep:4,calm:4
+R dfab544423431644c8bfdd0393d37998fae39c9ebbdcd49341be17c5437e1873 2026-10-26T01:10:54+01:00 overall:3,pain:3,mood:3,appetite:3
+R c5e9dbc684dad6d7e60c00c9ca38662a46df5831bc8831787ac9d634a0dee036 2026-10-26T01:10:54+01:00 overall:3,sleep:4,calm:4
+R ce20f1b6fee3433538b344b00ba13708284f9817945631f0780761858e48db50 2026-10-26T01:10:54+01:00 overall:3,mood:4,focus:4
+R a75ba020c2fde0aeb9329d7ac0b823dbef8e7dbb08d91da440296b87033c4049 2026-10-26T01:10:54+01:00 overall:3,pain:3,sleep:4,calm:2
+R fe354281a4d3e2dfe3e2fc11f8aced200a447e1afbb82dacd9134385aeb2805d 2026-10-26T01:10:54+01:00 overall:5,pain:4,mood:5,appetite:4
+R 3f6e67d861a61b63e2fb74e164456b38d3b5112bbe4979bc76e5cdd138b0de74 2026-10-26T01:10:54+01:00 overall:4,pain:5,sleep:5,calm:4
+R 663322f4bf207f41409f8f5c1c64411be6e37089c1f860fdef21da481a156d84 2026-10-26T01:10:54+01:00 overall:4,pain:3,mood:3,focus:4
+R cefa9ef3de16c0aa48e31d5f69aebd379d572f6da03f3a5041d738c4e7fb1a56 2026-10-26T01:10:54+01:00 overall:3,pain:3,sleep:4,calm:3
+R 46d2809a74ce166af90fc45d348a2bd564fba178457fc6694790d861c0231958 2026-10-26T01:10:55+01:00 overall:3,pain:2,sleep:3,calm:3
+R 1ca8ea22786f09bf39e6369fdc3407df947f156d5c399f00bd765a305c42833c 2026-10-26T01:10:55+01:00 overall:4,sleep:4,calm:3
+R f406bbed70457b3dd224d9d3e4428e6e841747eecc65743a92b27d4d51b083a8 2026-10-26T01:10:55+01:00 overall:4,pain:4,sleep:5,calm:4
+R 1557eb31e01a2e1cb1c34976992dc3cfcef07d0d531a0c85ddf7210d3deae5a0 2026-10-26T01:10:55+01:00 overall:4,pain:4,sleep:5,calm:5
+R 3f049eca41bbcf59e110465bdc8799b719b6d054f5822fe30f4760ffd3dd6179 2026-10-26T01:10:55+01:00 overall:5,pain:4,mood:5,appetite:5
+R 8400b2ff3c9a5656089169b0b1fde87004ec9f9b8b696e7262b4b1785f9d349d 2026-10-26T01:10:55+01:00 overall:3,sleep:4,calm:5
+R e3f1b637858043ef00e53f01dfdc8f1c41ead1f418f6db62563725d0c4955d84 2026-10-26T01:10:55+01:00 overall:3,pain:3,sleep:4,calm:4
+R f65782a3ad5bff7ef3df412084c6f7a42acdece6d2d2f7ecd07308731272b74f 2026-10-26T01:10:55+01:00 overall:5,mood:4,focus:5
+R 0a47e74f9deeb965003702e992632425d2c7da112b935c3f828f417785c80f0d 2026-10-26T01:10:55+01:00 overall:4,pain:5,sleep:5,calm:5
+R 53eb21774d6f5bfebdab69185afe35ab76a891111ec3d9dc69c1e81f93d9edb3 2026-10-26T01:10:55+01:00 overall:5,pain:4,mood:5,appetite:4
+R c05f7bc25f00fa28cca5406763ce80db25c50d5b438d2467e8c4b9e1e954e9bd 2026-10-26T01:10:55+01:00 overall:4,sleep:4,calm:3
+R 4e5227aa4e553a44916d2c6028c8a0fb9a8d89b935fd3a4b0fa217216e4ee67b 2026-10-26T01:10:55+01:00 overall:4,pain:3,mood:4,appetite:3
+R f0a301dfc27bccdd98b51d4c927069e4f811b16edae1bb6bfcb40b5ee4ecfb47 2026-10-26T01:10:55+01:00 overall:3,pain:3,sleep:4,calm:4
+R 0532a5284a7097814efafb5e0d65e3d8d548e538959179148e251f4f5f7a6cc5 2026-10-26T01:10:55+01:00 overall:3,sleep:5,calm:3
+R 819b8196e24b73b76ddb044c9d19bada0ce24c2f12d7ab43f1be6242ba8c87a5 2026-10-26T01:10:56+01:00 overall:4,pain:4,mood:3,focus:4
+R 71cab80ccc04cb9adce2e41bdc3b90732ea95ca4c12b44f52e0c84ba3bb4148b 2026-10-26T01:10:56+01:00 overall:4,pain:5,mood:4
+R 86324956c3ef64998ebb7d98df98bee13b56ad3360992c9c8505ec463b85233e 2026-10-26T01:10:56+01:00 overall:5,mood:5,focus:5
+R 317f01ecfdfc2acfdd8886a1d4790bd9a8622c8725d2c6a57bd0cc42e000d554 2026-10-26T01:10:56+01:00 overall:3,pain:4,mood:4,focus:4
+R 4265cc543f299de5203047cb90c5d80bf62fd4514a988a90f0c92ed2bf1e1af4 2026-10-26T01:10:56+01:00 overall:3,pain:4,sleep:5,calm:3
+R b92b0828b0f0a083dcc5a991553d8e7454bf3c62db72718a7acc041a331ecdcb 2026-10-26T01:10:56+01:00 overall:5,pain:5,mood:5,appetite:5
+R 8935936d1e1d61ecc1266ef9c7abfb175f75d5a5f22d8e6b9c650cbdf68fb046 2026-10-26T01:10:56+01:00 overall:4,pain:4,sleep:5,calm:5
+R 7fd503baae1d5f4d8dc81d0337ded5bcd5cae4fc554e0ea8cec98f6f7a3d2ce5 2026-10-26T01:10:56+01:00 overall:5,pain:5,sleep:5,calm:4
+R d57513cfd52672d5e61e63e9d1a26b68eae4329002e95f947d1c2ada7f3091b7 2026-10-26T01:10:56+01:00 overall:5,pain:4,sleep:5,calm:5
+R 087a46273d85ae10eb95d8b75aa26da40990de924e5dc9289ded9fed0381a588 2026-10-26T01:10:56+01:00 overall:3,sleep:4,calm:2
+R 61c03bf68da7fcea4923568038bfb9fdf916784cd335378eac43c2e6b8ad964e 2026-10-26T01:10:56+01:00 overall:3,sleep:3,calm:3
+R 2059f9d3ab483d6ac7dcaaa4a20017398cf49f5403659f266c3991e1cbafc00d 2026-10-26T01:10:56+01:00 overall:5,sleep:5,calm:5
+R 89ca45b4b2b4aa30548a5c1b05b9077c846c47dd4a315328ff7085f45395aab0 2026-10-26T01:10:56+01:00 overall:4,pain:5,sleep:4,calm:5
+R b6eb2845f7f545706998a9231c18245f2a96250db1960b8d5257c7e87b941898 2026-10-26T01:10:57+01:00 overall:4,pain:4,mood:3
+R 99dc5af8b5debff6d4a39f5639e621159bf62469d71579b6bae989f3e9421a22 2026-10-26T01:10:57+01:00 overall:5,sleep:5,calm:4
+R aa6585339f4742e9999899cd311c13db2f1824eec9a817b651e5975baa0f8d12 2026-10-26T01:10:57+01:00 overall:5,pain:5,mood:5
+R 4babbfa8f15dfbb23d5b9d51fe879b0b83a9b90af710d2fb9839c9e465d12c17 2026-10-26T01:10:57+01:00 overall:5,pain:5,mood:4,appetite:5
+R 1bdc9470710af51e0b113ca22bacd6e23950c6bf9caa06a3913505ede86c9353 2026-10-26T01:10:57+01:00 overall:4,pain:4,mood:4
+R b99b1a9fe7ef8afca2b4b1c0406ee31ec7aeb45298d2f2882a3fec79343b1760 2026-10-26T01:10:57+01:00 overall:3,pain:4,mood:4,focus:5
+R 70fbdc696f0b88ff95534b63697c002d9d863eb404985b32db51d28e14d08397 2026-10-26T01:10:57+01:00 overall:3,pain:3,sleep:4,calm:4
+R f6fc939e791accff627610c361f89c7d6a23d0962a0062fac431211d4ef7da64 2026-10-26T01:10:57+01:00 overall:4,pain:5,mood:5,focus:5
+R c8c0542a909e31d347d7dc1ea6c45d4b8bad25e7aa0bc5dda8c45879b788a91c 2026-10-26T01:10:57+01:00 overall:5,pain:5,mood:4,appetite:5
+R a43542855785600939bd3b4879c32c542da56278a01e600c2dc972858afb02c3 2026-10-26T01:10:57+01:00 overall:5,mood:4,focus:5
+R 2f90647a16bafa8cd72b6dcfc792b36c60edf2d35cf2daf1927e532c23c341f0 2026-10-26T01:10:57+01:00 overall:4,pain:4,mood:3
+R 4ea18f9bb524e811bdb846db58b2be07e3a4526a276528dbcca713dfaab8f52a 2026-10-26T01:10:57+01:00 overall:4,pain:3,sleep:4,calm:4
+R 133834f0b2cccff5b97213cb33cb96e0c43a5eafc05497b3079996c0c91c5d23 2026-10-26T01:10:57+01:00 overall:4,pain:4,sleep:4,calm:4
+R ae321fe48ac62d47293e5745e25301fd0fbd25a0db10cf075bce056cf067661d 2026-10-26T01:10:57+01:00 overall:4,sleep:4,calm:4
+R 991defe369c78db7750fcdbace8ef6f20a46e7aa0edc7045441ec263dd3a0444 2026-10-26T01:10:58+01:00 overall:3,pain:4,sleep:5,calm:4
+R 42c5be6a3d4871123824c29d572954ebffe819ef5accc69781c6a8a6b9e5f8ab 2026-10-26T01:10:58+01:00 overall:5,sleep:5,calm:5
+R 37c8e8fddc1a08fe4f8777cc53e3ab210a96361c2248ec55f2a570bc05409517 2026-10-26T01:10:58+01:00 overall:4,pain:5,mood:5
+R 60244ad7e23b66d009e6d9e4317ef94f16758b83d58b3b81370693d1f8c4ba35 2026-10-26T01:10:58+01:00 overall:5,sleep:5,calm:5
+R dd84fcafdcff73d7f542496fc0e35961d954c4e16fa755e183db416abe7c7455 2026-10-26T01:10:58+01:00 overall:4,sleep:3,calm:4
+R 982594aed9fd3c6d11629fcdc2b1b556db5f8c4603613b928ef0eeb21fd81a6d 2026-10-26T01:10:58+01:00 overall:4,pain:4,mood:4
+R d586dde635aff86cfac32e604f6e79d05955d39ed84ae5612af00cef74fa771a 2026-10-26T01:10:58+01:00 overall:4,pain:4,mood:4
+R e361a1ba94e360e417bad7c6b221299e9a8298f618471706f2dc7a7899950b60 2026-10-26T01:10:58+01:00 overall:4,sleep:5,calm:4
+R 2cdbfc518ef4743fcf0490409ac91a261659a605c2313a4492b28ef6b43aacb8 2026-10-26T01:10:58+01:00 overall:4,sleep:5,calm:5
+R c7e026b87088152f37a47c3b6bd98b69cdce8b5a3145357789c1406013d0aa27 2026-10-26T01:10:58+01:00 overall:3,mood:4,focus:4
+R 0fcd9f555a19df0798b86c6f8fc897ad901be777126b331fce3048397a95189e 2026-10-26T01:10:58+01:00 overall:3,pain:3,sleep:4,calm:3
+R 343302bec3ca8d7c447e10aea5f6d250015ac7d24c267e4bb3c0d4774ce89d91 2026-10-26T01:10:58+01:00 overall:3,pain:3,sleep:4,calm:4
+R 0c3739ca9406b805731d40d56c5dc54a97ed7b5b7c1ae8e68c532512ed608c07 2026-10-26T01:10:58+01:00 overall:4,pain:4,sleep:5,calm:4
+R 33de5b16cad342550aad8742493b33315fc1a1fc798708a76ad023249c858328 2026-10-26T01:10:58+01:00 overall:4,sleep:4,calm:4
+R f23caef06b64c158b6429e6a6bee47e4334679059838cd4b2a09692654d5379e 2026-10-26T01:10:59+01:00 overall:4,mood:3,focus:5
+R 4c1c76734884d754c076f612705a2ad452d93ad9fb7acadc832ba3c80bbd269f 2026-10-26T01:10:59+01:00 overall:3,pain:4,sleep:4,calm:3
+R a2697879ac5eebbc4d682576b9a3da03c4b68d698decbb00759a6437b340a6a5 2026-10-26T01:10:59+01:00 overall:3,sleep:3,calm:4
+R ae0d196d312c1fd86d078e981fccb3b8ad22bd5e36f8abad2ffc7e53a980909d 2026-10-26T01:10:59+01:00 overall:3,sleep:4,calm:3
+R 6f8a27dceee713dc1ab928e4042a3ef9901a330cc41f2974a3cd2f4a39591394 2026-10-26T01:10:59+01:00 overall:3,mood:3,focus:5
+R 6926dc62ff59db8d27a0b582c35e08f9de100ed31fdc1bbfc40746475d75c27c 2026-10-26T01:10:59+01:00 overall:4,pain:3,mood:3
+R d80ef84c12e9575b08d0e7296671361f6d50403237fd5237ba25c5e0a282d34b 2026-10-26T01:10:59+01:00 overall:5,sleep:5,calm:5
+R 1491a5b576a10652e89383d1820ba3c79c7be380e91e5566258554a4ebd6ce00 2026-10-26T01:10:59+01:00 overall:4,pain:5,sleep:5,calm:5
+R 4355f6250b13dc8b5832dfc35ac22ed17c3969868df809a1f378be47fcd856ec 2026-10-26T01:10:59+01:00 overall:4,sleep:4,calm:5
+R e01b2e55a1292e901618ebacc44fb638c37ecf4e855a67d6e4f0a0a148dd469d 2026-10-26T01:10:59+01:00 overall:3,sleep:4,calm:4
+R a2ee55596d92cbdc9d270f9ac2e7c64d9fe152e5c34bc935055f5cef4c1a9c07 2026-10-26T01:10:59+01:00 overall:4,pain:4,mood:4
+R 81e5d1cfcf856906d48b6697a6cf357463aeebce6210c12ac2e384b43e47e19b 2026-10-26T01:10:59+01:00 overall:5,sleep:4,calm:5
+R 940264755261fdec2be60bf46e8443673ef39d7fbd2b963f92d69ecfcfd9384f 2026-10-26T01:10:59+01:00 overall:5,pain:4,mood:5
+R fe1dfc865645b036be4b5c9b49449dcea34ccdd2eb988b275c5822f6faab93dc 2026-10-26T01:10:59+01:00 overall:5,sleep:5,calm:5
+R 02d965e827b6358c4ff376c6a9fe3eb85b93abf88093caa1a5ecce998c0ac744 2026-10-26T01:10:59+01:00 overall:4,pain:5,mood:5,appetite:5
+R b7f1e13c05b6396e6770e7caaca6c249b0711ee06b85cdeb8f0c75325663cab3 2026-10-26T01:11:00+01:00 overall:5,sleep:5,calm:5
+R 5d8165aba24d7a3403dc62f72c18f525db384ee6b324b5271a475f3f9012d6f6 2026-10-26T01:11:00+01:00 overall:4,pain:5,mood:5,appetite:5
+R 752f22e03fa71ea89120913d325317e337d33558546e045271db2e4981954fe4 2026-10-26T01:11:00+01:00 overall:4,sleep:5,calm:5
+R 6ac37eb07172da6077764c754c46a4db3f420c4617eeb80026d69239aba9253d 2026-10-26T01:11:00+01:00 overall:3,mood:5,focus:4
+R 4e5f6923c41bf22105decd87cca86e54b8a50a993e46042d6cc7f0c8a842cd81 2026-10-26T01:11:00+01:00 overall:4,pain:4,sleep:3,calm:4
+R 387f584d559affadfa455e6dd8de8900c3beb9304f2448488578e029ba0b21ff 2026-10-26T01:11:00+01:00 overall:5,pain:4,sleep:5,calm:5
+R e31bb0d4e75cbc405785df4ba8b41d10a1aab5a6c373784f072f74cd57c8ce2b 2026-10-26T01:11:00+01:00 overall:5,pain:5,sleep:5,calm:5
+R 601fb461785466d5878d55f4539ef3d69db2b558e3e96509c87441df1d5bf2d9 2026-10-26T01:11:00+01:00 overall:5,sleep:5,calm:4
+R b02a5a6fc7362e0196c6ede33f07fddb6d7ceb07965d50d625c372edae9d40c3 2026-10-26T01:11:00+01:00 overall:4,pain:3,sleep:4,calm:3
+R f7557a87a17d6f9f36c814a1105a0171b659c507ea4c5b4e5db25dfca005eaa0 2026-10-26T01:11:00+01:00 overall:3,pain:3,mood:4
+R 027bed3beb8c0fbf060fe8b17f33f1998ec3a6cfd435279c6614d6000fe0fb38 2026-10-26T01:11:00+01:00 overall:3,pain:4,mood:4,appetite:3
+R f011a17f6c17b04b20ae3baf3541a1af545764a0c9766defa424486bc1fe33be 2026-10-26T01:11:00+01:00 overall:4,sleep:4,calm:4
+R 96c39c6f659df3445fe66ccd64f4adb72104048d2de19d58b284c489d5c20bc1 2026-10-26T01:11:00+01:00 overall:3,pain:3,mood:4
+R 0e3d12cf6c03639414365fa4e834b3c243776dffa205bb6dd59629f61498b895 2026-10-26T01:11:01+01:00 overall:3,pain:3,sleep:4,calm:4
+R 93c537816d517cc4a296a8f25bcbac0468949b4eea30a853eb0cd1a34ad3760f 2026-10-26T01:11:01+01:00 overall:3,pain:4,mood:3
+R 8f7dfc2a9257e0dc5c587cb4f5070b4fa7e6fb04eee357df3053c98dea9e03df 2026-10-26T01:11:01+01:00 overall:3,pain:4,sleep:4,calm:3
+R a4a553446fa0e2d3fa57edc663dce54b580b85b3ebaccd9f66b52a7b1ffeba97 2026-10-26T01:11:01+01:00 overall:4,pain:4,mood:3
+R 4894d3df645e7a50a279a6fafd960ecddf65ec2307621a2c955b600b60f7b52a 2026-10-26T01:11:01+01:00 overall:3,pain:4,sleep:4,calm:4
+R 10e8906cb39b98146810d5bf80fab6190c0fdb2c98213d54883fd8f129d1f5ff 2026-10-26T01:11:01+01:00 overall:4,pain:4,sleep:4,calm:4
+R 27c82fce98e33823448015b98d751a54795484018edd68d64dafdfc904eb44e7 2026-10-26T01:11:01+01:00 overall:3,pain:3,mood:4,appetite:3
+R c424ad5d539c98a026bf9c270b370070439ebe889fa5e1e05544b8ff033f70ca 2026-10-26T01:11:01+01:00 overall:4,sleep:4,calm:3
+R 1919b3cea2da6631bdd51f1c0cbaf2bd659b119bfd1109d55836a3e0d39adff9 2026-10-26T01:11:01+01:00 overall:3,pain:3,sleep:5,calm:4
+R fd351d1651f6e185b90d9ba5bff121c0e88297cc4f8e71fe4f0a042ffe63ce05 2026-10-26T01:11:01+01:00 overall:3,sleep:4,calm:3
+R 652bf5f8da7740b87ef9dfffde3b1beb32cba10ea01e66d0d423d6f9898b71cd 2026-10-26T01:11:01+01:00 overall:4,mood:4,focus:4
+R 7c0611bcc91db5d967900e1537e2a48b33400a5b74d9236872551c78b13fbced 2026-10-26T01:11:01+01:00 overall:4,mood:4,focus:4
+R 15fce9040ec90eb8c6db9e28049aa60f87dfafd87ef84e88ac08196a8270a052 2026-10-26T01:11:01+01:00 overall:4,pain:5,mood:5
+R 4aab8d5b8dd6a2de520eeb00217298164ad59deca7ecf459c621a6c5ba0d3d45 2026-10-26T01:11:01+01:00 overall:5,sleep:5,calm:5
+R 1a54a84ddf81fb0092d8c9f4c73d8becb15ac0a8756a9d1ad85ff1d639583f8e 2026-10-26T01:11:02+01:00 overall:4,mood:2,focus:4
+R 3c5631d2efaca8fd0158240429997a1a5061e807d8f9333c7ad111bd690528b2 2026-10-26T01:11:02+01:00 overall:4,pain:3,sleep:5,calm:4
+R 8800a7e9efa15a89ab976bfe4be70a30b3224818cb8239687de708ab50887f6b 2026-10-26T01:11:02+01:00 overall:4,sleep:3,calm:3
+R cf29d22ef297822f8a65674b1d8336ef0de7eb1595dbc3c5ad5e27df294ffe9b 2026-10-26T01:11:02+01:00 overall:3,pain:3,mood:4,appetite:3
+R 63822f71a06a4ffb8568500e9f248f6a6f712d86820187d67096fcaa24170e2d 2026-10-26T01:11:02+01:00 overall:4,pain:4,mood:3,appetite:4
+R 0e07a81bb157f02c20fb541f2bf6373c6e3ebcfec785dba54cd7e1a1655905eb 2026-10-26T01:11:02+01:00 overall:2,pain:4,sleep:4,calm:2
+R e13a64f408907cf3cef8861c2b94b9b3dd53f066c165ad39e9ea94cc4beff98e 2026-10-26T01:11:02+01:00 overall:3,sleep:4,calm:4
+R 7b565fef11a310e3dc0a1d87294b8bd95d73f6d465ed785c87e4a19074e8f90f 2026-10-26T01:11:02+01:00 overall:4,pain:4,mood:4
+R bbbf2749aabab573c4f1ed8e309254cba418f86222e3b683f25869ef0faf4be1 2026-10-26T01:11:02+01:00 overall:4,sleep:5,calm:5
+R bf058aae6010f15bbfdd5f67ea53f271745a62f614b6bc82ba85dcc9730d0df7 2026-10-26T01:11:02+01:00 overall:4,pain:4,mood:4
+R 2d2dad850fbb3fa9126db686ceaab17ae1549695fec4128788f0b35f3ee78c1b 2026-10-26T01:11:02+01:00 overall:3,pain:5,sleep:4,calm:4
+R abf89eea2f9c9480036f7d8959209704252bb6a8e31ae541aa74ab612c7ec420 2026-10-26T01:11:03+01:00 overall:4,sleep:5,calm:5
+R 094340df4f03cfbd9e3971dae0cef2d7d299320cf78fa05e96009faee8fa999a 2026-10-26T01:11:03+01:00 overall:4,sleep:5,calm:5
+R 748791baf5d3ff9d7d079e7a04e5366341d44c66aee8d0d3054397978a3b3118 2026-10-26T01:11:03+01:00 overall:4,sleep:5,calm:5
+R 02101d627be1c0243d1e9c5472e40b7fb85e5397bd65d9cce781d4d640e515d6 2026-10-26T01:11:03+01:00 overall:4,pain:4,sleep:5,calm:5
+R b92b8d21f3427f331cb4797bad6f96ef49caa08d86c88d45a4629edaff4af807 2026-10-26T01:11:03+01:00 overall:5,sleep:5,calm:4
+R ab08a265f8e1349f47f5a9c4b529c11b29ad50bbf83905c102417c9a8ad60d84 2026-10-26T01:11:03+01:00 overall:4,mood:4,focus:5
+R bddf5be92589c19663c31ac1f58badc858203335dbf1ae68750021a478015d0a 2026-10-26T01:11:03+01:00 overall:5,sleep:5,calm:5
+R 7665d0cf03456e9daf26ff876121fe56119915c2f69dea3b6d7f1aab2e2558b0 2026-10-26T01:11:03+01:00 overall:5,sleep:4,calm:5
+R 34801f9a546eed3dca9d252cbb90286f29588822922b7d3d0de63c6cdf2232a2 2026-10-26T01:11:03+01:00 overall:4,pain:5,mood:4
+R 470c45f3094f9f4f81c88923e6057db54b87f6a1d7dded3ce87a2368ac0af774 2026-10-26T01:11:03+01:00 overall:4,mood:5,focus:5
+R 377702358e4ca6a140492f1b64e13e96e5f508444890817d89439c801ca36c4a 2026-10-26T01:11:03+01:00 overall:5,pain:4,mood:5,focus:5
+R e4123eaec931de80b5adb7f823d15d0c81306f2f9c31cb6db2ef0d18ccdc7943 2026-10-26T01:11:03+01:00 overall:5,pain:4,mood:5,appetite:4
+R 2121c531c4b1783cc7e6a187e30018d6ec048473dcfa9849fa2d25e09ad19f7f 2026-10-26T01:11:03+01:00 overall:4,sleep:5,calm:4
+R 9881fe90be1554de4b379cd18fcd6fb679e1cd17f5f0ead19f120a8d89433e32 2026-10-26T01:11:04+01:00 overall:3,pain:4,sleep:4,calm:4
+R 182b42a0ef4f7e0b07db135b908868b3ee8442258abdd761be23db04a9fda4aa 2026-10-26T01:11:04+01:00 overall:5,pain:5,mood:4,appetite:5
+R 4aad5877dff7568d6e5644d5b680235368450c7597c709d21ce2de55fb906592 2026-10-26T01:11:04+01:00 overall:5,sleep:5,calm:4
+R 594787160c6098ffdd9809f8965a3dd64c795d99eba40cfe13a7a47f013a8f81 2026-10-26T01:11:04+01:00 overall:4,pain:5,mood:4
+R ac97fe29fe54f00ba2fb7981ac59603515352b9f7d7ded32b1b3acbf0d5afcce 2026-10-26T01:11:04+01:00 overall:4,sleep:5,calm:4
+R ed1f9e293833366c42ed73280d5cdee2f602ad22ac0f9ff09d95b22b45b8777f 2026-10-26T01:11:04+01:00 overall:4,pain:4,sleep:5,calm:4
+R eb790fb420df95955ed901c165bcc4cce879b13e175bfdbfa35c86fe902d8ea4 2026-10-26T01:11:04+01:00 overall:4,pain:4,sleep:4,calm:4
+R 6cbadd2de8866b61dc29309575424fa288fc2764de7a2880840dd02ab15c1d89 2026-10-26T01:11:04+01:00 overall:4,sleep:4,calm:4
+R ed1104389f3331a93a671cdc01e5b8c8041d1196ecdbcc7164dd98517c2026d8 2026-10-26T01:11:04+01:00 overall:5,pain:4,sleep:5,calm:5
+R 8bafa893b088778058fb6431336f5321ca93bd57106e077215d67bd2a4fb933d 2026-10-26T01:11:04+01:00 overall:5,sleep:5,calm:5
+R 33d584c2fc5a02e1f61f021e0e88acd3faa0f7ba36bf7345b1db4edc570ee294 2026-10-26T01:11:04+01:00 overall:4,sleep:5,calm:5
+R 0fbc037316b17343ba3fe938e0022e8057991e81f57578b12496ab9882575203 2026-10-26T01:11:04+01:00 overall:5,sleep:5,calm:5
+R fc3513886457226b271a36f47329de6c6bc6b4b42d80d395ace8dfd593fd7b47 2026-10-26T01:11:04+01:00 overall:5,pain:5,mood:5
+R c08978feefadcec2ad7b7d947911fcd6ecb476045a3bc2e14dc46801b15d170a 2026-10-26T01:11:05+01:00 overall:4,pain:5,sleep:5,calm:4
+R ffbc07fce4128b5706c3045a8e612265b96d4884576022be59f01f4ba2eee64f 2026-10-26T01:11:05+01:00 overall:4,sleep:4,calm:5
+R 1aee5dcd43cab3541aad01d0756a0fd3fd84a9ac5f5a30b0b7af73fa4ef53252 2026-10-26T01:11:05+01:00 overall:5,pain:4,mood:4,appetite:4
+R a933caa4a1ada26d6714cd0a2317c89da8fef80ea1c6e915dbdcba655cc6003a 2026-10-26T01:11:05+01:00 overall:4,sleep:5,calm:5
+R ccf6c03755bbd5ba039df5effaf044a4d49db2667df64e90590754ccf851001d 2026-10-26T01:11:05+01:00 overall:4,pain:5,mood:4
+R 35cc6f2f393f0092f9de9deb7bd622f39182ff2ae3271a552792442fa1a34b86 2026-10-26T01:11:05+01:00 overall:4,sleep:5,calm:5
+R da5e9db8ca667298ad882e7d974d2046b768fd09ff6f94683856cd00ded74e38 2026-10-26T01:11:05+01:00 overall:5,sleep:5,calm:5
+R 8314fd58babb5f602ba97cb756924f99b2221941cb8218c3c9247c8d3330f1a0 2026-10-26T01:11:05+01:00 overall:4,pain:5,mood:4,appetite:5
+R d3818a2afebbcb54fb9dac9b45fc23b301e6d0f95e43d63c1266b8641df15163 2026-10-26T01:11:05+01:00 overall:5,sleep:5,calm:4
+R 56c5f980a5aa2841abc3439810e5919c390d9daa7b6ff4168403d75163f78602 2026-10-26T01:11:05+01:00 overall:5,sleep:5,calm:5
+R 9e1a8a365a4b96b5112375fcb49c0717ebc41cb8d95e844e15c65ddcb160517c 2026-10-26T01:11:05+01:00 overall:5,pain:5,sleep:5,calm:5
+R b04baba57892385c2fca59a8c42c8f7cc734ea0b3d55523d0bead84c8dae1d4c 2026-10-26T01:11:05+01:00 overall:4,pain:4,sleep:5,calm:4
+R bbb430cffa3df3e484c33429b9bd327189d552e9cd3e9d85718557bbad994d6a 2026-10-26T01:11:06+01:00 overall:4,pain:4,sleep:5,calm:4
+R 096ee382a4b642c5d140c6f44604f9f27e36c7fd1c224722c9a6a4b7c4d932e9 2026-10-26T01:11:06+01:00 overall:4,sleep:5,calm:4
+R f47c3e0d894f215017e0f59f20840a479cf42844b7c8419f9ccc306f90ad5a16 2026-10-26T01:11:06+01:00 overall:5,pain:5,sleep:5,calm:5
+R 03c8588c1c2bbdebdcd0e4216340e929198396e2fe74a62457c586b9c857f7c2 2026-10-26T01:11:06+01:00 overall:4,sleep:5,calm:5
+R 319e3f90966558c25476f272624ef336b2ecb1a07f0af64dce4723a6a2455fbf 2026-10-26T01:11:06+01:00 overall:5,sleep:5,calm:4
+R fafce84f6f952d8ae732afc8504d724f176b4a95e523a76cdba1137fc740e246 2026-10-26T01:11:06+01:00 overall:3,pain:4,mood:4,focus:4
+R 7747bd089a4071ab25d147cb740bf708d3bcd5ab8f32e183fcdeea5c6887a081 2026-10-26T01:11:06+01:00 overall:4,sleep:5,calm:5
+R 2d5b0f015e3b32d38816968da318601033881df40b09659ab5e9b7266b907c69 2026-10-26T01:11:06+01:00 overall:5,pain:5,mood:5,appetite:5
+R 6e917bf284b20c5b6bf289da0701a9f9a4e9fb4672f6f6459e378c9ecd057d26 2026-10-26T01:11:06+01:00 overall:4,sleep:5,calm:5
+R 1a2240d8dc7c2439060e70533d898528d4a1fbebe8fc515b23c795e2f49ef869 2026-10-26T01:11:06+01:00 overall:5,pain:4,sleep:5,calm:5
+R c8cd54f3782ae3250489b383c7d3c80c3946871117ce9fe6755af50a76920d7c 2026-10-26T01:11:06+01:00 overall:3,pain:4,mood:4,appetite:4
+R 5a80cc033b3afb97090e0df7da928f4d79f98641559034aa700f64b1eae1c4b4 2026-10-26T01:11:07+01:00 overall:3,pain:3,sleep:5,calm:3
+R 4acd76b33edebf1d6152d474feccf638d144b1d9e28b23477a84de9502a91464 2026-10-26T01:11:07+01:00 overall:4,sleep:5,calm:4
+R ffa1501971b830dfd8361ba331cceb7fe094df3a6015be500978ca549f02138b 2026-10-26T01:11:07+01:00 overall:5,sleep:5,calm:5
+R 4c15044efd7f7165037c61fb155a79469ffe3b9b44ea71adb261a7ba140f8189 2026-10-26T01:11:07+01:00 overall:4,sleep:5,calm:4
+R aad659cbffff2fdbc26933adad4ca3ff7454cfe063dafdc6b949861a6e191d3f 2026-10-26T01:11:07+01:00 overall:5,pain:5,sleep:5,calm:5
+R 1c4a81d7581c4b884e3a90011d5786f80ec3208c46dcb2433a1da698238b436b 2026-10-26T01:11:07+01:00 overall:4,sleep:5,calm:4
+R f065413364ba6a14f8ba19db1f56c80777eab314b8094d1eb85f8ede7db36ed3 2026-10-26T01:11:07+01:00 overall:5,pain:4,sleep:5,calm:5
+R 24720c969604a5c534462c9eb20089f32a1bc3dab455c00608fb0553a237fcca 2026-10-26T01:11:07+01:00 overall:4,pain:5,sleep:4,calm:5
+R 7147398979bd02a1e7b59c8f3988cfdf9c4d07cdf44ebb23b006a400aa167eb0 2026-10-26T01:11:07+01:00 overall:5,sleep:5,calm:5
+R 6f09061ca615edd00e1be1dbe71ee4b6e4fd6cdb5e55516205cabdca44be3d30 2026-10-26T01:11:07+01:00 overall:5,pain:5,mood:5,focus:5
+R 9b4435db522ae07d4d49cd6fd7b33b7fd4f04ef0613b9b7d1b314d8df1b07610 2026-10-26T01:11:07+01:00 overall:4,pain:3,sleep:3,calm:3
+R b431b23fd04581440b1e3f57aee502f98095129b84c0184db9ad884ef5d799a8 2026-10-26T01:11:07+01:00 overall:4,pain:3,mood:4,appetite:4
+R 2f15169a07e677258d4eba482a9db5c67687d82e37b7f46f1f5a4747eea0ea63 2026-10-26T01:11:08+01:00 overall:3,pain:3,sleep:3,calm:2
+R 02c80107112d0a185bff119e62b42edee810a77c2e4f9633ea248d80956fd693 2026-10-26T01:11:08+01:00 overall:3,pain:4,mood:4
+R aded9200f2b0cf5764027bbd744d7fbb4de644f7add3fa22e89ca0dc929e8847 2026-10-26T01:11:08+01:00 overall:4,pain:5,mood:4,focus:5
+R 95d9d7f8065633aea4ca976e82d54fa74407f75547b358c88336759dd3f3325f 2026-10-26T01:11:08+01:00 overall:4,pain:3,mood:4,appetite:4
+R 61b37afe5feb4de082e2e0bee87e387a1764dc82d94726ceb576e882bc588132 2026-10-26T01:11:08+01:00 overall:4,sleep:5,calm:5
+R 9d8cae45586f34be12d08dfc7f08f56f43e551801a38e3b95cbdcefc93db9847 2026-10-26T01:11:08+01:00 overall:5,sleep:5,calm:5
+R 8cd298b4663b2d55445487a6b477d2259c071703decda0f2610be4ab216ee32a 2026-10-26T01:11:08+01:00 overall:5,sleep:4,calm:4
+R a31881d631a556289a24dc2fbbc117f098ba645aec6a7c0fb501a0c769c871dc 2026-10-26T01:11:08+01:00 overall:5,sleep:5,calm:5
+R 34b5ee8a12fb5fc40f3aa032c6ef7510d3f545abcde6326f8c8306db01b6940c 2026-10-26T01:11:08+01:00 overall:4,sleep:5,calm:4
+R 1838fb3c5dd708a4c539985e313a8109bfcc870b295db4622256b58834941951 2026-10-26T01:11:08+01:00 overall:5,mood:4,focus:4
+R ea3da083b759766981c906e2c96d610b932862b036ef0795e854d4b2393053c9 2026-10-26T01:11:08+01:00 overall:5,pain:5,mood:5,appetite:5
+R b7c6dc009b5315f90dfa9dc9fc498b31eda4ac3ffc13e186b3d6cf6794136c29 2026-10-26T01:11:08+01:00 overall:5,sleep:5,calm:4
+R 727699ec99ca74565c555b3232a5af7eefc796e71aa1c76d33d2a131b5c0e38c 2026-10-26T01:11:08+01:00 overall:3,pain:3,sleep:4,calm:4
+R b3ab9537bc83e656d87e626ea977e5a4515eaca74088db72b92e4445396bba7a 2026-10-26T01:11:09+01:00 overall:2,pain:3,mood:3,appetite:4
+R 7ace6b7f4cf2fe5f229f0589b20352a5767e6a32cdb1adbb97f01875722e9de0 2026-10-26T01:11:09+01:00 overall:2,pain:2,sleep:4,calm:3
+R 55b6e5eafc3e6c51b69c4a6f46209a5d89890535cface8d0079d2e8307e7da65 2026-10-26T01:11:09+01:00 overall:4,sleep:5,calm:3
+R 1e440c1a805f4623423fc978b2b8cd99c6dad1fb331670dbb906cee3a45bc154 2026-10-26T01:11:09+01:00 overall:5,pain:5,sleep:5,calm:4
+R 5a588f5514953f12002ce08e74c502feb455cd26d5ec1ebdbd560749263e59a5 2026-10-26T01:11:09+01:00 overall:5,sleep:4,calm:4
+R d2f3f9703dd68ed5d0c2318d3dff6d5df5139247204026bedb888595bfb283a0 2026-10-26T01:11:09+01:00 overall:5,pain:5,sleep:5,calm:5
+R f4b164aa18a06deba19f2bcd6fbe9c36d8aec2f93c476621450b26c6d35c3328 2026-10-26T01:11:09+01:00 overall:5,sleep:5,calm:5
+R e9c1ec6bb13f223d1f06e79907807092ac2b937d68480d9f9875c1bd2e6290c9 2026-10-26T01:11:09+01:00 overall:4,pain:5,sleep:4,calm:3
+R 2f93dae762f5a70c10eb8f9c98254b219cb00ca39d40a3d5abb9013371d346c8 2026-10-26T01:11:09+01:00 overall:4,sleep:5,calm:3
+R 4fe1bc896f0c8f54192dc9802193630e540530334bae6f315b98724fca172e14 2026-10-26T01:11:09+01:00 overall:5,sleep:5,calm:4
+R 051bb15dfd74e68ecfd6ed9c9c493d4cd546ddb622a79e8f0e65def33341fea7 2026-10-26T01:11:10+01:00 overall:5,pain:5,mood:4
+R 6e0f931cad8b37132b35af2459881fa0eb6815f125f5e34c9fc4ce2df276e028 2026-10-26T01:11:10+01:00 overall:4,sleep:5,calm:4
+R 48c72a44b1102cdb2f4487287cfe3085895ee5ac0a387c0c23a1499c667dee55 2026-10-26T01:11:10+01:00 overall:4,pain:5,sleep:4,calm:5
+R 23f06198b73b0e03396604547f6b561ec769a77baf0a991faf1b4b84befc20a4 2026-10-26T01:11:10+01:00 overall:4,pain:4,sleep:4,calm:4
+R 67152f6095504c28c9e32eabe5b5925ae327e7f01d13d4dc2a36adeac255079d 2026-10-26T01:11:10+01:00 overall:4,pain:5,sleep:5,calm:4
+R 68b963cb9852f5eb44d85a82196860fc395a877cc3a72e7bb0a830a72647f549 2026-10-26T01:11:10+01:00 overall:3,pain:5,sleep:5,calm:5
+R 11cec529b84326173870c4630bd37377d6c545387c355373c4d26a468e91ea33 2026-10-26T01:11:10+01:00 overall:5,sleep:5,calm:5
+R 298596fe58002fa1c50435a2db93335712aff319791a4e83b4a1a42914b1943a 2026-10-26T01:11:10+01:00 overall:5,sleep:5,calm:4
+R 0cdd4c229ea0ba35a97392a0d852078614caee01a6325e1056d05cfa8e88f208 2026-10-26T01:11:10+01:00 overall:5,pain:5,sleep:5,calm:5
+R b8ffa9f6691a65b14992d7a160aaf8bc4126e44c64c33d37a1ed16ad119a5946 2026-10-26T01:11:10+01:00 overall:5,pain:5,sleep:5,calm:5
+R 47a369c8a54547714ffe97912e9b8635e658532ab17ac975c46a40f7b44f9e76 2026-10-26T01:11:10+01:00 overall:5,pain:4,sleep:5,calm:4
+R 463a9b54fab8ecc6ab4e7d3373d1e54dfcc7b7d8fadeb7cef9435f922393b0dc 2026-10-26T01:11:10+01:00 overall:5,sleep:5,calm:5
+R 33debacddbfc69c93cb64c486dedfcdd7ba5a07afa990ed95e7078b9c004b2eb 2026-10-26T01:11:10+01:00 overall:4,pain:5,mood:5,appetite:5
+R 3fffe23739d8f47b50f6096cf9cc85e7f89acd5de9855e783dbce4f5461ab27a 2026-10-26T01:11:10+01:00 overall:4,pain:3,mood:3,appetite:3
+R b44bc59c3e72b38d885ede1579f5e17d0aec786aede273add5596241e5f68eb8 2026-10-26T01:11:11+01:00 overall:3,mood:4,focus:5
+R 3a21cfa921a508fef52cc15691aa26104ded6647f529ad69f2b76cbe0e2215fb 2026-10-26T01:11:11+01:00 overall:4,pain:4,sleep:5,calm:3
+R a2541a2b95ea2c6fe13c0d46bb017323d270c7aab5d99c76b4291e038c5786a7 2026-10-26T01:11:11+01:00 overall:3,sleep:4,calm:4
+R a53ee771fb16b7979726dbb8203a0214075c6016c886a9a4f3328a412f5ac9a7 2026-10-26T01:11:11+01:00 overall:2,mood:3,focus:4
+R 40abb2f179a3c5dc2abe7afbc7d3166911a7772eec15fe73b4c0fc7ef35772d2 2026-10-26T01:11:11+01:00 overall:3,pain:4,mood:3
+R 207f3908f69eb6299836f6f6492e52f6f5cd72daac838371afc49fb1e713c52d 2026-10-26T01:11:11+01:00 overall:4,sleep:4,calm:3
+R bb39a1e08450a7445d8b08d2079c8cda13fec9d92a48f8703716370566a99b2f 2026-10-26T01:11:11+01:00 overall:3,pain:3,mood:4,focus:5
+R 93901f6bad4d965a39146c16e56dd0ae4a0501c1188ff4ead6d1ce8bba3a130d 2026-10-26T01:11:11+01:00 overall:3,mood:4,focus:5
+R cfc737bcc93074923063180f36681bebd6948444f16ead570ac98adedb8fe47d 2026-10-26T01:11:11+01:00 overall:4,sleep:4,calm:4
+R 181d8480a963872bf027edc8a6e356522d12afe151a35f5cd3e55e72ad00976b 2026-10-26T01:11:11+01:00 overall:2,sleep:3,calm:3
+R fef45fa6698cdec2e7c68587bcfb4132ed6c74d2dfdf27bc3efab6d0dd903838 2026-10-26T01:11:12+01:00 overall:5,pain:4,mood:4
+R 6688d0cf77b4ddcecca02f8f99a70a1cf929ddf8df43b1dfc3fbb370cc34eea8 2026-10-26T01:11:12+01:00 overall:4,sleep:5,calm:5
+R 70725571fecb99f0dcf66f8adecc4bafa4b6297e468601a6421316fd77c10633 2026-10-26T01:11:12+01:00 overall:4,pain:4,sleep:5,calm:4
+R 7c46e6a0a33906dcb61265bf7f3e4864123225532e8c531a11e4f38de014ec18 2026-10-26T01:11:12+01:00 overall:4,pain:4,mood:4
+R 36aed88457aeadaff019ebd16aeab08e0d8307371d5d3ccf1689a266e0ad68c7 2026-10-26T01:11:12+01:00 overall:3,pain:3,sleep:4,calm:4
+R 1d46d1b5e5c9ac3b00c0881ed3fae172a1e10904f5a55e1f4bb7f30f67d0cba1 2026-10-26T01:11:12+01:00 overall:2,sleep:3,calm:4
+R 550a836b3fd5d3fff03bf31e912ddea53c7ffce79695e8777035f5a5684e0ef2 2026-10-26T01:11:12+01:00 overall:3,pain:3,sleep:4,calm:4
+R 8a0a1b33ead37140d6a2e89d89672a4a00ec56050686a2084a017a865b29c73e 2026-10-26T01:11:12+01:00 overall:4,pain:4,mood:3,appetite:3
+R a9f54acb51ee622ff99411d8f4c8da7fb99764b19b45d89d62f63f9ffbdd1972 2026-10-26T01:11:12+01:00 overall:4,sleep:3,calm:3
+R d01841bca971c558ca15f1c901f53dd659f12e5a165587297af98a5198b31116 2026-10-26T01:11:12+01:00 overall:3,sleep:4,calm:4
+R 2d7a0532baf08034700e646e85b9f34d6a62f12b7c56a6c777786c55d72dcea5 2026-10-26T01:11:12+01:00 overall:3,pain:4,sleep:5,calm:4
+R 2b4d49a14474763497d9a411fa8a63d6c3d796f83ac0963f1ab7d40cb58f4012 2026-10-26T01:11:12+01:00 overall:4,pain:4,sleep:4,calm:4
+R 5f42d5fd5c8489beb6c4a97571ed220241debf935ecc1c524c6e029f99ad12b7 2026-10-26T01:11:13+01:00 overall:4,sleep:5,calm:4
+R bf4d2d52ee7dad68ab0811134e400ddf1a475fb34a025d8c10d8a75b9151d3e9 2026-10-26T01:11:13+01:00 overall:3,pain:4,sleep:4,calm:3
+R 6e5075df70b6f33e45775de3866cbb9c2da567858eaeb0013d9be8986753da79 2026-10-26T01:11:13+01:00 overall:4,sleep:4,calm:3
+R 43360bde6c85805f16610b58f8bb351434692c61381af4a3f179f3154daefb7b 2026-10-26T01:11:13+01:00 overall:3,pain:3,sleep:3,calm:3
+R 51f237bc9c29d47e04c706a65796c93732e9d6b1c6de543518272ca0dd99d25b 2026-10-26T01:11:13+01:00 overall:3,sleep:3,calm:3
+R b59fdd7c4cae754f717d61de7c739acc91f20b7782182b32b994d6842a145a87 2026-10-26T01:11:13+01:00 overall:2,pain:3,sleep:4,calm:4
+R fbbac2b4ae47940bf6585e59331bbff71d4da3b1a7a0bfd3849e658284c8f965 2026-10-26T01:11:13+01:00 overall:4,pain:4,mood:3
+R b2b3a8488dd4925dbca683e806231b2cc8a8ee0125c31086a32d6edefe7aec9b 2026-10-26T01:11:13+01:00 overall:3,sleep:3,calm:4
+R bf89b6f15053f993b744757b26af560b929f77187a4834712ed0b4c621db7a91 2026-10-26T01:11:13+01:00 overall:4,sleep:4,calm:3
+R 9d4c5a576210a9bd909cf64f9fa942e2922c4c2b191358bc86b3ea342b5ae12b 2026-10-26T01:11:13+01:00 overall:3,pain:2,sleep:4,calm:3
+R 16c503c8917549d213e4639d6457a3740b5336337b61898235da5c7c727c365d 2026-10-26T01:11:13+01:00 overall:2,pain:3,sleep:4,calm:2
+R 0c849bbca5c3917696e74240dba7b96ba1af9f1763760552a413d5eaa5c73d25 2026-10-26T01:11:13+01:00 overall:4,pain:3,mood:3
+R 327d782ecc7f1eb9d56f2d10bf769b3925b0b1b32c1dc182abf5d61c90704b26 2026-10-26T01:11:13+01:00 overall:4,pain:4,sleep:4,calm:3
+R e578f94730baa48653c73200222fc0d7b94a00caa1d6254a994d1474b8becc67 2026-10-26T01:11:14+01:00 overall:3,pain:4,mood:3
+R 38fa8332fdd44a14762f5e94e240667d7c2faf2e27b46a102fc7a8cd23cb913e 2026-10-26T01:11:14+01:00 overall:3,sleep:5,calm:3
+R 9d31af498e38a05acfa73136f4d8249688f11c9b2168898bad97f60c5f59017b 2026-10-26T01:11:14+01:00 overall:3,pain:3,sleep:4,calm:3
+R a6beb3e692cc8c83fe1891bc16012c6da7a6729c060ef72b94e1b22321073e42 2026-10-26T01:11:14+01:00 overall:3,pain:3,sleep:5,calm:4
+R fbd018b5f3bc65ac559e3a595d728774489f434c73c4021f3568722055872d64 2026-10-26T01:11:14+01:00 overall:4,pain:3,sleep:5,calm:4
+R ae57618d9141dfa7b65e88ceffa137eeb88ac8251ed32d764309450f02ceec69 2026-10-26T01:11:14+01:00 overall:3,pain:4,sleep:3,calm:4
+R faa5c5a72ae488d8ad60c06e80467f387f45c3b3b8eb36d7b17e585e98c59870 2026-10-26T01:11:14+01:00 overall:3,pain:4,mood:3
+R 38580204697f07d60b341f73d956894c8ae3ac21d02c2c6dae49571dc50f95d6 2026-10-26T01:11:14+01:00 overall:3,sleep:5,calm:3
+R 97d9f4ba8d80d193c063ecbf26d0702c9b999274df5dcb5f6865ebbe64c8d391 2026-10-26T01:11:14+01:00 overall:3,pain:2,sleep:3,calm:2
+R d87654932b040b7ef84ccdab211f5351652044235bc482d8957597e0013df4a5 2026-10-26T01:11:14+01:00 overall:4,mood:4,focus:4
+R 5a78a15b8f57604e2281a2ef2cb2c84a994a6d43b3d1059313b68a25022b5c57 2026-10-26T01:11:14+01:00 overall:3,pain:2,mood:3
+R 765d37de77f69b75a04458e08947a39279424f521cd13d5abcb4d0c608e5e884 2026-10-26T01:11:15+01:00 overall:3,pain:3,mood:4
+R 84077fbffb3f07bb0c7d300bc4aa057a85c038cf860020a3bc05c01511be944c 2026-10-26T01:11:15+01:00 overall:3,sleep:4,calm:3
+R 2a4b17b3d8bee0b9d1db42aa5afb7f319431870acc48ae3b47f541c8f83e1847 2026-10-26T01:11:15+01:00 overall:3,pain:3,mood:4,appetite:4
+R d9395b218cfcfd70626eff892ee50166e4d1ca1fbb60c894034983882d218d00 2026-10-26T01:11:15+01:00 overall:3,pain:4,mood:3
+R bf9e54171a8fa3c60a5ae312a89e8d5d385612d2cfc4118fdb1db5a489791eeb 2026-10-26T01:11:15+01:00 overall:3,pain:4,sleep:4,calm:3
+R 66d8f271093993313798fcf9da1b2c58530f57dbc30f931197f5c403bb1952a3 2026-10-26T01:11:15+01:00 overall:3,sleep:5,calm:3
+R 020ec12b356fce1896ab72be08ab37a091e51eef3a6adc49d96b4622e6ef16a1 2026-10-26T01:11:15+01:00 overall:4,sleep:4,calm:3
+R 058d23f69f82be6b58122f7089ec5af014d1510441a5d1245cc90c6d2c89bcbb 2026-10-26T01:11:15+01:00 overall:4,pain:3,mood:4,appetite:4
+R 6eb989c8bb088a48bc624abc597c9459fc5712daa23275eefa70ed5d1b83bac0 2026-10-26T01:11:15+01:00 overall:5,sleep:5,calm:5
+R 73635e04088775fbe82f12eb3b71fa91e60fc0dd9550e913d313c268f7bca46c 2026-10-26T01:11:15+01:00 overall:5,pain:5,mood:5,appetite:5
+R a623c1e6ade13d267e5b0d5525e9d2f56bcbd82afc535148f58320fd3e7716cd 2026-10-26T01:11:15+01:00 overall:5,sleep:5,calm:5
+R 973c52615b10e3f3470d44a0afe2ce8acbf448a08a75f6bf1bb6ff3170e2e0aa 2026-10-26T01:11:15+01:00 overall:4,pain:3,mood:3
+R 18d239835d8605b9e91feba844f0d1ca110d92887ac08cbb2aee0407fd115972 2026-10-26T01:11:16+01:00 overall:3,sleep:3,calm:4
+R 7241790970fc627e21edb324fb727534f36086f61059ff164bcf824baacc9ee6 2026-10-26T01:11:16+01:00 overall:3,sleep:4,calm:3
+R f3a2cad9fe1f1f836383f5d2c305ad310fe7a51e023dde9fe225d0007798d7d8 2026-10-26T01:11:16+01:00 overall:4,pain:4,sleep:4,calm:5
+R a2bb8a61fa3b3e79c4856147ae1c7930fc2cfc9072752b1355ce19b8b55a8389 2026-10-26T01:11:16+01:00 overall:5,pain:4,mood:5
+R 547c5fe445c9716eb3034a8110dbcb18fc275bdb1097043c5ec678a78fdfb8de 2026-10-26T01:11:16+01:00 overall:5,sleep:5,calm:4
+R aa24f746514069fa3f4f4312fd68f547c6e4f33a4f667406337ae3b1dd1c7149 2026-10-26T01:11:16+01:00 overall:4,pain:5,sleep:5,calm:4
+R a2ba17fca0d013d255a1432258f0629330a3aa842039fefc9629fd7e294786c3 2026-10-26T01:11:16+01:00 overall:4,pain:4,sleep:4,calm:5
+R ffd10b24a0dbea6e456abaad81ee9f1dfad1690b060b5ae8eb8706ba2b380cc3 2026-10-26T01:11:16+01:00 overall:4,pain:4,sleep:5,calm:4
+R 719bc2e763302d009934884191229eb8d4649c9cd5090e3bef19eb018fc50499 2026-10-26T01:11:16+01:00 overall:4,pain:5,sleep:5,calm:4
+R 3a9be2ee43e289d8eef38d60aeadab6a6ae322ec966bd4738b43c16cd68c26c7 2026-10-26T01:11:16+01:00 overall:4,sleep:5,calm:4
+R 0f9ca60ea5b163387c45f1bb5872642d303bbaabbab739e39053482496604fd5 2026-10-26T01:11:16+01:00 overall:5,pain:5,mood:5,appetite:5
+R f3745737b52c0f24353b7ee9b8ee60f0adfbb8b833ab9969dbe5f89cb181cbfa 2026-10-26T01:11:17+01:00 overall:4,sleep:5,calm:5
+R b46e85e3d7a5d8b3338743b1601cf893901aa01a8b0abe0f55b7085a77aad971 2026-10-26T01:11:17+01:00 overall:4,pain:5,sleep:4,calm:4
+R 09cdf1bbec8c59f99809d798ef6d655057cf51153c0da3f3e02ad5843cf2e883 2026-10-26T01:11:17+01:00 overall:5,sleep:5,calm:5
+R 0d6988cb37ed9ec7435f7e62c64ff906fbc72438fd49824a7350b2f93a3a3007 2026-10-26T01:11:17+01:00 overall:5,pain:4,mood:5,appetite:5
+R a07ad350643b3746b584ff06ffc1a3152598926d05c2091a847382a13a4d57e0 2026-10-26T01:11:17+01:00 overall:5,sleep:5,calm:4
+R 2e11294e6d09cc1d005cf1a50d6336fc8678735f3c5f9021db52aacb73bf2580 2026-10-26T01:11:17+01:00 overall:4,pain:5,mood:5
+R 0dc2f244f1093b437c3a4cf6120fb66a5b134c3b67a8f28ce9e336fbb99b1ddc 2026-10-26T01:11:17+01:00 overall:5,mood:5,focus:5
+R 9612bd3965eb130e35c6e6a02f5ef02b4494caaedb2b65da7bcc276750921ec0 2026-10-26T01:11:17+01:00 overall:5,pain:4,sleep:5,calm:5
+R 96e26fa552b70fa1bd7d4c8117fe9438a544779556aa5e8272c413cdb7534091 2026-10-26T01:11:17+01:00 overall:4,pain:3,mood:4,appetite:4
+R bacad6663c61596e71c7280b2962f98d36dcde2ac3a50d0240863596d042b456 2026-10-26T01:11:17+01:00 overall:4,sleep:5,calm:4
+R 4e742bbae3e06c9f976005e7ab0988e0e4588e988c4b6ff05d7adf77507f7056 2026-10-26T01:11:18+01:00 overall:4,sleep:4,calm:3
+R 49ae9eef4d4da215f9fcdd3dbfa92768aedf5d5d12f14092372e777bdf8aecc9 2026-10-26T01:11:18+01:00 overall:4,sleep:5,calm:5
+R 4f0e76ef55c3c5f3bc5bac8180d970102d50d2a3ea331dad4ced0d77d29a39bf 2026-10-26T01:11:18+01:00 overall:4,pain:3,mood:3,appetite:3
+R 7ccd8817e2d07f90c0184f22c2813ffe51118cfb302adefce4e0f4cf34f07e88 2026-10-26T01:11:18+01:00 overall:3,sleep:4,calm:4
+R e5c06c97b3d4dbe3bf58b0c23d25345e640a8b1a9fa6846352820dff82087936 2026-10-26T01:11:18+01:00 overall:3,sleep:3,calm:4
+R 5c8b82b74e96b46fab0cf9f15872386efaff1342b98109f6734da1ed270cf667 2026-10-26T01:11:18+01:00 overall:3,sleep:3,calm:4
+R 9517665db0e04de9503507a60741a70ae144722ab35fca9a2f1e5c17dfa9b0a0 2026-10-26T01:11:18+01:00 overall:3,sleep:3,calm:3
+R d81aa3021e5a091c2b03a2a1109fd531cdcafea82422d40c767fed2565e57fe2 2026-10-26T01:11:18+01:00 overall:4,sleep:3,calm:3
+R d11af14c54815b55cde6a4301f82be533e8ebe4255d1d5c43a3bfb7cf4967da5 2026-10-26T01:11:18+01:00 overall:3,sleep:5,calm:4
+R eac350b074780ae607c8780ff1f8feb1b84e22926fc501afdebcb3f553317deb 2026-10-26T01:11:18+01:00 overall:4,sleep:4,calm:3
+R d94a4458a8196e857426e0beb3da9d9687396cd9c86abb90d6034d0b2c88186a 2026-10-26T01:11:18+01:00 overall:3,pain:3,mood:3
+R bb3e8aa1a67c04c604c991a83081fdea388d085c933dc27c54ab28a97f91a6d1 2026-10-26T01:11:19+01:00 overall:3,pain:3,sleep:3,calm:4
+R 2cd092d2af322869f000fe9afe28cad54a31dbf621411e80fb380af6976d8554 2026-10-26T01:11:19+01:00 overall:4,pain:5,sleep:5,calm:5
+R fd1f2ded382a704eff6b0380112c9d360e88995c811e4a0c72fef342aa4ff8a9 2026-10-26T01:11:19+01:00 overall:5,pain:5,mood:5,focus:5
+R 0d2569c85ed8490551ee9fb401691c62b69e46ae4bfabeebf7ea5ddeb75b620d 2026-10-26T01:11:19+01:00 overall:5,sleep:5,calm:5
+R fd786cad720ce36f6bb9faa267417754a26f16551cbce0cee6f1e5c6c121c0c5 2026-10-26T01:11:19+01:00 overall:5,pain:5,mood:5
+R 92b0892c62f1dd9948ba3530c7938bc0b059fc7a56b5b2996627ca885f009e80 2026-10-26T01:11:19+01:00 overall:4,pain:4,sleep:4,calm:4
+R 39dc016a9f945362228ac50a4c8154586ee2072033453de7495d37f724fb2df0 2026-10-26T01:11:19+01:00 overall:4,pain:3,mood:4
+R cc654f2d0ec5a6f33b03590c1bd898595c273b7388e79bd5a496bab621e82704 2026-10-26T01:11:19+01:00 overall:3,pain:3,mood:4,appetite:4
+R 6a83637c3b0785df08b69e3a2d5afcc3861761794dfbe7169ce840587959f1eb 2026-10-26T01:11:19+01:00 overall:4,pain:4,sleep:5,calm:4
+R 877f1976e87cb4bdd05fa5f2da47ab16d4f9927b0daf858049fa6db0a573b37f 2026-10-26T01:11:19+01:00 overall:4,sleep:5,calm:5
+R 79b99ee70912a6165a353931ae6a382f9e1fb29a739fd5b0b2f2ba1fb09383d4 2026-10-26T01:11:20+01:00 overall:5,mood:5,focus:5
+R 0c276b7b15b08f2bb99aa499374a448ef165cb579153d1b55729725614a3ea4e 2026-10-26T01:11:20+01:00 overall:3,pain:4,sleep:4,calm:4
+R a96120242e6b7d4eab79cdf6f1f40de84811d02e51f372681f42135426c85790 2026-10-26T01:11:20+01:00 overall:3,pain:4,sleep:5,calm:3
+R 94644155a09e22112119da65dce63788205b5f1a4df490c9178bfb1c1893ffb1 2026-10-26T01:11:20+01:00 overall:3,pain:4,sleep:5,calm:4
+R fc4cf754ec5f07874c3299cd7dcfa0606ff918ce3ffe733ad5e3fe98d9b46215 2026-10-26T01:11:20+01:00 overall:3,sleep:4,calm:4
+R c73cead3399ef22128ee6a823c7990f5a7f95a9de50801b79c47f850465b3bda 2026-10-26T01:11:20+01:00 overall:4,pain:4,sleep:4,calm:4
+R e326ebe9133b2427db17c3a9647e43bd3ebcc2640440254c932b354d4b1c934d 2026-10-26T01:11:20+01:00 overall:3,pain:3,sleep:5,calm:4
+R 7c31a121e848900e1b0f2cd17f48eab9267da32575f0c08ab8e8da7754c5f6fc 2026-10-26T01:11:20+01:00 overall:3,sleep:4,calm:4
+R 9ce3ef333782fd10406bbe3ae0bf9460bf296bf4bb0c5b1f31ef751dd752810c 2026-10-26T01:11:20+01:00 overall:3,pain:4,mood:2,appetite:3
+R e1632a4454c20fbe567bd7fc9c1aeb025181d397fc420811eb3dc3f74f6ab65f 2026-10-26T01:11:20+01:00 overall:3,pain:4,sleep:4,calm:3
+R 4cfe0445eb3b0fc047ef0da6c2abce9e69f9fbd838e10596c0fd724677454596 2026-10-26T01:11:20+01:00 overall:4,pain:4,sleep:5,calm:4
+R f0ea9897fcc86c64b01ad67141ea8c008e61614d656468f5446988bc3a9661d5 2026-10-26T01:11:21+01:00 overall:3,pain:4,sleep:4,calm:4
+R fd21339874484517d2fde70db24cbe39f8afad3319163a331e5c4178bf3019a6 2026-10-26T01:11:21+01:00 overall:3,pain:3,sleep:4,calm:3
+R bbb94660934b1eaab6d814fa2e89c9ba23a1959f695ea1ce4cf8325ab0955f39 2026-10-26T01:11:21+01:00 overall:5,pain:4,mood:4,appetite:3
+R 26460c003c63ee186ca2fd13b205ed2b962aa231f697eb61aea6d24378472c39 2026-10-26T01:11:21+01:00 overall:4,pain:4,sleep:4,calm:5
+R 73f5e6f7859105bb289a23f2d7ce3ed189e88e3d530cbcf6c9cf44d20fb22702 2026-10-26T01:11:21+01:00 overall:4,pain:4,sleep:4,calm:4
+R 2618295164007da1962330ed67513b8864fefd355bc2bb4f3e129f05e2acd6ee 2026-10-26T01:11:21+01:00 overall:4,pain:4,mood:4,appetite:4
+R f521f6ae8922d62d49aa77a8fae296c250e17e1eb233c4f7b9ce55b0be800ad7 2026-10-26T01:11:21+01:00 overall:2,pain:2,mood:3,appetite:3
+R 7a156336fc57e1907afd44226a945e84a190756d5f665fb48f2f912f69fce65f 2026-10-26T01:11:21+01:00 overall:3,pain:3,sleep:4,calm:4
+R c671406b37b8efaf4e5971ae110f5b2973e4062751ef94cb3f723136e90ffad8 2026-10-26T01:11:21+01:00 overall:3,sleep:5,calm:4
+R e6a45d7c5d3e2ed05bfb51c58d1c61a38f38e0040a90b3d37a06fc2a2bbf6d65 2026-10-26T01:11:21+01:00 overall:3,pain:3,mood:3
+R a65a2f0cb967c80154de98c307307e2d9af5ffd839029aa4d0232f67440776fe 2026-10-26T01:11:22+01:00 overall:4,pain:4,mood:4
+R e7511a3355f30037ec15b01845263ddf879f04489aa63990b600583cbf33c52b 2026-10-26T01:11:22+01:00 overall:4,sleep:4,calm:4
+R 0b9d7cab4348a22bd6a77017aed46228bcdb097e66357457d1436efffbb36fd7 2026-10-26T01:11:22+01:00 overall:4,pain:4,sleep:5,calm:3
+R f1e1256720273adc37cd6a183be26b8bc81c1cffec5fc452c501b27de7d2db4e 2026-10-26T01:11:22+01:00 overall:3,sleep:3,calm:4
+R 69a73eea934aee6690ca2610444140a4d07eb1d7a70cdf9ca1709175cb93f5e3 2026-10-26T01:11:22+01:00 overall:3,pain:4,mood:4,appetite:4
+R f873b0ac92ab88d5933199fba5baa256daac04e4d78bcd4b545e651d9718f87f 2026-10-26T01:11:22+01:00 overall:4,sleep:5,calm:4
+R 5d62fd8499203fb4258a2e56e2dda2d318014b41ae50d80f17eeb1018a8ad45c 2026-10-26T01:11:22+01:00 overall:2,pain:3,mood:3,appetite:2
+R b451629f9a81cfafd274b7343e3710cdd7768d3dc19c25d064454cfae3874230 2026-10-26T01:11:22+01:00 overall:3,mood:3,focus:4
+R bb9d4486f332c667cf33ab9ab4090013c5ef6cb4bdb4bd356304a1429f3569e1 2026-10-26T01:11:22+01:00 overall:4,pain:4,mood:4
+R b5b79b9ce0bf0558fad403c2e9e952a0a71fca1868e1c74ba26922847a7be28e 2026-10-26T01:11:22+01:00 overall:4,pain:4,mood:3,appetite:4
+R 258614a4303b674177512f727dd9b47d70ede27f5a46a7852a9b205c6002aa54 2026-10-26T01:11:23+01:00 overall:3,pain:3,sleep:4,calm:4
+R 91dbdc9442c83ac6a761f4045e8c4331670fd09d62310510c52c5670e3cfd8ca 2026-10-26T01:11:23+01:00 overall:3,pain:3,mood:3,focus:4
+R ec217737da86f47b7c59c7bd6e29b23de9b0c2054c29f55ed4abae5d3cfb60e5 2026-10-26T01:11:23+01:00 overall:4,sleep:5,calm:4
+R b3bbb880958afaee14da8db85e5abf92ea1afc141530b8d80d52dedf5bf37cb8 2026-10-26T01:11:23+01:00 overall:4,pain:4,sleep:3,calm:3
+R 054a9226d0519925cea77e6f91f2f5c17bf91f49abe0699ca93dd29de3229c97 2026-10-26T01:11:23+01:00 overall:3,sleep:4,calm:4
+R 2b971a7c8368576931658cd19ac471efdea6a8ed2cb76d632b5273eddda4a2ca 2026-10-26T01:11:23+01:00 overall:4,pain:4,sleep:5,calm:5
+R eaa82ed0a4b727dc593d1eba9c2c860399d4cffcf926b1081589a7f17701686a 2026-10-26T01:11:23+01:00 overall:3,pain:3,mood:4
+R b352fb3f4ba183e23fee1f4e17ce5b2fe9c7bc46c0ae8ad5a6e873d7a5e58a6b 2026-10-26T01:11:23+01:00 overall:3,sleep:4,calm:3
+R cad538eb311f4400d068d8f3f294599c2043753f7ea5ee705a47f4967875bb8c 2026-10-26T01:11:23+01:00 overall:2,pain:2,mood:2
+R 26767a27e821e9b77d02035880d7655e087a55ac542d4df15857c38447b3bec5 2026-10-26T01:11:23+01:00 overall:4,pain:3,mood:3
+R 80ca2e8522a110566c073ce5d8f5e86a57f2a008a89e5959c6a3868877ed5276 2026-10-26T01:11:23+01:00 overall:3,sleep:5,calm:4
+R b7fe3755b0c76901bce3e6fcc60f293bc4d79e7cfbfcc294748741a10ba79f1f 2026-10-26T01:11:23+01:00 overall:2,pain:3,mood:2
+R b831ccd1d59a7bdd20347371ca02cf898c658107ca36b778a6b3958fc8e92465 2026-10-26T01:11:24+01:00 overall:4,pain:4,mood:5
+R b7696915b08be99d4ab5a2c91756a317d7207cb6c436b43c36b2820afa2a9d01 2026-10-26T01:11:24+01:00 overall:3,sleep:3,calm:3
+R 7bb9fd1b9d6b71acc0e8fc550f83e63aa4fab97f99d98c1c9fe61d2c0af64631 2026-10-26T01:11:24+01:00 overall:3,pain:3,mood:3
+R a04b71eb34fa5c28f68a8aa115c949a6b10a21fc45d161f101fde560f279c602 2026-10-26T01:11:24+01:00 overall:3,pain:3,mood:4,appetite:4
+R 74f3768f3429d58fd52473074a0e06af18b1cddf348f0820db31b19a66ed1879 2026-10-26T01:11:24+01:00 overall:3,pain:3,sleep:4,calm:4
+R 6c17f75bde9a5a4214d1f1359f0f39d9db5091694382d489656f3def7a7774c0 2026-10-26T01:11:24+01:00 overall:5,pain:3,mood:4,appetite:4
+R 582bfb92a38c91506035dd40cad1933dd92261f67b714e0186e3f90b7b54dd65 2026-10-26T01:11:24+01:00 overall:3,sleep:4,calm:4
+R 2ed22c976e5f81f7e727ccc7d40ac907e7a69279039a6d5560d8d7de36da1389 2026-10-26T01:11:24+01:00 overall:4,pain:4,sleep:4,calm:4
+R e7207b2604c8b70a0146210a644de198f0930f385cebd57ec5ee211f9433c1b3 2026-10-26T01:11:24+01:00 overall:4,sleep:4,calm:4
+R 9e94e5c5fbf9255f96f87112a8e5e49b02e3415dc368f363f07e5b5e476ab1da 2026-10-26T01:11:24+01:00 overall:4,sleep:4,calm:4
+R 9af8aa7e584e7a33214ffd412152da7d7165903d2d4eecc4c46cfbe2d16f4bbf 2026-10-26T01:11:25+01:00 overall:3,sleep:4,calm:3
+R 3e7dbe106888580a3ffa399857ef33a4788bccfc1b6b64370a20c4d0f330fd2b 2026-10-26T01:11:25+01:00 overall:3,sleep:4,calm:4
+R 9a28996ef3f8b6dba708d7a7aeb9d31ea51c52ead6604946915a37a9d53c4eeb 2026-10-26T01:11:25+01:00 overall:3,pain:3,sleep:5,calm:3
+R b8c50e411d0fb9327f868eee0c6b30bed2e13d928f2a7bd35848746a85148d0d 2026-10-26T01:11:25+01:00 overall:4,pain:5,mood:4
+R 8bbe82ae5ff2ffa09e0ff3e76501537953590be560e27f9141dea7cde9514713 2026-10-26T01:11:25+01:00 overall:3,sleep:5,calm:5
+R 148cc86cc470d1c0df840570b7da2c6b0e737eec2bca89cfde2788fdf60858b5 2026-10-26T01:11:25+01:00 overall:2,pain:3,sleep:4,calm:3
+R b5390998e87235144a023b54f3082c86211fb1124571bfe1e32972703e47c81a 2026-10-26T01:11:25+01:00 overall:4,pain:3,mood:3
+R 20475f15746c7a2e68ffeb44610079dc490af9c5ea0db813c979cdc7c736d9cf 2026-10-26T01:11:25+01:00 overall:2,pain:3,mood:3,focus:4
+R 6938f84f40c0c36de67a223aa7f72ba862689cdf83d5f49d4784ddd95687774c 2026-10-26T01:11:25+01:00 overall:3,pain:3,sleep:4,calm:3
+R 2281f4c2fbb2f4090c6d47723fc87612a5b8a2f81a547a52e33b210b36ac24ce 2026-10-26T01:11:25+01:00 overall:3,pain:3,sleep:3,calm:3
+R 5e2501fa851bddf53944c91c535f8d0ac1af65bf36bba233b0ba1fe8bd39799a 2026-10-26T01:11:25+01:00 overall:3,pain:3,mood:4
+R 683c0ab51a6508d8df847868378f11a2492244635e6aedc013309edcbe3d5d5d 2026-10-26T01:11:26+01:00 overall:4,pain:4,mood:4,appetite:3
+R 817bb87af8c21858952913449270e38cf1735bc2d6e1b81e366102aaf24420ff 2026-10-26T01:11:26+01:00 overall:4,sleep:4,calm:4
+R 05cc461de0bddb6c22dabf6008ace1b1f5593362eb6f8e7384625ba8f1143ac8 2026-10-26T01:11:26+01:00 overall:4,pain:4,mood:3,focus:5
+R 205ef2cf46ddc72b101169017217d5f1621ebc6180a9b2456978cc79d67d01a9 2026-10-26T01:11:26+01:00 overall:3,sleep:5,calm:4
+R 8fe4cb5864c3233b8370c823f16b96a79d786747a5942ee645314a97863496af 2026-10-26T01:11:26+01:00 overall:3,pain:3,mood:4,appetite:3
+R ded6cbc40b9350b53554ba0d3f86f7f75a8aa6732cb11a785ee60d311924abc0 2026-10-26T01:11:26+01:00 overall:4,pain:3,sleep:4,calm:4
+R 40b7e432180e577107ca89749e2635aa4e076770997b82bd8c4ed0c9a409d35f 2026-10-26T01:11:26+01:00 overall:4,sleep:5,calm:3
+R ae4fd6211fa2bfccbc451ae1b3eb25701629b8da9bc41df0fd2c934a5b96a37b 2026-10-26T01:11:26+01:00 overall:4,pain:3,sleep:4,calm:5
+R 10da67f761770501d253b9f8aa52cfe6aecc7ba693cfe0f7ecb4fbc6abc915f2 2026-10-26T01:11:26+01:00 overall:4,sleep:5,calm:3
+R 664c9b6328d217deed0e7025835033d3c443894abee6dd00e8493bfbacc3702c 2026-10-26T01:11:26+01:00 overall:3,sleep:4,calm:3
+R 8d1b4927ad29f775d6bacbf975ec657784695c8a334e73a579ad6cf24369a57d 2026-10-26T01:11:26+01:00 overall:3,sleep:4,calm:3
+R 15b9d8cd62ebad41ec35009bb80984b2c4eba46f98a0b6b81288af693d43683a 2026-10-26T01:11:27+01:00 overall:3,pain:3,sleep:4,calm:3
+R 05a781c63a61cac4160f437c4509ca57e8e0acbac976f19f761f12ae77a85ae8 2026-10-26T01:11:27+01:00 overall:3,pain:3,sleep:4,calm:4
+R ca18484f4385d84f364b04ab3a16e0b48cd771fb2aa8214ed23ec0baaf379a45 2026-10-26T01:11:27+01:00 overall:4,pain:3,sleep:4,calm:4
+R b8df99c203f6559411d85002d5ff57e99c2e02600b98560566abf413a40a8e55 2026-10-26T01:11:27+01:00 overall:3,pain:3,sleep:4,calm:4
+R d1669b64b3eceb4dfe582edb82da68f48ce9c47f2d5a30d7d85f841dcca5f103 2026-10-26T01:11:27+01:00 overall:3,pain:4,sleep:4,calm:3
+R 2f8f27efbdb5d067bed6dd57aa8fc69ea38b1e07341ba55a8e559debc64d42af 2026-10-26T01:11:27+01:00 overall:3,pain:4,sleep:4,calm:5
+R 45b1164dc9748bb16b0ff4e598d3721108badffc0bad82c96c8e7f9452195210 2026-10-26T01:11:27+01:00 overall:4,pain:4,mood:3,focus:5
+R d94e02dfdb65ba95df268d04ab924851f180b58f512dbc8a8f273456f80b3448 2026-10-26T01:11:27+01:00 overall:4,pain:3,sleep:4,calm:4
+R e1658c0ef3f849c1306a8b4544d42a0aebf92b01acce88a49cc8c7bce2940cd3 2026-10-26T01:11:27+01:00 overall:3,pain:4,mood:3
+R 15f56575952afedf9bb85c0333057207dc6b2c07ebcc317f13f5be5eae4e83f1 2026-10-26T01:11:27+01:00 overall:4,sleep:5,calm:5
+R dd96ab6b4dc9fec7d4a884a6d4ae1cab48b2198978a56d7af99b1e7ceb427297 2026-10-26T01:11:28+01:00 overall:3,sleep:4,calm:3
+R 3608f541dab93e23a312882c4f2e622fe05bcc9c2c3efb876fdd0a62f7ca2491 2026-10-26T01:11:28+01:00 overall:2,pain:3,sleep:4,calm:2
+R c72cfe7e250015deb671ddf682691e04b63b361af68d9a4322ca264b86ba6e65 2026-10-26T01:11:28+01:00 overall:4,sleep:4,calm:4
+R 9b8ec1138929e66abd7c8801b0b44a0a9e9d73b3c7393b58ae6b7342fd90dfc8 2026-10-26T01:11:28+01:00 overall:2,pain:2,mood:3
+R db70aef390804bc7af656e9a1dd3ecf2b1444b1dbd5057ca353c8d4f411e5dff 2026-10-26T01:11:28+01:00 overall:4,pain:2,sleep:4,calm:4
+R e9ec103c55db5fe091992c2a3e55d1a1b895a8fd22ec6c41f245b8ae8f3887d6 2026-10-26T01:11:28+01:00 overall:4,pain:4,sleep:3,calm:4
+R 459fc53ff4814fb57a183be11f9ed88215c12dcfb13dad4ce639331a8f2c0603 2026-10-26T01:11:28+01:00 overall:3,mood:4,focus:5
+R bde76c4a971d5524b1a0c3b96757a3d0c2a71f2e601482be47bd12dff2ecc56b 2026-10-26T01:11:28+01:00 overall:3,pain:4,sleep:4,calm:4
+R 7137842bc7e150503d2b4a77203fd01da87bfed1f31d1ed0e1a03e9e1f25d4bb 2026-10-26T01:11:28+01:00 overall:3,pain:4,sleep:5,calm:3
+R 6256b485d845c040913e41a3184772d34b1802eaff0c1f04b1712b570c20a4d5 2026-10-26T01:11:28+01:00 overall:4,pain:3,sleep:4,calm:4
+R a613a37b1cfc8c4c406117058780408ecfc431498fbc68faa42fb7ee5024ce63 2026-10-26T01:11:28+01:00 overall:4,pain:4,mood:4
+R 84cd31fb8ca73c02561d42ea7d9713068f64a31eb077ae378c10971e68863f0e 2026-10-26T01:11:29+01:00 overall:3,pain:3,sleep:5,calm:4
+R cb03404114fadd26f4dace6d4c4e78f2d951e640e396e3da3a1960be8fca43d1 2026-10-26T01:11:29+01:00 overall:3,sleep:5,calm:5
+R ed9d3256f3351864b2c550b6c658dff224ffaec309688e0ba6d53dd6b12a3211 2026-10-26T01:11:29+01:00 overall:3,pain:4,mood:4,appetite:4
+R c7ccf323a91268506df0c4eea19cd121aadc0152baf31665fcd8f750825d3062 2026-10-26T01:11:29+01:00 overall:4,pain:5,mood:3,appetite:4
+R 6cee56ce4369faf6b4b2e7a3254b55434a9b1a280e675e609958b3963dcc27fe 2026-10-26T01:11:29+01:00 overall:3,sleep:4,calm:4
+R 5babf85b37968dc8ac6f9d708517b583d2dcf10f420798347fa6678662f8843d 2026-10-26T01:11:29+01:00 overall:3,pain:4,mood:4
+R 6e432192b9be6c830b5bfcbc94d2d2cd19516c453898c5a9d22d42102a9e58a0 2026-10-26T01:11:29+01:00 overall:3,pain:3,sleep:4,calm:4
+R c5b682f85b47858169f8017ff2f42025f1e6a7fe9329bb2f88dddbd1c105bd22 2026-10-26T01:11:29+01:00 overall:3,sleep:5,calm:3
+R 32f6cdad115f8271483d5627550bfd38ea49de9422885a39f07695177d5c431d 2026-10-26T01:11:29+01:00 overall:3,pain:4,sleep:4,calm:3
+R 1b3c513150b4a8e534d33b0ea71c5cb9a6b4d2439fb13995d431987b0a0971a4 2026-10-26T01:11:29+01:00 overall:3,pain:3,mood:3,appetite:4
+R b96a0bb74c6c912c68cce43f5159726572d451f743035fbe72dd6f47a2edf37a 2026-10-26T01:11:29+01:00 overall:4,pain:4,sleep:4,calm:4
+R 70c3ee8770159c55130cdf5147597bfc8c26c1c40c13b15c2b5d1635a5b7d86c 2026-10-26T01:11:30+01:00 overall:4,sleep:5,calm:3
+R 7b6508504512260f13fa425c9a4821a2dd2631da65042566814972acbbc5209a 2026-10-26T01:11:30+01:00 overall:2,pain:2,sleep:4,calm:4
+R fb3234f4090dd954e86a8912f198276f90b8db8ba8f24e63b3f5de903f3d5d2a 2026-10-26T01:11:30+01:00 overall:3,pain:3,sleep:4,calm:4
+R 36cbfda928acc29142d8f3492cf00674134f536e572579bf8de5a8abee897d37 2026-10-26T01:11:30+01:00 overall:4,pain:3,mood:4
+R a7999f39735659cdeb0d9712191318a594b6ff9456bfedd54c9e0a012f7a8d5b 2026-10-26T01:11:30+01:00 overall:4,pain:4,sleep:4,calm:4
+R 0690e59a684d6405f8ff294ffa8121926bfc38d0d3725a8372360a86956cf83d 2026-10-26T01:11:30+01:00 overall:4,sleep:4,calm:4
+R f55886e9afddc62b327b104114ec8d8edc349d63099fa6ced0482e7d9227168f 2026-10-26T01:11:30+01:00 overall:4,sleep:3,calm:4
+R f730cfbb08f20612e37ab324d5b502c2b4d8839a4c8a46f1795ab4a93846b6f7 2026-10-26T01:11:30+01:00 overall:3,pain:4,sleep:3,calm:3
+R 138e49cf0f58bac7d7b8862993b3209efa2e12dae739810f0372dca378b350b5 2026-10-26T01:11:30+01:00 overall:3,sleep:4,calm:4
+R 752efe81a21005f1fd8464f44d8365e67742cfc32465c75673025735dc808094 2026-10-26T01:11:30+01:00 overall:2,sleep:4,calm:3
+R e85298f54b401c1084153c0cace5d8e4e34849be793c4d0ae767928275e8c8ce 2026-10-26T01:11:30+01:00 overall:3,pain:4,sleep:5,calm:3
+R da25a7cbac1ab2e7c4bed768460aaa25be307679e57a37aefea710e1ab467158 2026-10-26T01:11:31+01:00 overall:3,pain:3,sleep:4,calm:4
+R e6309879ef21b669c0db69864ae2e4708722aa3333d8c2ae03e6fa45a5b1f1d7 2026-10-26T01:11:31+01:00 overall:4,sleep:5,calm:4
+R f4e178174086779e8ff744f14c62281370d4f98450a1a20a0ed8c49dc6dc83d8 2026-10-26T01:11:31+01:00 overall:4,pain:4,sleep:5,calm:4
+R c4c7b4bde4ccdb4ba5ff64cab8afc576047aeee839cadfac96cfa1967c10f7d3 2026-10-26T01:11:31+01:00 overall:3,pain:3,mood:4,appetite:3
+R 064b42643b5b700c3d2c659820337a389a47bca0d9ca1a21bfce147b7ac4020f 2026-10-26T01:11:31+01:00 overall:4,pain:3,sleep:4,calm:4
+R 9de9a3a7e24e8132652d6ade715fef75683deb6b8b22c1ff7713581574430654 2026-10-26T01:11:31+01:00 overall:4,sleep:5,calm:4
+R 2e913757c3a2e683b547c31d47ec161c7f150ddb166f1eff179550ccdfbbd963 2026-10-26T01:11:31+01:00 overall:4,mood:4,focus:5
+R 68561ed1ae7a19ee58fe461367f1b549bff8d585185777e4c3b29acd34a944b3 2026-10-26T01:11:31+01:00 overall:3,pain:4,mood:4,appetite:4
+R 0f2e44ada3e17e8782de75396744cd6897d925b489bacf4d62c901ce3fc064d1 2026-10-26T01:11:31+01:00 overall:3,mood:3,focus:4
+R 8d9df3285207ab11dc4f63a70904cbe3875e364313f3dee7610d551e0d78935f 2026-10-26T01:11:31+01:00 overall:4,pain:3,sleep:4,calm:4
+R 15ef817c646d33ca02ac96bfe47b469a2e423d11a3754c742bf9c00c39431cbe 2026-10-26T01:11:31+01:00 overall:3,sleep:5,calm:4
+R 678faf8e4b30fb86c9e64713abf599d5e404fa4271f0bb7911ddd906c4fc60cf 2026-10-26T01:11:32+01:00 overall:3,sleep:3,calm:4
+R c4f55d01f56a527af06b6ac606b9434e5639b18d3508175c125e00d28dafe8f8 2026-10-26T01:11:32+01:00 overall:3,sleep:5,calm:4
+R 45709b5d0b01777ab3d2ea838c4f005038916f55040ae0e04d1ae963163e19d3 2026-10-26T01:11:32+01:00 overall:4,pain:4,sleep:5,calm:4
+R e469bab90d465b79b985a7946ed87d25286119b9c659d01994047d91cb307aef 2026-10-26T01:11:32+01:00 overall:4,sleep:5,calm:3
+R 89e5aed7632684596afd7faf5938d3dcd89a69a51728c92a241f606b92616bef 2026-10-26T01:11:32+01:00 overall:3,pain:4,mood:4,appetite:4
+R e5137379c913a8ab1131b03e496abfd4698d346eb66eddbf049ebf8bb8809128 2026-10-26T01:11:32+01:00 overall:4,pain:4,mood:4
+R 70070c93eac1d131aa14c9836c2713dbb41a5830b5ca8da711eb39fb2df926a5 2026-10-26T01:11:32+01:00 overall:4,pain:4,sleep:4,calm:5
+R d84abd3ffc4abac6f79df3481a9916ead40959d931b9cc89f21f0cc88268f1f4 2026-10-26T01:11:32+01:00 overall:4,pain:5,sleep:5,calm:5
+R e75450ebec3575a103ab9d471cc29905ce2972baf96d053aa6a8d5af8985e106 2026-10-26T01:11:32+01:00 overall:2,pain:3,sleep:3,calm:4
+R 77f3492a662fd2cf12434c97757658bb20efe2c684615014c2dc4d5ddbc0cbd6 2026-10-26T01:11:33+01:00 overall:4,sleep:3,calm:4
+R e12554632fbbb3720451493556160f9917470a40041cd7db64c314ccf201110c 2026-10-26T01:11:33+01:00 overall:3,pain:4,sleep:5,calm:4
+R 50cfb3a266431c5f66b150a444e04b91cf3dbd2ce9b3871aeebc29ff66b6730f 2026-10-26T01:11:33+01:00 overall:4,pain:4,mood:4,appetite:5
+R fd04de311b49fa19ec333ae446f2d08d031a6171cfd774802f8e5818638a97c4 2026-10-26T01:11:33+01:00 overall:3,pain:4,sleep:4,calm:3
+R b01848cb9033ad533449a4e8b5eac4fb36a85088bacc7bf274aef4b8b6f4005e 2026-10-26T01:11:33+01:00 overall:4,pain:4,mood:3,focus:4
+R 6b93202982b2d508b1f4309e8ff49973ccde29e786459a9e7b1b2b4fe85773ae 2026-10-26T01:11:33+01:00 overall:4,pain:5,sleep:4,calm:5
+R f2eb38924ec434fa08e762a1390993c7d74b2f51b6c039e5da06349aa3372169 2026-10-26T01:11:33+01:00 overall:3,sleep:5,calm:4
+R 354bef9a76e413bd37f91c712e98d17d269e54b369738c63a545380dd24c2d28 2026-10-26T01:11:33+01:00 overall:3,sleep:5,calm:5
+R 842962a485e97c160da6611733ea48cc600e9cb4fde0e4d0b3217d431de8d03c 2026-10-26T01:11:33+01:00 overall:4,pain:3,mood:4
+R 6cfa2ecc836f6b9365cf57026037c32f38df20186851f712a7db7b21b04002c0 2026-10-26T01:11:33+01:00 overall:4,pain:4,sleep:5,calm:5
+R 1b6c4513ca3b173d10c8c34c6b5ff44f4b117103c3a6b592972b697442b98d9f 2026-10-26T01:11:34+01:00 overall:4,pain:4,mood:4,appetite:4
+R b8aafdd6b63cd84eb32acf58a4e310a9bd1862b80c750153388ab5260a1d63af 2026-10-26T01:11:34+01:00 overall:3,pain:3,sleep:4,calm:5
+R 21bb765e500a1d64b197e801cee603a114c4273b0956cf7be82c3e83cc0c5997 2026-10-26T01:11:34+01:00 overall:3,sleep:5,calm:4
+R 52465703087c6abab2aac9b2c41f23f1aedcb520e7c29b018f7c9a75a5abcc3c 2026-10-26T01:11:34+01:00 overall:3,pain:3,sleep:4,calm:4
+R bfbb418e1c246e7b2cb77222ad99dbf9a75e05079b4208c3db83dd8353106c18 2026-10-26T01:11:34+01:00 overall:4,sleep:5,calm:4
+R e84fee71cfce4f14fbee16fea4693dca914440f95bf5e3581ff12f6d975f0ab1 2026-10-26T01:11:34+01:00 overall:3,sleep:5,calm:4
+R 8673873049f61efc39909a7265d8a11249d0c13929d5368e50dc3fe19867de81 2026-10-26T01:11:34+01:00 overall:3,pain:3,sleep:4,calm:4
+R 9e9af65582f4466f169fe968a987720dadc230da2783c8739717aec2e10b11fc 2026-10-26T01:11:34+01:00 overall:4,sleep:4,calm:3
+R 46cc3186144b731187d118570dd58329f74003f2415381e04382e0eaa1223e80 2026-10-26T01:11:34+01:00 overall:4,pain:3,mood:5,appetite:4
+R 8d093427dcf4bb6aa14efbd7bda66825ac1169c5b2ad7db03ec423ffbcd49f88 2026-10-26T01:11:34+01:00 overall:4,pain:4,sleep:5,calm:4
+R 95650412efc90dbf27f3c534ec0ebc3a346f8cfbacdf37c160a661974c426e02 2026-10-26T01:11:35+01:00 overall:4,pain:4,sleep:5,calm:4
+R bc7d55eee23fc40166cc0729176b1f65b745a79e43f065526acaebfe1ab602ad 2026-10-26T01:11:35+01:00 overall:3,sleep:4,calm:3
+R efbc9998e81995f80dfebdd029a4e2d812aabf451f21354090d6762e8b26cea4 2026-10-26T01:11:35+01:00 overall:3,pain:4,mood:4
+R fbe5d67a0075e9e77c85392f9480c63d2a0dcbf062baf31bed09d6e49fac6331 2026-10-26T01:11:35+01:00 overall:2,pain:4,sleep:4,calm:4
+R 0067921fff255f14e82a39bfe0e941b1e69be378c6e6d83001ca2f973895cdf4 2026-10-26T01:11:35+01:00 overall:4,sleep:5,calm:4
+R 7b2257d28f37fcb76923c4d42edf179154e7405066a6bdd1c4ce73868c3b01c1 2026-10-26T01:11:35+01:00 overall:4,pain:4,sleep:4,calm:3
+R d83683250ab585fe582b3abc5961a2829e44bedb3a7f5481c07905b6aea79a34 2026-10-26T01:11:35+01:00 overall:3,pain:4,sleep:5,calm:3
+R 15ad1a3f8ed0f6e650dd7be04bf7ed4f434ae59aec60b170d6e8db6da51e61bd 2026-10-26T01:11:35+01:00 overall:3,pain:4,mood:4
+R c90ec18260540a5cb714109523bda876905bccc30a7fb09bf1f3a00cdde78a81 2026-10-26T01:11:35+01:00 overall:4,pain:3,sleep:5,calm:3
+R f31dd54cae51aa558a5f555d7d762b1453cf3e29ffe270352de6f44f0f1da652 2026-10-26T01:11:35+01:00 overall:3,pain:4,mood:4,appetite:3
+R 5bf139edf0afa3acb99152097e1ede5e4d31ac1ff0b95a4077f82f650aa12911 2026-10-26T01:11:36+01:00 overall:4,sleep:4,calm:3
+R 2d780a193873ced921f0b20f1500e86c45c5387f47bc2440fc1d8eae713a890d 2026-10-26T01:11:36+01:00 overall:5,pain:5,sleep:4,calm:4
+R fcf51d3047daf33288f96db97eab3c7494fca4777ba6bc27aa466033848bf529 2026-10-26T01:11:36+01:00 overall:4,sleep:4,calm:5
+R 0822d07a8d9545625036ee27411f5ba07879acf7a25d72e72d6602744ee2f845 2026-10-26T01:11:36+01:00 overall:4,pain:4,sleep:5,calm:4
+R 960713bb20790609f39a2b2d1e6d768e7c88ea220b78a9ef2918139f5d10d4a6 2026-10-26T01:11:36+01:00 overall:4,sleep:5,calm:4
+R fdab3ba237c70fa1e31c6e401113a67f4231b490acee9ade2fad2fdfd138d44b 2026-10-26T01:11:36+01:00 overall:3,pain:3,sleep:4,calm:4
+R d9a4f55eaf5808e30aeee05fecefb38f1dcb8437aef3b191ed55333e5228bc18 2026-10-26T01:11:36+01:00 overall:4,pain:4,mood:3,appetite:4
+R cfdcf5a076d9c76f8034f33c3111497e30aca2f6cf0c297182e260c2538b718f 2026-10-26T01:11:36+01:00 overall:4,pain:4,sleep:5,calm:4
+R b14745d32b5312ce51b63e69d06f7c66035e7f7ffb469995f0cf9f9f7dab305b 2026-10-26T01:11:37+01:00 overall:4,sleep:4,calm:4
+R 488607c88f510ea4807a47b57d62ea4e84c4b23e0a5babb7c66b0d52a08fcf24 2026-10-26T01:11:37+01:00 overall:3,pain:3,mood:4,focus:4
+R 3fbedcf3f1f9d2bec44a0f0f9e49779cb1972df2ced34630d3ea46da7da81351 2026-10-26T01:11:37+01:00 overall:3,pain:3,sleep:4,calm:4
+R b161cc87ec6a69ec73559ec034b6f61c666f09b85236309bbe011e81f344e012 2026-10-26T01:11:37+01:00 overall:4,pain:4,sleep:5,calm:5
+R 185a03ba7a53f63735ca38b4202474d01d9e798e8969b17fbf5dfe8e88a122ce 2026-10-26T01:11:37+01:00 overall:4,pain:4,mood:3
+R 9daad3556be6d2b2f08803eca190488cead2809c5e614ff630e7d3bb9beda215 2026-10-26T01:11:37+01:00 overall:4,pain:4,mood:3,appetite:4
+R cec62caf976fd98c5aae2621e6849ef22fe72b2cbd63ee3639105f2fa01026d2 2026-10-26T01:11:37+01:00 overall:5,pain:4,mood:3,focus:4
+R 3118aee691a2bf569915ebb11a426824557c31b6090cb5d0a0a5ae813e28e2ec 2026-10-26T01:11:37+01:00 overall:3,pain:4,mood:3,appetite:4
+R 516122decae980accbab68f0782fda666d53f148d93667b6784a4fb0bbb82647 2026-10-26T01:11:37+01:00 overall:3,sleep:4,calm:4
+R f4a2d86977c771b4e4931ba1b08ef5eb08eeea66485224c5b9fcbd90b9d56fa9 2026-10-26T01:11:37+01:00 overall:4,pain:4,sleep:4,calm:4
+R 61dcf98fd24fa15560c1a7390167d40b5c73cf337add2a299b68073ee20cbda7 2026-10-26T01:11:38+01:00 overall:4,pain:4,sleep:4,calm:4
+R cb729fd00fa59aaf202800e9b5ece6abbd9ad566338862f5c7991d70db6f2cfc 2026-10-26T01:11:38+01:00 overall:4,pain:5,mood:3,focus:5
+R f164fd5012e86683682ee31271c0b8f825f8ecbf0efc3b32cd9e5243c1808c08 2026-10-26T01:11:38+01:00 overall:3,pain:3,mood:4
+R 7f0706624ad1895a05c6b8f6d8dd175f5ab0b6dfdeff5ac33ecc19c681af677b 2026-10-26T01:11:38+01:00 overall:4,pain:3,sleep:4,calm:3
+R fdbac560b67aa8ced39f2541c4d6fd6bc198d869699270ff4ec09a91912c7d8e 2026-10-26T01:11:38+01:00 overall:3,pain:4,sleep:5,calm:4
+R e0a2c869e2a347b03665f83e09ee897344856d39b4d116c0116b893824ed5a7a 2026-10-26T01:11:38+01:00 overall:4,pain:4,sleep:5,calm:5
+R 4fd00e88b9fb6211993e4aeb3850cf6c8e2f3386b6647904b87b981b04afade3 2026-10-26T01:11:38+01:00 overall:4,sleep:4,calm:4
+R c6aee9f344c96d91371ef7dda4f814d13e267ba4336088da6b8e4698a5b734c4 2026-10-26T01:11:38+01:00 overall:4,sleep:5,calm:4
+R b9457317207e0c57a35d96669e1981a022e8f8681fd52a530734442c72e6d9de 2026-10-26T01:11:38+01:00 overall:4,sleep:5,calm:4
+R 9f072ee8dcd3e0bae64ac5ac5de61d04755ae17695104c392add89d3bfcbbe35 2026-10-26T01:11:38+01:00 overall:2,sleep:4,calm:3
+R a4dedfd8cb78a513a0409d919ff7a57a03e91f626f0e170b7956e0b2c6d41fd4 2026-10-26T01:11:38+01:00 overall:3,sleep:4,calm:3
+R 4080ed7e690a54bf5f8bf2ec5cfbf2afbc0cdd63e0ad46555d63c063b0ca4719 2026-10-26T01:11:39+01:00 overall:3,sleep:4,calm:4
+R 04b181f44a02041741bfcaaf81de8b168a77183304497ab520000fd7c918b1da 2026-10-26T01:11:39+01:00 overall:4,sleep:4,calm:4
+R 6478256844b9e58390f94b5109ba5d971ca9bbf5b27bc22ab3e4804eec901d75 2026-10-26T01:11:39+01:00 overall:4,pain:5,mood:4,focus:5
+R 99159380233d58dde9f633171e8937ee71ee33035e545e907df99bbabe05051a 2026-10-26T01:11:39+01:00 overall:4,pain:4,mood:4,focus:4
+R b12f0a668907328f45151445cb36dacc826d3c5c2e67f89fc54987ca7da7c2c5 2026-10-26T01:11:39+01:00 overall:3,sleep:4,calm:4
+R 6dbf71a66336a37de270e204be3134d3269a3979f25869d9d658c461ae3c7a93 2026-10-26T01:11:39+01:00 overall:3,pain:4,mood:4,appetite:3
+R c48174e47db80e6466cb6a191fe676c233cd8657385e2ec5e4c8a873507af179 2026-10-26T01:11:39+01:00 overall:3,pain:3,mood:2,appetite:3
+R 8eafc9a6a87217865b80c5367859fdd631260f0b32cb93dabeada9b65a16c780 2026-10-26T01:11:39+01:00 overall:4,pain:5,sleep:5,calm:4
+R 2de407cc7a74cf75250ff11160aa2a40a3364c4b98829bff7da554cbd9c90b9f 2026-10-26T01:11:39+01:00 overall:4,pain:4,mood:4
+R 1e9cc31391c673ae11666ab496a7f35c5196ad55a7534462a76c3f9a2a092569 2026-10-26T01:11:39+01:00 overall:4,sleep:3,calm:3
+R 3783507552ee55bd7dc7881e70ce85b902e33d21bea3eecb38fc135e577c392c 2026-10-26T01:11:40+01:00 overall:3,pain:3,sleep:5,calm:5
+R 1730627c53c6eda60e2f03bc7453c52fb3aa28c47e7ae7779d4720f394bd8449 2026-10-26T01:11:40+01:00 overall:4,pain:3,sleep:4,calm:4
+R a7dad1da1d5fe12ce61400d7ff3592af4ce94540d6d72e8e45bf2e30c4154157 2026-10-26T01:11:40+01:00 overall:3,pain:3,sleep:4,calm:4
+R ea09ab2f65faff8d64c0a20ead3b1a1431e086aac52c090b57edae074febd1ac 2026-10-26T01:11:40+01:00 overall:3,sleep:4,calm:3
+R 3ffc45d4e224e80046950a7663c2d04ea0fb3d6410428c7a639caf36c274f97d 2026-10-26T01:11:40+01:00 overall:3,pain:4,sleep:3,calm:4
+R 07a98341009d1e4fb57b3e5945fb8824daba087fbdf6fa17054d2b1146f7031c 2026-10-26T01:11:40+01:00 overall:3,sleep:4,calm:4
+R ffcee312571207d820a33394bc7500ade6193cdb919701b11359ead9fa5d09e9 2026-10-26T01:11:40+01:00 overall:3,sleep:3,calm:3
+R 956aeba1096397b1bc0b04e99bfe77a5b26b381dfa923f02c66f8adeeddda134 2026-10-26T01:11:40+01:00 overall:4,sleep:4,calm:4
+R 4b1f0fcdabba22c450d81877ee9427cc9dee4e2351b18b94ee4afc9f0582abba 2026-10-26T01:11:41+01:00 overall:4,sleep:4,calm:3
+R 788fc4bd3c42371fb49d2f4003e1602afca483f519118f7ba486245268434f29 2026-10-26T01:11:41+01:00 overall:3,sleep:5,calm:3
+R e8235c16091f085d0fd9da8a58789f689993e9485ce3ea341cd1971578d152e7 2026-10-26T01:11:41+01:00 overall:3,pain:3,sleep:4,calm:4
+R 6854e17fb3b53560c7db6abc52a56f9eb3a08b9c091166759affc15e80b70d8f 2026-10-26T01:11:41+01:00 overall:3,pain:3,mood:3,appetite:3
+R 27bc5f34edc9a5598182c69113e50c04f905b6dfe87b6103bb9c4cd24f798891 2026-10-26T01:11:41+01:00 overall:2,sleep:4,calm:4
+R 4e127b5641aa1d7129cdc856e91c188300e3720abec80f06f3ceb42a8446e721 2026-10-26T01:11:41+01:00 overall:3,pain:4,mood:3
+R ebd4acbc7fe0b20029541cff0537e8e0d5700aba9af882b7211129e39f7c6c15 2026-10-26T01:11:41+01:00 overall:4,pain:4,sleep:5,calm:5
+R 5a2f2d1658205b8477436e087cca0a9056234d8dfb288101f086df900314a662 2026-10-26T01:11:41+01:00 overall:3,pain:4,sleep:4,calm:4
+R 2d25deb29f699178e96697b7dd61bf8e536b1c00ea3482d4e384eb02a811f237 2026-10-26T01:11:41+01:00 overall:3,sleep:4,calm:3
+R 833bb68ccf9e1f4d7d9fd40def0c4d5b663bf425a9db9cd5b5cca30e6b8d1c64 2026-10-26T01:11:41+01:00 overall:3,pain:3,sleep:5,calm:4
+R 71dabccdce293f5f3689116b9385580b59271930f753db1722ec7dd684789d5e 2026-10-26T01:11:42+01:00 overall:4,pain:4,sleep:4,calm:3
+R 241c3ecd60858d5cc901db539fc39e9c62926f43478f36edb4a7ea668a02c2c4 2026-10-26T01:11:42+01:00 overall:5,pain:4,sleep:5,calm:5
+R f326c24a159fda8990f88bb386f57c7c93c6b756b641d9fa43ea26f97616a61f 2026-10-26T01:11:42+01:00 overall:4,pain:4,mood:4
+R 61e273ef24be9207997eeb27a48f624059aec65cdfd2a0a9c9f5630178824be9 2026-10-26T01:11:42+01:00 overall:4,pain:5,mood:4
+R a6ef15624d70a660c85f43cdac73a372d9e79ea0f433e8a41045ca1fe6d80350 2026-10-26T01:11:42+01:00 overall:4,pain:4,mood:5,focus:5
+R 897916cf766f6ca29bbae6e8c1e0fd7db490939340b170d8f03d8f7f8968a062 2026-10-26T01:11:42+01:00 overall:3,sleep:4,calm:5
+R 332e986ee3f38553ae18d0973362c51c0837240275888465082bba463bdae160 2026-10-26T01:11:42+01:00 overall:3,pain:3,sleep:3,calm:4
+R 5ccb2f7e6e9ba63accb4613b6d82c437de8cd99f2d69f8005805ca9599cf0793 2026-10-26T01:11:43+01:00 overall:4,pain:3,mood:3
+R bc9b7598304261b9e5d3a0b5571f6e9c4d61eab382f9022adb4f688183a580eb 2026-10-26T01:11:43+01:00 overall:5,sleep:5,calm:4
+R 1bcb26602e998e94b10845661c7ee6c2b7bb5e7e3d20591206a36530cc40ce85 2026-10-26T01:11:43+01:00 overall:4,sleep:5,calm:3
+R d7128df29d53e1e8dcac5ce92e05723942c9b5c4aeb50587c651bae084eff47c 2026-10-26T01:11:43+01:00 overall:4,sleep:5,calm:5
+R f21ddb9bb9736d5ec990add93b024d2ee46210ab885c96e6226056ad4cf094e6 2026-10-26T01:11:43+01:00 overall:4,pain:4,sleep:5,calm:4
+R fc86d7550ec2a5a1786edcc14a9a9969bdd0a4b2963c28e468adf01c888bc3f3 2026-10-26T01:11:43+01:00 overall:4,sleep:5,calm:5
+R 91478f64cbc849741375e7c9fde8a95581df3bd24c4502fe998e7a8d7a3458c2 2026-10-26T01:11:43+01:00 overall:4,pain:4,mood:3
+R d21b8193b0f1fa31e2417b905aad6c71427f1babd74d5805ff89671c0ce0c647 2026-10-26T01:11:43+01:00 overall:5,sleep:5,calm:5
+R c2274d23588e17e915b4ab7fd807764486934df4f34527fd1177d129e11cb885 2026-10-26T01:11:43+01:00 overall:4,mood:5,focus:5
+R e8f736d6f41a1937fdca4442427041fa4e661f747d9704a751aafd0531dadcc5 2026-10-26T01:11:44+01:00 overall:5,pain:4,sleep:5,calm:4
+R 5efb1a823949b7f33f9377dfd0d3bcceb07ffbdacf34d72072889812d664f1db 2026-10-26T01:11:44+01:00 overall:4,pain:3,sleep:4,calm:4
+R b99a7e6b1cb693d2005aa42cf7ea4d6be107b72d4c5ae8d2fc6e66809ac92100 2026-10-26T01:11:44+01:00 overall:4,sleep:4,calm:4
+R 393d10c887f3d849900f0b15e9d2bc721e211d85239e75d7ff6793901a9d4775 2026-10-26T01:11:44+01:00 overall:4,pain:4,sleep:4,calm:3
+R ef310c83af2681c026637979e4af487cb8c408762a82ca98322fe3356bbf5fae 2026-10-26T01:11:44+01:00 overall:4,sleep:5,calm:4
+R 8c656ae350294c09aedc630ea726b6cb8eeacad905df38e005d293c63faf573f 2026-10-26T01:11:44+01:00 overall:5,pain:4,sleep:5,calm:5
+R b41dd9840c6b795a5cefd087704df15967e9dd581b9288c18e0b536660609a82 2026-10-26T01:11:44+01:00 overall:4,pain:4,sleep:5,calm:4
+R 3ee7b50e772d5ad2cf0b54f3e2fedd36b5a5a92e2c978adcba930edef154d093 2026-10-26T01:11:44+01:00 overall:3,pain:3,sleep:4,calm:5
+R 82c7d7a01f323f57b6cd07b0926405b011dacbfaf81fe7b45a2344d2ad69187d 2026-10-26T01:11:45+01:00 overall:3,sleep:4,calm:4
+R 22302b35a18cccf167f0504b5d4f419fe89b4db360c8c72da78fa853bcfe7f6b 2026-10-26T01:11:45+01:00 overall:4,pain:5,mood:4,appetite:4
+R 84d1ce4e666bfd2c183ab24b49e3d9fbd61b4d5d262ece4534dee43ad2977821 2026-10-26T01:11:45+01:00 overall:5,pain:3,sleep:5,calm:5
+R 784df84beeafa20e8a3808bdc5ea207cfa5a09ad1e92b7ee7c6b21a7a4277bab 2026-10-26T01:11:45+01:00 overall:4,sleep:4,calm:4
+R 13a9e1e994e27e9dd358a3e511581e92373d65bc5e33a28d58c01bac6aeda6d9 2026-10-26T01:11:45+01:00 overall:5,sleep:5,calm:5
+R 91805bf1a15c31f75351fa9d7498b8975b0ed34bf6512dbc4393741cfa98b939 2026-10-26T01:11:45+01:00 overall:5,mood:5,focus:5
+R 6a431cad58d5f1ffad71178f489217cfd58f15e15d7586825fd34d830751b9e1 2026-10-26T01:11:45+01:00 overall:4,pain:4,mood:5
+R a65d35f4cc244a8b4736d0b11b59a11f38b87aad9e9236a363766d9fdffadfac 2026-10-26T01:11:45+01:00 overall:4,sleep:5,calm:4
+R a98a1598b485dc9fb2cac8043fd6de68d6ef06c08ab00fbbfb358b17a541fcc9 2026-10-26T01:11:45+01:00 overall:4,pain:5,mood:4,appetite:5
+R 29adffb7145be3ac268d5c24760995b1256c99215f5c127eb5d97474b2be71d6 2026-10-26T01:11:46+01:00 overall:5,mood:4,focus:5
+R 9fa9632b4214144d03d25539f0544b0ed7de8f964ab85404970de987b79acc24 2026-10-26T01:11:46+01:00 overall:5,sleep:5,calm:5
+R dd7c09df3b7d856a94951c1b68bc191978c67e3a7b680920f1cab236ab43de48 2026-10-26T01:11:46+01:00 overall:4,sleep:5,calm:5
+R 0f0a8029c1500eb92ab0262886d70d5b7148e67b1b1a770f39af35e9e09801af 2026-10-26T01:11:46+01:00 overall:5,sleep:5,calm:5
+R b938278901909c159ca95e1548705fab94342030c36dd14b232df45d5eb590f5 2026-10-26T01:11:46+01:00 overall:5,pain:4,sleep:5,calm:4
+R bd5b4ae6f01480220edf6f54c413aada6f4f0407936ba033bee3724744258bf9 2026-10-26T01:11:46+01:00 overall:4,sleep:5,calm:5
+R 5ac6550cf38853f160eb65a3006c3b4c2e203d9f649b3fcc97f507be75724277 2026-10-26T01:11:46+01:00 overall:4,mood:4,focus:5
+R ccccf97786bc43979db1becc02d13bcc6f493e2ef107432d30a844ee3faddcad 2026-10-26T01:11:46+01:00 overall:5,pain:5,sleep:5,calm:4
+R c4141cdff5a427d6cb47b93810c8c97182cdfbe8aa43e071af7fa8c54393dfd9 2026-10-26T01:11:46+01:00 overall:3,pain:4,mood:4
+R 844a73aa97ab380ca057572c16dd74bf674235830bf182968eb8c77f32927067 2026-10-26T01:11:47+01:00 overall:3,pain:3,mood:3,appetite:3
+R 59606472d844c4a30146cfdea16bea05d83a7c3f0f740a7bb180e440b53624ff 2026-10-26T01:11:47+01:00 overall:3,sleep:5,calm:3
+R 89a986e4f687531861c35b4913e823c1cf060a8dd6de7487a0cdf215a1538d81 2026-10-26T01:11:47+01:00 overall:4,pain:4,sleep:4,calm:3
+R c32f4e7134f73c6cc4d3ab2e9a126b917b0e932714adcb1aef050de87e9bf628 2026-10-26T01:11:47+01:00 overall:4,pain:4,sleep:4,calm:4
+R 450ec0690a8c6fbc9b3124aaaa643ca14383effb8bc40f35a7b1a88c2dc90422 2026-10-26T01:11:47+01:00 overall:4,sleep:4,calm:3
+R d22cf2f465d0c8b8f681b0bcfdd8d6706aa9c25db92dc1d48214ee4339211f3c 2026-10-26T01:11:47+01:00 overall:4,sleep:5,calm:5
+R 9f09123cef0921e6ccb2bfae085fe9db3e02c23147b5089abccc9b3113822eb2 2026-10-26T01:11:47+01:00 overall:5,pain:4,mood:4,appetite:4
+R 3a78546dbdb0ce59625996b876260e6a7ed76e0fab890b232a0fedb424f2d9f9 2026-10-26T01:11:47+01:00 overall:5,sleep:5,calm:5
+R 28f6bf5a47865442475062f3c65add197fd8d958666b02c6d960c5534115c3c7 2026-10-26T01:11:47+01:00 overall:4,pain:4,sleep:5,calm:4
+R fa234bdf3663ba065a0918f2ec16dda0d111ba219b1ec9548f5dbf892d260b73 2026-10-26T01:11:48+01:00 overall:4,pain:4,sleep:5,calm:4
+R 7f87a942a7f0448981493064a7ef6a94576790f39b08386cbcf90231fce0971e 2026-10-26T01:11:48+01:00 overall:3,pain:5,sleep:5,calm:5
+R 05dd265741b4946bd766eb3a7ff31e697959b07d194edd0b3f11a4783ab1f662 2026-10-26T01:11:48+01:00 overall:4,sleep:5,calm:4
+C 840e2625d3401aee8c754adf8963442560e3e1ba95cf90394c3ad60579aae07c 2026-10-26T01:10:44+01:00 15108 s=Apotheke\sim\sPaunsdorf\sCenter
+C 9c1688d07c758b81a5086bc8d75e2dc9ef9b29a6ec3b7aa43abe4f104e1f2981 2026-10-26T01:10:44+01:00 20385 s=Apotheke\sim\sPaunsdorf\sCenter
+C 5db63268478c3f4475bc48d68d47658aee0c491502d6a358161be895dd625cc5 2026-10-26T01:10:44+01:00 8990 s=Apotheke\sim\sPaunsdorf\sCenter
+C 757a8fab494e9f6189294777f924a20db23921287aed7d0773a4b8bd3861fa30 2026-10-26T01:10:44+01:00 20385 s=Apotheke\sim\sPaunsdorf\sCenter
+C 04c6c8dbaa8136493ccad66e92778f77cd9e38146adb81085a13afca19518600 2026-10-26T01:10:44+01:00 8990 s=Apotheke\sim\sPaunsdorf\sCenter
+C b01a713afea33a458086952511de835b14d5ce90667d40e82d3443e8a7fe8ef5 2026-10-26T01:10:44+01:00 11988 s=Apotheke\sim\sPaunsdorf\sCenter
+C 382259a5524aae22a864da9a0ecc44ea1d9e4f29bd65be2c9641a8e13098b2ee 2026-10-26T01:10:45+01:00 19980 s=Apotheke\sim\sPaunsdorf\sCenter
+C f930a061cb044202bc08dfb36e949ef3aca1f3caedc5fc144055dc3ac25b1169 2026-10-26T01:10:45+01:00 13485 s=Apotheke\sim\sPaunsdorf\sCenter
+C daa34a7e9a269aea4612ec86dbbe65100400094b1aa7587b55cefdcd28d056b2 2026-10-26T01:10:45+01:00 24500 s=Apotheke\sim\sPaunsdorf\sCenter
+C 16996f3383939784bf631934282226c1f29a21400d16fd868336a8768d9c306b 2026-10-26T01:10:45+01:00 13485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 35ea498102f5c4179586b8b39f5ea22138fbcf86abd295f6d3a4b77ec8e5255c 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C 275b5308c9b15c4dae79065817fd73d72cce67c2e14ddd52514592d4c3768a49 2026-10-26T01:10:45+01:00 13485 s=Apotheke\sim\sPaunsdorf\sCenter
+C bf2083c190da790fd53d805c7c5c8ec1f997e83d3080ad5e9f55e41fd31c6704 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C e164c1227a4cf404e1bacc6968921f245c271ea3d5223c7b3d54753a04960a3d 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C d8f56135aacec17ddbc59140fd3885402aa02a34da4ee4adcb0ed576031d9789 2026-10-26T01:10:45+01:00 15885 s=Apotheke\sim\sPaunsdorf\sCenter
+C be11c88729e923d68f583b95d77d8ed6f7b64c392fb2e5136ca7d0634484a0f1 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 5baeb4ca769b0b3b139bf59725851df4ff399c57603e03277da9be009e01d37a 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C dc50130b4acf556f6d2bf279ccefdc7880ed540f1bad5219d7f4a5f13b609a2a 2026-10-26T01:10:45+01:00 15885 s=Apotheke\sim\sPaunsdorf\sCenter
+C 4163f36aeb7173f60703df3c042a5aa6fe54feeb640b345abf320ce8340fc21f 2026-10-26T01:10:45+01:00 15735 s=Apotheke\sim\sPaunsdorf\sCenter
+C 48b9e7c9b61c3e740464645bd8bb7e4623917a6a02fa64f02f050c3d2c8c925a 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C 7700a6e94e73cf6847be71656fc443557f6a72dd553c4520723f3436ec1c08ff 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C 3e5195f27cd15d9657fb540cc3a8532530e75d92a04b18e060158cbbb0f36ff4 2026-10-26T01:10:45+01:00 15735 s=Apotheke\sim\sPaunsdorf\sCenter
+C 9a6c091aae827fd39267808553ed44e10d738e1c6664fd4ad685f2764369dd1f 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C 83d80c725e84968cb95bea87e0ee1f34fb060ab5734c7616afa7c5e0ae40e4a4 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 8fce93f8a8ab5eba92bc60cd9ba20b2ceec19b46fe9f0088250304f0c44bc128 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 64ab9c1dd740376db8cb85e62fc73dccbee765600c8012aed18dae086d6d1a1d 2026-10-26T01:10:45+01:00 17985 s=Apotheke\sim\sPaunsdorf\sCenter
+C f030310327b8ec05d424933a225a42281bf85510789916090311aa69c108aa57 2026-10-26T01:10:45+01:00 13485 s=Apotheke\sim\sPaunsdorf\sCenter
+C bd2fd85fe2d68302052e3be1b45cbd61338aa80d7cb9536a57ad0226c9007357 2026-10-26T01:10:45+01:00 13485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 974080b7a86a780d2a5b037a214647b919ef190c9f9bd7f654e8e3cb682133d4 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 41046d1aec5d9d98d261e6fbeb5969ac842ccdfa7b75704ad5c4089c28d05a71 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C f85ce3934c26c8635db25cc59046180561733993f7fa4462b2dbb2dbde2bfc35 2026-10-26T01:10:45+01:00 13485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 7d2efd9ce38f524eaa4e822f5a371a4e9c46d0ac82a8d27e3c708938840e0959 2026-10-26T01:10:45+01:00 16485 s=Apotheke\sim\sPaunsdorf\sCenter
+C 72640ee84d763dd7ef1971010506d0a97f894ccd3b191a8f1ce41f39eaa604f4 2026-10-26T01:10:45+01:00 14985 s=Apotheke\sim\sPaunsdorf\sCenter
+C 7a0627f5f5a96e918c35a7eb00a9a7ca29a60c57c6746fe48f1bca49e77e9d6c 2026-10-26T01:10:45+01:00 6250 s=360Grad-Apotheke
+C c77320658a7016e2be7d9bba338be1dbba28b871639e6b275c773dc882cbc1c9 2026-10-26T01:10:45+01:00 5995 s=360Grad-Apotheke
+C 2285b93177baa8d0db002ffcb5432ebb77a508a92017df7f1708a07d7b5834de 2026-10-26T01:10:45+01:00 2995 s=360Grad-Apotheke
+C 92784e959a31fbfa1e92bbbc9e3d5610c30f9018f3194c0f9c66bd72e3e3e915 2026-10-26T01:10:45+01:00 3900 s=360Grad-Apotheke
+C 2285b93177baa8d0db002ffcb5432ebb77a508a92017df7f1708a07d7b5834de 2026-10-26T01:10:45+01:00 2995 s=360Grad-Apotheke
+C 77258fbfea5ef8b0635a8f5b2d17815c399e79bb735c5840389e9f5a0fe315da 2026-10-26T01:10:45+01:00 7520 s=360Grad-Apotheke
+C 20c3c59f7b9dad9f7c34fef241a70c78ef6930ebc901e4243b00bcf51de103dc 2026-10-26T01:10:45+01:00 3475 s=360Grad-Apotheke
+C 599ee9c28e5615002519e88ffadd0ccc1ebfc830078b4341278628a71955117b 2026-10-26T01:10:45+01:00 5440 s=360Grad-Apotheke
+C 78338066149900b2e021265b7a89e9e95f0e967e01af42386ffb590a16c67d18 2026-10-26T01:10:46+01:00 8560 s=360Grad-Apotheke
+C 9afac30736b6665f0d24bf46c6098165e024118128cdbcb5c83c78dd8c77a9a1 2026-10-26T01:10:46+01:00 5440 s=360Grad-Apotheke
+C b8226bd64f831315b62291cdd79eefd1411cfc5025c701e2543504f938d64e41 2026-10-26T01:10:46+01:00 5495 s=360Grad-Apotheke
+C 393915dc367f195d0f0324fd533304b56372f061e07384139eb7e441baf1ee2e 2026-10-26T01:10:46+01:00 9980 s=360Grad-Apotheke
+C 4f1772ca8c8e0c7760c2d6aeb9a6794c5ee6c902ac5aa69f0e00140bc5f7dbac 2026-10-26T01:10:46+01:00 4995 s=360Grad-Apotheke
+C cf9e43eeafe848f9bfde49baacbd672cc9f00d889c30528dc7437b9d0831d43b 2026-10-26T01:10:46+01:00 4960 s=360Grad-Apotheke
+C 3f89c31106751ada2584441da0c3995bed1991cb86101a5aed4abf650469ddb3 2026-10-26T01:10:46+01:00 8890 s=Cannabis\sApotheke\sNordostbahnhof
+C 6e0a331d33449639768cdef5f0f6e2291281a0d59d53e25141d71273d38ec60c 2026-10-26T01:10:46+01:00 8950 s=Cannabis\sApotheke\sNordostbahnhof
+C 7c3e81c6ac8103ba7c157c4c7484e524c6334474ad9aac8dd63d0700d5796b2d 2026-10-26T01:10:46+01:00 7490 s=Cannabis\sApotheke\sNordostbahnhof
+C 995bf6b191de6052c2a3dc6ec0ad2d87c3a4d8411ed9c3242a3be225404346a3 2026-10-26T01:10:46+01:00 8900 s=Cannabis\sApotheke\sNordostbahnhof
+C 9403885a3970dc7cbebfc918482d6e790e786a72be68f2cf42783e1b5ed12766 2026-10-26T01:10:46+01:00 5950 s=Cannabis\sApotheke\sNordostbahnhof
+C edebf023d599746f646d688af28f2b9b459d9df434596efc714603d23c0437a2 2026-10-26T01:10:46+01:00 16035 s=Cannabis\sApotheke\sNordostbahnhof
+C 7c3a9ae4f00bef92ba0717537763fbb3657003c6cdf7df81ef3078d78e74f30d 2026-10-26T01:10:46+01:00 7480 s=Cannabis\sApotheke\sNordostbahnhof
+C 32adc1f7bed80d99ab35693285f2f3863d9a9bc97ef625b4f7a0f48054187e0a 2026-10-26T01:10:46+01:00 8890 s=Cannabis\sApotheke\sNordostbahnhof
+C 968ab646a25425cf777bf14df911fb9138104d8f1e6b6aa58db2854575963656 2026-10-26T01:10:46+01:00 7990 s=Cannabis\sApotheke\sNordostbahnhof
+C 8279b2cb4b2bbfd29f611d98e46e50e436e88b2a69b8bbf20c959e0ced23dd6d 2026-10-26T01:10:46+01:00 10485 s=Cannabis\sApotheke\sNordostbahnhof
+C 883aad9df60181b1f634bd3335f3ac9288ac3e88142437c53ed49032b9377c15 2026-10-26T01:10:46+01:00 16035 s=Cannabis\sApotheke\sNordostbahnhof
+C 199a0a36924a88c8681ce1ffdea5cacbb9f098740f2480397a29eca64c12c615 2026-10-26T01:10:46+01:00 12675 s=Cannabis\sApotheke\sNordostbahnhof
+C e087ea0fc7f83dbe3d062a7f5fe4e881b468accd07b48d466f0d530c20e617d7 2026-10-26T01:10:46+01:00 12380 s=Cannabis\sApotheke\sNordostbahnhof
+C e3ea4890abca7cf4cca77250d522dd11a09a2734b54e7de3ea7c2d6c91209a06 2026-10-26T01:10:46+01:00 9990 s=Cannabis\sApotheke\sNordostbahnhof
+C 53a1e5623b125a37957ed223c3e2d721f92f8ab072a6ec7880c36b8ff850076a 2026-10-26T01:10:46+01:00 9825 s=Cannabis\sApotheke\sNordostbahnhof
+C 41fd94185f6b4776b5b0198284be1795854a3df6a246e0a2799cfd49aea9b51c 2026-10-26T01:10:46+01:00 14985 s=Cannabis\sApotheke\sNordostbahnhof
+C b1aba9f1286d7598bf54348af7527a361620b67284416c3344428794a93547da 2026-10-26T01:10:46+01:00 9975 s=Cannabis\sApotheke\sNordostbahnhof
+C f54e385377fd52a10d8b610cfa2503ffed0e46de73630263d35a78549a2a9950 2026-10-26T01:10:46+01:00 12475 s=Cannabis\sApotheke\sNordostbahnhof
+C 2232d8039ae95e940981e66deb4091918c7e67c4c096f89b65e8872806f7ac31 2026-10-26T01:10:46+01:00 11235 s=Cannabis\sApotheke\sNordostbahnhof
+C 01f4a5af274c5ee95d864271d2814ccec160c88b425ee6e3840dca69d795986d 2026-10-26T01:10:46+01:00 9825 s=Cannabis\sApotheke\sNordostbahnhof
+C e141a5aa060f291020c01125c4ff679b1f1692627763658e1da5b45301bbeafa 2026-10-26T01:10:46+01:00 13600 s=Cannabis\sApotheke\sNordostbahnhof
+C 618c06a71308a4f8a7edf60a7883e532799de872d2d31a27d2d5b49b612f51fa 2026-10-26T01:10:46+01:00 10980 s=Cannabis\sApotheke\sNordostbahnhof
+C c072d8da2a81842aa1bc6e4c80a996e52515780400edb5366375aeb5a5475e01 2026-10-26T01:10:46+01:00 12980 s=Cannabis\sApotheke\sNordostbahnhof
+C 8bdfe4ecd039690d665487d69b5ccc6b42f85dc0b1d8bdf993eacb8f126ed10a 2026-10-26T01:10:46+01:00 10980 s=Cannabis\sApotheke\sNordostbahnhof
+C b29058945c1691a074494273714a97b3b93f6144375a4254c57944c5cd868b6e 2026-10-26T01:10:46+01:00 10900 s=Cannabis\sApotheke\sNordostbahnhof
+C 112167b8e680b1bc86ae425f1162fb56ecf6189b2a69bbf7c5aee84511be7930 2026-10-26T01:10:46+01:00 10980 s=Cannabis\sApotheke\sNordostbahnhof
+C 3511b66138fa6d2880dee40dbe351be2d855d9c10f2a1735ca7d59f1016be534 2026-10-26T01:10:46+01:00 14900 s=Cannabis\sApotheke\sNordostbahnhof
+C 74d29373022b56cedee45b6ae0905763fef9ea98360751f6e8f43d9174467fb9 2026-10-26T01:10:46+01:00 12900 s=Cannabis\sApotheke\sNordostbahnhof
+C 6fa2e56458d71e73f372ae3f8ec7c6935d2e255966ff537350f6497c57d5bf88 2026-10-26T01:10:46+01:00 10900 s=Cannabis\sApotheke\sNordostbahnhof
+C 707e53d614e043f61ee72ce1db7acf86bb76b942cc6a3975e64568c0a223ffd1 2026-10-26T01:10:46+01:00 4780 s=Cannabis\sApotheke\sNordostbahnhof
+C b105558a3e9c23989817cbdc0fd337d990688a129d1a51849873d0c008bc484a 2026-10-26T01:10:46+01:00 5450 s=Cannabis\sApotheke\sNordostbahnhof
+C ce5388a0e14caa0feb473a672b2eea02bce8f60b7be35bfe1c8c3c5fb18f8e3f 2026-10-26T01:10:46+01:00 3700 s=Cannabis\sApotheke\sNordostbahnhof
+C 6497b5804d24d4ebab44c88746482b12f6dd522619ecf9ee8e0d39294e8d3f61 2026-10-26T01:10:46+01:00 6950 s=Cannabis\sApotheke\sNordostbahnhof
+C 74ac8917ab3ec39ec6a55847055f05acd6870f96bd154678f55f407c63b1c92c 2026-10-26T01:10:46+01:00 6550 s=Cannabis\sApotheke\sNordostbahnhof
+C ecd2f7e886beefcf1268f1d37a63c73669c5252d1ae8d7c1b465eb6dd0ec4dce 2026-10-26T01:10:46+01:00 2475 s=Cannabis\sApotheke\sNordostbahnhof
+C b48aa41e972bade77ee86fbf7f5dec816462ee07d441282eb443e29e7b5c413a 2026-10-26T01:10:46+01:00 13900 s=Cannabis\sApotheke\sNordostbahnhof
+C 6721096101d45d42a09890c43aab2ac9e36b3e67eb2c11669441edf974c2c94e 2026-10-26T01:10:46+01:00 13300 s=Cannabis\sApotheke\sNordostbahnhof
+C 6ecb0a5ddd1b977b1be365da892cf953489320af15b2cdc97275ea3fb9e3c38f 2026-10-26T01:10:46+01:00 15980 s=Cannabis\sApotheke\sNordostbahnhof
+C 1a1a0442fcf582678509aea9340d2206975cf90682f010243e9b9dd38b323feb 2026-10-26T01:10:46+01:00 11680 s=Cannabis\sApotheke\sNordostbahnhof
+C ae46986c228b63bd7c03e66020df6174dec2cd5e2343e3416c18562df6b7136a 2026-10-26T01:10:46+01:00 11600 s=Cannabis\sApotheke\sNordostbahnhof
+C e9ae4a827461968879614551f02809df8ed856e2854820e632c5761e369c1384 2026-10-26T01:10:46+01:00 11900 s=Cannabis\sApotheke\sNordostbahnhof

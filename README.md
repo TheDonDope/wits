@@ -903,6 +903,20 @@ heated it, and at which of the heater's settings: an induction heater's
 wattage. The Journal shows it all, as in "Vestratto Tornado · heated with YLL
 3.0 at 45 W".
 
+### A demo, to look around
+
+**Seed with demo data**, on the header's menu (⋮), opens a repository made to
+show every page with something on it, without touching yours. It is the
+workbook with the pharmacy invoices' prices, every device preset, a year of
+sessions — 897 of them, 718 rated, on the Venty, the Mighty+ and the Frolic,
+with the AVB weighed out of each every dozen or so — every jar's terpenes
+looked up, and the stashes left behind cleared. It is restored into
+`wits-demo` in your home folder (`/wits-demo` on the phone) and served; asked
+for again, that repository opens as you left it. **Repository** goes back to
+yours. The sessions and ratings are made up, from a seeded generator; the
+rest is the workbook's and the invoices'. `make demo-seed` makes it again
+(`assets/demo-seed.wits`, a few minutes and the live web).
+
 ### Which repository
 
 The **Repository** page, off the header's menu (⋮), is where the server is

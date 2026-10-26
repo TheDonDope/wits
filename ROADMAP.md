@@ -685,6 +685,42 @@ for every gram. Every page measures 375 px on the phone. On a computer, the
 clock goes below 1100 px and the tab labels below 780; measured every 20 px
 from 641 to 1920, no tab bar pages and no page scrolls sideways.
 
+### A demo — Seed with demo data, on the menu
+
+`assets/demo-seed.wits` is a bundle made to show every page with something on
+it, and **Seed with demo data** on the header's menu opens it
+(`POST /api/demo`, `pkg/api/demo.go`): restored into `wits-demo` in the home
+folder, `/wits-demo` on the phone, and served; asked for again, the repository
+there opens as it was left, and a folder by that name holding anything else is
+left alone. The interface ships the bundle (`wits-ui/public/demo-seed.wits`, a
+link to the one in assets, which the AppImage copies as the file); the phone
+restores it on its own storage like the computer. `wits restore`'s code moved
+to `bundle.Restore` so the server can run it.
+
+`./demo-bundle.sh` (`make demo-seed`) makes it: the workbook imported into a
+new repository, then `wits-ui/scripts/demo-seed.ts`, bundled by esbuild, run
+against it through wits-server's API, every entry through the recorder:
+
+- the 37 invoices read by the browser's own reader (`readInvoice`, pdf.js
+  under Node) and matched: 32 fills priced, 5 matching no fill in the
+  workbook. The pharmacy is kept; the invoice's number, which the batch
+  writes into the price's note, is not.
+- the 15 device presets, as Add a device makes them;
+- a year of sessions from a seeded generator: after every grind of the last
+  twelve months, a few sessions of it over the next days, mostly in the
+  evening, on the Venty, the Mighty+ and the Frolic; 897 recorded, 718 rated
+  — overall from the product, the heat and the hour, sleep at night, focus in
+  the morning — and 76 AVB collections. One session the recorder refused.
+- every jar's terpenes looked up: 50 of 53;
+- the 48 stashes left behind cleared.
+
+Sessions come before the clearing, not after: a session dated in the past
+draws on that day's stash, and the recorder checks every date, so one recorded
+after a stash was cleared would take grams no longer there. The bundle is
+2617 events, 165 KB. Checked by clicking it: on the computer the dashboard
+opens on the demo (AVB 102.93 g, the last emptying 54 %), and the Pages build
+restores it on the phone in /wits-demo, 2617 entries.
+
 ### The AppImage — every release, one file
 
 `appimage.sh` builds wits as an AppImage, `dist/wits-<version>-x86_64.AppImage`

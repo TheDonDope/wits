@@ -17,6 +17,7 @@ make ui-test           # the client's Vitest suite (Node and npm; nothing else n
 make wasm-check        # the phone's engine (cmd/wits-wasm) synced with the CLI, both ways
 make pages             # the phone's build, as GitHub Pages serves it under /wits/
 make appimage          # dist/wits-<version>-x86_64.AppImage: server, CLI and UI in one file, checked by running it
+make demo-seed         # assets/demo-seed.wits again: the workbook, invoices, devices, a year of sessions, terpenes — minutes, live web
 ```
 
 Single test: `go test ./pkg/ledger -run TestCycleGap -v`. TUI tests live in

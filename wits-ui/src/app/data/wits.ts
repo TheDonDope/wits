@@ -195,6 +195,19 @@ export class Wits {
     return out;
   }
 
+  /**
+   * Opens the demo: the bundle this interface ships, restored into a
+   * repository of its own beside yours (wits-demo in the home folder), or
+   * that repository opened again as it was left.
+   */
+  async demo(): Promise<Place> {
+    const sent = await firstValueFrom(this.http.get(new URL('demo-seed.wits', document.baseURI).href, { responseType: 'blob' }));
+    const type = 'application/x-wits-bundle';
+    const place = await this.send<Place>('/api/demo', new Blob([sent], { type }), type);
+    this.refresh();
+    return place;
+  }
+
   /** Every view reads again, and the poll starts counting afresh. */
   private refresh(): void {
     this.seen = -1;

@@ -40,6 +40,7 @@
       @for (l of aside; track l.path) {
         <a mat-menu-item [routerLink]="l.path"><mat-icon>{{ l.icon }}</mat-icon><span>{{ l.label }}</span></a>
       }
+      <button mat-menu-item (click)="demo()" [disabled]="seeding()"><mat-icon>science</mat-icon><span>Seed with demo data</span></button>
       <!-- The phone has no footer, so its build and theme are named here. -->
       <p class="build">wits-ui {{ version }} · {{ theme.info().label }}</p>
     </mat-menu>
