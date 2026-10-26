@@ -35,6 +35,7 @@ func (s *Server) desk(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/repo", s.open)
 	mux.HandleFunc("GET /api/dirs", s.dirs)
 	mux.HandleFunc("POST /api/import", s.importBook)
+	mux.HandleFunc("POST /api/demo", s.demo)
 }
 
 // place is the repository being served, as a client reads it.

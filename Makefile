@@ -12,7 +12,7 @@ UI_DEFINE = --define "WITS_VERSION='$(shell git describe --tags --always --dirty
 
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release server ui ui-test serve \
-	wasm wasm-check pages appimage
+	wasm wasm-check pages appimage demo-seed
 
 .DEFAULT_GOAL := build
 
@@ -133,6 +133,13 @@ pages: wasm
 # The repository in the working directory, in a browser at http://127.0.0.1:7341
 serve: server ui
 	./bin/wits-server --ui wits-ui/dist/wits-ui/browser
+
+# The demo (assets/demo-seed.wits), made again: the workbook, the invoices'
+# prices, every device, a year of rated sessions, every jar's terpenes looked
+# up and the stashes cleared, bundled. The invoices are not committed; without
+# assets/invoices the demo has no prices.
+demo-seed:
+	./demo-bundle.sh
 
 # wits as an AppImage: the server, the command line and the interface in one
 # file, dist/wits-<version>-x86_64.AppImage, checked by running it. The

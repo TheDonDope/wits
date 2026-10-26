@@ -102,7 +102,8 @@ step "building the interface"
 	[ -d node_modules ] || npm ci
 	npx ng build --define "WITS_VERSION='$version'" >/dev/null
 )
-cp -r wits-ui/dist/wits-ui/browser "$appdir/usr/share/wits/ui"
+# -L: the demo bundle is a link to assets/demo-seed.wits, and must travel as the file.
+cp -rL wits-ui/dist/wits-ui/browser "$appdir/usr/share/wits/ui"
 # The phone's engine, if a `make wasm` left one in public/: the server's
 # interface never loads it, so it is 13 MB the AppImage need not carry.
 rm -f "$appdir/usr/share/wits/ui/wits.wasm" "$appdir/usr/share/wits/ui/wasm_exec.js"
