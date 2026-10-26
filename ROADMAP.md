@@ -1494,6 +1494,23 @@ installed, and the layout and development; `docs/terminal.md` is the command
 line and the terminal interface, `docs/browser.md` the server, the window and
 the phone.
 
+### The replay, as a timeline and a tape — Analysis, Jars
+
+The replay's entry used to pop in under the play bar as a card of its own,
+appearing when play was pressed and changing with every step, so the page
+under it jumped. The transport (`viz/transport.ts`) is one panel of one
+height now, live or playing. Beside the controls, the day being played and
+how many entries in. Under them, the whole record in time
+(`data/timeline.ts`): the grams ground in slices, a day each on a span
+shorter than 120 days and 120 on a longer one, a tick at every pickup (a fill
+of several strains is one), the years marked, or the months on a span under
+fourteen months; the part played lit, the playhead glowing, and a pointer
+anywhere on it scrubbing to that day (`Replay.scrubTo`). Under that, the tape:
+the eight newest entries that tell the story, newest at the right, each one
+moved along by a transition as long as one step, so it keeps pace from 1.2 to
+20 a second. Live, it shows the last entries recorded. It was looked
+at in Aurora and Paper, and fits 375 px on the phone.
+
 ---
 
 ## 📌 Planned

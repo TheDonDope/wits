@@ -371,7 +371,7 @@ COLLECTED   DEVICE                 AVB    FROM                  YIELD
     icon: 'monitoring',
     lead: '<b>Insights → Analysis</b> is the long view: this fill, the last 30 or 90 days, 12 months, or all time. Press play and everything replays from empty, an entry a moment.',
     body: [
-      'The daily chart fills in, the products race each other up the ranking, the fills grow on their timeline. Drag the scrubber to any point or step with <kbd>←</kbd> <kbd>→</kbd>; <code>?at=2025-02-14</code> opens it as the record stood that day.',
+      'The daily chart fills in, the products race each other up the ranking, the fills grow on their timeline. The panel above them is the record in time — the grams ground, a blue tick at every pickup — lit up to the playhead: point anywhere on it to go there, or step with <kbd>←</kbd> <kbd>→</kbd>. Under it the <b>tape</b> runs, the newest entries in a row, each new one pushing the others along. <code>?at=2025-02-14</code> opens it as the record stood that day.',
       '<b>Tolerance</b> draws grams a day against how the sessions went, both over the same 14 days rolling, with breaks of a week or more shaded behind. Tolerance creeps when the grams climb and the rating stays flat.',
     ],
     shots: [web('analysis', '/insights/analysis', 'Analysis: grams a day, the products ranked, and the replay', 'This fill: 44.4 g ground on 23 of its 55 days, 1.93 g an active day.')],
