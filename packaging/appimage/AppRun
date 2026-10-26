@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
 # What the wits AppImage runs: the server, with the interface bundled beside
-# it, on a repository — and the browser, pointed at it.
+# it, on a repository — and a window of its own on it. Closing the window
+# stops the server.
 #
 #   wits.AppImage                 the repository in ~/.local/share/wits, made
-#                                 the first time; the interface opens in the browser
+#                                 the first time; the interface opens in its window
 #   wits.AppImage ~/somewhere     that repository, or one made there
 #   wits.AppImage cli status      the command line: wits status
 #
@@ -13,9 +14,11 @@
 #
 #   WITS_REPO        the repository to start on, instead of ~/.local/share/wits
 #   WITS_ADDR        where to listen (default 127.0.0.1:7341); this machine only
-#   WITS_NO_BROWSER  set, and no browser is opened
+#   WITS_NO_WINDOW   set, no window: the server alone, until stopped
+#                    (WITS_NO_BROWSER, its old name, too)
+#   WITS_BROWSER     set, the interface opens in the browser, as it used to
 #
-# Launched again while it runs, it opens the browser on the one running.
+# Launched again while it runs, its window comes to the front.
 
 set -euo pipefail
 
@@ -32,7 +35,7 @@ if [ "${1:-}" = cli ]; then
 	exec "$bin/wits" "$@"
 fi
 if [ "${1:-}" = --help ] || [ "${1:-}" = -h ]; then
-	sed -n '3,19p' "$0" | sed 's/^# \{0,1\}//'
+	sed -n '3,22p' "$0" | sed 's/^# \{0,1\}//'
 	exit 0
 fi
 
@@ -53,8 +56,12 @@ answers() {
 	) 2>/dev/null
 }
 
+shell="$here/usr/lib/wits-desktop"
+
+# headless says no window was asked for: the server alone.
+headless() { [ -n "${WITS_NO_WINDOW:-}${WITS_NO_BROWSER:-}" ]; }
+
 browse() {
-	[ -n "${WITS_NO_BROWSER:-}" ] && return 0
 	if command -v xdg-open >/dev/null 2>&1; then
 		xdg-open "$url" >/dev/null 2>&1 &
 	else
@@ -62,9 +69,39 @@ browse() {
 	fi
 }
 
+# window runs the interface's window in the foreground, until it is closed.
+# Chromium sandboxes its pages in user namespaces; where the kernel keeps
+# those from a program like this one (AppArmor on Ubuntu 24.04 and later), it
+# cannot, and runs without. The libraries the image carries are put first for
+# it alone; the system's own are kept, for the browser a link opens.
+window() {
+	local flags=() system="${LD_LIBRARY_PATH:-}"
+	if [ "$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ] ||
+		[ "$(cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null)" = 0 ]; then
+		flags+=(--no-sandbox)
+	fi
+	WITS_SYSTEM_LIBRARY_PATH="$system" \
+		LD_LIBRARY_PATH="$shell/lib${system:+:$system}" \
+		WITS_URL="$url" WITS_ICON="$here/wits.png" \
+		"$shell/wits-desktop" "${flags[@]}"
+}
+
+# show opens the interface as asked: its window, which returns when closed;
+# the browser; or nothing.
+show() {
+	if headless; then
+		return 0
+	fi
+	if [ -n "${WITS_BROWSER:-}" ]; then
+		browse
+		return 0
+	fi
+	window
+}
+
 if answers; then
 	echo "wits: already running on $url"
-	browse
+	show
 	exit 0
 fi
 
@@ -85,5 +122,12 @@ for _ in $(seq 1 50); do
 	kill -0 "$server" 2>/dev/null || exit 1
 	sleep 0.2
 done
-browse
-wait "$server"
+
+# The window is the app: closing it is quitting, and the trap stops the
+# server. Without one, the server runs until it is stopped.
+if headless || [ -n "${WITS_BROWSER:-}" ]; then
+	show
+	wait "$server"
+else
+	window
+fi

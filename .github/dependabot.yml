@@ -23,6 +23,14 @@ updates:
           - minor
           - patch
 
+  # Electron, the AppImage's window: pinned, and a major version a pull
+  # request of its own.
+  - package-ecosystem: npm
+    directory: /desktop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+
   # The pinned action SHAs in the Go workflow.
   - package-ecosystem: github-actions
     directory: /

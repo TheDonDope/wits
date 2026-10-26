@@ -685,6 +685,39 @@ for every gram. Every page measures 375 px on the phone. On a computer, the
 clock goes below 1100 px and the tab labels below 780; measured every 20 px
 from 641 to 1920, no tab bar pages and no page scrolls sideways.
 
+### A window of its own — the AppImage, in Electron
+
+The AppImage opened the interface in the browser, a tab among others, with a
+terminal window to close to stop it. It opens a window of its own now: the
+same server, the same page, shown by Electron (`desktop/main.js`, pinned to
+44.7.0, the newest release then two weeks old). AppRun still starts the server
+and makes the repository; it then runs the window in the foreground, and
+closing the window stops the server. Launched again, the window comes to the
+front (Electron's single-instance lock). `WITS_BROWSER` keeps the old way,
+`WITS_NO_WINDOW` (or `WITS_NO_BROWSER`) the server alone, and `cli` and the
+`wits` link are as they were. The page gets nothing of Node; links off the
+server open in the system's browser, started with the system's own library
+path rather than the image's.
+
+Electron, not a system web view: Wails would have made the image about
+25 MB, but needs WebKitGTK on the machine, and this Steam Deck has none, nor a
+Chromium to borrow for an app window. Electron carries its own: the image went
+from 22 MB to 130 MB, most of it the 219 MB Chromium binary compressed. zstd
+at level 19 saved under a megabyte, and the AppImage runtime reads nothing
+else. Only English of Chromium's locales is kept.
+
+Chromium links against NSS, NSPR and ALSA, which SteamOS lacks, so the image
+carries them from the build machine (`./doctor.sh env` here, the Ubuntu
+packages in CI) and puts them first for the window alone. npm no longer runs
+install scripts unasked, so the build runs Electron's to fetch its binary.
+Chromium sandboxes its pages in user namespaces; where AppArmor withholds them
+(Ubuntu 24.04 and later), AppRun runs it with `--no-sandbox`. `appimage.sh
+check` now also opens the window on the server it started and waits for the
+page to load (`WITS_SMOKE`), on the display there is or one `xvfb-run` makes —
+headless, Chromium crashed before loading — and passes with the system's
+library path removed, on the carried libraries alone. A pull request that
+touches how the image is made builds and checks it too (`appimage.yml`).
+
 ### A demo — Seed with demo data, on the menu
 
 `assets/demo-seed.wits` is a bundle made to show every page with something on

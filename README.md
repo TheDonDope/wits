@@ -49,22 +49,33 @@ the last of it is ground.
 ## Getting started
 
 On Linux, the simplest is the AppImage attached to every
-[release](https://github.com/TheDonDope/wits/releases): one file holding
-the server, the command line and the browser interface.
+[release](https://github.com/TheDonDope/wits/releases): one file, about
+130 MB, holding the server, the command line, and the interface in a window
+of its own.
 
 ```sh
 chmod +x wits-*-x86_64.AppImage
-./wits-*-x86_64.AppImage              # serves ~/.local/share/wits, opens the browser
+./wits-*-x86_64.AppImage              # serves ~/.local/share/wits, in its own window
 ./wits-*-x86_64.AppImage ~/wits       # or that repository, made there if new
 ./wits-*-x86_64.AppImage cli status   # the command line
 ```
 
 The first launch makes its repository, and the Repository page opens another,
-makes one, or imports the workbook. Launched again while it runs, it opens the
-browser on the one running. It runs in a terminal window, and closing the
-window stops it. `WITS_ADDR` changes where it listens (127.0.0.1:7341, this
-machine only), and `WITS_NO_BROWSER=1` keeps it from opening a browser. Each
-release lists its `SHA256SUMS`.
+makes one, or imports the workbook. The window is the app: closing it stops
+the server, and launching it again while it runs brings the window to the
+front. Links to other sites, a terpene source say, open in your browser.
+`WITS_ADDR` changes where it listens (127.0.0.1:7341, this machine only),
+`WITS_BROWSER=1` opens the interface in the browser instead, as it used to,
+and `WITS_NO_WINDOW=1` runs the server alone. Each release lists its
+`SHA256SUMS`.
+
+The window is [Electron](https://www.electronjs.org/), so the AppImage
+carries a Chromium of its own: that is most of its size. A system web view
+(Wails, Tauri) would have kept it near 25 MB, but needs WebKitGTK on the
+machine, and a Steam Deck has none; Electron runs the same everywhere. It
+carries NSS and ALSA too, which SteamOS lacks. Chromium sandboxes its pages
+where the kernel lets it (on Ubuntu 24.04 and later AppArmor does not, and it
+runs without), and the window shows only this server's own pages.
 
 Or with Go:
 

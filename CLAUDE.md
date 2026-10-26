@@ -16,7 +16,7 @@ make serve             # wits-server + the Angular client on http://127.0.0.1:73
 make ui-test           # the client's Vitest suite (Node and npm; nothing else needs them)
 make wasm-check        # the phone's engine (cmd/wits-wasm) synced with the CLI, both ways
 make pages             # the phone's build, as GitHub Pages serves it under /wits/
-make appimage          # dist/wits-<version>-x86_64.AppImage: server, CLI and UI in one file, checked by running it
+make appimage          # dist/wits-<version>-x86_64.AppImage: server, CLI and the UI in an Electron window, checked by running it (eval "$(./doctor.sh env)" first here: it carries NSS)
 make demo-seed         # assets/demo-seed.wits again: the workbook, invoices, devices, a year of sessions, terpenes — minutes, live web
 ```
 
