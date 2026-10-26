@@ -96,6 +96,8 @@ type priceLine struct {
 	Total    string `json:"total"`
 	Unknown  bool   `json:"unknown"`
 	Note     string `json:"note"`
+	// WithVAT says the price a gram has its VAT in it already.
+	WithVAT bool `json:"with_vat"`
 }
 
 // priceFill writes down a fill's prices: for each of its purchases a price a
@@ -126,11 +128,49 @@ func (s *Server) priceFill(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err)
 		return
 	}
+	if dry(r) {
+		ws.Recorder = ws.Recorder.Dry()
+	}
 	if _, err := ws.Recorder.PriceAll(paid, time.Now()); err != nil {
 		fail(w, http.StatusBadRequest, err)
 		return
 	}
+	if dry(r) {
+		reply(w, http.StatusOK, pricedPreview{Lines: pricedLines(ws, req.Lines, req.VAT), Message: pricedMessage(paid, grams)})
+		return
+	}
 	reply(w, http.StatusCreated, map[string]string{"message": pricedMessage(paid, grams)})
+}
+
+// pricedPreview is what pricing a fill would write, asked with ?dry=1: each
+// line's price and the VAT in it, as lineCents works them, and what it would say.
+type pricedPreview struct {
+	Lines   []pricedLine `json:"lines"`
+	Message string       `json:"message"`
+}
+
+type pricedLine struct {
+	Purchase string `json:"purchase"`
+	Cents    int64  `json:"cents"`
+	VAT      int64  `json:"vat_cents"`
+}
+
+// pricedLines prices each line as fillPrices does, a line with no price at none.
+func pricedLines(ws *workspace.Workspace, lines []priceLine, vat bool) []pricedLine {
+	out := make([]pricedLine, 0, len(lines))
+	for _, l := range lines {
+		e, err := ws.Recorder.Find(l.Purchase)
+		if err != nil || l.Unknown {
+			continue
+		}
+		f := fillLine{Grams: e.Grams, PerGram: l.PerGram, Total: l.Total, WithVAT: l.WithVAT}
+		c, err := lineCents(f, vat)
+		if err != nil {
+			continue
+		}
+		out = append(out, pricedLine{Purchase: l.Purchase, Cents: c, VAT: lineVAT(f, vat, c)})
+	}
+	return out
 }
 
 // pricedMessage says what a fill's pricing wrote: what the priced ones cost,
@@ -177,7 +217,7 @@ func fillPrices(ws *workspace.Workspace, lines []priceLine, vat bool) ([]prices.
 			paid = append(paid, prices.Price{Purchase: e.Hash, Unknown: true, Note: l.Note})
 			continue
 		}
-		c, err := lineCents(fillLine{Grams: e.Grams, PerGram: l.PerGram, Total: l.Total}, vat)
+		c, err := lineCents(fillLine{Grams: e.Grams, PerGram: l.PerGram, Total: l.Total, WithVAT: l.WithVAT}, vat)
 		if err != nil {
 			return nil, 0, fmt.Errorf("%s: %w", ws.ProductName(e.Product), err)
 		}

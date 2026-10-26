@@ -1,11 +1,12 @@
 import { DecimalPipe, PercentPipe } from '@angular/common';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { addsUp, readInvoice } from '../data/invoice';
 import { readLabel } from '../data/label';
-import { FillLine, InvoiceReading, LabelReading } from '../data/models';
+import { FillLine, InvoiceReading, LabelReading, Preview } from '../data/models';
 import { Wits } from '../data/wits';
 import { Choice, ChoiceInput } from '../inputs/choice';
 import { WhenInput } from '../inputs/when';
@@ -62,18 +63,21 @@ function started(r: Row): boolean {
   return r.name.trim() !== '' || (r.grams ?? 0) > 0 || (r.perGram ?? 0) > 0;
 }
 
-/**
- * What a strain costs, in cents: the invoice's total, or its grams at its
- * price, VAT added when it is due. Worked as the server's lineCents (pkg/api/
- * fill.go) works it — the price a gram in cents first, then the grams, then the
- * VAT, rounded once — so the total on the form is the one written down.
- */
-export function rowCents(r: Row, vat: boolean): number {
-  if (r.total !== undefined) {
-    return r.total;
-  }
-  const cents = Math.round((r.perGram ?? 0) * 100) * (r.grams ?? 0);
-  return Math.round(vat && !r.inclVAT ? cents * (1 + VAT / 100) : cents);
+/** Whether a strain is whole enough to be priced: a name and some grams. */
+function whole(r: Row): boolean {
+  return r.name.trim() !== '' && (r.grams ?? 0) > 0;
+}
+
+/** A strain as the API takes it: an invoice's total as it was printed, or the price a gram typed in, said to have its VAT or not. */
+export function lineOf(r: Row): FillLine {
+  return {
+    name: r.name.trim(),
+    grams: r.grams ?? 0,
+    total: r.total !== undefined ? (r.total / 100).toFixed(2) : undefined,
+    per_gram: r.total === undefined && r.perGram ? String(r.perGram) : undefined,
+    with_vat: r.inclVAT && r.total === undefined ? true : undefined,
+    note: r.invoice ? `invoice ${r.invoice}` : undefined,
+  };
 }
 
 /**
@@ -237,6 +241,9 @@ export function rowCents(r: Row, vat: boolean): number {
     }
     <div class="receipt">
       <span class="eyebrow">the prescription</span>
+      @if (refusal()) {
+        <p class="refused"><mat-icon>report</mat-icon>Would be refused: {{ refusal() }}</p>
+      }
       @if (totalGrams() > 0) {
         <div class="split" aria-hidden="true">
           @for (l of rows(); track l.id; let i = $index) {
@@ -329,6 +336,7 @@ export function rowCents(r: Row, vat: boolean): number {
     .receipt .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .receipt .num { text-align: right; }
     .receipt .sub { color: var(--w-dim); font-size: 12px; }
+    .refused { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--w-warn); }
     .receipt .all { border-top: 1px solid var(--w-glass-edge); padding-top: 8px; margin-top: 2px; font-weight: 600; font-size: 15px; }
     @include bp.phone {
       .reader { padding: 12px; }
@@ -369,14 +377,39 @@ export class FillForm {
   protected readonly invoiceDates = computed(() =>
     [...new Set(this.invoices().flatMap((i) => (i.state === 'new' && i.reading.date ? [i.reading.date] : [])))].sort(),
   );
-  /** The prices typed in, before VAT, in cents. */
+  /**
+   * The fill as it would be recorded, rehearsed by the server as it is typed
+   * (?dry=1): each whole strain priced as the recorder prices it — VAT added
+   * where it is due, rounded once — so every figure on the form is the one
+   * written down, and none is worked out here.
+   */
+  private readonly rehearsal = httpResource<Preview>(() => {
+    const lines = this.rows().filter(whole).map(lineOf);
+    this.wits.version();
+    return lines.length ? { url: '/api/fill?dry=1', method: 'POST', body: { lines, vat: this.vat() } } : undefined;
+  });
+  /** Each whole strain's price and its VAT, in cents, by the strain. */
+  private readonly priced = computed(() => {
+    const out = new Map<number, { cents: number; vat: number }>();
+    const lines = this.rehearsal.hasValue() ? (this.rehearsal.value().lines ?? []) : [];
+    this.rows().filter(whole).forEach((r, i) => {
+      const l = lines.at(i);
+      if (l) {
+        out.set(r.id, { cents: l.cents, vat: l.vat_cents });
+      }
+    });
+    return out;
+  });
+  /** Why the fill would be refused, as the recorder says it. */
+  protected readonly refusal = computed(() => {
+    const err = this.rehearsal.error() as HttpErrorResponse | undefined;
+    return (err?.error as { error?: string } | null)?.error ?? '';
+  });
+  protected readonly totalCents = computed(() => [...this.priced().values()].reduce((sum, p) => sum + p.cents, 0));
+  protected readonly vatCents = computed(() => [...this.priced().values()].reduce((sum, p) => sum + p.vat, 0));
+  /** The prices the VAT was added to, before it. */
   protected readonly typedCents = computed(() =>
-    this.rows().reduce((sum, r) => sum + (r.inclVAT ? 0 : rowCents(r, false)), 0),
-  );
-  protected readonly totalCents = computed(() => this.rows().reduce((sum, r) => sum + this.cents(r), 0));
-  protected readonly vatCents = computed(() =>
-    this.rows().reduce((sum, r) => sum + (r.inclVAT ? 0 : this.cents(r)), 0) - this.typedCents(),
-  );
+    [...this.priced().values()].reduce((sum, p) => sum + (p.vat ? p.cents - p.vat : 0), 0));
   protected readonly totalGrams = computed(() => this.rows().reduce((sum, r) => sum + (r.grams ?? 0), 0));
 
   protected readonly vatChoices: Choice[] = [
@@ -450,7 +483,7 @@ export class FillForm {
   }
 
   protected cents(r: Row): number {
-    return rowCents(r, this.vat());
+    return this.priced().get(r.id)?.cents ?? 0;
   }
 
   protected euros(cents: number): string {
@@ -470,21 +503,12 @@ export class FillForm {
   }
 
   /**
-   * The fill as the API takes it. A strain off an invoice goes with its
-   * total, worked out here when its figures were changed, since its prices
-   * include VAT; one typed in goes with its price a gram, VAT added there.
-   * The blank strains the form starts with go.
+   * The fill as the API takes it: a strain off an invoice with its total,
+   * one typed in with its price a gram, said to have its VAT or not, and the
+   * server pricing both. The blank strains the form starts with go.
    */
   request(): { lines: FillLine[]; vat: boolean; seller?: string } {
-    const lines = this.rows()
-      .filter(started)
-      .map((r) => ({
-        name: r.name.trim(),
-        grams: r.grams ?? 0,
-        total: r.inclVAT ? (this.cents(r) / 100).toFixed(2) : undefined,
-        per_gram: !r.inclVAT && r.perGram ? String(r.perGram) : undefined,
-        note: r.invoice ? `invoice ${r.invoice}` : undefined,
-      }));
+    const lines = this.rows().filter(started).map(lineOf);
     // The pharmacy, when the invoices read for this fill name one and the same.
     const sellers = new Set(this.invoices().filter((i) => i.state === 'new').map((i) => i.reading.seller ?? ''));
     const seller = sellers.size === 1 ? [...sellers][0] : '';

@@ -81,6 +81,10 @@ func (r *Recorder) Fill(lines []FillLine, at time.Time, note string) ([]Filled, 
 	for i := range filled {
 		filled[i].Event = stored[i]
 	}
+	if r.dry {
+		// A rehearsed purchase has no hash yet for a price to name.
+		return filled, nil
+	}
 	return filled, r.fillPrices(filled, note)
 }
 

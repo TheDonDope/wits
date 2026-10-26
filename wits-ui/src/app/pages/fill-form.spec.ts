@@ -1,17 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { rowCents } from './fill-form';
+import { lineOf } from './fill-form';
 
-describe('rowCents', () => {
-  it('works a price out as the server does, so the form shows what is written down', () => {
-    // 30 g at 2.05 € with VAT is 7318.5 cents: worked in euros first it rounded to 7318, the server's 7319.
-    expect(rowCents({ id: 1, name: 'X', grams: 30, perGram: 2.05 }, true)).toBe(7319);
-    expect(rowCents({ id: 1, name: 'X', grams: 10, perGram: 5 }, true)).toBe(5950);
-    expect(rowCents({ id: 1, name: 'X', grams: 10, perGram: 5 }, false)).toBe(5000);
+describe('lineOf', () => {
+  it('sends a price a gram as typed, for the server to price, VAT and all', () => {
+    expect(lineOf({ id: 1, name: ' Aurora 26/1 Pink Kush ', grams: 15, perGram: 8.5 })).toEqual({
+      name: 'Aurora 26/1 Pink Kush', grams: 15, total: undefined, per_gram: '8.5', with_vat: undefined, note: undefined,
+    });
   });
 
-  it('keeps an invoice’s total, and never adds VAT to an invoice’s prices', () => {
-    expect(rowCents({ id: 1, name: 'X', grams: 20, perGram: 5.84, total: 11680, inclVAT: true }, true)).toBe(11680);
-    expect(rowCents({ id: 1, name: 'X', grams: 10, perGram: 5.84, inclVAT: true }, true)).toBe(5840);
+  it('says a price has its VAT in it already, as last time’s and an invoice’s have', () => {
+    expect(lineOf({ id: 1, name: 'X', grams: 20, perGram: 5.8, inclVAT: true }).with_vat).toBe(true);
+  });
+
+  it('keeps an invoice’s total as it was printed, with its invoice beside it', () => {
+    const l = lineOf({ id: 1, name: 'X', grams: 20, perGram: 5.84, total: 11680, inclVAT: true, invoice: 'R-12' });
+    expect(l.total).toBe('116.80');
+    expect(l.per_gram).toBeUndefined();
+    expect(l.note).toBe('invoice R-12');
   });
 });

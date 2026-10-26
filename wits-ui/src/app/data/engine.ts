@@ -58,6 +58,69 @@ interface Globals {
 const g = globalThis as unknown as Globals;
 const DB = 'wits';
 const STORE = 'files';
+/** The lock the one page that records holds for as long as it is open. */
+const LOCK = 'wits-engine';
+
+/**
+ * Whether this page records. Two pages — the installed app and a tab, say —
+ * each run an engine on their own copy of the files, and the one that saved
+ * last would write the other's entries out of IndexedDB. So one page holds
+ * the lock and records; any other reads, is told when the first has recorded,
+ * and takes over when it closes.
+ */
+let writer = true;
+const changed = new Set<() => void>();
+const channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('wits');
+
+/** Calls back whenever another page has recorded, or this one has taken over; returns the way to stop. */
+export function onElsewhere(fn: () => void): () => void {
+  changed.add(fn);
+  return () => changed.delete(fn);
+}
+
+/** Why a page that does not hold the lock refuses to record. */
+export const ELSEWHERE = 'wits is open in another tab or window, which records. Record there, or close it and this one takes over.';
+
+/** Whether this page records. */
+export function records(): boolean {
+  return writer;
+}
+
+/** Tells every page listening that the files changed, and reads them again. */
+function reread(db: IDBDatabase, fs: MemFS): void {
+  void load(db, fs).then(() => {
+    for (const fn of changed) {
+      fn();
+    }
+  });
+}
+
+/**
+ * Takes the lock if no page holds it, and holds it for the page's life; if
+ * one does, waits for it to close, then reads the files again and records.
+ * A browser without Web Locks has one writer by trust, as before.
+ */
+async function claim(db: IDBDatabase, fs: MemFS): Promise<boolean> {
+  const locks = (navigator as { locks?: LockManager }).locks;
+  if (!locks) {
+    return true;
+  }
+  const forever = () => new Promise<never>(() => undefined);
+  const got = await new Promise<boolean>((resolve) => {
+    void locks.request(LOCK, { ifAvailable: true }, (lock) => {
+      resolve(lock !== null);
+      return lock ? forever() : undefined;
+    });
+  });
+  if (!got) {
+    void locks.request(LOCK, () => {
+      writer = true;
+      reread(db, fs);
+      return forever();
+    });
+  }
+  return got;
+}
 
 /** Opens the IndexedDB the repository's files are kept in. */
 function database(): Promise<IDBDatabase> {
@@ -143,6 +206,12 @@ async function start(): Promise<GoEngine> {
   const db = await database();
   const fs = new MemFS();
   await load(db, fs);
+  writer = await claim(db, fs);
+  channel?.addEventListener('message', () => {
+    if (!writer) {
+      reread(db, fs);
+    }
+  });
   const dirty = new Set<string>();
   fs.onChange = (path) => {
     if (kept(path)) {
@@ -176,12 +245,16 @@ async function start(): Promise<GoEngine> {
     } finally {
       const paths = [...dirty];
       dirty.clear();
-      await save(db, fs, paths);
+      // A page that reads keeps nothing: its files may be older than the writer's.
+      if (writer && paths.length) {
+        await save(db, fs, paths);
+        channel?.postMessage('changed');
+      }
     }
   };
   return {
     request: (method, url, body, type) => flush(inner.request(method, url, body, type)),
-    sync: (file, key) => flush(inner.sync(file, key)),
+    sync: (file, key) => (writer ? flush(inner.sync(file, key)) : Promise.reject(new Error(ELSEWHERE))),
     key: () => inner.key(),
   };
 }
@@ -197,6 +270,9 @@ export function engine(): Promise<GoEngine> {
 /** Answers one API call from the engine, the way wits-server would. */
 async function answer(req: HttpRequest<unknown>): Promise<HttpResponse<unknown> | HttpErrorResponse> {
   const e = await engine();
+  if (!writer && req.method !== 'GET') {
+    return new HttpErrorResponse({ status: 409, error: { error: ELSEWHERE }, url: req.url });
+  }
   // A workbook goes across as its bytes, in its own type; anything else is JSON.
   const res =
     req.body instanceof Blob

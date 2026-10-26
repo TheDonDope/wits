@@ -31,6 +31,9 @@ type fillLine struct {
 	PerGram string  `json:"per_gram"`
 	Total   string  `json:"total"`
 	Note    string  `json:"note"`
+	// WithVAT says the price a gram has its VAT in it already — last time's,
+	// or an invoice's — and none is added to it.
+	WithVAT bool `json:"with_vat"`
 }
 
 type fillRequest struct {
@@ -63,6 +66,11 @@ func recordFill(ws *workspace.Workspace, r *http.Request) ([]journal.Event, stri
 	if err != nil && !errors.Is(err, record.ErrUnpriced) {
 		return nil, "", err
 	}
+	if out := rehearsedLines(r); out != nil {
+		for i, f := range filled {
+			*out = append(*out, previewLine{Product: f.Product.Slug, Added: f.Added, Cents: f.Cents, VAT: lineVAT(req.Lines[i], req.VAT, f.Cents)})
+		}
+	}
 	events := make([]journal.Event, len(filled))
 	for i, f := range filled {
 		events[i] = f.Event
@@ -78,6 +86,19 @@ func recordFill(ws *workspace.Workspace, r *http.Request) ([]journal.Event, stri
 
 // lineCents is what a line cost: its total as given, or its grams at its
 // price a gram, with VAT on top when asked for. Zero is no price.
+// lineVAT is the VAT in a line's price: what was added to a price a gram
+// typed in, none in an invoice's total, which is given with it.
+func lineVAT(l fillLine, vat bool, cents int64) int64 {
+	if !vat || l.WithVAT || strings.TrimSpace(l.Total) != "" || strings.TrimSpace(l.PerGram) == "" {
+		return 0
+	}
+	perGram, err := prices.ParseEuros(l.PerGram)
+	if err != nil {
+		return 0
+	}
+	return cents - int64(math.Round(float64(perGram)*l.Grams))
+}
+
 func lineCents(l fillLine, vat bool) (int64, error) {
 	if strings.TrimSpace(l.Total) != "" {
 		return prices.ParseEuros(l.Total)
@@ -90,7 +111,7 @@ func lineCents(l fillLine, vat bool) (int64, error) {
 		return 0, err
 	}
 	cents := float64(perGram) * l.Grams
-	if vat {
+	if vat && !l.WithVAT {
 		cents *= 1 + germanVAT/100.0
 	}
 	return int64(math.Round(cents)), nil

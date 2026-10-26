@@ -197,6 +197,26 @@ export interface Written {
   message: string;
 }
 
+/** What a jar holds in each account. */
+export interface Accounts {
+  storage: number;
+  stash: number;
+  consumed: number;
+  avb: number;
+}
+
+/**
+ * What a write would record and do, rehearsed by the server (?dry=1) and
+ * nothing written: the entries, the message it would say, each jar it
+ * touches before and after, and a fill's lines priced as they would be.
+ */
+export interface Preview {
+  entries: Entry[];
+  message: string;
+  jars: { product: string; name: string; before: Accounts; after: Accounts }[];
+  lines?: { product: string; added: boolean; cents: number; vat_cents: number }[];
+}
+
 /**
  * What a scale reading short of the ledger would be put down to, not yet
  * written: a grind forgotten, for what is sealed; sessions forgotten, for what
@@ -436,7 +456,15 @@ export interface PriceLine {
   total?: string;
   /** None to be had: written down so the purchase is asked about no more. */
   unknown?: boolean;
+  /** The price a gram has its VAT in it already: none is added. */
+  with_vat?: boolean;
   note?: string;
+}
+
+/** What pricing a fill would write, rehearsed by the server (?dry=1): each line's price and the VAT in it. */
+export interface PricedPreview {
+  lines: { purchase: string; cents: number; vat_cents: number }[];
+  message: string;
 }
 
 /** One product of a fill as the form sends it: a line's total, or a price a gram, or neither. */
@@ -445,6 +473,8 @@ export interface FillLine {
   grams: number;
   per_gram?: string;
   total?: string;
+  /** The price a gram has its VAT in it already: none is added. */
+  with_vat?: boolean;
   /** Beside the price: the invoice it is from. */
   note?: string;
 }
