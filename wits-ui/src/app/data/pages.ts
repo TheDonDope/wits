@@ -17,12 +17,14 @@ export const TABS: readonly Tab[] = [
     { path: 'jars', label: 'Jars', icon: 'inventory_2' },
     { path: 'journal', label: 'Journal', icon: 'receipt_long' },
     { path: 'devices', label: 'Devices', icon: 'air' },
+    { path: 'trip', label: 'Trip', icon: 'luggage' },
   ] },
   { path: '/insights', label: 'Insights', icon: 'insights', pages: [
     { path: 'analysis', label: 'Analysis', icon: 'monitoring' },
     { path: 'effects', label: 'Effects', icon: 'psychology' },
     { path: 'history', label: 'History', icon: 'timeline' },
     { path: 'costs', label: 'Costs', icon: 'euro' },
+    { path: 'year', label: 'Year', icon: 'auto_awesome' },
   ] },
 ];
 

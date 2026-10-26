@@ -20,6 +20,8 @@ export const routes: Routes = [
       { path: 'jars/:slug', loadComponent: () => import('./pages/jar').then((m) => m.JarPage), title: 'wits · jar' },
       { path: 'journal', loadComponent: () => import('./pages/journal').then((m) => m.Journal), title: 'wits · journal' },
       { path: 'devices', loadComponent: () => import('./pages/devices').then((m) => m.Devices), title: 'wits · devices' },
+      // What to take on a trip, from which jars, signed for exactly that: wits pack.
+      { path: 'trip', loadComponent: () => import('./pages/trip').then((m) => m.Trip), title: 'wits · trip' },
     ],
   },
   {
@@ -32,6 +34,8 @@ export const routes: Routes = [
       { path: 'effects', loadComponent: () => import('./pages/effects').then((m) => m.Effects), title: 'wits · effects' },
       { path: 'history', loadComponent: () => import('./pages/history').then((m) => m.History), title: 'wits · history' },
       { path: 'costs', loadComponent: () => import('./pages/costs').then((m) => m.Costs), title: 'wits · costs' },
+      // The year on one card: wits review.
+      { path: 'year', loadComponent: () => import('./pages/year').then((m) => m.Year), title: 'wits · the year' },
     ],
   },
   // Which repository, and importing a workbook: the computer's folders, or the phone's own. Off the header's menu.

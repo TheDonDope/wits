@@ -67,6 +67,12 @@ func carryStatement(cmd *cobra.Command, s *session) (seal.Carry, error) {
 	if len(items) == 0 {
 		return seal.Carry{}, errors.New("nothing is held: there is nothing to show")
 	}
+	return signCarry(cmd, s, items)
+}
+
+// signCarry signs a statement of the items, against the journal's head; the
+// sealing key is made the first time, and its fingerprint said.
+func signCarry(cmd *cobra.Command, s *session, items []seal.Item) (seal.Carry, error) {
 	events, err := s.Journal().Events()
 	if err != nil {
 		return seal.Carry{}, err

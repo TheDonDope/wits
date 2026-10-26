@@ -1041,3 +1041,51 @@ func TestDescribeRatesTheStrain(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "Rated: not yet")
 }
+
+func TestPackCommand(t *testing.T) {
+	dir := repository(t)
+	today := time.Now()
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", today.AddDate(0, 0, -2).Format(time.DateOnly))
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "2", "--date", today.AddDate(0, 0, -1).Format(time.DateOnly))
+	require.NoError(t, err)
+	statement := filepath.Join(t.TempDir(), "trip.txt")
+
+	out, err := run(t, dir, Pack, "--days", "3", "--margin", "0", "--out", statement)
+
+	require.NoError(t, err)
+	assert.Contains(t, out, "Take 6.00 g: 3 days at 2.00 g a day, with 0 % to spare.")
+	assert.Contains(t, out, "2.00g   4.00g   6.00g  3.0   14.00g", "The stash first, then sealed")
+	assert.Contains(t, out, "Grind the sealed grams before you go.")
+	text, err := os.ReadFile(statement)
+	require.NoError(t, err)
+	c, err := seal.ParseCarry(string(text))
+	require.NoError(t, err)
+	assert.NoError(t, c.Verify())
+
+	out, err = run(t, dir, Pack, "--days", "30")
+	require.NoError(t, err)
+	assert.Contains(t, out, "and the shelf holds 20.00 g: take it all, 10.0 days' worth.")
+}
+
+func TestReviewCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2025-03-01")
+	require.NoError(t, err)
+	for _, d := range []string{"2025-03-02", "2025-03-20"} {
+		_, err = run(t, dir, Grind, "wedding", "2", "--date", d)
+		require.NoError(t, err)
+	}
+
+	out, err := run(t, dir, Review, "2025")
+
+	require.NoError(t, err)
+	assert.Contains(t, out, "│  2025 in wits")
+	assert.Contains(t, out, "4.00 g ground on 2 of 365 days · 2.00 g an active day")
+	assert.Contains(t, out, "Mar  ████████████████████████████████   4.00 g  ← the most")
+	assert.Contains(t, out, "Longest break  286 days, 21 March to 31 December (3 breaks in all)")
+	assert.Contains(t, out, "Strains        1  Enua 22/1 Wedding Cake, 4.00 g (100 %)")
+
+	_, err = run(t, dir, Review, "2019")
+	assert.ErrorContains(t, err, "nothing was recorded in 2019; the journal has 2025")
+}

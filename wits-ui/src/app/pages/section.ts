@@ -37,7 +37,8 @@ export interface Subpage {
     .sub mat-icon { margin-right: 8px; }
     @include bp.phone {
       .sub a { flex: 1; padding: 0 6px; }
-      .sub mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; }
+      /* Five pages to a tab want the width their icons took: the labels alone fit 375 px, unpaged. */
+      .sub mat-icon { display: none; }
       .sub span { font-size: 13px; }
     }
   `,

@@ -365,6 +365,33 @@ COLLECTED   DEVICE                 AVB    FROM                  YIELD
     ],
   },
   {
+    id: 'trip',
+    group: 'The shelf',
+    title: 'Packing for a trip',
+    icon: 'luggage',
+    lead: '<b>Shelf → Trip</b> says what to take: the days away at this fill’s rate, with some to spare, drawn from the jars on the shelf — and signs a QR code for exactly that.',
+    steps: [
+      'Pick the days away — <b>Weekend</b>, <b>A week</b>, <b>Two weeks</b> — or slide to any number up to six weeks.',
+      'Set how much to take on top; 20 % covers a day’s delay or a heavier evening.',
+      '<b>Evenly</b> takes about the same from every jar, so the trip has a mix and the jars go down together; <b>Oldest first</b> empties the oldest fill’s jars.',
+      'Each jar shows what it gives, lit: its ground grams first, then sealed ones, which you grind before you go. Nothing is recorded until you do.',
+      'The QR code is signed for exactly what is packed. Any phone that scans it checks the signature.',
+    ],
+    shots: [web('trip', '/shelf/trip', 'The Trip page: a week away, packed evenly from five jars', 'A week away: 16.30 g, about 3.3 g from each of five jars.')],
+    page: { path: '/shelf/trip', label: 'Open Trip' },
+    cli: [
+      { cmd: 'wits pack --days 10', out: `Take 23.20 g: 10 days at 1.93 g a day, with 20 % to spare.
+
+PRODUCT                            GROUND  SEALED  TAKE   DAYS  LEFT
+420 Evolution 27/1 Ice Cream Cake  4.60g   0.00g   4.60g  2.4   7.07g
+Enua 36/1 Citrus Slap              4.60g   0.00g   4.60g  2.4   5.01g
+All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
+…` },
+      { cmd: 'wits pack --days 4 --margin 0 --oldest --out trip.svg', note: 'Oldest first, nothing on top, and the QR code written to a file.' },
+      { cmd: 'wits verify trip.txt', note: 'A statement written with --out trip.txt checks like any other.' },
+    ],
+  },
+  {
     id: 'analysis',
     group: 'Insights',
     title: 'Analysis, and the record played back',
@@ -446,6 +473,35 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
 …` },
     ],
     tui: [{ keys: ['$'], does: 'walks every purchase without a price' }],
+  },
+  {
+    id: 'year',
+    group: 'Insights',
+    title: 'The year, on one card',
+    icon: 'auto_awesome',
+    lead: '<b>Insights → Year</b> is the year in wits: what was ground and on how many days, then a card for each finding — the months, every day, the strains, the terpene of the year, the longest break, the temperature and the strain rated best, the device, and what it cost.',
+    body: [
+      'Every figure is the year’s own, to today in a year still running. Pick another year at the top, or open one with <code>?year=2025</code>. A temperature is named best only on five ratings or more; a break is a week or more with nothing ground and no session, as the tolerance curve counts them.',
+    ],
+    shots: [web('year', '/insights/year?year=2025', 'The year 2025 on one card', '2025: 446.3 g on 221 days, a 53-day break, 190–199 °C rated best.')],
+    page: { path: '/insights/year', label: 'Open the year' },
+    cli: [
+      { cmd: 'wits review 2025', out: `╭─────────────────────────────────────────────────────────────╮
+│  2025 in wits                                               │
+│  446.34 g ground on 221 of 365 days · 2.02 g an active day  │
+│  11 prescriptions · 309 sessions · 25 strains               │
+╰─────────────────────────────────────────────────────────────╯
+
+  Oct  ███████████████████████▌          49.96 g
+  Nov  █████████████████████████▉        55.00 g
+  Dec  ████████████████████████████████  67.98 g  ← the most
+  …
+  Longest break        53 days, 21 March to 12 May (2 breaks in all)
+  Best temperature     190–199 °C, 4.2 overall over 67 ratings
+  Terpene of the year  Limonene — citrus, lemon, orange, 60 % of the grams ground
+  Dearest gram         10.99 €, Pedanios 22/1 DNK Ghost Train Haze on 6 February` },
+      { cmd: 'wits review', note: 'This year, so far.' },
+    ],
   },
   {
     id: 'keep',

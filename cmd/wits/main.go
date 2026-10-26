@@ -58,6 +58,8 @@ func init() {
 		commands.Seal,
 		commands.Verify,
 		commands.Carry,
+		commands.Pack,
+		commands.Review,
 		commands.Remote,
 		commands.Push,
 		commands.Pull,
