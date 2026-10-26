@@ -2,8 +2,31 @@
 ## [Unreleased]
 
 
+<a name="v0.108.0"></a>
+## [v0.108.0] - 2026-10-26
+### Build
+- the API's shapes held in TypeScript, one place for shared figures, the phone's engine without the .xlsx reader
+
+### Feat
+- **api:** every write can be rehearsed, and the phone has one writer
+- **journal:** the journal as a timeline, every week of it in reach
+- **ui:** read again when the repository changes, only what a page shows, and the journal from where it was left
+
+### Fix
+- **remote:** catalogs merge field by field, the later change winning
+
+### Refactor
+- **record:** an entry built by the kind it is, which Codacy can count
+
+### Style
+- gofmt
+
+
 <a name="v0.107.0"></a>
 ## [v0.107.0] - 2026-10-26
+### Docs
+- update changelog for v0.107.0
+
 ### Feat
 - **record:** a prescription as cards and a receipt, a device from tiles and a dial
 
@@ -1305,7 +1328,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.107.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.108.0...HEAD
+[v0.108.0]: https://github.com/TheDonDope/wits/compare/v0.107.0...v0.108.0
 [v0.107.0]: https://github.com/TheDonDope/wits/compare/v0.106.0...v0.107.0
 [v0.106.0]: https://github.com/TheDonDope/wits/compare/v0.105.0...v0.106.0
 [v0.105.0]: https://github.com/TheDonDope/wits/compare/v0.104.0...v0.105.0
