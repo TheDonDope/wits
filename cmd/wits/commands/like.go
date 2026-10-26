@@ -4,6 +4,7 @@ package commands
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/TheDonDope/wits/pkg/report"
 	"github.com/spf13/cobra"
@@ -34,13 +35,29 @@ var Like = &cobra.Command{
 			return fmt.Errorf("%s was never dispensed, so it is not on the map", p.Name)
 		}
 		out := cmd.OutOrStdout()
-		fmt.Fprintf(out, "Like %s:\n", p.Name)
-		for _, slug := range strains[i].Like {
-			j := slices.IndexFunc(strains, func(x report.Strain) bool { return x.Slug == slug })
-			fmt.Fprintf(out, "  %s%s\n", strains[j].Name, rated(strains[j]))
+		fmt.Fprintf(out, "Like %s%s:\n", p.Name, tastes(strains[i]))
+		for _, l := range strains[i].Like {
+			j := slices.IndexFunc(strains, func(x report.Strain) bool { return x.Slug == l.Slug })
+			fmt.Fprintf(out, "  %3.0f %%  %s%s%s\n", l.Score*100, strains[j].Name, sharing(l), rated(strains[j]))
 		}
 		return nil
 	},
+}
+
+// tastes says what a strain tastes of, when its terpenes say.
+func tastes(s report.Strain) string {
+	if s.Taste == "" {
+		return ""
+	}
+	return " (" + strings.ToLower(s.Taste) + ")"
+}
+
+// sharing names the terpenes two strains share, when they share any.
+func sharing(l report.Likeness) string {
+	if len(l.Shared) == 0 {
+		return ""
+	}
+	return " — shares " + strings.Join(l.Shared, ", ")
 }
 
 // rated says what the effect log says a strain did, when it says anything.

@@ -314,7 +314,9 @@ var vocabulary = func() map[string]string {
 		}
 	}
 	// Last, so Terpinene is the name Terpinen-4-ol's key writes, not "Terpinen".
-	names = append(names, "Ocimene", "Farnesene", "Valencene", "Guaiol", "Fenchol", "Terpinene", "Bergamotene")
+	for _, t := range can.Minor {
+		names = append(names, t.Name)
+	}
 	for _, n := range names {
 		w := longestWord(n)
 		out[catalog.TerpeneKey(w)] = w

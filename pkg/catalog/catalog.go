@@ -456,16 +456,9 @@ func ParseTerpenes(s string) []string {
 	return out
 }
 
-// TerpeneKey is a terpene's name as two labels agree on it: lowercase, without
-// its α or β, and without the e German leaves off — "β-Myrcen" and "myrcene"
-// are one terpene.
-func TerpeneKey(name string) string {
-	k := strings.ToLower(strings.TrimSpace(name))
-	for _, prefix := range []string{"α-", "β-", "γ-", "δ-", "alpha-", "beta-", "alpha ", "beta ", "a-", "b-"} {
-		k = strings.TrimPrefix(k, prefix)
-	}
-	return strings.TrimSuffix(strings.TrimSpace(k), "e")
-}
+// TerpeneKey is a terpene's name as two labels agree on it — "β-Myrcen" and
+// "myrcene" are one terpene. It is cannabis.Key, which says how.
+func TerpeneKey(name string) string { return can.Key(name) }
 
 // Label is what a pharmacy label says about a fill, as far as it can be read
 // from the text an OCR made of a photograph of it. Anything not found is left

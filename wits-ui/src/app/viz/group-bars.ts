@@ -29,6 +29,7 @@ import { scoreColor } from './effect-matrix';
     </div>
   `,
   styles: `
+    :host { display: block; min-width: 0; }
     .cols { display: flex; gap: 14px; align-items: flex-end; min-height: 200px; overflow-x: auto; padding-top: 8px; }
     .col { display: grid; justify-items: center; gap: 6px; min-width: 54px; }
     .v { font-weight: 600; }

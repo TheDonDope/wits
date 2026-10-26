@@ -685,6 +685,60 @@ for every gram. Every page measures 375 px on the phone. On a computer, the
 clock goes below 1100 px and the tab labels below 780; measured every 20 px
 from 641 to 1920, no tab bar pages and no page scrolls sideways.
 
+### What a strain is like, by its terpenes — the map, the jar, `wits like`
+
+With terpenes written down for 50 of the demo's 53 products, the map of the
+strains and "most like it" were rebuilt around them (`pkg/report`). Alike was
+the cultivar's name, the cannabinoids and a weighted overlap of the terpenes,
+and the map put THC across. It is now mostly the profile:
+
+- **The terpenes**, as vectors: each weighs by its place, 1/√(rank), and by
+  how rare it is among the profiles (inverse document frequency). Limonene is
+  in 45 of 50 profiles and Terpinolene in 9, so sharing Terpinolene tells
+  more. Compared by cosine.
+- **The taste**, family by family (`cannabis.Aroma`): each terpene's flavours
+  fall in eight families — citrus, fruity, floral, sweet, herbal, woody,
+  earthy, spicy — so two citrus-led profiles are near even through different
+  terpenes. The profile is 70 % terpenes, 30 % taste.
+- **The rest**, a little: 85 % profile, 10 % the cultivar's name, 5 % THC and
+  CBD. A product without terpenes is compared by name and cannabinoids alone,
+  at half weight, so it ranks below any known profile.
+
+Each match carries its score and the terpenes the two share. The map is the
+profiles laid out in two dimensions by classical multidimensional scaling
+(the second axis taken after shifting by the first eigenvalue, so a negative
+one cannot be mistaken for it). Each axis is spread half by rank, since two
+outliers pressed fifty strains into a corner. A product with no profile has
+no place, and the map says how many.
+
+`pkg/cannabis` keys terpenes for both catalog and research now
+(`cannabis.Key`, its longest word less isomer prefixes, so "Alpha-Pinen" and
+"Trans-Caryophyllen" key right), tastes the minor terpenes the lookups find —
+Ocimene, Farnesene, Guaiol and others, which have no boiling point — and puts
+a profile's taste in words, its three strongest flavours from three families
+("Citrus, flowers and pine"). `/api/terpenes` lists every terpene the shelf
+names, its taste, how many products name and lead with it, and their sessions'
+mean overall rating, weighted by rated sessions and rank.
+
+In the browser the map marks each strain by the group its strongest taste
+falls in — five, each a colour and a shape. Eight colours could not be kept
+apart: run through a palette validator, Aurora's green and rose are ΔE 3.2
+apart to a red-green colour-blind eye, so shape carries identity as well.
+Picked, a strain shows its taste as a wheel (spokes on a square-root scale, so
+the second and third notes show), its terpenes and its five nearest, and
+pointing at one draws its taste over the picked one's. The names placed on
+the map try four spots each and take the first that clears the rest. Under the
+map, the terpenes on the shelf; on a jar's page, its taste, each terpene's
+flavours, and its matches with their scores. On the demo, Farnesene's products
+were rated highest (4.5 over 191 sessions), and Morning Sun, a Terpinolene
+profile, finds the Terpinolene hazes: Ghost Train Haze, Jack Haze, Frozen
+Lemon Mints.
+
+The demo also showed the Effects page 587 px wide on a phone: the
+product-by-dimension matrix, now full, put seven columns beside the names. On a
+phone each name now takes its own line above its cells, and the temperature
+bars stay inside their card. Every Insights page measures 375 px again.
+
 ### A window of its own — the AppImage, in Electron
 
 The AppImage opened the interface in the browser, a tab among others, with a

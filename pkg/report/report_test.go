@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	can "github.com/TheDonDope/wits/pkg/cannabis"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/seal"
@@ -160,14 +161,14 @@ func TestStrains(t *testing.T) {
 		all := Strains(ws)
 		i := slices.IndexFunc(all, func(s Strain) bool { return s.Name == name })
 		require.GreaterOrEqual(t, i, 0, name)
-		j := slices.IndexFunc(all, func(s Strain) bool { return s.Slug == all[i].Like[0] })
+		j := slices.IndexFunc(all, func(s Strain) bool { return s.Slug == all[i].Like[0].Slug })
 		return all[i], all[j].Name
 	}
 
 	require.Len(t, Strains(ws), 5)
 	wcake, first := like(ws, "Enua 22/1 Wedding Cake")
 	assert.Equal(t, "Khiron 20/1 Wedding Cake", first, "The other Wedding Cake first")
-	assert.Equal(t, 22.0, wcake.X, "Across by THC")
+	assert.False(t, wcake.Placed, "No terpenes, no place on the map")
 	_, first = like(ws, "Cantourage 25/1 MAC1+")
 	assert.Equal(t, "Barongo 27/1 MAC3", first, "MAC1+ and MAC3 are one family")
 
@@ -181,6 +182,58 @@ func TestStrains(t *testing.T) {
 	}
 	ws, err = workspace.Read(r)
 	require.NoError(t, err)
-	_, first = like(ws, "Sumo 25/1 Papaya Bomb")
+	sumo, first := like(ws, "Sumo 25/1 Papaya Bomb")
 	assert.Equal(t, "Khiron 20/1 Wedding Cake", first, "Alike in terpenes, alike on the map")
+	assert.Equal(t, []string{"Myrcen", "Limonen", "Caryophyllen"}, sumo.Like[0].Shared)
+	assert.Greater(t, sumo.Like[0].Score, 0.85, "the same terpenes, by another name and strength")
+	assert.Equal(t, "Musk, citrus and herbs", sumo.Taste)
+}
+
+// TestLikeLeansOnTerpenes: the profile decides what a strain is like, not
+// its strength — a match in terpenes five points of THC apart comes before a
+// strain of the same THC that tastes of something else — and the terpene
+// only some profiles name tells more than the one nearly all do.
+func TestLikeLeansOnTerpenes(t *testing.T) {
+	base := []Strain{
+		{Slug: "a", THC: 22, Terpenes: []string{"Limonene", "Caryophyllene", "Terpinolene"}},
+		{Slug: "b", THC: 27, Terpenes: []string{"Limonene", "Terpinolene", "Caryophyllene"}},
+		{Slug: "c", THC: 22, Terpenes: []string{"Myrcene", "Pinene", "Humulene"}},
+		{Slug: "d", THC: 22, Terpenes: []string{"Limonene", "Caryophyllene", "Myrcene"}},
+		{Slug: "e", THC: 25, Terpenes: []string{"Limonene", "Caryophyllene", "Linalool"}},
+	}
+	for i := range base {
+		base[i].Aroma = can.Aroma(base[i].Terpenes)
+	}
+	v := terpeneVectors(base)
+	none := map[string]bool{}
+	sim := func(i, j int) float64 { return similarity(base[i], base[j], v[i], v[j], none, none) }
+	assert.Greater(t, sim(0, 1), sim(0, 2), "the same terpenes, five points of THC apart, before the same THC")
+	assert.Greater(t, sim(0, 1), sim(0, 3), "sharing the rare Terpinolene tells more than sharing Myrcene")
+	assert.Greater(t, sim(0, 3), sim(0, 2))
+
+	place(base, v)
+	for _, s := range base {
+		assert.True(t, s.Placed, s.Slug)
+	}
+}
+
+// TestTerpenes: each terpene the shelf names, the most named first, its
+// taste from what wits knows, and its rating weighed by where it stands.
+func TestTerpenes(t *testing.T) {
+	all := Terpenes([]Strain{
+		{Terpenes: []string{"Limonen", "Myrcene"}, Ratings: 4, Overall: 4},
+		{Terpenes: []string{"Myrcen", "Limonene", "Ocimene"}, Ratings: 2, Overall: 2},
+	})
+	require.Len(t, all, 3)
+	assert.Equal(t, "Limonen", all[0].Name)
+	assert.Equal(t, 2, all[0].Products)
+	assert.Equal(t, 1, all[0].Leads)
+	// Limonene leads the first (4 sessions at 4, weight 4) and is second in
+	// the second (2 at 2, weight 1): (16 + 2) / 5.
+	assert.InDelta(t, 3.6, all[0].Overall, 1e-9)
+	assert.Equal(t, 6, all[0].Rated)
+	assert.Equal(t, can.Citrus, all[0].Family)
+	ocimene := all[slices.IndexFunc(all, func(x Terpene) bool { return x.Name == "Ocimene" })]
+	assert.Equal(t, can.Sweet, ocimene.Family, "a minor terpene, tasted all the same")
+	assert.Zero(t, ocimene.BoilingPoint)
 }

@@ -65,3 +65,14 @@ describe('FillRing', () => {
     expect(ring(36.73, 23.27, 0, 8.07).querySelector('path.halo')).not.toBeNull();
   });
 });
+
+describe('spread', () => {
+  it('opens a cluster up by order, and keeps an outlier apart by value', async () => {
+    const { spread } = await import('./strain-map');
+    const s = spread([0, 0.01, 0.02, 0.03, 10]);
+    expect(s[0]).toBe(0);
+    expect(s[4]).toBe(1);
+    // By value alone the four would sit within 0.003 of each other.
+    expect(s[3] - s[0]).toBeGreaterThan(0.35);
+  });
+});

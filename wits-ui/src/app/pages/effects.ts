@@ -11,6 +11,7 @@ import { DayWheel } from '../viz/day-wheel';
 import { EffectMatrix, scoreColor } from '../viz/effect-matrix';
 import { GroupBars } from '../viz/group-bars';
 import { StrainMap } from '../viz/strain-map';
+import { TerpeneTable } from '../viz/terpene-table';
 import { ASKS } from './rate-queue';
 
 /**
@@ -30,6 +31,7 @@ import { ASKS } from './rate-queue';
     MatIconModule,
     RouterLink,
     StrainMap,
+    TerpeneTable,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -88,11 +90,22 @@ import { ASKS } from './rate-queue';
         <section class="glass pad">
           <div>
             <span class="eyebrow">a map of the strains</span>
-            <p class="dim mapnote">Across by THC; up and down by name and terpenes, where they are written down
-              (<code>wits describe --terpenes</code>), alike at one height. Coloured by how the sessions went; pick one
-              for what is most like it.</p>
+            <p class="dim mapnote">Laid out by terpene profile: strains that share their terpenes, the leading ones and the
+              rarer ones most, sit together, whatever their name or strength. Marked by what each tastes of most, or by
+              how its sessions went; pick one for what is most like it, and in what.</p>
           </div>
           <w-strain-map [strains]="wits.strains.value()" />
+        </section>
+      }
+
+      @if (wits.shelfTerpenes.value().length) {
+        <section class="glass pad">
+          <div>
+            <span class="eyebrow">the terpenes on the shelf</span>
+            <p class="dim mapnote">Every terpene your products name, what it tastes of, how many name it and lead with it,
+              and how their sessions went — the products it leads counting most.</p>
+          </div>
+          <w-terpene-table [terpenes]="wits.shelfTerpenes.value()" />
         </section>
       }
 

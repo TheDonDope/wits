@@ -292,18 +292,48 @@ export interface CostGroup {
 }
 
 /** One product on the map of the strains: placed by profile, coloured by effect. */
+/** A product like another: how alike, 0 to 1, and the terpenes the two share. */
+export interface Likeness {
+  slug: string;
+  score: number;
+  shared: string[];
+}
+
+/** One product on the map of the strains, placed by its terpene profile when it has one. */
 export interface Strain {
   slug: string;
   name: string;
   x: number;
   y: number;
+  placed: boolean;
   thc: number;
   cbd: number;
   terpenes: string[];
+  /** Its taste, family by family, the strongest 1. */
+  aroma: Partial<Record<string, number>>;
+  /** Its strongest taste family. */
+  lead?: string;
+  /** Its three strongest flavours in words: "Lemon, pepper and musk". */
+  taste?: string;
   dispensed: number;
   overall?: number;
   ratings: number;
-  like: string[];
+  like: Likeness[];
+}
+
+/** One terpene the shelf names: what it tastes of, and what its products' sessions were rated. */
+export interface Terpene {
+  name: string;
+  flavors: string[];
+  family?: string;
+  notes?: string;
+  effects: string[];
+  boiling_point?: number;
+  products: number;
+  leads: number;
+  /** The mean overall rating of its products' sessions, the lead counting most. */
+  overall?: number;
+  rated: number;
 }
 
 /** The repository being served, and the home folder to browse from. */
@@ -436,7 +466,9 @@ export interface JarDetail extends Jar {
     /** The latest sessions, newest first; a hash and scores when rated. */
     recent: Rated[];
   };
-  like: { slug: string; name: string }[];
+  like: (Likeness & { name: string })[];
+  taste?: string;
+  aroma: Partial<Record<string, number>>;
 }
 
 /** A page that names a product's terpenes: a search result, or the strain's profile on Leafly. */
