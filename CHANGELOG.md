@@ -2,9 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.102.0"></a>
+## [v0.102.0] - 2026-10-26
+### Feat
+- **delight:** the year on one card, and a trip packed evenly
+
+### Test
+- **review:** compare the busiest day and the break by date, as any zone writes them
+
+
 <a name="v0.101.0"></a>
 ## [v0.101.0] - 2026-10-26
 ### Docs
+- update changelog for v0.101.0
 - **diary:** the same, in a terminal
 
 ### Feat
@@ -1238,7 +1248,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.101.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.102.0...HEAD
+[v0.102.0]: https://github.com/TheDonDope/wits/compare/v0.101.0...v0.102.0
 [v0.101.0]: https://github.com/TheDonDope/wits/compare/v0.100.0...v0.101.0
 [v0.100.0]: https://github.com/TheDonDope/wits/compare/v0.99.0...v0.100.0
 [v0.99.0]: https://github.com/TheDonDope/wits/compare/v0.98.0...v0.99.0
