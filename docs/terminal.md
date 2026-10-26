@@ -18,7 +18,6 @@ does the same here.
 
 ## Recording, day to day
 
-
 Tab completion offers the handles, with the full name and how much is left
 beside each — and only the ones the command can act on, so `sesh` offers what is
 in a stash rather than everything ever dispensed:
@@ -100,7 +99,6 @@ Order the next prescription by Sat 14 November, with 3 days for the pharmacy.
 Wrote a reminder for 2026-11-14 to refill.ics
 ```
 
-
 ## The terminal interface
 
 `wits` on its own opens the interface: a dashboard of cards — storage, stash,
@@ -133,7 +131,6 @@ differ. `s` changes the scope.
 Because everything is replayed from the log, the analysis, storage and stash
 screens can start from empty and grow the way the record grew: `p` plays,
 `←/→` steps an entry at a time, and `+/-` retunes the speed.
-
 
 ## Commands
 
