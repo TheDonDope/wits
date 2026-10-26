@@ -276,8 +276,8 @@ All Nations 29/1 Mac Doughnut      12.42g  3.30g   1.72g  20.00g on 2026-08-29
     group: 'The shelf',
     title: 'The journal, and putting a mistake right',
     icon: 'receipt_long',
-    lead: '<b>Shelf → Journal</b> is every entry, newest first. Undo one and wits records a correction that moves the same grams back; both stay in the log.',
-    shots: [web('journal', '/shelf/journal', 'The journal: every entry, newest first', 'The journal, day by day.')],
+    lead: '<b>Shelf → Journal</b> is every entry, newest first, on a timeline: each day with what was ground and vaped, each entry with its time and where its grams went. The bars above are every week; pick one to go there. Undo an entry and wits records a correction that moves the same grams back; both stay in the log.',
+    shots: [web('journal', '/shelf/journal', 'The journal as a timeline, with every week of the history as bars above it', 'The journal, day by day, the whole history above it.')],
     page: { path: '/shelf/journal', label: 'Open the journal' },
     cli: [
       { cmd: 'wits log --oneline -n 4', out: `77bf22b  2026-10-26  adjust  30.00g  cannabistada-gorilla-glue-4-221
@@ -526,7 +526,7 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
     icon: 'sync',
     lead: 'A <b>bundle</b> is the whole repository as one small file, restored exactly, hash chain included. A <b>remote</b> is a folder several devices reach — a Syncthing share, a USB stick — holding one encrypted file.',
     body: [
-      'A pull works the way <code>git rebase</code> does: what both devices share is kept, the remote’s entries are taken as they are, and this device’s own are chained again on top. A push is refused until this device holds everything on the remote, so nothing another wrote is written over.',
+      'A pull works the way <code>git merge</code> does: the remote’s entries are taken as they are, and when both devices recorded, a merge entry joins the two — nothing is chained again, so every entry keeps its hash everywhere. Products and devices merge field by field, the later change standing. A push is refused until this device holds everything on the remote, so nothing another wrote is written over.',
       'The phone keeps its own copy and syncs through the same folder, by hand: see <a href="#phone">On the phone</a>.',
     ],
     cli: [

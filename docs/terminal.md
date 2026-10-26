@@ -410,19 +410,20 @@ $ wits push   # on the deck, after both recorded a grind
 🚨 the remote holds entries this device does not: wits pull first
 $ wits pull
 Pulled 1 entry and 0 ratings.
-Chained 1 entry of this device's on top, with new hashes.
+Merged with this device's own, which keep their hashes.
 $ wits push
 Pushed 1 entry and 0 ratings.
 ```
 
-A pull works the way `git rebase` does. The entries both devices share are
-kept, the remote's are taken as they are, and this device's own are chained
-again on top of them. Those get new hashes, since a hash names a place in the
-chain, and undos and ratings are pointed at the new ones. The journal as it
-was is kept as `.wits/journal.ndjson.orig`. A push is refused until the
-device holds everything on the remote, so nothing another device wrote is
-written over. Where the remote holds a product or a device differently, the
-remote's version stands.
+A pull works the way `git merge` does. The remote's entries this device lacks
+are appended as they are, and when both devices recorded, a merge entry
+follows, naming both heads. Nothing is chained again: every entry keeps its
+hash on every device, so what rates, prices or undoes it, and a seal made
+before the sync, still name it. A push is refused until the device holds
+everything on the remote, so nothing another device wrote is written over.
+Products and devices merge field by field: where both changed one, the later
+change stands, and a rename or a terpene profile written here and not yet
+pushed is kept.
 
 Two devices can each record the same last grams of a jar. Both entries are
 kept as written, and `wits pull`, `wits status` and `wits fsck` name the one

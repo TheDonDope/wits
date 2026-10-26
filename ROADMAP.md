@@ -299,14 +299,16 @@ fails to open rather than restoring as something else. A bundle carries no
 hashes, so a fetched one is chained the way appending it would chain it
 (`journal.Chain`, `effects.Chain`) and then checked like any other copy.
 
-A pull is a rebase (`Journal.Rebase`): shared entries kept, the remote's
-taken as they are, this device's own chained again on top with new hashes,
-undos pointed at them, and the effect log following the sessions that moved
-while the journal's lock is still held. It is the one rewrite the journal
-has, of entries no other device has seen yet; the journal as it was is kept as
-`journal.ndjson.orig`. A push is refused unless this device holds everything on
-the remote — entries, ratings, products and devices — so two devices cannot
-keep rewriting each other's entries. On a pull the remote's catalog entries win.
+A pull is a merge (`Journal.Merge`): the remote's entries this device lacks
+are appended as they are, and when both devices recorded, a `merge` entry
+follows them, naming both heads — nothing is chained again, so every entry
+keeps its hash on every device (until v0.107.0 a pull rebased, chaining this
+device's own on top with new hashes). A push is refused unless this device
+holds everything on the remote — its head, and with it everything it covers;
+its ratings, products and devices — so nothing another device wrote is
+written over. The catalogs merge field by field, the later change winning
+(until v0.107.0 the remote's copy won whole, and a terpene profile written
+here and not yet pushed was lost to the next pull).
 
 Two devices can each grind a jar's last 2 g. Merged, the later of the two took
 grams that were not there. Both are kept, and `pull`, `status` and `fsck` name
@@ -537,7 +539,8 @@ charts drawn as SVG with d3's geometry: the fill as a ring with the older jars
 as a halo, each product as a jar of glass with a moving surface, the shelf's
 supply as a curve to its empty day, the whole history as a calendar a year a
 row, every fill as a lane on one timeline, and a virtual-scrolled journal. It
-polls for entries made elsewhere. Its fonts and icons ship with it — the
+reads again when the server says the repository changed (until v0.107.0 it
+polled every four seconds). Its fonts and icons ship with it — the
 scaffolding fetched them from a font service, which would have been the only
 network call wits made. Reduced motion is honoured throughout, the route
 cross-fade included.
@@ -989,7 +992,10 @@ making the key.
 It is served from GitHub Pages (`make pages`, `.github/workflows/pages.yml`):
 installable, with a manifest and Angular's service worker caching everything
 the engine included, and shortcuts to `?record=grind` and `?record=session`. On
-a touchscreen the key hints are hidden. The engine is 8.9 MB, 2.4 MB gzipped;
+a touchscreen the key hints are hidden. The engine was 8.9 MB, 2.4 MB gzipped,
+and had grown to 20.5 MB, 5.2 MB gzipped, by v0.106.0; built without the
+.xlsx reader it is 16.9 MB, 4.3 MB gzipped, and the reader loads on its own
+to import (v0.107.0);
 `httptest` was swapped for a ten-line recorder, which kept the testing flags out
 rather than saving much — the size is the API and `net/http`. Before this,
 the 5.2 MB of a first build was a stub whose unused imports the linker had
@@ -1361,8 +1367,8 @@ The browser walks it a fill at a time (`PickupCard`): `/api/unpriced` names
 each purchase's fill, and a fill is priced together (`POST /api/price/fill`,
 `Recorder.PriceAll`). Every purchase is checked before any price is written, so
 a bad line refuses the fill whole. Each strain takes a price a gram, with 19% VAT
-on top when the switch is on, worked out by the fill form's `rowCents` on the
-page and `lineCents` on the server. Or it takes its invoice's line total:
+on top when the switch is on, worked out by `lineCents` on the server — the
+page shows the server's rehearsal (`?dry=1`), as it has since v0.107.0. Or it takes its invoice's line total:
 **Scan invoice** reads the PDF on the device and shows its first page beside
 the figures. The invoice's match decides what happens: this fill on the same
 day fills the prices; a few days off, it asks first; another fill's says whose
@@ -1663,6 +1669,53 @@ the modes marked, each mode a card; a Venty added from its preset with a
 3-minute auto-off was written with its range, 180 °C, its modes, 0.15 g and
 180 s. The boxes are one global style, `.w-field` and `.w-box`.
 
+### Everything on the table — the architecture review of 2026-10-26
+
+A review questioned every decision. Kept: the log as truth, folded on every
+read (60 ms for `wits status` on the demo's 2,617 entries); NDJSON files
+rather than a database; compensating entries, the three scopes, one recorder.
+Changed, in one PR:
+
+- **Catalogs merge field by field.** A pull took the remote's whole product
+  or device wherever it differed; a terpene profile written on one device was
+  erased by its next pull of an unchanged remote (reproduced). Each field is
+  stamped when it changes (`catalog.Changed`, in the catalog's locked update),
+  carried in bundles (`ch=`), and a pull takes a field only when the remote
+  changed it later.
+- **The phone has one writer.** Two tabs each ran an engine on their own
+  copy, and the last to save wrote the other's entries out of IndexedDB. The
+  first tab holds a Web Lock and records; another reads, says why it refuses
+  to record or sync, hears over a BroadcastChannel when the first recorded,
+  and takes over when it closes — checked on the phone build in two tabs.
+- **Every write can be rehearsed** (`?dry=1`, `Recorder.Dry`): built and
+  checked as it would be, nothing written, answered with the entries, each jar
+  before and after, a fill's or a pickup's line prices with their VAT, or the
+  refusal. Record's before and after, the prescription's receipt and a
+  pickup's totals show it; `rowCents` and `fillCents` are gone, a price with
+  its VAT sent as `with_vat`.
+- **The page reads again only on a change**, said by `/api/changes` (a
+  stream), each view made the first time a page reads it, the journal read
+  from where it was left (`/api/journal?after=`) — on every change the page
+  read 2.4 MB, the 0.9 MB journal twice. A grind recorded with the command
+  line showed on an open Journal within a second.
+- **A pull merges** (`Journal.Merge`, a `merge` entry): no entry is ever
+  chained again, so its hash is its name for good, and a seal made before a
+  sync verifies after it on the other device (`journal.Holds`). Bundle format
+  11 carries merges (`j`) and, for an entry that does not simply follow the
+  one before, the entries it names (`pv=`, `mg=`) and its number (`sq=`); a
+  restore imports the journal as it stood. Stable ids apart from the hash, in
+  the review, were not needed once nothing rewrites.
+- **The models are held to the server's shapes** (`make types`, `api.gen.ts`,
+  `api-check.ts`, `npm run typecheck` in preflight and CI); **figures both
+  sides show are worked out once** (`pkg/views`: day by day, device by device,
+  in centigrams); **the phone's engine carries no .xlsx reader** (4.3 MB
+  gzipped rather than 5.2), `cmd/wits-xlsx` loaded only to import.
+
+The Journal page became a timeline: a rail through every day and entry, each
+day a node with what was ground and vaped on it, each entry a bead with its
+time and the accounts its grams moved between, and above it the whole
+history week by week, the week in sight marked, a week picked to go there.
+
 ---
 
 ## 📌 Planned
@@ -1727,7 +1780,7 @@ at once, and what the review found broken — are built, above. What is left:
   remote wits itself would send anything to, so it is opt-in and said plainly.
   A conditional write (`If-Match`) closes the gap a folder leaves: two pushes
   at the same moment, the second writing over the first. The device that loses
-  still holds its entries and rebases them on its next pull, but the remote
+  still holds its entries and merges them in on its next pull, but the remote
   does not say it lost.
 
 ### 6 · The effect log, put to work
