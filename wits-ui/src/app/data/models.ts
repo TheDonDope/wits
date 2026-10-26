@@ -89,6 +89,16 @@ export interface Overview {
   shelf: Shelf;
 }
 
+/** A strain rated as a whole, apart from any one session: each score 1–5, or left out. */
+export interface StrainRating {
+  overall?: number;
+  taste?: number;
+  aroma?: number;
+  again?: 'yes' | 'no';
+  note?: string;
+  at?: string;
+}
+
 /** One product across its lifetime — the jar's scope. */
 export interface Jar {
   slug: string;
@@ -99,6 +109,8 @@ export interface Jar {
   cbd?: number;
   /** Dominant first; empty until written down. */
   terpenes: string[];
+  /** The strain rated as a whole; none until it is. */
+  rating?: StrainRating;
   storage: number;
   stash: number;
   avb: number;
@@ -106,6 +118,8 @@ export interface Jar {
   ground: number;
   fills: number;
   last_seen: string;
+  /** When it was last ground or had in a session; none if never. */
+  last_used?: string;
 }
 
 export interface Cycle {

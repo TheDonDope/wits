@@ -36,7 +36,10 @@ type Product struct {
 	THC          float64         `yaml:"thc,omitempty"`
 	CBD          float64         `yaml:"cbd,omitempty"`
 	Terpenes     []string        `yaml:"terpenes,omitempty"`
-	AddedAt      time.Time       `yaml:"added_at"`
+	// Rating is what the strain is thought of as a whole, apart from any one
+	// session; nil until it is rated.
+	Rating  *StrainRating `yaml:"rating,omitempty"`
+	AddedAt time.Time     `yaml:"added_at"`
 }
 
 // String returns the display name of the product.

@@ -14,6 +14,7 @@ import { scoreColor } from '../viz/effect-matrix';
 import { AromaWheel } from '../viz/aroma-wheel';
 import { GlassJar } from '../viz/glass-jar';
 import { MonthBars } from '../viz/month-bars';
+import { StrainRatingForm } from './strain-rating';
 import { Terpenes } from './terpenes';
 
 /**
@@ -25,7 +26,7 @@ import { Terpenes } from './terpenes';
  */
 @Component({
   selector: 'w-jar-detail',
-  imports: [AromaWheel, DatePipe, DecimalPipe, GlassJar, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MonthBars, RouterLink, Terpenes],
+  imports: [AromaWheel, DatePipe, DecimalPipe, GlassJar, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MonthBars, RouterLink, StrainRatingForm, Terpenes],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a mat-button routerLink="/shelf/jars" class="back"><mat-icon>arrow_back</mat-icon>The jars</a>
@@ -93,6 +94,14 @@ import { Terpenes } from './terpenes';
           }
         </section>
       </div>
+
+      <section class="glass pad">
+        <header>
+          <span class="eyebrow">your rating</span>
+          <span class="scope">the strain as a whole{{ j.rating?.at ? ' · ' + (j.rating?.at | date: 'd MMM y') : '' }}</span>
+        </header>
+        <w-strain-rating [slug]="j.slug" [rating]="j.rating" />
+      </section>
 
       <section class="glass pad">
         <header><span class="eyebrow">pickups, fill by fill</span><span class="scope">each fill's own grams</span></header>

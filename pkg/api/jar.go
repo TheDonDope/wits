@@ -383,6 +383,62 @@ func likeOf(ws *workspace.Workspace, slug string) ([]alike, string, map[string]f
 	return out, "", aroma
 }
 
+// strainRating is a strain rated as a whole, as a client reads it and sends it.
+type strainRating struct {
+	Overall int       `json:"overall,omitempty"`
+	Taste   int       `json:"taste,omitempty"`
+	Aroma   int       `json:"aroma,omitempty"`
+	Again   string    `json:"again,omitempty"`
+	Note    string    `json:"note,omitempty"`
+	At      time.Time `json:"at,omitzero"`
+}
+
+// ratingOf is a catalog rating as a client reads it, or nil.
+func ratingOf(r *catalog.StrainRating) *strainRating {
+	if r == nil {
+		return nil
+	}
+	return &strainRating{Overall: r.Overall, Taste: r.Taste, Aroma: r.Aroma, Again: string(r.Again), Note: r.Note, At: r.At}
+}
+
+// rateStrain writes down what a strain is thought of as a whole; a body that
+// rates nothing, {"clear": true}, takes the rating away.
+func (s *Server) rateStrain(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.writable(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		strainRating
+		Clear bool `json:"clear"`
+	}
+	if err := decode(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	slug := r.PathValue("slug")
+	if ws.Products.Exact(slug) == nil {
+		fail(w, http.StatusNotFound, errNoJar)
+		return
+	}
+	var rating *catalog.StrainRating
+	if !req.Clear {
+		rating = &catalog.StrainRating{Overall: req.Overall, Taste: req.Taste, Aroma: req.Aroma,
+			Again: catalog.Again(req.Again), Note: req.Note}
+	}
+	p, err := ws.Recorder.RateStrain(slug, rating, time.Now())
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	message := p.Name + ": rating taken away"
+	if p.Rating != nil {
+		message = p.Name + ": " + strings.TrimPrefix(p.Rating.Summary()+" — "+p.Rating.Note, " — ")
+		message = strings.TrimSuffix(message, " — ")
+	}
+	reply(w, http.StatusCreated, map[string]any{"message": message, "rating": ratingOf(p.Rating)})
+}
+
 // researchTimeout is how long a lookup waits on the web, every site together.
 const researchTimeout = 25 * time.Second
 

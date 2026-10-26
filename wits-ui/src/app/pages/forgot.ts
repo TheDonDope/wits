@@ -1,26 +1,28 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 
-import { RATE_DAYS, Todo } from '../data/todo';
+import { RATE_DAYS, RATE_STRAIN_DAYS, Todo } from '../data/todo';
 import { Wits } from '../data/wits';
 import { PriceWalk } from './price-walk';
 import { RateQueue } from './rate-queue';
 import { openRecord } from './record';
 import { StashClear } from './stash-clear';
+import { StrainRatingForm } from './strain-rating';
 import { TerpeneQueue } from './terpene-queue';
 
 /**
  * Everything left undone, in one place: sessions to rate, pickups to price,
- * stashes to clear, AVB to collect — each shown only while there is some,
+ * stashes to clear, AVB to collect, strains to rate — each shown only while there is some,
  * and counted on the tab — and the jars still sealed, to weigh now and then,
  * and those with no terpene profile, to look up.
  */
 @Component({
   selector: 'w-forgot',
-  imports: [DecimalPipe, MatButtonModule, MatIconModule, PriceWalk, RateQueue, StashClear, TerpeneQueue],
+  imports: [DatePipe, DecimalPipe, MatButtonModule, MatIconModule, PriceWalk, RateQueue, RouterLink, StashClear, StrainRatingForm, TerpeneQueue],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="glass head">
@@ -36,6 +38,30 @@ import { TerpeneQueue } from './terpene-queue';
         <header><span class="eyebrow">rate a session</span><span class="chip num">{{ todo.rate().length }}</span></header>
         <p class="dim note">Sessions of the last {{ rateDays }} days, while you still remember how they went.</p>
         <w-rate-queue [sessions]="todo.rate()" [dimensions]="dimensions()" />
+      </section>
+    }
+
+    @if (todo.strains().length) {
+      <section class="glass pad">
+        <header><span class="eyebrow">rate a strain</span><span class="chip num">{{ todo.strains().length }}</span></header>
+        <p class="dim note">Strains used in the last {{ strainDays }} days, rated as a whole — its taste, its aroma, whether
+          you would have it again — apart from any one session.</p>
+        <div class="strains">
+          @for (j of allStrains() ? todo.strains() : todo.strains().slice(0, 3); track j.slug) {
+            <article class="strain glass">
+              <header>
+                <a [routerLink]="['/shelf/jars', j.slug]"><strong>{{ j.name }}</strong></a>
+                <span class="dim">last used {{ j.last_used | date: 'd MMM' }}{{ j.terpenes.length ? ' · ' + j.terpenes.slice(0, 3).join(', ') : '' }}</span>
+              </header>
+              <w-strain-rating [slug]="j.slug" />
+            </article>
+          }
+        </div>
+        @if (todo.strains().length > 3) {
+          <button mat-button class="more" (click)="allStrains.set(!allStrains())">
+            {{ allStrains() ? 'Fewer' : 'All ' + todo.strains().length }}
+          </button>
+        }
       </section>
     }
 
@@ -114,6 +140,13 @@ import { TerpeneQueue } from './terpene-queue';
       padding: 6px 0; border-top: 1px solid var(--w-glass-edge); }
     .row mat-icon { color: var(--w-primary); }
     .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .strains { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .strain { padding: 16px; display: grid; gap: 12px; align-content: start; }
+    .strain header { display: grid; gap: 2px; }
+    .strain a { color: inherit; text-decoration: none; }
+    .strain a:hover { color: var(--w-primary); }
+    .strain .dim { font-size: 12px; }
+    .more { justify-self: start; }
     .done { display: flex; align-items: center; gap: 8px; justify-content: center; margin: 0; font-size: 13px; }
     .done mat-icon { color: var(--w-good); }
     @include bp.phone {
@@ -129,12 +162,16 @@ export class Forgot {
   private readonly dialog = inject(MatDialog);
   protected readonly todo = inject(Todo);
   protected readonly rateDays = RATE_DAYS;
+  protected readonly strainDays = RATE_STRAIN_DAYS;
+  /** Whether every strain waiting is shown, not only the latest three. */
+  protected readonly allStrains = signal(false);
   protected readonly dimensions = computed(() => this.wits.effects.value()?.dimensions ?? []);
   /** Any purchase without a price, in storage or not: the walk can show the older ones too. */
   protected readonly unpricedAtAll = computed(() => (this.wits.costs.value()?.unpriced ?? 0) > 0);
   /** What has nothing waiting, said in a line so the page says it looked. */
   protected readonly done = computed(() => [
     ...(this.todo.rate().length ? [] : ['nothing to rate']),
+    ...(this.todo.strains().length ? [] : ['every strain rated']),
     ...(this.unpricedAtAll() ? [] : ['every purchase priced']),
     ...(this.todo.stashes().length ? [] : ['no stash left behind']),
     ...(this.todo.avb().length ? [] : ['no AVB waiting']),

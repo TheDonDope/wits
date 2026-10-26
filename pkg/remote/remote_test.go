@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TheDonDope/wits/pkg/bundle"
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
@@ -275,4 +276,27 @@ func TestSealsTravel(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, kept, 1)
 	assert.Equal(t, "wits-seal 1\n", kept[0].Text)
+}
+
+// TestTakeProductsKeepsTheNewerRating: a strain rated here after the remote's
+// rating of it keeps this one; rated there later, it takes theirs; and a
+// product that differs in nothing else is not taken at all.
+func TestTakeProductsKeepsTheNewerRating(t *testing.T) {
+	earlier := time.Date(2026, 10, 20, 9, 0, 0, 0, time.UTC)
+	later := earlier.Add(48 * time.Hour)
+	added := earlier.Add(-time.Hour)
+	ours := &catalog.Catalog{Products: []*catalog.Product{
+		{Slug: "a", Name: "A", AddedAt: added, Rating: &catalog.StrainRating{Overall: 5, At: later}},
+		{Slug: "b", Name: "B", AddedAt: added, Rating: &catalog.StrainRating{Overall: 2, At: earlier}},
+	}}
+	theirs := bundle.Contents{Products: &catalog.Catalog{Products: []*catalog.Product{
+		{Slug: "a", Name: "A", AddedAt: added, Rating: &catalog.StrainRating{Overall: 1, At: earlier}},
+		{Slug: "b", Name: "B", AddedAt: added, Rating: &catalog.StrainRating{Overall: 4, At: later}},
+	}}}
+
+	took := takeProducts(ours, theirs)
+
+	assert.Equal(t, []string{"b"}, took, "a is ours and newer, so nothing of it is taken")
+	assert.Equal(t, 5, ours.Products[0].Rating.Overall)
+	assert.Equal(t, 4, ours.Products[1].Rating.Overall)
 }

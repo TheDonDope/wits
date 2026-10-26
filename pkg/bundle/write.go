@@ -187,11 +187,29 @@ func writeProduct(out io.Writer, p *catalog.Product) {
 	if len(p.Terpenes) > 0 {
 		fmt.Fprintf(out, " tp=%s", escape(strings.Join(p.Terpenes, ",")))
 	}
+	writeRating(out, p.Rating)
 	if p.Radiated {
 		fmt.Fprint(out, " r=1")
 	}
 	if !p.AddedAt.IsZero() {
 		fmt.Fprintf(out, " a=%s", num(p.AddedAt.Unix()))
+	}
+}
+
+// writeRating writes a strain's own rating, when it has one: its scores,
+// whether it would be had again (y, n, or - for not said) and when, apart by
+// slashes — "sr=4/5/0/y/1792973444" — and its line apart.
+func writeRating(out io.Writer, r *catalog.StrainRating) {
+	if r == nil {
+		return
+	}
+	again := map[catalog.Again]string{catalog.AgainYes: "y", catalog.AgainNo: "n"}[r.Again]
+	if again == "" {
+		again = "-"
+	}
+	fmt.Fprintf(out, " sr=%d/%d/%d/%s/%s", r.Overall, r.Taste, r.Aroma, again, num(r.At.Unix()))
+	if r.Note != "" {
+		fmt.Fprintf(out, " sn=%s", escape(r.Note))
 	}
 }
 
