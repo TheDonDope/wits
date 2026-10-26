@@ -2,12 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.98.0"></a>
+## [v0.98.0] - 2026-10-26
+### Feat
+- **strains:** what a strain is like is what it tastes of — terpenes first, and in words
+
+
 <a name="v0.97.0"></a>
 ## [v0.97.0] - 2026-10-26
 ### Build
 - **deps-dev:** bump electron from 44.7.0 to 44.9.1 in /desktop
 
 ### Docs
+- update changelog for v0.97.0
 - **diary:** every jar opened, a year to look around in, and a window of its own
 
 
@@ -1199,7 +1206,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.97.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.98.0...HEAD
+[v0.98.0]: https://github.com/TheDonDope/wits/compare/v0.97.0...v0.98.0
 [v0.97.0]: https://github.com/TheDonDope/wits/compare/v0.96.0...v0.97.0
 [v0.96.0]: https://github.com/TheDonDope/wits/compare/v0.95.0...v0.96.0
 [v0.95.0]: https://github.com/TheDonDope/wits/compare/v0.94.0...v0.95.0
