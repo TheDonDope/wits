@@ -1576,6 +1576,109 @@ server answers only this machine. Timestamping a chain and syncing over WebDAV
 are the first things wits would send anywhere, so both are opt-in and said
 plainly.
 
+### Next · Ready for anyone
+
+wits is made for its maintainer, and open to anyone; a store listing is
+likely. A UI review on 2026-10-26 found that it reads as a tool for an expert:
+polished, honest, and dense. A newcomer meets an empty page with nothing to
+press, insider words on every card, and everything at once. Nothing is to be
+taken away — what is deep moves one step back, and the everyday path gets
+short. This phase comes before the ones below. Phone and desktop count
+equally.
+
+#### 🔹 The first launch
+
+- **Status**: Planned
+- An empty repository shows "No fill in progress", two calendars with nothing
+  in them and "the journal's hash chain verifies", and nothing to press. It
+  becomes a welcome with three ways in: record the first prescription, import
+  a spreadsheet, or look around in the demo. Charts with nothing to draw are
+  left out until they have something. Record opens on Fill while the shelf is
+  empty, not on Grind.
+
+#### 🔹 A session in two taps
+
+- **Status**: Planned
+- Logging a session is the thing done most, several times a day, and the form
+  starts blank each time, its device "none". It starts from the last session
+  instead: the strain, the device, its mode and temperature. The amounts used
+  lately are chips to tap. "When" says now, and can be changed. Today on the
+  dashboard has **Same as last time**, one tap. Saving a session asks how it
+  went then, rather than leaving it for I forgot to.
+
+#### 🔹 Plain words on screen
+
+- **Status**: Proposed — the words below want the maintainer's yes
+- The interface speaks the ledger's words — fill, stash, AVB, seshed, the
+  shelf, and a scope chip on every figure. They are exact, and each is a wall
+  for a newcomer. On screen they become plain; the exact word stays in a
+  tooltip, in a glossary in the user guide, and in the terminal, whose users
+  chose it:
+
+  | now | on screen |
+  | --- | --- |
+  | fill | prescription ("Prescription 30") |
+  | stash, in the stashes | ground, ready to use |
+  | sealed, storage | sealed (unchanged) |
+  | AVB | already vaped (AVB), the short form after |
+  | seshed | vaped |
+  | the shelf | everything you have |
+  | the fill / the shelf / the jar chips | shown on hover, not on every card |
+  | I forgot to | To do |
+  | verified | said only when the journal was changed outside wits |
+
+#### 🔹 Less at once
+
+- **Status**: Planned
+- Effects is about 6,000 px tall and ends in every rated session: it becomes
+  tabs (what works, strains, terpenes, ratings), the ratings paged. I forgot to
+  holds a rating card of seven rows of dots per session: each card starts at
+  overall, the rest behind "more", and the page can go one thing at a time.
+  The jars page opens on the jars; the replay is a **Play back history**
+  button that opens the transport. The row of keys under every page shows once
+  a key has been pressed, and `?` keeps the whole list.
+
+#### 🔹 What the review found broken
+
+- **Status**: Planned
+- The Record dialog shows a horizontal scrollbar, on a computer and on a phone.
+- I forgot to's rating cards name the device by its slug
+  (`storz-bickel-venty`), not its name.
+- History's calendar is cut off after August on a phone; Year splits its
+  calendar in half years there, and History could too.
+- Dim 11 px text falls short of comfortable contrast in some themes: a
+  contrast pass over every theme.
+
+#### 🔹 German, and more languages
+
+- **Status**: Planned
+- The interface in German beside English, chosen in the menu, the browser's
+  language first. Numbers, dates and money in the reader's way: 1.234,56 € in
+  German, €1,234.56 in English. Every string in the client is then a message
+  with an id rather than a literal in a template, so the next language is a
+  file. The pharmacy domain is German already (the invoices, the 19 % VAT,
+  what a patient must be able to show), so German comes first. The terminal,
+  the report's PDF and the verify page follow once the client has a way.
+
+#### 🔹 More than one currency
+
+- **Status**: Planned
+- Prices are euro cents throughout (`pkg/prices`, the API, the client, the
+  bundle). A repository gets one currency of its own, chosen at `wits init`
+  and kept in `config.yml` as its ISO 4217 code, euro for every repository
+  made before; amounts stay whole minor units. Nothing is converted: a
+  repository's prices are in its currency, and figures across repositories
+  are not added. The VAT switch on a fill becomes the repository's country's
+  rate, and the invoice reader says plainly that it reads German pharmacies.
+
+#### 🔹 A store listing
+
+- **Status**: Planned
+- The phone's build is an installable web app already; a store wants it
+  wrapped (a trusted web activity for Android, the AppImage on Flathub or
+  AppImageHub for the desktop) with a listing, screenshots, and a privacy
+  statement that says what wits sends: nothing, unless asked.
+
 ### 5 · More than one device
 
 #### 🔹 WebDAV for the remote
