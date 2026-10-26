@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { CATEGORIES, PRESETS, SIGNATURES, USES, blankDevice } from '../data/devices';
 import { Device, DeviceCategory, DeviceFields, DeviceMode } from '../data/models';
 import { Wits } from '../data/wits';
+import { Choice, ChoiceInput } from '../inputs/choice';
+import { TempDial } from '../inputs/temp-dial';
+import { TempRange } from '../inputs/temp-range';
+import { isoDay } from '../inputs/when';
 
 /**
  * Adding a device, or changing one: from a preset of what is known about it,
@@ -22,185 +21,136 @@ import { Wits } from '../data/wits';
  */
 @Component({
   selector: 'w-device-form',
-  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule,
-    MatSlideToggleModule],
+  imports: [ChoiceInput, MatButtonModule, MatDialogModule, MatIconModule, TempDial, TempRange],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>{{ editing ? 'Change ' + editing.name : 'Add a device' }}</h2>
     <mat-dialog-content>
       <div class="form">
         @if (!editing) {
-          <mat-form-field appearance="outline" class="wide preset" subscriptSizing="dynamic">
-            <mat-label>Start from</mat-label>
-            <mat-select [ngModel]="preset()" (ngModelChange)="fromPreset($event)">
-              <mat-option value="">Nothing — fill it in</mat-option>
-              @for (p of presets; track p.preset) {
-                <mat-option [value]="p.preset">{{ p.preset }}</mat-option>
-              }
-            </mat-select>
-            <mat-hint>What is known of it, filled in; what could not be found stays empty.</mat-hint>
-          </mat-form-field>
+          <w-choice label="start from" [tiles]="true" [fold]="7" [options]="presetChoices" [value]="preset()" (valueChange)="fromPreset($event)" />
+          <p class="dim note">What is known of it, filled in; what could not be found stays empty.</p>
         }
-        <mat-form-field appearance="outline" class="wide">
-          <mat-label>Name</mat-label>
-          <input matInput [ngModel]="d().name" (ngModelChange)="set('name', $event)" required />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>What it is</mat-label>
-          <mat-select [ngModel]="d().category" (ngModelChange)="category($event)">
-            @for (c of categories; track c.id) {
-              <mat-option [value]="c.id">{{ c.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Manufacturer</mat-label>
-          <input matInput [ngModel]="d().maker ?? ''" (ngModelChange)="set('maker', $event)" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Model</mat-label>
-          <input matInput [ngModel]="d().model ?? ''" (ngModelChange)="set('model', $event)" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>The maker's country</mat-label>
-          <input matInput [ngModel]="d().country ?? ''" (ngModelChange)="set('country', $event)" />
-        </mat-form-field>
+        <label class="w-field name">
+          <span class="eyebrow">name</span>
+          <input [value]="d().name" (input)="set('name', text($event))" placeholder="Storz & Bickel Venty" required />
+        </label>
+        <w-choice label="what it is" [tiles]="true" [options]="categoryChoices" [value]="d().category" (valueChange)="pickCategory($event)" />
+        <div class="three">
+          <label class="w-field"><span class="eyebrow">manufacturer</span>
+            <span class="w-box"><input [value]="d().maker ?? ''" (input)="set('maker', text($event))" /></span></label>
+          <label class="w-field"><span class="eyebrow">model</span>
+            <span class="w-box"><input [value]="d().model ?? ''" (input)="set('model', text($event))" /></span></label>
+          <label class="w-field"><span class="eyebrow">the maker's country</span>
+            <span class="w-box"><input [value]="d().country ?? ''" (input)="set('country', text($event))" /></span></label>
+        </div>
 
         @if (d().category === 'vaporizer' || d().category === 'grinder') {
-          <mat-form-field appearance="outline">
-            <mat-label>Power</mat-label>
-            <mat-select [ngModel]="d().power ?? ''" (ngModelChange)="power($event)">
-              <mat-option value="">Not said</mat-option>
-              <mat-option value="electric">Electric</mat-option>
-              <mat-option value="manual">Manual</mat-option>
-            </mat-select>
-          </mat-form-field>
-        }
-        @if (d().category === 'vaporizer' || d().category === 'glass') {
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>A load holds</mat-label>
-            <input matInput type="number" min="0" step="0.01" [ngModel]="d().load ?? null"
-              (ngModelChange)="set('load', $event || undefined)" />
-            <span matTextSuffix>g</span>
-            <mat-hint>As you usually fill it. Sizes a session you forgot to record.</mat-hint>
-          </mat-form-field>
+          <w-choice label="power" [options]="powerChoices" [value]="d().power ?? ''" (valueChange)="pickPower($event)" />
         }
         @if (d().category === 'vaporizer') {
-          <mat-form-field appearance="outline">
-            <mat-label>Heats by</mat-label>
-            <mat-select [ngModel]="d().signature ?? ''" (ngModelChange)="set('signature', $event)">
-              <mat-option value="">Not said</mat-option>
-              @for (s of signatures; track s.id) {
-                <mat-option [value]="s.id">{{ s.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Used</mat-label>
-            <mat-select [ngModel]="d().use ?? ''" (ngModelChange)="set('use', $event)" [disabled]="d().power === 'manual'">
-              <mat-option value="">Not said</mat-option>
-              @for (u of uses; track u.id) {
-                <mat-option [value]="u.id">{{ u.label }}</mat-option>
-              }
-            </mat-select>
+          <div class="pair">
+            <w-choice label="heats by" [options]="signatureChoices" [value]="d().signature ?? ''" (valueChange)="set('signature', asSignature($event))" />
             @if (d().power === 'manual') {
-              <mat-hint>Manual: heated once, inhaled, what was vaped tossed.</mat-hint>
+              <div class="w-field"><span class="eyebrow">used</span>
+                <p class="dim manual">On demand: heated once, inhaled, what was vaped tossed.</p></div>
+            } @else {
+              <w-choice label="used" [options]="useChoices" [value]="d().use ?? ''" (valueChange)="set('use', asUse($event))" />
             }
-          </mat-form-field>
-          @if (d().power === 'electric') {
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Turns itself off after</mat-label>
-              <input matInput type="number" min="0" step="0.5" [ngModel]="autoOff()" (ngModelChange)="setAutoOff($event)" />
-              <span matTextSuffix>min</span>
-              <mat-hint>Unused this long, it ends a session itself.</mat-hint>
-            </mat-form-field>
-            <div class="temps">
-              <mat-form-field appearance="outline">
-                <mat-label>From</mat-label>
-                <input matInput type="number" [ngModel]="d().min_temp ?? null" (ngModelChange)="set('min_temp', $event ?? undefined)" />
-                <span matTextSuffix>°C</span>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>To</mat-label>
-                <input matInput type="number" [ngModel]="d().max_temp ?? null" (ngModelChange)="set('max_temp', $event ?? undefined)" />
-                <span matTextSuffix>°C</span>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Usually</mat-label>
-                <input matInput type="number" [ngModel]="d().default_temp ?? null" (ngModelChange)="set('default_temp', $event ?? undefined)" />
-                <span matTextSuffix>°C</span>
-              </mat-form-field>
+          </div>
+        }
+        @if (d().category === 'vaporizer' || d().category === 'glass') {
+          <div class="w-field">
+            <span class="eyebrow">a load holds</span>
+            <div class="row">
+              @for (g of loads; track g) {
+                <button type="button" class="chip" [class.on]="d().load === g" (click)="set('load', g)">{{ g }} g</button>
+              }
+              <label class="w-box small"><input type="number" min="0" step="0.01" placeholder="—" aria-label="A load holds, in grams"
+                [value]="d().load ?? ''" (input)="set('load', figure($event))" /><span class="unit">g</span></label>
             </div>
-          }
+            <p class="dim note">As you usually fill it. Sizes a session you forgot to record.</p>
+          </div>
         }
         @if (d().category === 'glass') {
-          <mat-slide-toggle class="wide" [checked]="d().water ?? false" (change)="set('water', $event.checked)">With water — a bubbler, a rig with water</mat-slide-toggle>
+          <w-choice label="water" [options]="waterChoices" [value]="d().water ? 'water' : 'dry'" (valueChange)="set('water', $event === 'water')" />
+        }
+        @if (d().category === 'vaporizer' && d().power === 'electric') {
+          <div class="heat">
+            <w-temp-range [from]="d().min_temp" [to]="d().max_temp" (fromChange)="set('min_temp', $event)" (toChange)="set('max_temp', $event)" />
+            @if (d().default_temp !== undefined) {
+              <div class="usually">
+                <w-temp-dial [min]="d().min_temp ?? 40" [max]="d().max_temp ?? 230" [marks]="marks()" [value]="d().default_temp ?? 185"
+                  (valueChange)="set('default_temp', $event)" />
+                <button mat-button type="button" (click)="set('default_temp', undefined)">Not said how it is usually set</button>
+              </div>
+            } @else {
+              <button mat-stroked-button type="button" class="say" (click)="set('default_temp', usual())">
+                <mat-icon>thermostat</mat-icon>Say how it is usually set</button>
+            }
+          </div>
+          <div class="w-field">
+            <span class="eyebrow">turns itself off after</span>
+            <div class="row">
+              @for (m of offs; track m) {
+                <button type="button" class="chip" [class.on]="autoOff() === m" (click)="setAutoOff(m)">{{ m }} min</button>
+              }
+              <label class="w-box small"><input type="number" min="0" step="0.5" placeholder="—" aria-label="Turns itself off after, minutes"
+                [value]="autoOff() ?? ''" (input)="setAutoOff(figure($event) ?? null)" /><span class="unit">min</span></label>
+            </div>
+            <p class="dim note">Unused this long, it ends a session itself.</p>
+          </div>
         }
 
         @if (d().category === 'vaporizer' || d().category === 'induction-heater') {
-          <div class="modes wide">
+          <div class="modes">
             <span class="eyebrow">{{ d().category === 'vaporizer' ? 'modes' : 'settings' }}</span>
-            <p class="dim">{{ d().category === 'vaporizer'
+            <p class="dim note">{{ d().category === 'vaporizer'
               ? 'What it is run in — a boost, a session mode — each heating its own way if it does, at a temperature it is usually run at, and with a session timer if it runs one. A session with it asks which, and starts from those.'
               : 'What it is set to — a wattage, a time. A session it heats asks which.' }}</p>
             @for (m of d().modes; track $index; let i = $index) {
               <div class="mode">
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>{{ d().category === 'vaporizer' ? 'Mode' : 'Setting' }}</mat-label>
-                  <input matInput [ngModel]="m.name" (ngModelChange)="editMode(i, { name: $event })" />
-                </mat-form-field>
+                <label class="w-box mname"><input [value]="m.name" (input)="editMode(i, { name: text($event) })"
+                  [placeholder]="d().category === 'vaporizer' ? 'Boost' : '45 W'" [attr.aria-label]="d().category === 'vaporizer' ? 'Mode' : 'Setting'" /></label>
                 @if (d().category === 'vaporizer') {
-                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Heats by</mat-label>
-                    <mat-select [ngModel]="m.signature ?? ''" (ngModelChange)="editMode(i, { signature: $event })">
-                      <mat-option value="">As the device</mat-option>
-                      @for (s of signatures; track s.id) {
-                        <mat-option [value]="s.id">{{ s.label }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="num-field">
-                    <mat-label>Usually</mat-label>
-                    <input matInput type="number" [ngModel]="m.temp ?? null" (ngModelChange)="editMode(i, { temp: $event || undefined })" />
-                    <span matTextSuffix>°C</span>
-                  </mat-form-field>
-                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="num-field">
-                    <mat-label>Timer</mat-label>
-                    <input matInput type="number" min="0" [ngModel]="m.timer ?? null" (ngModelChange)="editMode(i, { timer: $event || undefined })" />
-                    <span matTextSuffix>s</span>
-                  </mat-form-field>
+                  <label class="w-box num"><input type="number" placeholder="—" aria-label="Usually, °C" [value]="m.temp ?? ''"
+                    (input)="editMode(i, { temp: figure($event) })" /><span class="unit">°C</span></label>
+                  <label class="w-box num"><input type="number" min="0" placeholder="—" aria-label="Timer, seconds" [value]="m.timer ?? ''"
+                    (input)="editMode(i, { timer: figure($event) })" /><span class="unit">s</span></label>
                 }
                 <button mat-icon-button type="button" (click)="removeMode(i)" aria-label="Remove"><mat-icon>close</mat-icon></button>
+                @if (d().category === 'vaporizer') {
+                  <w-choice class="msig" [options]="modeSignatures" [value]="m.signature ?? ''" (valueChange)="editMode(i, { signature: asSignature($event) })" />
+                }
               </div>
             }
-            <button mat-button type="button" (click)="addMode()"><mat-icon>add</mat-icon>{{ d().category === 'vaporizer' ? 'Add a mode' : 'Add a setting' }}</button>
+            <button mat-stroked-button type="button" class="add" (click)="addMode()"><mat-icon>add</mat-icon>{{ d().category === 'vaporizer' ? 'Add a mode' : 'Add a setting' }}</button>
           </div>
         }
 
-        <mat-form-field appearance="outline">
-          <mat-label>Price</mat-label>
-          <input matInput type="number" min="0" step="0.01" [ngModel]="euros()" (ngModelChange)="euros.set($event)" />
-          <span matTextSuffix>€</span>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Bought at</mat-label>
-          <input matInput [ngModel]="d().shop ?? ''" (ngModelChange)="set('shop', $event)" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Bought on</mat-label>
-          <input matInput type="date" [ngModel]="d().bought_on ?? ''" (ngModelChange)="set('bought_on', $event)" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Link</mat-label>
-          <input matInput type="url" [ngModel]="d().link ?? ''" (ngModelChange)="set('link', $event)" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="wide">
-          <mat-label>Notes</mat-label>
-          <textarea matInput rows="3" [ngModel]="d().notes ?? ''" (ngModelChange)="set('notes', $event)"></textarea>
-        </mat-form-field>
+        <div class="bought">
+          <span class="eyebrow">bought</span>
+          <div class="four">
+            <label class="w-field"><span class="eyebrow">price</span>
+              <span class="w-box"><input type="number" min="0" step="0.01" placeholder="—" [value]="euros() ?? ''" (input)="euros.set(figure($event) ?? null)" />
+                <span class="unit">€</span></span></label>
+            <label class="w-field"><span class="eyebrow">at</span>
+              <span class="w-box"><input [value]="d().shop ?? ''" (input)="set('shop', text($event))" placeholder="the shop" /></span></label>
+            <label class="w-field"><span class="eyebrow">on</span>
+              <span class="w-box"><input type="date" [max]="today" [value]="d().bought_on ?? ''" (change)="set('bought_on', text($event))" /></span></label>
+            <label class="w-field"><span class="eyebrow">link</span>
+              <span class="w-box"><input type="url" [value]="d().link ?? ''" (input)="set('link', text($event))" placeholder="https://" /></span></label>
+          </div>
+        </div>
+        <label class="w-field">
+          <span class="eyebrow">notes</span>
+          <span class="w-box"><textarea rows="3" [value]="d().notes ?? ''" (input)="set('notes', text($event))"></textarea></span>
+        </label>
         @if (editing) {
-          <mat-slide-toggle class="wide" [checked]="d().retired ?? false" (change)="set('retired', $event.checked)">
-            Retired — kept, since its sessions name it, but no longer offered</mat-slide-toggle>
+          <w-choice label="in use" [options]="retiredChoices" [value]="d().retired ? 'retired' : 'used'" (valueChange)="set('retired', $event === 'retired')" />
+          @if (d().retired) {
+            <p class="dim note">Kept, since its sessions name it, but no longer offered.</p>
+          }
         }
       </div>
       @if (error()) {
@@ -214,23 +164,45 @@ import { Wits } from '../data/wits';
   `,
   styles: `
     @use 'breakpoints' as bp;
-    .form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; padding-top: 6px; }
-    .wide { grid-column: 1 / -1; }
-    .preset { margin-bottom: 18px; }
-    .temps { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 10px; }
-    .modes { display: grid; gap: 8px; margin-bottom: 14px; }
-    .modes p { margin: 0; font-size: 12px; }
-    .mode { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 96px 96px auto; gap: 8px; align-items: center; }
-    .mode:has(> mat-form-field:only-of-type) { grid-template-columns: minmax(0, 1fr) auto; }
+    .form { display: grid; gap: 18px; padding-top: 6px; width: min(640px, calc(94vw - 52px)); }
+    .eyebrow { font-size: 11px; }
     .dim { color: var(--w-dim); }
+    .note { margin: -10px 0 0; font-size: 12px; }
+    .w-field .note { margin: 4px 0 0; }
+    .name input { width: 100%; border: 0; border-bottom: 1px solid var(--w-glass-edge); background: none; color: inherit; outline: 0;
+      font: 600 22px var(--w-head); padding: 4px 0 8px; }
+    .name input:focus { border-bottom-color: var(--w-primary); }
+    .name input::placeholder { color: color-mix(in srgb, var(--w-fg) 22%, transparent); font-weight: 400; }
+    .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .manual { margin: 4px 0 0; font-size: 13px; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--w-glass-edge); background: none; color: inherit;
+      font: 500 12px var(--w-num); cursor: pointer; }
+    .chip:hover { border-color: var(--w-primary); }
+    .chip.on { border-color: var(--w-primary); background: color-mix(in srgb, var(--w-primary) 18%, transparent); }
+    .small { width: 9ch; padding: 3px 8px; }
+    .small input[type='number'] { font-size: 14px; }
+    .heat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 24px; align-items: center; padding: 14px;
+      border-radius: 16px; background: color-mix(in srgb, var(--w-fg) 3%, transparent); }
+    .usually { display: grid; justify-items: center; gap: 2px; }
+    .say { justify-self: center; }
+    .modes { display: grid; gap: 10px; }
+    .modes .note { margin: -6px 0 0; }
+    .mode { display: grid; grid-template-columns: minmax(0, 1fr) 11ch 10ch auto; gap: 8px; align-items: center; padding: 10px;
+      border-radius: 14px; border: 1px solid var(--w-glass-edge); }
+    .mode:not(:has(.num)) { grid-template-columns: minmax(0, 1fr) auto; }
+    .msig { grid-column: 1 / -1; }
+    .add { justify-self: start; }
+    .bought { display: grid; gap: 8px; padding: 14px; border-radius: 4px 4px 14px 14px; border-top: 2px dashed var(--w-glass-edge);
+      background: color-mix(in srgb, var(--w-fg) 3%, transparent); }
+    .four { display: grid; grid-template-columns: 1fr 1.4fr 1.2fr 1.6fr; gap: 10px; }
     .bad { color: var(--w-warn); margin: 8px 0 0; }
-    mat-slide-toggle { margin-bottom: 14px; }
     @include bp.phone {
-      .form { grid-template-columns: minmax(0, 1fr); }
-      .temps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .mode { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding-bottom: 6px;
-        border-bottom: 1px solid var(--w-glass-edge); }
-      .mode button { grid-column: 1 / -1; justify-self: end; margin-top: -4px; }
+      .three, .pair, .heat { grid-template-columns: minmax(0, 1fr); }
+      .four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mode { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+      .mname { grid-column: 1 / -1; }
     }
   `,
 })
@@ -241,10 +213,31 @@ export class DeviceForm {
   /** The device changed, or none when one is being added. */
   protected readonly editing = inject<{ device?: Device } | null>(MAT_DIALOG_DATA, { optional: true })?.device ?? null;
 
-  protected readonly categories = CATEGORIES;
-  protected readonly signatures = SIGNATURES;
-  protected readonly uses = USES;
-  protected readonly presets = PRESETS;
+  protected readonly today = isoDay(new Date());
+  /** The loads a fill usually holds, and the minutes a device usually waits, a tap away. */
+  protected readonly loads = [0.1, 0.15, 0.2, 0.3];
+  protected readonly offs = [1, 2, 3, 5, 10];
+  protected readonly presetChoices: Choice[] = [
+    { value: '', label: 'Nothing', icon: 'edit_note', hint: 'fill it in' },
+    ...PRESETS.map((p) => ({ value: p.preset, label: p.model ?? p.name, icon: iconOf(p.category), hint: p.maker ?? labelOf(p.category) })),
+  ];
+  protected readonly categoryChoices: Choice[] = CATEGORIES.map((c) => ({ value: c.id, label: c.label, icon: c.icon }));
+  protected readonly powerChoices: Choice[] = [
+    { value: '', label: 'Not said' },
+    { value: 'electric', label: 'Electric', icon: 'power' },
+    { value: 'manual', label: 'Manual', icon: 'back_hand' },
+  ];
+  protected readonly signatureChoices: Choice[] = [{ value: '', label: 'Not said' }, ...SIGNATURES.map((x) => ({ value: x.id, label: x.label }))];
+  protected readonly modeSignatures: Choice[] = [{ value: '', label: 'Heats as the device' }, ...SIGNATURES.map((x) => ({ value: x.id, label: x.label }))];
+  protected readonly useChoices: Choice[] = [{ value: '', label: 'Not said' }, ...USES.map((x) => ({ value: x.id, label: x.label }))];
+  protected readonly waterChoices: Choice[] = [
+    { value: 'dry', label: 'Dry' },
+    { value: 'water', label: 'With water', icon: 'water_drop', hint: 'a bubbler, a rig' },
+  ];
+  protected readonly retiredChoices: Choice[] = [
+    { value: 'used', label: 'In use', icon: 'check_circle' },
+    { value: 'retired', label: 'Retired', icon: 'inventory' },
+  ];
 
   protected readonly d = signal<DeviceFields>(this.editing ? { ...this.editing, modes: [...this.editing.modes] } : blankDevice());
   protected readonly preset = signal('');
@@ -276,6 +269,48 @@ export class DeviceForm {
     const fields: DeviceFields & { preset?: string } = { ...p, modes: p.modes.map((m) => ({ ...m })) };
     delete fields.preset;
     this.d.set(fields);
+  }
+
+  /** The modes' usual temperatures, marked on the dial. */
+  protected readonly marks = computed(() => this.d().modes.filter((m) => m.temp).map((m) => ({ temp: m.temp ?? 0, label: m.name })));
+
+  /** Where the usual temperature starts when first said: the middle of the range, to the five degrees. */
+  protected usual(): number {
+    const lo = this.d().min_temp ?? 40;
+    const hi = this.d().max_temp ?? 230;
+    return Math.round((lo + hi) / 10) * 5;
+  }
+
+  protected text(e: Event): string {
+    return (e.target as HTMLInputElement | HTMLTextAreaElement).value;
+  }
+
+  /** A number typed, or nothing; half of one — "0." — keeps what was there. */
+  protected figure(e: Event): number | undefined {
+    const el = e.target as HTMLInputElement;
+    if (el.validity.badInput || el.value === '') {
+      return undefined;
+    }
+    return Number(el.value);
+  }
+
+  protected pickCategory(id: string): void {
+    const c = CATEGORIES.find((x) => x.id === id);
+    if (c) {
+      this.category(c.id);
+    }
+  }
+
+  protected pickPower(p: string): void {
+    this.power(p === 'electric' || p === 'manual' ? p : '');
+  }
+
+  protected asSignature(v: string): DeviceMode['signature'] {
+    return SIGNATURES.find((x) => x.id === v)?.id ?? '';
+  }
+
+  protected asUse(v: string): DeviceFields['use'] {
+    return USES.find((x) => x.id === v)?.id ?? '';
   }
 
   protected category(c: DeviceCategory): void {
@@ -313,4 +348,14 @@ export class DeviceForm {
       this.busy.set(false);
     }
   }
+}
+
+/** A category's icon. */
+function iconOf(category: DeviceCategory): string {
+  return CATEGORIES.find((c) => c.id === category)?.icon ?? 'devices';
+}
+
+/** A category's name. */
+function labelOf(category: DeviceCategory): string {
+  return CATEGORIES.find((c) => c.id === category)?.label ?? category;
 }

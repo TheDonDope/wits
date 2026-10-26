@@ -136,7 +136,7 @@ export const GUIDE: readonly GuideSection[] = [
     ],
     shots: [
       { src: 'guide/record-session.webp', alt: 'The Record dialog on its Session tab: jars to pick, device tiles, mode pills, a temperature dial and the amount', caption: 'A session starts from your last: the jar, the device, its dial, and the amounts you use a tap away.', frame: 'dialog', w: 645, h: 884 },
-      { src: 'guide/record-fill.webp', alt: 'The Record dialog on its Fill tab, with Read invoices and Read the label', caption: 'A fill: its strains, their prices, and two readers that fill them in for you.', frame: 'dialog', w: 632, h: 704 },
+      { src: 'guide/record-fill.webp', alt: 'The Record dialog on its Prescription tab: Read invoices and Read the label, and two strains as cards, each with a jar filling as its grams are typed', caption: 'A prescription: each strain a card — a jar already or a new product, the sizes it comes in, last time’s price — and two readers that fill them in for you.', frame: 'dialog', w: 645, h: 858 },
     ],
     record: { tab: 0, label: 'Open Record' },
     cli: [
@@ -338,7 +338,10 @@ Dry run. Nothing was written. Re-run without --dry-run to record it.` },
       'A device has its maker, how it heats, its temperature range and its modes, each with its own temperature and timer, and for a vaporizer or glass what <b>a load holds</b> — 0.15 g on most presets, 0.1 g on the Simrells — which sizes a session you forgot to record. Its card shows what it has done: sessions and grams, when it was last used, and its price per session so far. A retired device is kept, since its sessions name it.',
       'Wits knows the boiling point of every cannabinoid and terpene, so a number on a dial reads as what it releases — up to the point it starts producing benzene.',
     ],
-    shots: [web('devices', '/shelf/devices', 'The devices page: vaporizers with their sessions and grams', 'Every device by what it is for, with what it has done.')],
+    shots: [
+      web('devices', '/shelf/devices', 'The devices page: vaporizers with their sessions and grams', 'Every device by what it is for, with what it has done.'),
+      { src: 'guide/device-form.webp', alt: 'Add a device, started from the Venty preset: presets and categories as tiles, power, heating and use as pills, the load a tap away', caption: 'Start from a preset: what is known of it is filled in, every choice in sight.', frame: 'dialog', w: 705, h: 858 },
+    ],
     page: { path: '/shelf/devices', label: 'Open the devices' },
     cli: [
       { cmd: 'wits device add "Volcano Hybrid" --min 40 --max 230 --default 185 --load 0.15' },
