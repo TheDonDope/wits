@@ -2,8 +2,21 @@
 ## [Unreleased]
 
 
+<a name="v0.100.0"></a>
+## [v0.100.0] - 2026-10-26
+### Docs
+- one blank line between paragraphs, as the split should have left them
+- **diary:** tasted, and thought of as a whole
+
+### Feat
+- **guide:** the browser explains itself, and points at the terminal
+
+
 <a name="v0.99.0"></a>
 ## [v0.99.0] - 2026-10-26
+### Docs
+- update changelog for v0.99.0
+
 ### Feat
 - **rating:** a strain rated as a whole, from the shelf, its page and I forgot to
 
@@ -1215,7 +1228,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.99.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.100.0...HEAD
+[v0.100.0]: https://github.com/TheDonDope/wits/compare/v0.99.0...v0.100.0
 [v0.99.0]: https://github.com/TheDonDope/wits/compare/v0.98.0...v0.99.0
 [v0.98.0]: https://github.com/TheDonDope/wits/compare/v0.97.0...v0.98.0
 [v0.97.0]: https://github.com/TheDonDope/wits/compare/v0.96.0...v0.97.0
