@@ -2,6 +2,21 @@
 
 ## 2026-10-26
 
+### A year looked back on, a trip packed for
+
+Two of the roadmap's delights, each in the terminal and the browser. `wits review` is a year in wits, every figure the year's own and one the report, the effect log or the price log already computes, with two of its own: the longest break, by the tolerance curve's week-or-more rule, and the terpene most of the grams led with. On the demo, 2025 is 446.34 g on 221 of 365 days, a 53-day break in spring, 190–199 °C rated best at 4.2 over 67 ratings, Limonene leading 60 % of the grams, and a gram from 3.99 € to 10.99 €; Insights → Year draws it as a hero year over a bento of cards, a vaporizer's dial among them. `wits pack --days 10` is the grams for a trip at the refill planner's rate with 20 % on top, drawn evenly from the jars on the shelf, as asked mid-way, so they go down together: shares in tenths that add up to exactly the need, 23.20 g as 4.60 or 4.70 g from each of five jars, or `--oldest` first. It is signed as a carry statement of exactly what is packed, and `wits verify` checks it. Shelf → Trip draws the trip day by day, each glass jar with what it gives lit, and the QR code. Shipped as v0.102.0.
+
+- `90b40cc` feat(delight): the year on one card, and a trip packed evenly
+- `2120669` test(review): compare the busiest day and the break by date, as any zone writes them
+- `5f98193` docs: update changelog for v0.102.0
+
+### The record in time, and a tape that keeps pace
+
+The replay's entry popped in under the play bar as a card of its own, there only while playing and new with every step, so the page under it jumped. The transport is one panel of one height now. Beside the controls stands the day being played; under them the whole record in time, the grams ground in day-sized slices on a short span and 120 on a long one, a tick at every pickup, the years or the months marked, lit up to a glowing playhead and scrubbed by pointing; under that the tape, the eight newest entries sliding along by a transition one step long, so it keeps pace from 1.2 to 20 a second. Analysis and Jars both have it, and it was looked at mid-replay in Aurora and Paper and at 375 px. Shipped as v0.101.0.
+
+- `1b9930d` feat(replay): the record in time, and a tape that keeps pace
+- `c3e493b` docs: update changelog for v0.101.0
+
 ### The same, in a terminal
 
 The README had grown to 1169 lines, the terminal and the browser told in one breath, so it was split by surface: the README keeps what wits is and how to install it, 244 lines, and `docs/terminal.md` and `docs/browser.md` say the rest. The interface got a User guide of its own, first on the header's menu: eighteen sections from how wits thinks to the phone, each with its steps, pictures of the page, a button that opens it, and the same done in a terminal, the commands with what they printed on the demo and the terminal interface's keys with a photograph of its screen. The browser's pictures were taken in headless Chromium on the demo, the terminal's with vhs, 22 WebP files, 1.3 MB, cached only once the guide is opened. A spec holds the guide to the app: every link a section, every page a route, every picture on disk. Every section measured 375 px on the phone and was looked at in Aurora and in Paper. Running every quoted command found `wits describe wedding` matching two Wedding Cakes, so the examples name `enua-wedding`. Shipped as v0.100.0.
@@ -39,6 +54,8 @@ The dashboard shows every fill not yet emptied now, not only the newest: on the 
 - `5facd06` docs: update changelog for v0.96.0
 
 ### Notes for 2026-10-26
+
+The longest break first came out as 300 days for a year with grinding on 221 of them: the days were keyed by midnight in each entry's own zone against midnight here, which are different times, so they are keyed by calendar date now. CI runs in UTC, where the same instant prints as UTC rather than Local, and a test comparing times failed there and nowhere here; it compares dates, and the packages were run under UTC and Pacific/Auckland. The even split's first rounding put 23.50 g in the bag for a 23.20 g need, then gave every leftover tenth to one jar; it rounds down and hands one tenth each to the fullest jars. A fifth Insights page made the phone's sub-tabs page with arrows, so there they lose their icons. The History page's calendar is still cut off after August on a phone, as it was before today; the Year page splits its one year into halves instead. The browser pictures were taken with a go-rod driver in the session's scratchpad, now with a wait and a PNG option, still not committed.
 
 Several tools were missing: `./doctor.sh install` fetched ffmpeg, shellcheck, ttyd, revive, lizard and Chromium's libraries, the first run cut short by a reset connection, and `node_modules` was stale against the lock file until `npm ci`. `git-chglog` lives in `~/go/bin`, which is off PATH here, so `make release` failed on it once before anything was written. The screenshots were driven by a go-rod program and a vhs tape in the session's scratchpad, not committed, so taking them again means writing those again. The page's link to another section is followed by the page itself, since `#weigh` resolves against the Pages build's `/wits/` base. Codacy's markdown lint refused two blank lines left by the split. Left open: the Record dialog shows a horizontal scrollbar at 1440 px, visible in its pictures.
 
