@@ -570,3 +570,35 @@ export interface Packing {
   fingerprint: string;
   qr: string;
 }
+
+/** The day so far, as wits today says it: THC and CBD in milligrams, in the material put through a device. */
+export interface DayToday {
+  day: string;
+  sessions: {
+    hash: string;
+    at: string;
+    name: string;
+    grams: number;
+    thc_pct: number;
+    cbd_pct: number;
+    thc_mg: number;
+    cbd_mg: number;
+    known: boolean;
+    device: string;
+    temperature: number;
+    mode: string;
+    overall: number;
+  }[];
+  seshed: number;
+  thc_mg: number;
+  cbd_mg: number;
+  unknown: number;
+  ground: number;
+  grinds: { name: string; grams: number }[];
+  picked: { name: string; grams: number }[];
+  avb_collected: number;
+  avb_used: number;
+  strains: { name: string; sessions: number; grams: number; thc_mg: number }[];
+  devices: { name: string; sessions: number; grams: number; thc_mg: number }[];
+  usual: { days: number; seshed: number; thc_mg: number };
+}

@@ -1089,3 +1089,23 @@ func TestReviewCommand(t *testing.T) {
 	_, err = run(t, dir, Review, "2019")
 	assert.ErrorContains(t, err, "nothing was recorded in 2019; the journal has 2025")
 }
+
+func TestTodayCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 20/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "2", "--date", "2026-07-02")
+	require.NoError(t, err)
+	for _, g := range []string{"0.15", "0.25"} {
+		_, err = run(t, dir, Sesh, "wedding", g, "--date", "2026-07-03")
+		require.NoError(t, err)
+	}
+
+	out, err := run(t, dir, Today, "--date", "2026-07-03")
+
+	require.NoError(t, err)
+	assert.Contains(t, out, "Friday 3 July: 2 sessions, 0.40 g through a device: 80 mg THC and 4 mg CBD in the material")
+	assert.Contains(t, out, "30.0 mg", "0.15 g at 20 % is 30 mg")
+	assert.Contains(t, out, "50.0 mg")
+	assert.Contains(t, out, "No session in the 30 days before to compare with.")
+}

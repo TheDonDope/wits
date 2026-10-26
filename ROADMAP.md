@@ -1545,6 +1545,25 @@ sealed. The plan is signed as a carry statement of exactly the grams packed
 Nothing is recorded. On the demo, ten days at 1.93 g a day with 20 % is
 23.20 g, 4.60 or 4.70 g from each of five jars.
 
+### Today, and the THC in it — `wits today`, the dashboard
+
+`pkg/today` is a day's record: its sessions, each with the THC and CBD in
+the grams put through the device — grams × the strain's per cent × 10, in
+milligrams, rounded to centigrams like every gram — their sums, the day's
+grinding, pickups and AVB, the THC by strain and the grams by device, and a
+usual day: the mean of the last 30 before it with a session. Days are matched
+by calendar date where each entry was written. It is what was in the
+material, not what reached the body, and every place it shows says so; a
+strain with no THC written down is counted, not guessed at. `wits today
+[--date]` lists it, `wits status` ends with it in one line, `GET /api/today`
+serves it, and the dashboard draws it under the shelf: the sum against a
+usual day, two rings (`viz/donut`, d3-shape) with legends, a clock of the day
+(`viz/day-clock`) with each session a dot sized by its THC, and the sessions
+in rows with their share. On the demo with four sessions recorded this
+morning: 206 mg THC and 7 mg CBD in 0.67 g, against a usual 239 mg; 0.15 g
+of the 32 % Morning Sun is 48 mg. The colours a day's strains and a trip's
+jars take are one list, `viz/tones`.
+
 ---
 
 ## 📌 Planned

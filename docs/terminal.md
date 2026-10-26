@@ -77,6 +77,7 @@ total                         36.73g                 61%
 1.93g per active day, 1.69g median, 0.81g per elapsed day
 About 19 days' worth at that rate
 Order the next prescription by Sat 14 November, with 3 days for the pharmacy.
+Today: no session yet.
 ```
 
 Every gram in storage stands on the account of the cycle that dispensed it,
@@ -98,6 +99,30 @@ $ wits refill --ics refill.ics
 44.80 g on the shelf, at 1.93 g a day with grinding: empty on Tue 17 November.
 Order the next prescription by Sat 14 November, with 3 days for the pharmacy.
 Wrote a reminder for 2026-11-14 to refill.ics
+```
+
+### Today, and the THC in it
+
+The last line of `wits status` is the day so far, and `wits today` has it at
+length: every session with the THC and CBD in the grams put through the
+device — grams × the strain's per cent × 10, in milligrams, so 0.15 g of a
+32 % strain is 48 mg — their sum, and a usual day of the last 30 with a
+session. It is what was in the material, not what reached the body: a
+vaporizer releases part of it, and a lung takes in part of that. A strain
+with no THC written down is counted, not guessed at. `--date 2026-10-24` for
+another day.
+
+```console
+$ wits today
+Monday 26 October: 4 sessions, 0.67 g through a device: 206 mg THC and 7 mg CBD in the material
+
+TIME   PRODUCT                DEVICE                           GRAMS  THC      CBD     RATED
+07:50  NICE 32/1 Morning Sun  Storz & Bickel Venty at 180°C    0.15g  48.0 mg  1.5 mg  4 of 5
+09:30  Sumo 25/1 Papaya Bomb  Storz & Bickel Mighty+ at 190°C  0.22g  55.0 mg  2.2 mg  -
+11:05  Enua 36/1 Citrus Slap  Limelight Herb Frolic at 175°C   0.18g  64.8 mg  1.8 mg  5 of 5
+12:20  NICE 32/1 Morning Sun  Storz & Bickel Venty at 185°C    0.12g  38.4 mg  1.2 mg  -
+
+Ground 0.60 g. A usual day of the last 30 with a session: 0.83 g, 239 mg THC (21 days).
 ```
 
 ## The terminal interface
@@ -148,6 +173,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits avb collect <grams>` / `use <grams>` | AVB weighed out of a device, or used up; `wits avb` for the jar and every yield |
 | `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
 | `wits status` | What is left, and how long it will last |
+| `wits today` | The day so far: every session with the THC and CBD in it, their sum, and a usual day; `--date` for another |
 | `wits refill` | When to order the next prescription; `--lead` for the pharmacy's days, `--ics` for a reminder |
 | `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
 | `wits show [entry]` | One entry in full: what it moved, the jar before and after, what corrects it |

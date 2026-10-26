@@ -423,3 +423,20 @@ func TestReview(t *testing.T) {
 	assert.Equal(t, "Enua 22/1 Wedding Cake", out.Strains[0].Name)
 	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/review?year=next", "").Code)
 }
+
+func TestToday(t *testing.T) {
+	s, _ := server(t, "")
+	day := time.Now().AddDate(0, 0, -3).Format(time.DateOnly) // the fixture's session
+
+	w := call(t, s, "GET", "/api/today?day="+day, "")
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	out := decodeInto[todayOut](t, w)
+	require.Len(t, out.Sessions, 1)
+	assert.Equal(t, 110.0, out.Sessions[0].THC, "0.5 g at 22 %")
+	assert.Equal(t, 110.0, out.THC)
+	assert.Equal(t, "Volcano", out.Sessions[0].Device)
+	require.Len(t, out.Strains, 1)
+	assert.Equal(t, http.StatusOK, call(t, s, "GET", "/api/today", "").Code, "Today, with or without a session")
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "GET", "/api/today?day=soon", "").Code)
+}

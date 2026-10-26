@@ -164,9 +164,12 @@ At 185°C this releases THCA (120°C), Nerolidol (122°C), CBDA (130°C), …` }
     body: [
       'Under it: what is in storage, the stashes and the AVB jar across the shelf; <b>every fill not yet emptied</b>, jar by jar, each glass filled to what that fill holds; the shelf’s supply as a curve to the day it runs out, with the day to order the next prescription by; and twenty weeks of grinding and sessions as calendars.',
       'A jar opens in full from here, or from the Shelf.',
+      '<b>Today</b>, under the shelf, is the day so far: the THC in what went through a device, in milligrams — grams × the strain’s per cent × 10, so 0.15 g of a 20 % strain is 30 mg — against a usual day, the THC by strain and the grams by device as rings, each session on a clock of the day, and every session in a row with its share. It is what was in the material, not what reached you.',
     ],
     shots: [web('dashboard', '/', 'The dashboard: the fill as a ring, the shelf’s three accounts, and the open fills jar by jar',
-      'Fill 30 on day 59: 36.73 g of its 60 g left, about 19 days’ worth.')],
+      'Fill 30 on day 59: 36.73 g of its 60 g left, about 19 days’ worth.'),
+    { src: 'guide/today.webp', alt: 'Today on the dashboard: 206 mg THC in four sessions, by strain, by device and through the day',
+      caption: 'Today: 206 mg THC in 0.67 g, four sessions, against a usual 239 mg.', frame: 'dialog', w: 1440, h: 640 }],
     page: { path: '/', label: 'Open the dashboard' },
     cli: [
       { cmd: 'wits status', out: `On cycle 30, opened 2026-08-29 (day 59)
@@ -183,6 +186,12 @@ total                         36.73g                 61%
 1.93g per active day, 1.69g median, 0.81g per elapsed day
 About 19 days' worth at that rate
 Order the next prescription by Mon 16 November, with 3 days for the pharmacy.` },
+      { cmd: 'wits today', out: `Monday 26 October: 4 sessions, 0.67 g through a device: 206 mg THC and 7 mg CBD in the material
+
+TIME   PRODUCT                DEVICE                           GRAMS  THC      CBD     RATED
+07:50  NICE 32/1 Morning Sun  Storz & Bickel Venty at 180°C    0.15g  48.0 mg  1.5 mg  4 of 5
+09:30  Sumo 25/1 Papaya Bomb  Storz & Bickel Mighty+ at 190°C  0.22g  55.0 mg  2.2 mg  -
+…`, note: 'The last line of wits status says the same in one line.' },
       { cmd: 'wits refill --ics refill.ics', out: `44.80 g on the shelf, at 1.93 g a day with grinding: empty on Thu 19 November.
 Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, note: '--ics writes a calendar reminder for the morning to order by; --lead 5 changes the pharmacy’s days.' },
     ],

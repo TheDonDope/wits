@@ -11,7 +11,8 @@ import { Packing } from '../data/models';
 import { Wits } from '../data/wits';
 import { CountUp } from '../viz/count-up';
 import { GlassJar } from '../viz/glass-jar';
-import { TRIP_TONES, TripLine } from '../viz/trip-line';
+import { tone } from '../viz/tones';
+import { TripLine } from '../viz/trip-line';
 
 /** Trips people take, a tap each. */
 const PRESETS = [
@@ -220,7 +221,7 @@ export class Trip {
   }
 
   protected tone(i: number): string {
-    return TRIP_TONES[i % TRIP_TONES.length];
+    return tone(i);
   }
 
   /** The server's words, when it says why there is no plan. */
