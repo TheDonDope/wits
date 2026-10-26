@@ -1,5 +1,28 @@
 # Development Diary
 
+## 2026-10-26
+
+### Every jar opened, a year to look around in, and a window of its own
+
+The dashboard shows every fill not yet emptied now, not only the newest: on the workbook, fill 29's three jars stand under fill 30's, holding the 8.07 g the "older jars" line had always named. A jar on the dashboard or the shelf opens in full, with its fills and pickups and what they cost, its months, its sessions by device and rating, and its terpenes. When none are written down, wits looks them up: a web search for the product as the pharmacy sells it, and Leafly for the strain. On the first four tried, each came back with a profile from two to seven pages. On the phone the lookup failed with a bare 504, because a page may read no other site; it asks through Jina's Reader now, and found Lemon Tartz on six pages in 1.7 s in the Pages build. Seed with demo data, on the menu, opens a repository with something on every page: the workbook, 32 fills priced from the invoices, 15 devices, 897 sessions over a year with 718 rated, terpenes for 50 of 53 jars, and the 48 stashes left behind cleared, 2617 events restored beside your own. Last, the AppImage stopped handing the interface to a browser tab and opens it in an Electron window of its own, 130 MB where it was 22, checked by opening it. Shipped as v0.93.0 through v0.96.0, and the README's browser section was rewritten around new screenshots on the way.
+
+- `7df80bd` feat(wits-ui): every open fill on the dashboard, every jar opens in full, and its terpenes looked up
+- `d3c6112` fix(wits-ui): splitTerpenes after the component, where Codacy cannot count the template as its body
+- `125474f` docs: update changelog for v0.93.0
+- `47cefe0` fix(research): the phone looks terpenes up through a reader, since its page may read no other site
+- `0424571` test(research): the stand-in reader answers from the stand-in sites, asking nothing itself
+- `e20c882` docs: update changelog for v0.94.0
+- `a5963f2` feat(demo): seed with demo data — a year of it, priced, rated and looked up, on the menu
+- `e6c0f36` refactor(demo): the generator's choices in small named steps, which Codacy can count
+- `b77be31` docs: update changelog for v0.95.0
+- `f476184` feat(appimage): wits in a window of its own, closed to quit
+- `f753c1e` refactor(desktop): the window's shell as an ES module, its browser's environment filtered
+- `5facd06` docs: update changelog for v0.96.0
+
+### Notes for 2026-10-26
+
+Brave and DuckDuckGo both turn a client away now and then: DuckDuckGo with a page asking to prove a person is searching, which has no results and passes to the next search, and after a day of testing, Brave with 429 and DuckDuckGo with 403 for a while. The lookup retries in the demo's generator, not in the app, where a failed jar just says so. Three products found no profile anywhere: Amsterdam Amnesia, Super Citra G. and CA GG. On the phone every lookup goes through Jina's Reader, a third party that sees the product's and strain's names; its free tier takes twenty requests a minute, which is why Research all there waits nine seconds a jar. The demo bundle is public and carries the three pharmacies' names and every fill's price, taken from invoices that themselves stay out of git; the invoices' numbers were kept out of it. Its sessions come from a seeded generator, but the generator was refactored after the bundle was made, so `make demo-seed` now draws different sessions, and the terpenes are the web's on the day; the committed bundle is not what a rerun gives. Electron is pinned to 44.7.0 rather than 45.0.0, which was five days old. npm 12 runs no install scripts unasked, so the build runs Electron's itself. Chromium here needs NSS, NSPR and ALSA, which SteamOS lacks, so the AppImage carries them, and `make appimage` on this machine wants `eval "$(./doctor.sh env)"` first for the build to find them. Chromium headless segfaulted before loading, so the window check uses the display or `xvfb-run`. Codacy misread short TypeScript functions three times — a helper before a component's decorator, nested ternaries, an object of ternaries — and each was rewritten plainly rather than argued with. A `pkill` matching its own command line killed the shell twice more; a server is stopped by its PID now. The merge of #160 was refused by the auto-mode permission check, and the maintainer merged it by hand. The entry for 2026-10-25 stops at v0.90.0: v0.91.0 (a price's pharmacy in the bundle) and v0.92.0 (the devices) came from another session and are not written up there.
+
 ## 2026-10-25
 
 ### What a gram cost, and one file to run it
