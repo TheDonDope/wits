@@ -24,13 +24,14 @@ Show
 Type "wits status" Sleep 400ms Enter
 Sleep 3s
 
-# One jar against the scale, account first. Nothing is written by a dry run.
-Type "wits reconcile storage wcake 13.40 --dry-run" Sleep 400ms Enter
-Sleep 3500ms
+# One jar against the scale, account first. Nothing is written by a dry run,
+# and a jar found light is offered as a grind forgotten.
+Type "wits reconcile storage wcake 16.40 --dry-run" Sleep 400ms Enter
+Sleep 4s
 
-# Record the difference as an adjustment, which is a transfer like any other.
-Type "wits reconcile storage wcake 13.40 --reason 'spilled on the desk'" Sleep 400ms Enter
-Sleep 3s
+# Grams do not vanish: record the grind that went unrecorded.
+Type "wits reconcile storage wcake 16.40 --forgot" Sleep 400ms Enter
+Sleep 3500ms
 Hide
 Type "clear" Enter
 Show
@@ -41,14 +42,16 @@ Sleep 2500ms
 # Every jar is ticked; take them all.
 Enter
 Sleep 1500ms
-# lcook reads a little light.
-Type "11.90" Sleep 600ms Enter
+# lcook matches the ledger.
+Type "12.15" Sleep 600ms Enter
 Sleep 1200ms
 # mac1 stays on the shelf.
 Enter
 Sleep 1200ms
-# wcake matches the ledger.
-Type "12.35" Sleep 600ms Enter
+# wcake reads light: sessions forgotten, of the usual size, with the Mighty+.
+Type "12.25" Sleep 600ms Enter
+Sleep 3500ms
+Enter
 Sleep 3500ms
 
 # It all stands in the log beside everything else.
