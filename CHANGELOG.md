@@ -2,8 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v0.99.0"></a>
+## [v0.99.0] - 2026-10-26
+### Feat
+- **rating:** a strain rated as a whole, from the shelf, its page and I forgot to
+
+
 <a name="v0.98.0"></a>
 ## [v0.98.0] - 2026-10-26
+### Docs
+- update changelog for v0.98.0
+
 ### Feat
 - **strains:** what a strain is like is what it tastes of — terpenes first, and in words
 
@@ -1206,7 +1215,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.98.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.99.0...HEAD
+[v0.99.0]: https://github.com/TheDonDope/wits/compare/v0.98.0...v0.99.0
 [v0.98.0]: https://github.com/TheDonDope/wits/compare/v0.97.0...v0.98.0
 [v0.97.0]: https://github.com/TheDonDope/wits/compare/v0.96.0...v0.97.0
 [v0.96.0]: https://github.com/TheDonDope/wits/compare/v0.95.0...v0.96.0
