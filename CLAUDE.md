@@ -116,11 +116,18 @@ and parallel renders have OOM-killed this machine.
 Wits is a **ledger**. `.wits/journal.ndjson` is an append-only, hash-chained
 event log; everything on screen is derived by replaying it (`ledger.Fold`).
 Nothing is edited in place — corrections are compensating entries (`wits
-revert`, adjustments), and the log keeps both. The one rewrite is `wits pull`
-(`Journal.Rebase`): entries not yet pushed are chained again on top of the
-remote's, with new hashes, and the effect log follows them. This is
-load-bearing: the replay transport and witsnap's JSON both exist because any
-state can be rebuilt from any prefix of events.
+revert`, adjustments), and the log keeps both. Nothing is ever chained again
+either: `wits pull` (`Journal.Merge`) appends the remote's entries as they
+are and, when both devices recorded, a `merge` entry naming both heads, so an
+entry's hash is its name for good, on every device — what rates, prices,
+undoes or seals it never has to follow it. Every entry names as its `prev`
+(and a merge as its `merge`) one that comes before it, and the last one's
+hash covers them all (`Verify`); a seal is checked by what its head covers
+(`journal.Holds`), not the line it stands on. This is load-bearing: the
+replay transport and witsnap's JSON both exist because any state can be
+rebuilt from any prefix of events. The catalogs merge field by field, each
+field stamped when it last changed (`catalog.Changed`, stamped in
+`UpdateProducts`/`UpdateDevices`), the later change winning.
 
 Two orders, never mixed: the journal is in **recorded order** (the hash chain),
 the fold in **occurred order** (`ledger.Chronological`, ties kept recorded).
@@ -253,9 +260,27 @@ Angular client (signals, zoneless, standalone components, `httpResource`).
   for. Its rules go under `@include bp.phone` (`src/_breakpoints.scss`, with
   `@use 'breakpoints' as bp;`), never a written-out width. Every page is checked
   there: no page wider than the screen (`scrollWidth`), nothing paged or cut off.
-- A figure the form shows and the server writes is worked out the same way on
-  both sides, step for step and rounded once (`rowCents` in `fill-form.ts`,
-  `lineCents` in `pkg/api/fill.go`), with a test on each pinning one case.
+- **The browser works out none of the ledger's arithmetic.** A form shows what
+  the server rehearses: every write takes `?dry=1` (`pkg/api/dry.go`,
+  `Recorder.Dry`), built and checked as it would be and written nowhere, and
+  answers with the entries, each jar before and after, a fill's line prices
+  and their VAT — or the recorder's refusal. Ask it rather than mirroring a
+  rule in TypeScript.
+- **The models are held to the server's shapes.** `make types` writes
+  `data/api.gen.ts` from pkg/api (`typescript.go`; a Go test fails when it is
+  behind), and `data/api-check.ts` fails `npm run typecheck` when a model's
+  fields and the server's part. A new answer the browser reads goes in
+  `shapes` there.
+- A figure both the terminal and the browser show is worked out once, in
+  `pkg/views`, in centigrams.
+- The page reads again only when the server says the repository changed
+  (`/api/changes`, a stream; on the phone the engine says so), each view made
+  the first time a page reads it, the journal kept in the page and read from
+  where it was left (`data/entries.ts`, `/api/journal?after=`). On the phone
+  one tab records (a Web Lock); another reads, and takes over when it closes.
+- The phone's engine is built without the .xlsx reader (`-tags noxlsx`);
+  `cmd/wits-xlsx` reads a workbook into an `importer.Workbook`, loaded only to
+  import. Anything else that needs excelize belongs behind that tag too.
 - **Verify by looking**: `make serve` on a copy of the workbook, then a headless
   Chromium screenshot (`~/.cache/rod/browser/*/chrome --headless=new
   --force-prefers-reduced-motion --screenshot=… --window-size=1440,1700 <url>`,

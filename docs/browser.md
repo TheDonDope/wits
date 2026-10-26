@@ -282,7 +282,13 @@ The jars are a gallery, every product a card across its life; tick the cards
 as consumed, one adjustment each in a single write: the terminal's history
 clean-up, for the jars you choose. **Play back history** opens the replay
 above the cards; `p` does too. The journal scrolls all of its entries and undoes one
-with a correction.
+with a correction. It is a timeline: a rail through every day and entry, each
+day a node with what was ground and vaped on it, each entry a bead with its
+time and the accounts its grams moved between — sealed to ground, ground to
+vaped. Above it the whole history runs week by week, ground and vaped as bars,
+the week in sight marked; pick a week to go there. The page reads again when
+the server says the repository changed — an entry made with the command line
+shows within a second — and reads only the entries recorded since.
 
 ![Every day, and every fill](../assets/wits-ui-history.png)
 
