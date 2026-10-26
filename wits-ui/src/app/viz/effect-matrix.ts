@@ -16,16 +16,17 @@ export function scoreColor(mean: number): string {
 /**
  * Products against what they were rated on: each cell the mean, coloured
  * from rose to mint, with how many ratings it stands on. A mean of one rating
- * is hatched: it is a rating, not a finding.
+ * is hatched: it is a rating, not a finding. On a phone each product's name
+ * takes a line of its own above its cells, so seven columns fit the width.
  */
 @Component({
   selector: 'w-effect-matrix',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="grid" [style.grid-template-columns]="'minmax(140px, 260px) repeat(' + dimensions().length + ', minmax(52px, 1fr))'">
-      <span></span>
+    <div class="grid" [style.--cols]="dimensions().length">
+      <span class="corner"></span>
       @for (d of dimensions(); track d) {
-        <span class="col">{{ d }}</span>
+        <span class="col" [title]="d"><span class="long">{{ d }}</span><span class="short">{{ d.slice(0, 3) }}</span></span>
       }
       @for (g of rows(); track g.key) {
         <span class="row" [title]="g.label">{{ g.label }}<small> · {{ g.count }}</small></span>
@@ -43,7 +44,10 @@ export function scoreColor(mean: number): string {
     </div>
   `,
   styles: `
-    .grid { display: grid; gap: 6px; align-items: center; }
+    @use 'breakpoints' as bp;
+    .grid { display: grid; gap: 6px; align-items: center;
+      grid-template-columns: minmax(140px, 260px) repeat(var(--cols), minmax(52px, 1fr)); }
+    .short { display: none; }
     .col { font: 600 10px var(--w-font); letter-spacing: .1em; text-transform: uppercase;
       color: var(--w-dim); text-align: center; }
     .row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
@@ -57,6 +61,16 @@ export function scoreColor(mean: number): string {
     .cell.thin { background-image: repeating-linear-gradient(45deg, transparent 0 5px, color-mix(in srgb, var(--w-fg) 5%, transparent) 5px 10px);
       box-shadow: none; opacity: .75; }
     .cell.none { background: color-mix(in srgb, var(--w-fg) 3%, transparent); border: 1px dashed color-mix(in srgb, var(--w-fg) 6%, transparent); }
+    @include bp.phone {
+      .grid { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 4px; }
+      .corner { display: none; }
+      .row { grid-column: 1 / -1; margin-top: 6px; font-size: 13px; }
+      .long { display: none; }
+      .short { display: inline; }
+      .col { letter-spacing: .04em; }
+      .cell { height: 34px; border-radius: 8px; }
+      .cell b { font-size: 13px; }
+    }
   `,
 })
 export class EffectMatrix {

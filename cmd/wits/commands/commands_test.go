@@ -998,5 +998,13 @@ func TestDescribeAndLike(t *testing.T) {
 
 	out, err = run(t, dir, Like, "Enua")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Like Enua 22/1 Wedding Cake:\n  Khiron 20/1 Wedding Cake\n")
+	assert.Contains(t, out, "Like Enua 22/1 Wedding Cake (pepper, citrus and wood):\n   49 %  Khiron 20/1 Wedding Cake\n")
+
+	// With a profile of its own, the other Wedding Cake is liked for it, and
+	// says which terpenes the two share.
+	_, err = run(t, dir, Describe, "Khiron", "--terpenes", "Limonen, Caryophyllen")
+	require.NoError(t, err)
+	out, err = run(t, dir, Like, "Enua")
+	require.NoError(t, err)
+	assert.Regexp(t, `\d+ %  Khiron 20/1 Wedding Cake — shares Caryophyllen, Limonen\n`, out)
 }

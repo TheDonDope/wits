@@ -856,25 +856,49 @@ line, and `e` on the terminal interface's sessions screen.
 
 ![What works, by product, temperature and time of day](./assets/wits-ui-effects.png)
 
-Under it is **a map of the strains**: every product dispensed, across by THC,
-up and down by its name and terpenes so that alike sits at one height, sized by
-what was dispensed and coloured by how its sessions went. Pick one for what is
-most like it; `wits like` says the same on the command line:
+Under it is **a map of the strains**, laid out by terpene profile: strains that
+share their terpenes sit together, whatever they are called or however strong.
+Each is marked by what it tastes of most — citrus, fruity & floral, herbal &
+pine, earthy, spicy, each a colour and a shape — or coloured by how its
+sessions went, and sized by what was dispensed. Pick one and it shows its taste
+as a wheel, its terpenes, and the five strains most like it: how alike, and
+which terpenes they share. Point at one of those and its taste is drawn over
+the picked one's.
+
+![The map of the strains, by terpene profile](./assets/wits-ui-strain-map.png)
+
+Alike is mostly the profile. The dominant terpenes count most, and the rare
+ones more than those nearly every jar has: Limonene is in 45 of the demo's 50
+profiles, Terpinolene in 9, so sharing Terpinolene says more. Two profiles
+that taste alike — citrus-led, say — count as nearer even through different
+terpenes. The cultivar's name counts a little, THC and CBD hardly: between 20
+and 30 % they say almost nothing of what a strain is like. A product with no
+terpenes written down is compared by name alone and ranks below any known
+profile. `wits like` says the same on the command line:
 
 ```console
 $ wits like cantourage-mac1-251
-Like Cantourage 25/1 MAC1+:
-  420 Evolution 25/1 CA MAC: MAC1
-  Cantourage 25/1 MAC 1+
-  Barongo 27/1 MAC3
+Like Cantourage 25/1 MAC1+ (citrus, flowers and pine):
+   99 %  Cantourage 25/1 MAC 1+ — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
+   98 %  420 Evolution 25/1 CA MAC: MAC1 — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
+   87 %  enua 22/1 Black Cherry Punch — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene — rated 4.1 overall, over 39 sessions
+   86 %  420 Evolution 22/1 CA MAC: MAC1 — shares Limonene, Linalool, Pinene, Caryophyllene
+   86 %  420 Evolution 22/1 MAC 1 — shares Limonene, Linalool, Pinene, Caryophyllene
 ```
 
+Under the map, **the terpenes on the shelf**: every terpene your products
+name, what it tastes of, how many name it and lead with it, and how their
+sessions went — each product counted by its rated sessions and by where the
+terpene stands in it, a trace less than the lead. A jar's own page shows the
+same: its taste in words and as a wheel, each terpene with what it tastes of,
+and what it is most like.
+
+![The terpenes on the shelf](./assets/wits-ui-terpene-table.png)
+
 The workbook names its cultivars but lists no terpenes, so until profiles are
-written down the map knows the Wedding Cakes and the MAC1s by name and the
-rest by THC. Look them up from **I forgot to**, or write one down as the label
-gives it — `wits describe wedding --terpenes "Myrcen, Limonen, Caryophyllen"`
-or the terminal's product form — and products alike in terpenes find each
-other whatever they are called.
+written down the map has nothing to place. Look them up from **I forgot to**,
+or write one down as the label gives it — `wits describe wedding --terpenes
+"Myrcen, Limonen, Caryophyllen"` or the terminal's product form.
 
 ### Devices
 

@@ -6,10 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 
+import { familyColor, terpeneKey } from '../data/aroma';
 import { euros } from '../data/costs';
 import { Dimension, JarDetail } from '../data/models';
 import { Wits } from '../data/wits';
 import { scoreColor } from '../viz/effect-matrix';
+import { AromaWheel } from '../viz/aroma-wheel';
 import { GlassJar } from '../viz/glass-jar';
 import { MonthBars } from '../viz/month-bars';
 import { Terpenes } from './terpenes';
@@ -23,7 +25,7 @@ import { Terpenes } from './terpenes';
  */
 @Component({
   selector: 'w-jar-detail',
-  imports: [DatePipe, DecimalPipe, GlassJar, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MonthBars, RouterLink, Terpenes],
+  imports: [AromaWheel, DatePipe, DecimalPipe, GlassJar, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MonthBars, RouterLink, Terpenes],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a mat-button routerLink="/shelf/jars" class="back"><mat-icon>arrow_back</mat-icon>The jars</a>
@@ -64,6 +66,20 @@ import { Terpenes } from './terpenes';
         <section class="glass pad">
           <header><span class="eyebrow">terpene profile</span><span class="scope">the product</span></header>
           <w-terpenes [slug]="j.slug" [name]="j.name" [terpenes]="j.terpenes" />
+          @if (j.taste) {
+            <div class="tasting">
+              <w-aroma-wheel [aroma]="j.aroma" [of]="j.name" />
+              <div class="tastes">
+                <p class="taste">{{ j.taste }}</p>
+                <ul>
+                  @for (t of tasting(); track t.name) {
+                    <li><i class="dot" [style.background]="t.color"></i><b>{{ t.name }}</b>
+                      <span class="dim">{{ t.flavors.join(', ') || 'no taste known' }}</span></li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
         </section>
 
         <section class="glass pad">
@@ -163,12 +179,19 @@ import { Terpenes } from './terpenes';
 
       @if (j.like.length) {
         <section class="glass pad">
-          <header><span class="eyebrow">most like it</span><span class="scope">by name, cannabinoids and terpenes</span></header>
-          <div class="devices">
+          <header><span class="eyebrow">most like it</span><span class="scope">by terpene profile, then name</span></header>
+          <ul class="likes">
             @for (l of j.like; track l.slug) {
-              <a class="chip link" [routerLink]="['/shelf/jars', l.slug]">{{ l.name }}</a>
+              <li>
+                <a [routerLink]="['/shelf/jars', l.slug]">
+                  <span class="score num">{{ l.score * 100 | number: '1.0-0' }}%</span>
+                  <span class="bar"><i [style.width.%]="l.score * 100"></i></span>
+                  <span class="who">{{ l.name }}</span>
+                  <span class="dim shares">{{ l.shared.length ? 'shares ' + l.shared.join(', ') : 'no terpene in common' }}</span>
+                </a>
+              </li>
             }
-          </div>
+          </ul>
         </section>
       }
     } @else if (jar.error()) {
@@ -225,6 +248,19 @@ import { Terpenes } from './terpenes';
     .sesh { display: grid; grid-template-columns: 160px 70px minmax(0, 1fr) auto; gap: 12px; padding: 6px 0;
       border-top: 1px solid var(--w-glass-edge); font-size: 13px; }
     .loading { display: grid; place-items: center; height: 50vh; }
+    .tasting { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: center; }
+    .taste { margin: 0 0 6px; font: 600 15px var(--w-font); }
+    .tastes ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+    .tastes li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; align-self: center; }
+    .likes { list-style: none; margin: 0; padding: 0; display: grid; }
+    .likes a { display: grid; grid-template-columns: 48px 120px minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; align-items: center;
+      padding: 7px 4px; border-top: 1px solid var(--w-glass-edge); color: inherit; text-decoration: none; font-size: 13px; }
+    .likes a:hover { background: color-mix(in srgb, var(--w-primary) 8%, transparent); }
+    .likes .score { font-weight: 600; color: var(--w-primary); }
+    .likes .bar { height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent); overflow: hidden; }
+    .likes .bar i { display: block; height: 100%; background: var(--w-primary); border-radius: 99px; }
+    .likes .shares { font-size: 12px; }
     @include bp.phone {
       /* The jar small in the corner, so the name has the width. */
       .head { grid-template-columns: minmax(0, 1fr); padding: 16px; position: relative; }
@@ -239,6 +275,11 @@ import { Terpenes } from './terpenes';
       .pickup .price { grid-column: 2 / -1; }
       .pickup .seller { display: none; }
       .sesh { grid-template-columns: minmax(0, 1fr) auto; }
+      .tasting { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+      .tasting w-aroma-wheel { width: 240px; }
+      .likes a { grid-template-columns: 44px minmax(0, 1fr); }
+      .likes .bar { display: none; }
+      .likes .shares { grid-column: 2; }
       .state { margin-left: 0; }
     }
   `,
@@ -269,6 +310,15 @@ export class JarPage {
     const d = new Date(at);
     return d.getHours() !== 0 || d.getMinutes() !== 0;
   }
+
+  /** Each of the jar's terpenes with what it tastes of, from what the shelf's terpenes say. */
+  protected readonly tasting = computed(() => {
+    const guide = new Map(this.wits.shelfTerpenes.value().map((t) => [terpeneKey(t.name), t]));
+    return (this.jar.value()?.terpenes ?? []).map((name) => {
+      const t = guide.get(terpeneKey(name));
+      return { name, flavors: t?.flavors ?? [], color: familyColor(t?.family) };
+    });
+  });
 
   /** A device's name, or what a session that named none is called. */
   protected deviceName(slug?: string): string {

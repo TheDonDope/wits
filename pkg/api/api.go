@@ -116,6 +116,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/report.pdf", s.report)
 	mux.HandleFunc("GET /api/carry", s.carry)
 	mux.HandleFunc("GET /api/strains", s.read(strainsOf))
+	mux.HandleFunc("GET /api/terpenes", s.read(terpenesOf))
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	s.desk(mux)
@@ -455,28 +456,74 @@ func (s *Server) label(w http.ResponseWriter, r *http.Request) {
 	reply(w, http.StatusOK, out)
 }
 
-// strain is one product on the map of the strains, as a client reads it.
+// strain is one product on the map of the strains, as a client reads it:
+// placed by its terpenes, when it has any written down.
 type strain struct {
-	Slug      string   `json:"slug"`
-	Name      string   `json:"name"`
-	X         float64  `json:"x"`
-	Y         float64  `json:"y"`
-	THC       float64  `json:"thc"`
-	CBD       float64  `json:"cbd"`
-	Terpenes  []string `json:"terpenes"`
-	Dispensed float64  `json:"dispensed"`
-	Overall   float64  `json:"overall,omitempty"`
-	Ratings   int      `json:"ratings"`
-	Like      []string `json:"like"`
+	Slug      string             `json:"slug"`
+	Name      string             `json:"name"`
+	X         float64            `json:"x"`
+	Y         float64            `json:"y"`
+	Placed    bool               `json:"placed"`
+	THC       float64            `json:"thc"`
+	CBD       float64            `json:"cbd"`
+	Terpenes  []string           `json:"terpenes"`
+	Aroma     map[string]float64 `json:"aroma"`
+	Lead      string             `json:"lead,omitempty"`
+	Taste     string             `json:"taste,omitempty"`
+	Dispensed float64            `json:"dispensed"`
+	Overall   float64            `json:"overall,omitempty"`
+	Ratings   int                `json:"ratings"`
+	Like      []strainLike       `json:"like"`
+}
+
+// strainLike is a product like another, how alike, and what they share.
+type strainLike struct {
+	Slug   string   `json:"slug"`
+	Score  float64  `json:"score"`
+	Shared []string `json:"shared"`
 }
 
 func strainsOf(ws *workspace.Workspace) any {
 	all := report.Strains(ws)
 	out := make([]strain, 0, len(all))
 	for _, s := range all {
-		out = append(out, strain{Slug: s.Slug, Name: s.Name, X: s.X, Y: s.Y, THC: s.THC, CBD: s.CBD,
-			Terpenes: append([]string{}, s.Terpenes...), Dispensed: s.Dispensed, Overall: s.Overall,
-			Ratings: s.Ratings, Like: append([]string{}, s.Like...)})
+		row := strain{Slug: s.Slug, Name: s.Name, X: s.X, Y: s.Y, Placed: s.Placed, THC: s.THC, CBD: s.CBD,
+			Terpenes: append([]string{}, s.Terpenes...), Aroma: map[string]float64{}, Lead: string(s.Lead), Taste: s.Taste,
+			Dispensed: s.Dispensed, Overall: s.Overall, Ratings: s.Ratings, Like: []strainLike{}}
+		for f, v := range s.Aroma {
+			row.Aroma[string(f)] = v
+		}
+		for _, l := range s.Like {
+			row.Like = append(row.Like, strainLike{Slug: l.Slug, Score: l.Score, Shared: append([]string{}, l.Shared...)})
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+// terpene is one terpene the shelf names, as a client reads it.
+type terpene struct {
+	Name         string   `json:"name"`
+	Flavors      []string `json:"flavors"`
+	Family       string   `json:"family,omitempty"`
+	Notes        string   `json:"notes,omitempty"`
+	Effects      []string `json:"effects"`
+	BoilingPoint int      `json:"boiling_point,omitempty"`
+	Products     int      `json:"products"`
+	Leads        int      `json:"leads"`
+	Overall      float64  `json:"overall,omitempty"`
+	Rated        int      `json:"rated"`
+}
+
+// terpenesOf is every terpene the shelf's products name, the most named
+// first: what each tastes of, and what their sessions were rated.
+func terpenesOf(ws *workspace.Workspace) any {
+	all := report.Terpenes(report.Strains(ws))
+	out := make([]terpene, 0, len(all))
+	for _, t := range all {
+		out = append(out, terpene{Name: t.Name, Flavors: t.Flavors, Family: string(t.Family), Notes: t.Notes,
+			Effects: t.Effects, BoilingPoint: t.BoilingPoint, Products: t.Products, Leads: t.Leads, Overall: t.Overall,
+			Rated: t.Rated})
 	}
 	return out
 }

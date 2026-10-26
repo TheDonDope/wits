@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 
 import {
-  Avb, Costs, Cycle, Findings, Strain, Day, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
+  Avb, Costs, Cycle, Findings, Strain, Day, Terpene, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
 } from './models';
 
 /**
@@ -33,6 +33,8 @@ export class Wits {
   /** The repository open: the server's, or the phone's, on its own file system. */
   readonly place = httpResource<Place>(() => `/api/repo?v=${this.version()}`);
   readonly strains = httpResource<Strain[]>(() => `/api/strains?v=${this.version()}`, { defaultValue: [] });
+  /** Every terpene the shelf names, with its taste and what its products' sessions were rated. */
+  readonly shelfTerpenes = httpResource<Terpene[]>(() => `/api/terpenes?v=${this.version()}`, { defaultValue: [] });
   readonly journal = httpResource<{ entries: Entry[]; total: number }>(
     () => `/api/journal?limit=100000&v=${this.version()}`,
     { defaultValue: { entries: [], total: 0 } },

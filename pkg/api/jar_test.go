@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"slices"
 	"testing"
 	"time"
 
@@ -130,4 +131,29 @@ func TestSitesFor(t *testing.T) {
 	assert.Equal(t, research.Phone.Relay, sitesFor("js").Relay)
 	assert.NotEmpty(t, sitesFor("js").Relay)
 	assert.Empty(t, sitesFor("linux").Relay)
+}
+
+// TestStrainsAndTerpenes: with a profile written down, a strain answers its
+// taste and how it is placed, and the shelf's terpenes say what each tastes
+// of and how many products name it.
+func TestStrainsAndTerpenes(t *testing.T) {
+	s, _ := server(t, "")
+	require.Equal(t, http.StatusCreated,
+		call(t, s, http.MethodPut, "/api/jars/wcake-221/terpenes", `{"terpenes":["Limonen","Caryophyllen","Ocimene"]}`).Code)
+
+	all := decodeInto[[]strain](t, call(t, s, http.MethodGet, "/api/strains", ""))
+	require.Len(t, all, 1)
+	assert.Equal(t, "citrus", all[0].Lead)
+	assert.NotEmpty(t, all[0].Taste)
+	assert.InDelta(t, 1, all[0].Aroma["citrus"], 1e-9)
+	assert.False(t, all[0].Placed, "one profile is too few to lay out")
+
+	terps := decodeInto[[]terpene](t, call(t, s, http.MethodGet, "/api/terpenes", ""))
+	require.Len(t, terps, 3)
+	i := slices.IndexFunc(terps, func(x terpene) bool { return x.Name == "Limonen" })
+	require.GreaterOrEqual(t, i, 0)
+	assert.Equal(t, 1, terps[i].Products)
+	assert.Equal(t, 1, terps[i].Leads)
+	assert.Contains(t, terps[i].Flavors, "lemon")
+	assert.Equal(t, 175, terps[i].BoilingPoint)
 }

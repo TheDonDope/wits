@@ -40,7 +40,11 @@ type jarDetail struct {
 	Price    jarPrice   `json:"price"`
 	Months   []jarMonth `json:"months"`
 	Sessions jarSesh    `json:"sessions"`
-	Like     []named    `json:"like"`
+	Like     []alike    `json:"like"`
+	// Taste is its three strongest flavours in words, and Aroma its taste
+	// family by family, the strongest 1.
+	Taste string             `json:"taste,omitempty"`
+	Aroma map[string]float64 `json:"aroma"`
 }
 
 // jarFill is one fill of the product — the fill's scope: what it dispensed
@@ -112,6 +116,14 @@ type named struct {
 	Name string `json:"name"`
 }
 
+// alike is a product like another: how alike, 0 to 1, and the terpenes the
+// two share.
+type alike struct {
+	named
+	Score  float64  `json:"score"`
+	Shared []string `json:"shared"`
+}
+
 // errNoJar is a slug the repository knows nothing of.
 var errNoJar = errors.New("no product by that slug")
 
@@ -142,7 +154,7 @@ func jarOf(ws *workspace.Workspace, slug string) (*jarDetail, bool) {
 	if j == nil {
 		return nil, false
 	}
-	out := &jarDetail{jar: *j, Terpenes: []string{}, Like: []named{}}
+	out := &jarDetail{jar: *j, Terpenes: []string{}, Like: []alike{}, Aroma: map[string]float64{}}
 	if p := ws.Products.Exact(slug); p != nil {
 		out.Country, out.Radiated = p.Country, p.Radiated
 		out.Terpenes = append(out.Terpenes, p.Terpenes...)
@@ -151,7 +163,7 @@ func jarOf(ws *workspace.Workspace, slug string) (*jarDetail, bool) {
 	out.Fills, out.Price = jarFills(ws, slug)
 	out.Months, out.FirstSeen, out.Seshed, out.Flushed = monthsOf(ws, slug)
 	out.Sessions = seshOf(ws, slug)
-	out.Like = likeOf(ws, slug)
+	out.Like, out.Taste, out.Aroma = likeOf(ws, slug)
 	return out, true
 }
 
@@ -352,18 +364,23 @@ func recentOf(ws *workspace.Workspace, slug string, latest map[string]effects.Ra
 }
 
 // likeOf is the products most like this one, as the map of the strains
-// reckons it.
-func likeOf(ws *workspace.Workspace, slug string) []named {
-	out := []named{}
+// reckons it, and how it tastes.
+func likeOf(ws *workspace.Workspace, slug string) ([]alike, string, map[string]float64) {
+	out, aroma := []alike{}, map[string]float64{}
 	for _, s := range report.Strains(ws) {
 		if s.Slug != slug {
 			continue
 		}
-		for _, other := range s.Like {
-			out = append(out, named{Slug: other, Name: ws.ProductName(other)})
+		for _, l := range s.Like {
+			out = append(out, alike{named: named{Slug: l.Slug, Name: ws.ProductName(l.Slug)}, Score: l.Score,
+				Shared: append([]string{}, l.Shared...)})
 		}
+		for f, v := range s.Aroma {
+			aroma[string(f)] = v
+		}
+		return out, s.Taste, aroma
 	}
-	return out
+	return out, "", aroma
 }
 
 // researchTimeout is how long a lookup waits on the web, every site together.
