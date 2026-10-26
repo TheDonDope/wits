@@ -1627,6 +1627,28 @@ storage holds 11.37 g; 10.50 g on the scale is a grind of 0.87 g on Fri
 23 Oct, after its last entry; its ground then holds 9.50 g, and 7.50 g on the
 scale with a Mighty+ at 0.15 g is 13 sessions of about 0.15 g, 23–26 Oct.
 
+### Record, drawn — the dialog's inputs
+
+Record's Grind, Session, Weigh and AVB tabs were outlined fields one under
+another. They are drawn now, by inputs of their own in `wits-ui/src/app/inputs`:
+`w-jar-pick`, the jars as a row of `w-jar` glasses filled as they stand, with
+the account's grams under each, a filter past eight, and arrow keys along the
+row; `w-grams`, a large figure with − and + by 0.05 g, a slider up to what the
+jar holds, the amounts used lately and *all of it*; `w-choice`, pills or tiles
+with icons, a radio group to the keyboard, folding past a number behind
+*more* (devices: the four most used, by model, the maker and their sessions
+under each); `w-temp-dial`, a 240° arc from d3-shape, dragged or stepped,
+the device's modes marked, the jar's terpenes from the shelf's boiling points
+lit at or below the heat; `w-when`, now, yesterday or a day from a native date
+input, none ahead; `w-flow`, what the entry does to the jar, before → after,
+account by account; and `w-scale` for Weigh, the reading in a display, the
+ledger under it and the difference lit — short, over or level. Weigh's jars
+come in the order the account holds most. Every colour is the theme's, and
+reduced motion stills the transitions. On the demo a session recorded through
+it — Morning Sun, the Venty, the dial stepped from 180 to 185 °C, 0.20 g —
+was written as a session of 0.20 g on the Venty at 185 °C. The Prescription
+tab is FillForm's, as it was.
+
 ---
 
 ## 📌 Planned

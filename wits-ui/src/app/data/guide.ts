@@ -124,17 +124,18 @@ export const GUIDE: readonly GuideSection[] = [
     icon: 'add_circle',
     lead: '<b>Record</b>, at the bottom right (raised in the middle of the dock on a phone), is always in reach. Its five tabs are the five things that happen to grams.',
     steps: [
-      '<b>Grind</b> <kbd>g</kbd> — out of a sealed jar, ground and ready to use.',
-      '<b>Session</b> <kbd>s</kbd> — from what is ground, through a device, at a temperature. It starts from your last session — strain, device, temperature — and the amounts you use are a tap away. Saved, it asks how it went.',
+      '<b>Grind</b> <kbd>g</kbd> — out of a sealed jar, ground and ready to use. Pick the jar from the shelf, each a glass filled as it stands, and the amount: typed, stepped with − and +, slid, or one you use lately.',
+      '<b>Session</b> <kbd>s</kbd> — from what is ground, through a device, at a temperature. It starts from your last session — strain, device, temperature — and the amounts you use are a tap away. Turn the dial, or step it with the arrow keys: the jar’s terpenes light up as the heat passes the point each boils at. Saved, it asks how it went.',
       '<b>Prescription</b> <kbd>b</kbd> — what the pharmacy handed you: one strain or several, each with its grams and price a gram. <b>Read the label</b> reads a photo of the pharmacy label; <b>Read invoices</b> reads the pharmacy’s PDF. Both are read in the browser, and the picture or the PDF goes nowhere.',
       '<b>Weigh</b> <kbd>r</kbd> — put a jar on the scale; see <a href="#weigh">When the scale disagrees</a>.',
       '<b>AVB</b> <kbd>v</kbd> — what you weighed out of a device, or used up.',
     ],
     then: [
+      'Every tab shows what the entry will do to the jar before you record it — what goes out, what comes in — and <b>When</b> is now unless you say yesterday or another day.',
       'Anything can be dated back, for the evening you forgot. Nothing can be dated ahead, and nothing can take more than the jar held on its date: a grind dated before the fill it draws on is refused.',
     ],
     shots: [
-      { src: 'guide/record-session.webp', alt: 'The Record dialog on its Session tab', caption: 'A session starts from your last: the strain, the device, its temperature, and the amounts you use a tap away.', frame: 'dialog', w: 660, h: 720 },
+      { src: 'guide/record-session.webp', alt: 'The Record dialog on its Session tab: jars to pick, device tiles, mode pills, a temperature dial and the amount', caption: 'A session starts from your last: the jar, the device, its dial, and the amounts you use a tap away.', frame: 'dialog', w: 645, h: 884 },
       { src: 'guide/record-fill.webp', alt: 'The Record dialog on its Fill tab, with Read invoices and Read the label', caption: 'A fill: its strains, their prices, and two readers that fill them in for you.', frame: 'dialog', w: 632, h: 704 },
     ],
     record: { tab: 0, label: 'Open Record' },
@@ -313,9 +314,10 @@ Rated       overall 4, sleep 5` },
     steps: [
       'Press <b>Record → Weigh</b>, or <kbd>r</kbd> anywhere — or <b>Sealed</b> and <b>Ground</b> under <b>I forgot to</b>.',
       'Pick the jar and what is on the scale — sealed, ground, or already vaped.',
-      'Type what the scale reads. The ledger’s figure is under it; a reading that agrees writes nothing.',
+      'Type what the scale reads into its display. The ledger’s figure is under it and the difference lights up; a reading that agrees writes nothing.',
       'Less than the ledger? <b>I forgot to record a grind</b> (sealed) or <b>sessions</b> (ground) writes them, dated after the jar’s last entry; <b>It went missing</b> records the grams as lost. After a grind, weigh what is ground next — the dialog stays for it.',
     ],
+    shots: [{ src: 'guide/record-weigh.webp', alt: 'The Weigh tab: a jar on the scale reading 12.6 g against the ledger’s 12.94 g, offered as a forgotten grind', caption: 'On the scale: 0.34 g light, and most likely a grind you forgot to record.', frame: 'dialog', w: 630, h: 845 }],
     record: { tab: 3, label: 'Weigh a jar' },
     cli: [
       { cmd: 'wits reconcile storage sumo 12.4 --dry-run', out: `storage holds 12.44g by the ledger and 12.40g on the scale: -0.04g
