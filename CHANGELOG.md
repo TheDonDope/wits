@@ -2,9 +2,25 @@
 ## [Unreleased]
 
 
+<a name="v0.104.0"></a>
+## [v0.104.0] - 2026-10-26
+### Build
+- **deps:** bump the gomod-minor group with 3 updates
+- **deps-dev:** bump electron from 44.9.1 to 45.0.0 in /desktop
+
+### Docs
+- one blank line before the session paragraph
+- **diary:** what the day held
+- **roadmap:** ready for anyone — a first launch, a short path, plain words, German and other currencies
+
+### Feat
+- **ux:** ready for anyone — a welcome, a session in two taps, plain words, less at once
+
+
 <a name="v0.103.0"></a>
 ## [v0.103.0] - 2026-10-26
 ### Docs
+- update changelog for v0.103.0
 - **diary:** a year looked back on, a trip packed for
 
 ### Feat
@@ -1260,7 +1276,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.103.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.104.0...HEAD
+[v0.104.0]: https://github.com/TheDonDope/wits/compare/v0.103.0...v0.104.0
 [v0.103.0]: https://github.com/TheDonDope/wits/compare/v0.102.0...v0.103.0
 [v0.102.0]: https://github.com/TheDonDope/wits/compare/v0.101.0...v0.102.0
 [v0.101.0]: https://github.com/TheDonDope/wits/compare/v0.100.0...v0.101.0
