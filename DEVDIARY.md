@@ -2,6 +2,25 @@
 
 ## 2026-10-26
 
+### Grams do not vanish
+
+A scale reading short of the ledger used to be booked as grams lost, but a grind or a session left unrecorded is the likelier story, so it is offered as one now. A light jar is a forgotten grind of the difference, dated a minute after the jar's last entry; light ground is forgotten sessions, spread from then until now, so no entry already recorded loses a gram to them. A session takes the size the last thirty most often took, had as the last one was; with none on record, a load of the gear in use, the maintainer's figures mid-way — 0.15 g on the Venty, Mighty+, Frolic, Tornado, Anvil and Tempest, 0.1 g on the Simrell and the Hydro — now on the presets and carried in bundle format 10; with neither, one a day. Past 30 sessions it is a leftover or a loss and is refused. `wits reconcile` asks (`--forgot` says yes), the terminal's weighing forms ask the same, the browser's Weigh offers it and stays open for the ground after a grind, I forgot to weighs the ground as well as the sealed, and the welcome has Add your gear. On the workbook Morning Sun's 11.37 g sealed, weighed at 10.50 g, is a grind of 0.87 g on Fri 23 Oct, and its ground then, 7.50 g against 9.50 g with a Mighty+, is 13 sessions of about 0.15 g over 23–26 Oct. `wits-reconcile.gif` was re-recorded for it. Shipped as v0.105.0.
+
+- `3447cd6` feat(weigh): grams do not vanish — a light jar was a grind forgotten, light ground was sessions
+- `f849bed` chore(vhs): re-record wits-reconcile.gif, where a light jar is now a grind forgotten
+- `e7f77b3` docs: update changelog for v0.105.0
+
+### Ready for anyone
+
+The UI review found wits polished and made for an expert, and the roadmap took it as a phase: a first launch, a short path, plain words, less at once. An empty repository opens on a welcome, and Record opens on Prescription while the shelf is empty. A session starts from the last one — strain, device, mode, temperature — with the amounts used lately a tap away, asks how it went once saved, and Today has Same as last time, undoable. The screen says prescription, ground and ready to use, already vaped, vaped and leftovers, while the terminal keeps its own words; scope chips show on hover. Effects is four views, I forgot to can go one at a time, and the replay waits behind Play back history. The Record dialog's scrollbar, left open this morning, is gone, and dim text in 19 of 41 themes now reads at 4.5:1 or better, held by a spec. Electron 45 and three Go module updates came in with it. Shipped as v0.104.0.
+
+- `31e72e4` docs(roadmap): ready for anyone — a first launch, a short path, plain words, German and other currencies
+- `2edf314` build(deps): bump the gomod-minor group with 3 updates
+- `1aa9c97` build(deps-dev): bump electron from 44.9.1 to 45.0.0 in /desktop
+- `56ebff1` feat(ux): ready for anyone — a welcome, a session in two taps, plain words, less at once
+- `b3bbcfc` docs: one blank line before the session paragraph
+- `7133044` docs: update changelog for v0.104.0
+
 ### What the day held
 
 The dashboard said where the fill stood and nothing of the day. Today stands under the shelf now, as `wits today` says it in the terminal and `wits status` in its last line: the THC in what went through a device so far, in milligrams, grams × the strain's per cent × 10, with the CBD beside it and a bar against a usual day of the last 30 with a session. Two rings give the THC by strain and the grams by device, a 24-hour clock puts each session at its hour sized by its THC, and every session has a row with its share of the day and its rating. It is what was in the material, not what reached the body, and every place it shows says so; a strain with no THC written down is counted, not guessed at. Four sessions recorded this morning on a copy of the demo came to 206 mg THC and 6.7 mg CBD in 0.67 g against a usual 239 mg, every row checked by hand: 0.15 g of the 32 % Morning Sun is 48 mg. `wits-cli.gif` was re-recorded for the new line in `wits status`. Shipped as v0.103.0.
@@ -61,6 +80,8 @@ The dashboard shows every fill not yet emptied now, not only the newest: on the 
 - `5facd06` docs: update changelog for v0.96.0
 
 ### Notes for 2026-10-26
+
+Forgotten sessions first had no sizing without a session on record, and the imported workbook has none, so 8 g short would have been one 8 g session; one a day came first, then the gear's load when the maintainer gave the figures mid-way. Capping the count at 30 and stretching the sessions to fit gave 30 sessions of 3.42 g out of a years-old leftover, so past 30 it is refused instead. Rounding each predicted time to the minute put one before an entry made in the same minute, and the recorder refused it as a shortfall; times are held at the jar's last entry or later. huh's TitleFunc fills a question in on a later command, which the tests' helper never delivers, and the group keeps the height it was made with, so the terminal's question rendered blank, then cut off; its words and its height are set when the form decides to show it. witsnap writes what a pressed-through form records, so photographing it took fresh imports. The reconcile tape's readings dated from an older demo and showed grams found where its comments said a jar read light; it tells the forgotten story now. A wits-server from an earlier session still holds port 7351 and was left alone.
 
 On the phone the Today rings' legends ran into each other until the names were given a span of their own to cut short, and the clock a row of its own. The device ring was first ordered by THC while it shows grams; devices are ordered by grams now. Milligrams are of THC in the bud, with no extraction rate assumed: what a vaporizer releases depends on the device, the temperature and the session, and nothing in the journal measures it.
 
