@@ -1,21 +1,24 @@
-import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { DeviceMode, Dimension, Entry, ForgottenPlan, Written } from '../data/models';
-import { heats, needsHeat, sessionWith } from '../data/devices';
+import { Device, DeviceMode, Dimension, Entry, ForgottenPlan, Jar, Written } from '../data/models';
+import { CATEGORIES, heats, needsHeat, sessionWith } from '../data/devices';
+import { Choice, ChoiceInput } from '../inputs/choice';
+import { FlowLine, FlowPreview } from '../inputs/flow';
+import { GramsInput } from '../inputs/grams';
+import { JarOption, JarPick } from '../inputs/jar-pick';
+import { ScaleInput } from '../inputs/scale';
+import { Boils, DialMark, TempDial } from '../inputs/temp-dial';
+import { WhenInput, isoDay } from '../inputs/when';
 import { Wits } from '../data/wits';
 import { ScoreDots } from '../viz/score-dots';
 import { FillForm } from './fill-form';
@@ -52,23 +55,25 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
  */
 @Component({
   selector: 'w-record',
-  providers: [provideNativeDateAdapter()],
   imports: [
+    ChoiceInput,
     DatePipe,
     DecimalPipe,
     FillForm,
+    FlowPreview,
     FormsModule,
-    NgTemplateOutlet,
+    GramsInput,
+    JarPick,
     MatButtonModule,
-    MatDatepickerModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
-    MatSliderModule,
     MatTabsModule,
+    ScaleInput,
     ScoreDots,
+    TempDial,
+    WhenInput,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -98,96 +103,61 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event); error.set('')" animationDuration="200ms">
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>grain</mat-icon><span>Grind</span></span></ng-template>
           <div class="form">
-            <mat-form-field appearance="outline">
-              <mat-label>From the jar</mat-label>
-              <mat-select [ngModel]="product()" (ngModelChange)="product.set($event)">
-                @for (j of sealed(); track j.slug) {
-                  <mat-option [value]="j.slug">{{ j.name }} <span class="dim">· {{ j.storage | number: '1.2-2' }} g sealed</span></mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <ng-container *ngTemplateOutlet="amount" />
+            <w-jar-pick label="from the jar" empty="Nothing sealed on the shelf." [jars]="grindJars()" [value]="product()"
+              (valueChange)="product.set($event)" />
+            <div class="duo">
+              <w-grams label="ground" [max]="held()" [lately]="recent()" [offerAll]="true" [value]="grams()" (valueChange)="grams.set($event)" />
+              <w-when [value]="date()" (valueChange)="date.set($event)" />
+            </div>
+            @if (flow().length) {
+              <w-flow [lines]="flow()" />
+            }
           </div>
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>air</mat-icon><span>Session</span></span></ng-template>
           <div class="form">
-            <mat-form-field appearance="outline">
-              <mat-label>From what is ground</mat-label>
-              <mat-select [ngModel]="product()" (ngModelChange)="product.set($event)">
-                @for (j of stashed(); track j.slug) {
-                  <mat-option [value]="j.slug">{{ j.name }} <span class="dim">· {{ j.stash | number: '1.2-2' }} g ground</span></mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Device</mat-label>
-              <mat-select [ngModel]="device()" (ngModelChange)="pickDevice($event)">
-                <mat-option value="">none</mat-option>
-                @for (d of sessionDevices(); track d.slug) {
-                  <mat-option [value]="d.slug">{{ d.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <w-jar-pick label="from what is ground" empty="Nothing ground yet: grind first." [jars]="seshJars()" [value]="product()"
+              (valueChange)="product.set($event)" />
+            <w-choice label="had with" [tiles]="true" [fold]="4" [options]="deviceChoices()" [value]="device()" (valueChange)="pickDevice($event)" />
             @if (picked()?.modes?.length) {
-              <mat-form-field appearance="outline">
-                <mat-label>Mode</mat-label>
-                <mat-select [ngModel]="mode()" (ngModelChange)="pickMode($event)">
-                  <mat-option value="">not said</mat-option>
-                  @for (m of picked()!.modes; track m.name) {
-                    <mat-option [value]="m.name">{{ m.name }}<span class="dim">{{ modeHint(m) }}</span></mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            }
-            @if (timed()) {
-              <mat-form-field appearance="outline">
-                <mat-label>Session timer</mat-label>
-                <input matInput type="number" min="0" [ngModel]="timer()" (ngModelChange)="timer.set($event)" />
-                <span matTextSuffix>s</span>
-              </mat-form-field>
+              <w-choice label="mode" [options]="modeChoices()" [value]="mode()" (valueChange)="pickMode($event)" />
             }
             @if (picked() && heatedBy(picked()!)) {
-              <mat-form-field appearance="outline">
-                <mat-label>Heated with</mat-label>
-                <mat-select [ngModel]="heater()" (ngModelChange)="pickHeater($event)">
-                  <mat-option value="">not said</mat-option>
-                  @for (h of heaters(); track h.slug) {
-                    <mat-option [value]="h.slug">{{ h.name }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <w-choice label="heated with" [options]="heaterChoices()" [value]="heater()" (valueChange)="pickHeater($event)" />
               @if (heaterPicked(); as h) {
                 @if (h.modes.length) {
-                  <mat-form-field appearance="outline">
-                    <mat-label>Setting</mat-label>
-                    <mat-select [ngModel]="setting()" (ngModelChange)="setting.set($event)">
-                      <mat-option value="">not said</mat-option>
-                      @for (m of h.modes; track m.name) {
-                        <mat-option [value]="m.name">{{ m.name }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                  <w-choice label="setting" [options]="settingChoices()" [value]="setting()" (valueChange)="setting.set($event)" />
                 } @else {
-                  <mat-form-field appearance="outline">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Setting</mat-label>
                     <input matInput [ngModel]="setting()" (ngModelChange)="setting.set($event)" placeholder="45 W, 40 s" />
                   </mat-form-field>
                 }
               }
             }
-            @if (range(); as r) {
-              <div class="temp">
-                <span class="eyebrow">temperature</span>
-                <mat-slider [min]="r.min" [max]="r.max" step="1" discrete>
-                  <input matSliderThumb [ngModel]="temp()" (ngModelChange)="temp.set($event)" />
-                </mat-slider>
-                <span class="num">{{ temp() }} °C</span>
+            <div class="duo" [class.solo]="!range()">
+              @if (range(); as r) {
+                <w-temp-dial [min]="r.min" [max]="r.max" [marks]="dialMarks()" [terpenes]="boils()" [value]="temp()" (valueChange)="temp.set($event)" />
+              }
+              <div class="stack">
+                <w-grams label="had" [max]="held()" [lately]="recent()" [value]="grams()" (valueChange)="grams.set($event)" />
+                @if (timed()) {
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="timer">
+                    <mat-label>Session timer</mat-label>
+                    <input matInput type="number" min="0" [ngModel]="timer()" (ngModelChange)="timer.set($event)" />
+                    <span matTextSuffix>s</span>
+                  </mat-form-field>
+                }
+                <w-when [value]="date()" (valueChange)="date.set($event)" />
               </div>
+            </div>
+            @if (flow().length) {
+              <w-flow [lines]="flow()" />
             }
-            <ng-container *ngTemplateOutlet="amount" />
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Note</mat-label>
-              <input matInput [ngModel]="note()" (ngModelChange)="note.set($event)" />
+              <textarea matInput rows="2" [ngModel]="note()" (ngModelChange)="note.set($event)"
+                placeholder="How it tasted, what it was for"></textarea>
             </mat-form-field>
           </div>
         </mat-tab>
@@ -196,30 +166,12 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>scale</mat-icon><span>Weigh</span></span></ng-template>
           <div class="form">
-            <mat-form-field appearance="outline">
-              <mat-label>Jar</mat-label>
-              <mat-select [ngModel]="product()" (ngModelChange)="product.set($event)">
-                @for (j of wits.jars.value(); track j.slug) {
-                  <mat-option [value]="j.slug">{{ j.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Account</mat-label>
-              <mat-select [ngModel]="account()" (ngModelChange)="account.set($event)">
-                <mat-option value="storage">Storage — still sealed</mat-option>
-                <mat-option value="stash">Ground, ready to use</mat-option>
-                <mat-option value="avb">Already vaped (AVB)</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>On the scale</mat-label>
-              <input matInput type="number" min="0" step="0.01" [ngModel]="grams()" (ngModelChange)="grams.set($event)" />
-              <span matTextSuffix>g</span>
-              @if (product()) {
-                <mat-hint>The ledger says {{ expected() | number: '1.2-2' }} g</mat-hint>
-              }
-            </mat-form-field>
+            <w-choice label="on the scale" [options]="accounts" [value]="account()" (valueChange)="account.set($event)" />
+            <w-jar-pick label="the jar" empty="Nothing on the shelf to weigh." [jars]="weighJars()" [value]="product()"
+              (valueChange)="product.set($event)" />
+            @if (product()) {
+              <w-scale [expected]="expected()" [value]="grams()" (valueChange)="grams.set($event)" />
+            }
             @if (weighed()) {
               <p class="said weighed"><mat-icon>check_circle</mat-icon>{{ weighed() }}</p>
             }
@@ -251,60 +203,29 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
         </mat-tab>
         <mat-tab><ng-template mat-tab-label><span class="tab"><mat-icon>recycling</mat-icon><span>AVB</span></span></ng-template>
           <div class="form">
-            <mat-form-field appearance="outline">
-              <mat-label>What happened</mat-label>
-              <mat-select [ngModel]="avbMode()" (ngModelChange)="avbMode.set($event)">
-                <mat-option value="collect">Emptied a device — the already vaped bud weighed out</mat-option>
-                <mat-option value="use">Used AVB — butter, a tincture</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <w-choice label="what happened" [tiles]="true" [options]="avbModes" [value]="avbMode()" (valueChange)="pickAvbMode($event)" />
             @if (avbMode() === 'collect') {
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="hinted">
-                <mat-label>The device emptied</mat-label>
-                <mat-select [ngModel]="emptied()" (ngModelChange)="device.set($event)">
-                  @for (w of wits.avb.value()?.waiting ?? []; track w.device) {
-                    <mat-option [value]="w.device">{{ deviceName(w.device) }}
-                      <span class="dim">· {{ w.grams | number: '1.2-2' }} g in {{ w.sessions }} {{ w.sessions === 1 ? 'session' : 'sessions' }}</span>
-                    </mat-option>
-                  }
-                </mat-select>
-                <mat-hint>From its sessions since it was last emptied.</mat-hint>
-              </mat-form-field>
-            } @else {
-              <p class="dim">{{ wits.avb.value()?.held ?? 0 | number: '1.2-2' }} g in the AVB jar.</p>
+              @if (avbDevices().length) {
+                <w-choice label="the device emptied" [tiles]="true" [options]="avbDevices()" [value]="emptied()" (valueChange)="device.set($event)" />
+              } @else {
+                <p class="dim">No session has been through a device since it was last emptied.</p>
+              }
             }
-            <ng-container *ngTemplateOutlet="amount" />
-            <mat-form-field appearance="outline">
+            <div class="duo">
+              <w-grams [label]="avbMode() === 'collect' ? 'weighed out' : 'used'" [max]="avbMode() === 'use' ? avbHeld() : null"
+                [offerAll]="avbMode() === 'use'" [value]="grams()" (valueChange)="grams.set($event)" />
+              <w-when [value]="date()" (valueChange)="date.set($event)" />
+            </div>
+            @if (flow().length) {
+              <w-flow [lines]="flow()" />
+            }
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Note</mat-label>
-              <input matInput [ngModel]="note()" (ngModelChange)="note.set($event)" />
+              <input matInput [ngModel]="note()" (ngModelChange)="note.set($event)" placeholder="Butter, a tincture" />
             </mat-form-field>
           </div>
         </mat-tab>
       </mat-tab-group>
-
-      <ng-template #amount>
-        <div class="pair">
-          <mat-form-field appearance="outline">
-            <mat-label>Amount</mat-label>
-            <input matInput type="number" min="0.01" step="0.01" [ngModel]="grams()" (ngModelChange)="grams.set($event)" />
-            <span matTextSuffix>g</span>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>When</mat-label>
-            <input matInput [matDatepicker]="picker" [ngModel]="date()" (ngModelChange)="date.set($event)" placeholder="now" />
-            <mat-datepicker-toggle matIconSuffix [for]="picker" />
-            <mat-datepicker #picker />
-          </mat-form-field>
-        </div>
-        @if (recent().length) {
-          <div class="recent" role="group" aria-label="Amounts used lately">
-            <span class="dim">lately</span>
-            @for (g of recent(); track g) {
-              <button type="button" class="chip" [class.on]="grams() === g" (click)="grams.set(g)">{{ g | number: '1.2-2' }} g</button>
-            }
-          </div>
-        }
-      </ng-template>
 
       @if (error()) {
         <div class="error"><mat-icon>block</mat-icon>{{ error() }}</div>
@@ -319,28 +240,23 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
   styles: `
     @use 'breakpoints' as bp;
     /* The dialog is at most 94vw: less its padding and its border, so the form never pushes past it. */
-    .form { display: grid; gap: 4px; padding-top: 18px; width: min(580px, calc(94vw - 52px)); }
-    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .temp { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .form { display: grid; gap: 18px; padding: 18px 0 4px; width: min(580px, calc(94vw - 52px)); }
+    .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 24px; align-items: start; }
+    .duo.solo { grid-template-columns: minmax(0, 1fr); }
+    .stack { display: grid; gap: 16px; align-content: start; }
+    .timer { width: 12ch; }
     .error { display: flex; gap: 8px; align-items: center; color: var(--w-warn); background: color-mix(in srgb, var(--w-warn) 8%, transparent);
       border: 1px solid color-mix(in srgb, var(--w-warn) 25%, transparent); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
     mat-icon { vertical-align: middle; }
-    /* A hint that wraps on a phone takes its room, rather than running into the field under it. */
-    .hinted { margin-bottom: 18px; }
     .tab { display: inline-flex; align-items: center; gap: 6px; }
-    .recent { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: -6px 0 10px; font-size: 12px; }
-    .chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--w-glass-edge); background: none; color: inherit;
-      font: 500 12px var(--w-num); cursor: pointer; }
-    .chip:hover { border-color: var(--w-primary); }
-    .chip.on { border-color: var(--w-primary); background: color-mix(in srgb, var(--w-primary) 18%, transparent); }
     .dims { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; align-items: center; margin: 8px 0; }
     .ask { font-size: 13px; color: var(--w-dim); }
     .ask.lead { color: var(--mat-sys-on-surface); font-weight: 600; }
     .said { margin-top: 0; }
-    .weighed { display: flex; gap: 8px; align-items: center; margin: 4px 0 8px; color: var(--w-good); font-size: 13px; }
-    .why { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; margin: 4px 0 8px; }
+    .weighed { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--w-good); font-size: 13px; }
+    .why { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; margin: 0; }
     .why mat-icon { font-size: 18px; width: 18px; height: 18px; flex: none; }
-    .forgot { display: grid; gap: 8px; margin: 14px 0 4px; }
+    .forgot { display: grid; gap: 8px; }
     .pick { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: center; text-align: left;
       padding: 12px 14px; border-radius: 12px; border: 1px solid var(--w-glass-edge); background: none; color: inherit;
       font: inherit; cursor: pointer; }
@@ -353,6 +269,7 @@ export function openRecord(dialog: MatDialog, data: RecordData = {}): void {
     /* A phone: the five tabs side by side, each its icon over its name, none paged out of sight. */
     @include bp.phone {
       .tab { flex-direction: column; gap: 2px; font-size: 11px; line-height: 1.1; }
+      .duo { grid-template-columns: minmax(0, 1fr); }
     }
   `,
 })
@@ -425,6 +342,95 @@ export class RecordDialog {
 
   protected readonly sealed = computed(() => this.wits.jars.value().filter((j) => j.storage > 0));
   protected readonly stashed = computed(() => this.wits.jars.value().filter((j) => j.stash > 0));
+  /** The jar picked, as the shelf has it. */
+  private readonly jar = computed(() => this.wits.jars.value().find((j) => j.slug === this.product()));
+  protected readonly grindJars = computed(() => this.sealed().map((j) => jarOption(j, j.storage, 'sealed')));
+  protected readonly seshJars = computed(() => this.stashed().map((j) => jarOption(j, j.stash, 'ground')));
+  /** Every jar holding anything, the one picked among them, by what the account on the scale holds. */
+  protected readonly weighJars = computed(() => {
+    const a = this.account();
+    const held = (j: Jar) => (a === 'storage' ? j.storage : a === 'stash' ? j.stash : j.avb);
+    // What the account holds most of first; a jar with none of it last.
+    return this.wits.jars.value()
+      .filter((j) => j.storage + j.stash + j.avb > 0 || j.slug === this.product())
+      .sort((x, y) => held(y) - held(x) || x.name.localeCompare(y.name))
+      .map((j) => jarOption(j, held(j), ACCOUNT_WORDS[a] ?? a));
+  });
+  /** The most a grind or a session can take of the jar picked. */
+  protected readonly held = computed(() => {
+    const j = this.jar();
+    return !j ? null : this.tab() === 0 ? j.storage : j.stash;
+  });
+  protected readonly avbHeld = computed(() => this.wits.avb.value()?.held ?? 0);
+  protected readonly accounts: Choice[] = [
+    { value: 'storage', label: 'Sealed', icon: 'inventory_2' },
+    { value: 'stash', label: 'Ground', icon: 'grain' },
+    { value: 'avb', label: 'Already vaped', icon: 'recycling' },
+  ];
+  protected readonly avbModes: Choice[] = [
+    { value: 'collect', label: 'Emptied a device', icon: 'move_to_inbox', hint: 'what came out, weighed' },
+    { value: 'use', label: 'Used some', icon: 'soup_kitchen', hint: 'butter, a tincture' },
+  ];
+  protected readonly deviceChoices = computed<Choice[]>(() => [
+    { value: '', label: 'Not said', icon: 'remove', hint: 'no device' },
+    // The most used first, so the fold keeps what is reached for.
+    ...[...this.sessionDevices()].sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name))
+      .map((d) => ({ value: d.slug, label: d.model?.trim() ? d.model.trim() : d.name, icon: iconOf(d),
+        hint: [d.model ? d.maker : '', d.sessions ? `${String(d.sessions)} sessions` : 'not used yet'].filter((x) => x).join(' · ') })),
+  ]);
+  protected readonly modeChoices = computed<Choice[]>(() => [
+    { value: '', label: 'Not said' },
+    ...(this.picked()?.modes ?? []).map((m) => ({ value: m.name, label: m.name, hint: this.modeHint(m).replace(/^ · /, '') })),
+  ]);
+  protected readonly heaterChoices = computed<Choice[]>(() => [
+    { value: '', label: 'Not said' },
+    ...this.heaters().map((h) => ({ value: h.slug, label: h.name, icon: iconOf(h) })),
+  ]);
+  protected readonly settingChoices = computed<Choice[]>(() => [
+    { value: '', label: 'Not said' },
+    ...(this.heaterPicked()?.modes ?? []).map((m) => ({ value: m.name, label: m.name })),
+  ]);
+  /** The devices with sessions since they were last emptied, each with what they hold. */
+  protected readonly avbDevices = computed<Choice[]>(() => (this.wits.avb.value()?.waiting ?? []).map((w) => {
+    const d = this.wits.devices.value().find((x) => x.slug === w.device);
+    return { value: w.device, label: d?.model?.trim() ? d.model.trim() : this.deviceName(w.device), icon: d ? iconOf(d) : 'help_outline',
+      hint: `${w.grams.toFixed(2)} g in ${String(w.sessions)} ${w.sessions === 1 ? 'session' : 'sessions'}` };
+  }));
+  /** The device's modes where they sit on the dial. */
+  protected readonly dialMarks = computed<DialMark[]>(() =>
+    (this.picked()?.modes ?? []).filter((m) => m.temp).map((m) => ({ temp: m.temp ?? 0, label: m.name })));
+  /** The jar's own terpenes, dominant first, each where it boils, as the shelf knows them. */
+  protected readonly boils = computed<Boils[]>(() => {
+    const known = new Map(this.wits.shelfTerpenes.value().map((t) => [t.name.toLowerCase(), t.boiling_point]));
+    return (this.jar()?.terpenes ?? []).flatMap((name) => {
+      const at = known.get(name.toLowerCase());
+      return at ? [{ name, at }] : [];
+    });
+  });
+  /** What the entry does to the jar, account by account, before it is recorded. */
+  protected readonly flow = computed<FlowLine[]>(() => {
+    const g = this.grams() ?? 0;
+    const j = this.jar();
+    if (g <= 0) {
+      return [];
+    }
+    switch (this.tab()) {
+      case 0:
+        return j ? [
+          { label: 'sealed', before: j.storage, after: Math.max(0, j.storage - g), tone: 'var(--w-storage)' },
+          { label: 'ground', before: j.stash, after: j.stash + g, tone: 'var(--w-stash)' },
+        ] : [];
+      case 1:
+        return j ? [{ label: 'ground', before: j.stash, after: Math.max(0, j.stash - g), tone: 'var(--w-stash)' }] : [];
+      case 4: {
+        const held = this.avbHeld();
+        const after = this.avbMode() === 'collect' ? held + g : Math.max(0, held - g);
+        return [{ label: 'AVB jar', before: held, after, tone: 'var(--w-avb)' }];
+      }
+      default:
+        return [];
+    }
+  });
   /** The device emptied: the one picked, or the only one with sessions waiting. */
   protected readonly emptied = computed(() => {
     const waiting = this.wits.avb.value()?.waiting ?? [];
@@ -538,6 +544,10 @@ export class RecordDialog {
     this.timer.set(m?.timer ?? null);
   }
 
+  protected pickAvbMode(mode: string): void {
+    this.avbMode.set(mode === 'use' ? 'use' : 'collect');
+  }
+
   protected pickHeater(slug: string): void {
     this.heater.set(slug);
     this.setting.set('');
@@ -638,6 +648,27 @@ export class RecordDialog {
   }
 }
 
+/** What an account's grams are called on a jar's tile. */
+const ACCOUNT_WORDS: Record<string, string> = { storage: 'sealed', stash: 'ground', avb: 'vaped' };
+
+/** A jar as the picker draws it: its glass filled as it stands, the grams that matter here named. */
+function jarOption(j: Jar, grams: number, what: string): JarOption {
+  return {
+    slug: j.slug, name: j.name, grams, what,
+    capacity: Math.max(j.storage + j.stash + j.avb, 0.01),
+    layers: [
+      { grams: j.storage, color: 'var(--w-storage)', label: 'sealed' },
+      { grams: j.stash, color: 'var(--w-stash)', label: 'ground' },
+      { grams: j.avb, color: 'var(--w-avb)', label: 'already vaped' },
+    ],
+  };
+}
+
+/** A device's icon, by what it is. */
+function iconOf(d: Device): string {
+  return CATEGORIES.find((c) => c.id === d.category)?.icon ?? 'devices';
+}
+
 /** The amounts in the entries the most used first, four of them, then smallest first. */
 function lately(entries: Entry[]): number[] {
   const count = new Map<number, number>();
@@ -647,7 +678,3 @@ function lately(entries: Entry[]): number[] {
   return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 4).map(([g]) => g).sort((a, b) => a - b);
 }
 
-function isoDay(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}

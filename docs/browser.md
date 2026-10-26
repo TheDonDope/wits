@@ -33,6 +33,21 @@ command line shows within a few seconds. There are four tabs — **Dashboard**,
 (Analysis, Effects, History, Costs) — and **Record**, always in reach, to
 grind, record a session, a fill or a weighing.
 
+Record's tabs are drawn rather than typed into. The jars are a row of small
+glass jars, each filled as it stands, with the grams that matter there under
+it — sealed for a grind, ground for a session — and a filter once there are
+more than eight. An amount is a large figure with − and + (five centigrams a
+press), a slider up to what the jar holds, the amounts used lately and, for a
+grind, all of it. Devices are tiles, the four most used first and the rest
+behind *more*; a mode, a heater's setting and the account on the scale are
+pills. A session's temperature is a dial, turned by dragging or the arrow keys
+(page keys by five), with the device's modes marked on it, and under it the
+jar's own terpenes light up as the heat passes the point each boils at — 2 of
+Morning Sun's 3 by 180 °C on the demo. **When** is now, yesterday or another
+day from the calendar. Every tab shows what the entry will do to the jar
+before it is recorded: Grind's 0.50 g of Morning Sun, sealed 11.37 → 10.87 g
+and ground 3.40 → 3.90 g.
+
 **Weigh** shows the ledger's figure under the reading. A reading less than
 it is offered as what was forgotten — **I forgot to record a grind** for what
 is sealed, **I forgot to record sessions** for what is ground, saying what
