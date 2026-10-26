@@ -14,6 +14,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/views"
 )
 
 // dashboard is the screen you land on: a grid of cards, one per corner of the
@@ -402,14 +403,10 @@ func storageProjection(a *App, c *ledger.Cycle) (hist, proj []float64, emptyAt t
 func rhythmCard(a *App, typ journal.Type, w int) string {
 	t := a.theme
 	perDay := map[string]float64{}
-	logged := false
-	for _, e := range a.data.State.Standing {
-		if e.Type == typ {
-			perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
-			logged = true
-		}
+	for d, g := range views.Daily(a.data.State.Standing, typ) {
+		perDay[d] = g.Grams()
 	}
-	if !logged {
+	if len(perDay) == 0 {
 		return t.Dim.Render("nothing here yet")
 	}
 	from := a.data.Now.AddDate(0, 0, -12*7)

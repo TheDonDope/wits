@@ -41,6 +41,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/research"
 	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/TheDonDope/wits/pkg/version"
+	"github.com/TheDonDope/wits/pkg/views"
 	"github.com/TheDonDope/wits/pkg/workspace"
 )
 
@@ -953,26 +954,10 @@ type day struct {
 
 // daysOf totals every day with an entry, oldest first, for the calendars.
 func daysOf(ws *workspace.Workspace) any {
-	ground, seshed := map[string]journal.Centigrams{}, map[string]journal.Centigrams{}
-	seen := map[string]bool{}
-	var dates []string
-	for _, e := range ws.State.Standing {
-		d := e.OccurredAt.Format(time.DateOnly)
-		if !seen[d] {
-			seen[d] = true
-			dates = append(dates, d)
-		}
-		switch e.Type {
-		case journal.Grind:
-			ground[d] += journal.CG(e.Grams)
-		case journal.Sesh:
-			seshed[d] += journal.CG(e.Grams)
-		}
-	}
-	sort.Strings(dates)
-	out := make([]day, 0, len(dates))
-	for _, d := range dates {
-		out = append(out, day{Date: d, Ground: ground[d].Grams(), Seshed: seshed[d].Grams()})
+	days := views.Days(ws.State.Standing)
+	out := make([]day, 0, len(days))
+	for _, d := range days {
+		out = append(out, day{Date: d.Date, Ground: d.Ground.Grams(), Seshed: d.Seshed.Grams()})
 	}
 	return out
 }

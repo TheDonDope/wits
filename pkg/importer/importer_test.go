@@ -392,3 +392,15 @@ func TestAnomaliesNameWhatWasNotThere(t *testing.T) {
 	assert.Equal(t, []string{"on 2026-07-02, grind 5.00 g of wcake took more than storage held — 1.00 g"},
 		result.Anomalies(), "The dry run should say so before anything is written")
 }
+
+func TestExcelDatesAsTheXLSXReaderReadsThem(t *testing.T) {
+	for _, serial := range []float64{45000, 45000.5, 46321.999994, 44562.25} {
+		want, err := excelize.ExcelDateToTime(serial, false)
+		require.NoError(t, err)
+		got, err := excelDate(serial)
+		require.NoError(t, err)
+		assert.Equal(t, want, got, "serial %v", serial)
+	}
+	assert.Equal(t, "D7", CellName(4, 7))
+	assert.Equal(t, "AA1", CellName(27, 1))
+}

@@ -53,6 +53,49 @@ interface Globals {
   Go?: new () => GoRuntime;
   witsEngine?: GoEngine;
   witsReady?: () => void;
+  witsReadWorkbook?: (bytes: Uint8Array) => { workbook?: string; error?: string };
+  witsXLSXReady?: () => void;
+}
+
+/** A .xlsx file, as a request's body is typed. */
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+/** A workbook already read, as the engine takes it (pkg/api/desk.go). */
+const WORKBOOK = 'application/vnd.wits.workbook+json';
+let reader: Promise<NonNullable<Globals['witsReadWorkbook']>> | undefined;
+
+/**
+ * The phone's .xlsx reader (cmd/wits-xlsx), started the first time a
+ * workbook is imported: the engine is built without one, 0.9 MB gzipped
+ * lighter on every start, and this is fetched only for the import.
+ */
+function xlsxReader(): Promise<NonNullable<Globals['witsReadWorkbook']>> {
+  reader ??= (async () => {
+    if (!g.Go) {
+      throw new Error('wasm_exec.js is not loaded');
+    }
+    const ready = new Promise<void>((resolve) => {
+      g.witsXLSXReady = resolve;
+    });
+    const go = new g.Go();
+    const { instance } = await WebAssembly.instantiateStreaming(fetch(new URL('wits-xlsx.wasm', document.baseURI)), go.importObject);
+    void go.run(instance);
+    await ready;
+    if (!g.witsReadWorkbook) {
+      throw new Error('wits-xlsx did not start');
+    }
+    return g.witsReadWorkbook;
+  })();
+  return reader;
+}
+
+/** A workbook's bytes read into what the engine takes, by the reader module. */
+async function workbookOf(file: Blob): Promise<string> {
+  const read = await xlsxReader();
+  const out = read(new Uint8Array(await file.arrayBuffer()));
+  if (out.error !== undefined || out.workbook === undefined) {
+    throw new Error(`not a workbook wits can read: ${out.error ?? 'nothing read'}`);
+  }
+  return out.workbook;
 }
 
 const g = globalThis as unknown as Globals;
@@ -273,11 +316,20 @@ async function answer(req: HttpRequest<unknown>): Promise<HttpResponse<unknown> 
   if (!writer && req.method !== 'GET') {
     return new HttpErrorResponse({ status: 409, error: { error: ELSEWHERE }, url: req.url });
   }
-  // A workbook goes across as its bytes, in its own type; anything else is JSON.
-  const res =
-    req.body instanceof Blob
-      ? await e.request(req.method, req.urlWithParams, new Uint8Array(await req.body.arrayBuffer()), req.body.type)
-      : await e.request(req.method, req.urlWithParams, req.body === null ? '' : JSON.stringify(req.body));
+  // A workbook is read by the reader module first, and goes across as what it
+  // read; any other bytes go as they are, in their own type; anything else is JSON.
+  let res: Awaited<ReturnType<GoEngine['request']>>;
+  if (req.body instanceof Blob && req.body.type === XLSX) {
+    try {
+      res = await e.request(req.method, req.urlWithParams, await workbookOf(req.body), WORKBOOK);
+    } catch (err) {
+      return new HttpErrorResponse({ status: 400, error: { error: (err as Error).message }, url: req.url });
+    }
+  } else if (req.body instanceof Blob) {
+    res = await e.request(req.method, req.urlWithParams, new Uint8Array(await req.body.arrayBuffer()), req.body.type);
+  } else {
+    res = await e.request(req.method, req.urlWithParams, req.body === null ? '' : JSON.stringify(req.body));
+  }
   if (res.bytes) {
     // The report: bytes, not JSON, handed over as the blob that was asked for.
     return new HttpResponse({ status: res.status, body: new Blob([res.bytes.slice()], { type: res.type }), url: req.url });

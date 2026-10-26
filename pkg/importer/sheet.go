@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xuri/excelize/v2"
-
 	"github.com/TheDonDope/wits/pkg/catalog"
 )
 
@@ -73,23 +71,20 @@ func (s *Sheet) Ground() float64 {
 
 // readSheet parses one worksheet. It returns nil for anything that does not look
 // like a tracking sheet, so unrelated tabs in the workbook are simply skipped.
-func readSheet(f *excelize.File, name string) (*Sheet, error) {
-	rows, err := f.GetRows(name, excelize.Options{RawCellValue: true})
-	if err != nil {
-		return nil, err
-	}
+func readSheet(ws WorkSheet) *Sheet {
+	rows := ws.Rows
 	header := headerRow(rows)
 	if header == -1 {
-		return nil, nil
+		return nil
 	}
 
-	sheet := &Sheet{Name: name}
+	sheet := &Sheet{Name: ws.Name}
 	sheet.Products = readProducts(rows, header)
 	if len(sheet.Products) == 0 {
-		return nil, nil
+		return nil
 	}
 
-	labels, anomalies := readBindings(f, name, header, sheet.Products)
+	labels, anomalies := readBindings(ws, header, sheet.Products)
 	sheet.Anomalies = append(sheet.Anomalies, anomalies...)
 
 	orphans := map[string]float64{}
@@ -123,10 +118,10 @@ func readSheet(f *excelize.File, name string) (*Sheet, error) {
 			grams, label))
 	}
 	if sheet.Opened.IsZero() {
-		return nil, nil
+		return nil
 	}
 	sheet.Anomalies = append(sheet.Anomalies, sheet.check()...)
-	return sheet, nil
+	return sheet
 }
 
 // check reconciles a sheet against what it says about itself.
@@ -195,7 +190,7 @@ func readProducts(rows [][]string, header int) []*Product {
 
 // readBindings reads the running-balance formulas to learn which strain label
 // belongs to which header product.
-func readBindings(f *excelize.File, sheet string, header int, products []*Product) (map[string]*Product, []string) {
+func readBindings(ws WorkSheet, header int, products []*Product) (map[string]*Product, []string) {
 	byRow := make(map[int]*Product, len(products))
 	for _, p := range products {
 		byRow[p.Row] = p
@@ -206,12 +201,9 @@ func readBindings(f *excelize.File, sheet string, header int, products []*Produc
 	slot := 0
 
 	for col := firstBalanceColumn; col <= lastBalanceColumn; col++ {
-		ref, err := excelize.CoordinatesToCellName(col, header+2)
-		if err != nil {
-			continue
-		}
-		formula, err := f.GetCellFormula(sheet, ref)
-		if err != nil || formula == "" {
+		ref := CellName(col, header+2)
+		formula := ws.Formulas[ref]
+		if formula == "" {
 			continue
 		}
 		m := balanceFormula.FindStringSubmatch(strings.TrimPrefix(formula, "="))
@@ -284,7 +276,7 @@ func cellDate(row []string, col int) (time.Time, bool) {
 	if err != nil {
 		return time.Time{}, false
 	}
-	at, err := excelize.ExcelDateToTime(serial, false)
+	at, err := excelDate(serial)
 	if err != nil {
 		return time.Time{}, false
 	}

@@ -12,7 +12,7 @@ UI_DEFINE = --define "WITS_VERSION='$(shell git describe --tags --always --dirty
 
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release server ui ui-test serve \
-	wasm wasm-check pages appimage demo-seed
+	wasm wasm-check types pages appimage demo-seed
 
 .DEFAULT_GOAL := build
 
@@ -115,12 +115,21 @@ ui-test:
 # wits for the phone: the repository, recorder and API compiled to
 # WebAssembly, with the Go runtime's loader beside it. Both are build output,
 # copied into the client's public folder and not committed.
+# The phone's engine, without the .xlsx reader (-tags noxlsx), and the reader
+# on its own, which the page loads only to import a workbook.
 wasm:
-	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w $(LDFLAGS)" -o wits-ui/public/wits.wasm ./cmd/wits-wasm
+	GOOS=js GOARCH=wasm go build -trimpath -tags noxlsx -ldflags "-s -w $(LDFLAGS)" -o wits-ui/public/wits.wasm ./cmd/wits-wasm
+	GOOS=js GOARCH=wasm go build -trimpath -ldflags "-s -w $(LDFLAGS)" -o wits-ui/public/wits-xlsx.wasm ./cmd/wits-xlsx
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" wits-ui/public/wasm_exec.js
 
 # The engine on MemFS under Node, synced with the CLI through a folder: what
 # the phone pushes, wits pull reads, and the other way round.
+# The shapes the API answers in, as TypeScript (wits-ui/src/app/data/api.gen.ts);
+# data/api-check.ts holds the browser's models to them, and a Go test fails
+# when the file is out of date.
+types:
+	go run ./cmd/wits-types wits-ui/src/app/data/api.gen.ts
+
 wasm-check: build wasm
 	./wasm-check.sh
 

@@ -172,8 +172,8 @@ check() {
 	# client's dependencies; without them there is nothing to lint against.
 	if [ -n "$( (git diff --name-only "$b"...HEAD -- wits-ui 2>/dev/null; git status --porcelain -- wits-ui) | head -1)" ]; then
 		if [ -d wits-ui/node_modules ]; then
-			if out="$(cd wits-ui && npx ng lint 2>&1 && npm run --silent lint:styles 2>&1)"; then
-				say "✓ ng lint and stylelint (wits-ui, with types)"
+			if out="$(cd wits-ui && npx ng lint 2>&1 && npm run --silent lint:styles 2>&1 && npm run --silent typecheck 2>&1)"; then
+				say "✓ ng lint, stylelint and the models held to the API (wits-ui, with types)"
 			else
 				say "✗ ng lint:"
 				say "$out" | grep -E 'error|warning' | head -20

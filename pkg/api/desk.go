@@ -6,6 +6,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -221,15 +222,30 @@ type merge struct {
 	Names []string `json:"names"`
 }
 
-// importBook reads a workbook sent as the request's body. It writes nothing
+// workbookJSON is a workbook already read, as the phone's reader sends it.
+const workbookJSON = "application/vnd.wits.workbook+json"
+
+// importBook reads a workbook sent as the request's body: a .xlsx file, or
+// one already read into an importer.Workbook. It writes nothing
 // unless ?commit=1 — a dry run is the default, as with wits import — and then
 // only into an empty journal, as importer.Commit insists.
 func (s *Server) importBook(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != xlsx {
+	var result *importer.Result
+	var err error
+	switch r.Header.Get("Content-Type") {
+	case xlsx:
+		result, err = importer.ReadFrom(http.MaxBytesReader(w, r.Body, maxWorkbook))
+	case workbookJSON:
+		// The phone's reader read the .xlsx file already (cmd/wits-xlsx):
+		// its engine carries no reader of its own.
+		var book importer.Workbook
+		if err = json.NewDecoder(http.MaxBytesReader(w, r.Body, 4*maxWorkbook)).Decode(&book); err == nil {
+			result, err = importer.ReadWorkbook(&book)
+		}
+	default:
 		fail(w, http.StatusUnsupportedMediaType, errors.New("send the workbook as "+xlsx))
 		return
 	}
-	result, err := importer.ReadFrom(http.MaxBytesReader(w, r.Body, maxWorkbook))
 	if err != nil {
 		fail(w, http.StatusBadRequest, fmt.Errorf("not a workbook wits can read: %w", err))
 		return
