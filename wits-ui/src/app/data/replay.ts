@@ -23,7 +23,8 @@ export class Replay {
 
   private timer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly events: Signal<Entry[]>) {}
+  /** Every entry the replay plays, in order: the timeline draws them all. */
+  constructor(readonly events: Signal<Entry[]>) {}
 
   /** The entries applied: all of them when live. */
   readonly played = computed(() => {

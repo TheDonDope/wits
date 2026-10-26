@@ -216,8 +216,13 @@ lane on one timeline, overlapping the way fills do. **Analysis** is the
 terminal's long view — this fill, the last 30 or 90 days, 12 months, all
 time — and the record played back through it. Press play and everything
 replays from empty, an entry a moment: the daily chart fills in, the products
-race each other up the ranking, the fills grow on their timeline; drag the
-scrubber to any point, step with `←`/`→`. The jars replay the same way,
+race each other up the ranking, the fills grow on their timeline. Above them
+the record is laid out in time — the grams ground week by week, a blue tick
+at every pickup, the years or the months marked — lit up to the playhead;
+point anywhere on it to go there, or step with `←`/`→`. Under it runs the
+tape: the newest entries in a row, each new one coming in at the right and
+pushing the others along, at the replay's pace. The panel keeps one height,
+playing or live, so nothing under it moves. The jars replay the same way,
 filling as fills arrive and draining as they are ground. `?at=2025-02-14`
 opens either as the record stood that day.
 
