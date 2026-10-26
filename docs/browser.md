@@ -156,7 +156,6 @@ already recorded is not recorded again: on the same day, the form says so and
 offers to price that fill from it. Within two weeks, it asks whether it is
 that fill. Only an invoice that matches no fill adds its strains as a new one.
 
-
 A session starts from the last one: its strain while there is some ground,
 its device, mode, heater and temperature. The amounts used lately are chips
 to tap, and *When* says now. Once saved, the dialog asks **How was it?** —
