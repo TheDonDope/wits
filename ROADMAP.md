@@ -302,12 +302,12 @@ hashes, so a fetched one is chained the way appending it would chain it
 A pull is a merge (`Journal.Merge`): the remote's entries this device lacks
 are appended as they are, and when both devices recorded, a `merge` entry
 follows them, naming both heads — nothing is chained again, so every entry
-keeps its hash on every device (until v0.107.0 a pull rebased, chaining this
+keeps its hash on every device (through v0.107.0 a pull rebased, chaining this
 device's own on top with new hashes). A push is refused unless this device
 holds everything on the remote — its head, and with it everything it covers;
 its ratings, products and devices — so nothing another device wrote is
 written over. The catalogs merge field by field, the later change winning
-(until v0.107.0 the remote's copy won whole, and a terpene profile written
+(through v0.107.0 the remote's copy won whole, and a terpene profile written
 here and not yet pushed was lost to the next pull).
 
 Two devices can each grind a jar's last 2 g. Merged, the later of the two took
@@ -539,7 +539,7 @@ charts drawn as SVG with d3's geometry: the fill as a ring with the older jars
 as a halo, each product as a jar of glass with a moving surface, the shelf's
 supply as a curve to its empty day, the whole history as a calendar a year a
 row, every fill as a lane on one timeline, and a virtual-scrolled journal. It
-reads again when the server says the repository changed (until v0.107.0 it
+reads again when the server says the repository changed (through v0.107.0 it
 polled every four seconds). Its fonts and icons ship with it — the
 scaffolding fetched them from a font service, which would have been the only
 network call wits made. Reduced motion is honoured throughout, the route
@@ -995,7 +995,7 @@ the engine included, and shortcuts to `?record=grind` and `?record=session`. On
 a touchscreen the key hints are hidden. The engine was 8.9 MB, 2.4 MB gzipped,
 and had grown to 20.5 MB, 5.2 MB gzipped, by v0.106.0; built without the
 .xlsx reader it is 16.9 MB, 4.3 MB gzipped, and the reader loads on its own
-to import (v0.107.0);
+to import (v0.108.0);
 `httptest` was swapped for a ten-line recorder, which kept the testing flags out
 rather than saving much — the size is the API and `net/http`. Before this,
 the 5.2 MB of a first build was a stub whose unused imports the linker had
@@ -1368,7 +1368,7 @@ each purchase's fill, and a fill is priced together (`POST /api/price/fill`,
 `Recorder.PriceAll`). Every purchase is checked before any price is written, so
 a bad line refuses the fill whole. Each strain takes a price a gram, with 19% VAT
 on top when the switch is on, worked out by `lineCents` on the server — the
-page shows the server's rehearsal (`?dry=1`), as it has since v0.107.0. Or it takes its invoice's line total:
+page shows the server's rehearsal (`?dry=1`), as it has since v0.108.0. Or it takes its invoice's line total:
 **Scan invoice** reads the PDF on the device and shows its first page beside
 the figures. The invoice's match decides what happens: this fill on the same
 day fills the prices; a few days off, it asks first; another fill's says whose
