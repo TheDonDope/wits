@@ -94,14 +94,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/jars", s.read(jarsOf))
 	mux.HandleFunc("GET /api/jars/{slug}", s.jarAt)
 	mux.HandleFunc("GET /api/jars/{slug}/research", s.research)
-	mux.HandleFunc("PUT /api/jars/{slug}", s.describe)
 	mux.HandleFunc("PUT /api/jars/{slug}/terpenes", s.terpenes)
 	mux.HandleFunc("PUT /api/jars/{slug}/rating", s.rateStrain)
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
 	mux.HandleFunc("POST /api/devices", s.addDevice)
 	mux.HandleFunc("PUT /api/devices/{slug}", s.editDevice)
-	mux.HandleFunc("DELETE /api/devices/{slug}", s.removeDevice)
 	mux.HandleFunc("GET /api/days", s.read(daysOf))
 	mux.HandleFunc("GET /api/effects", s.read(effectsOf))
 	mux.HandleFunc("POST /api/rate", s.rate)
@@ -113,8 +111,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/weigh", s.write(weigh))
 	mux.HandleFunc("GET /api/weigh/forgotten", s.forgottenAt)
 	mux.HandleFunc("POST /api/weigh/forgotten", s.batch(weighForgotten))
-	mux.HandleFunc("POST /api/undo", s.write(undo))
-	mux.HandleFunc("POST /api/amend", s.batch(amend))
 	mux.HandleFunc("POST /api/flush", s.flush)
 	mux.HandleFunc("GET /api/avb", s.read(avbOf))
 	mux.HandleFunc("GET /api/costs", s.read(costsOf))
@@ -131,6 +127,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/avb/collect", s.batch(collect))
 	mux.HandleFunc("POST /api/avb/use", s.batch(useAVB))
 	s.desk(mux)
+	s.corrections(mux)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		fail(w, http.StatusNotFound, errors.New("no such endpoint"))
 	})
@@ -138,6 +135,15 @@ func (s *Server) Handler() http.Handler {
 		mux.Handle("/", spa(s.ui))
 	}
 	return local(mux)
+}
+
+// corrections routes what puts the record right: an entry undone or amended,
+// a label corrected, a device taken out of the catalog.
+func (s *Server) corrections(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/undo", s.write(undo))
+	mux.HandleFunc("POST /api/amend", s.batch(amend))
+	mux.HandleFunc("PUT /api/jars/{slug}", s.describe)
+	mux.HandleFunc("DELETE /api/devices/{slug}", s.removeDevice)
 }
 
 // local refuses any request that does not name this machine as its host.
