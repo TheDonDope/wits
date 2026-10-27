@@ -2,10 +2,25 @@
 ## [Unreleased]
 
 
+<a name="v0.109.0"></a>
+## [v0.109.0] - 2026-10-27
+### Docs
+- **pull:** the help says what a pull does now
+
+### Fix
+- **tui:** the screens add in centigrams, and a tie ranks the same twice
+
+### Refactor
+- **chain:** a log names what it names, since nothing moves any more
+
+
 <a name="v0.108.0"></a>
 ## [v0.108.0] - 2026-10-26
 ### Build
 - the API's shapes held in TypeScript, one place for shared figures, the phone's engine without the .xlsx reader
+
+### Docs
+- update changelog for v0.108.0
 
 ### Feat
 - **api:** every write can be rehearsed, and the phone has one writer
@@ -1328,7 +1343,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.108.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.109.0...HEAD
+[v0.109.0]: https://github.com/TheDonDope/wits/compare/v0.108.0...v0.109.0
 [v0.108.0]: https://github.com/TheDonDope/wits/compare/v0.107.0...v0.108.0
 [v0.107.0]: https://github.com/TheDonDope/wits/compare/v0.106.0...v0.107.0
 [v0.106.0]: https://github.com/TheDonDope/wits/compare/v0.105.0...v0.106.0
