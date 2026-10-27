@@ -14,7 +14,6 @@ import (
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
-	"github.com/TheDonDope/wits/pkg/views"
 )
 
 // dashboard is the screen you land on: a grid of cards, one per corner of the
@@ -260,12 +259,11 @@ func (d dashboard) sessionsCard(a *App, w int) string {
 	if len(events) == 0 {
 		return t.Dim.Render("no sessions logged yet — s records one")
 	}
-	total := 0.0
-	perDay := map[string]float64{}
+	var total journal.Centigrams
 	for _, e := range events {
-		total += e.Grams
-		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
+		total += journal.CG(e.Grams)
 	}
+	perDay, _, _ := dailyGrams(events, journal.Sesh)
 	last := events[len(events)-1]
 	lastLine := fmt.Sprintf("last: %.2f g %s", last.Grams, truncate(a.data.ProductName(last.Product), 20))
 	if last.Device != "" {
@@ -279,7 +277,7 @@ func (d dashboard) sessionsCard(a *App, w int) string {
 	return lipgloss.JoinVertical(lipgloss.Left,
 		t.Big.Render(fmt.Sprintf("%d", len(events)))+
 			t.Dim.Render(fmt.Sprintf("  %s · %.1f g through, %.2f g each",
-				nounOnly(len(events), "session"), total, total/float64(len(events)))),
+				nounOnly(len(events), "session"), total.Grams(), total.Grams()/float64(len(events)))),
 		lipgloss.NewStyle().Foreground(t.SeshC).Render(Sparkline(values, min(w, 28), lipgloss.NewStyle()))+
 			t.Dim.Render("  last 14 days"),
 		t.Dim.Render(lastLine),
@@ -301,11 +299,7 @@ func (d dashboard) devicesCard(a *App, w int) string {
 		if n == "no device" || shown == 2 {
 			continue
 		}
-		u := byDev[n]
-		note := fmt.Sprintf("%.2f g · %s", u.grams, plural(u.count, "session"))
-		if u.temps > 0 {
-			note += fmt.Sprintf(" · avg %d°C", u.tSum/u.temps)
-		}
+		note := useNote(byDev[n])
 		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Left,
 			t.Value.Width(min(w/2, 20)).Render(truncate(deviceName(a, n), min(w/2, 20))),
 			t.Dim.Render(" "+note)))
@@ -402,10 +396,7 @@ func storageProjection(a *App, c *ledger.Cycle) (hist, proj []float64, emptyAt t
 // so the habit is readable from the front page.
 func rhythmCard(a *App, typ journal.Type, w int) string {
 	t := a.theme
-	perDay := map[string]float64{}
-	for d, g := range views.Daily(a.data.State.Standing, typ) {
-		perDay[d] = g.Grams()
-	}
+	perDay, _, _ := dailyGrams(a.data.State.Standing, typ)
 	if len(perDay) == 0 {
 		return t.Dim.Render("nothing here yet")
 	}

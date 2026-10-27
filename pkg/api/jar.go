@@ -310,7 +310,12 @@ func seshOf(ws *workspace.Workspace, slug string) jarSesh {
 	for _, d := range devices {
 		out.Devices = append(out.Devices, *d)
 	}
-	sort.Slice(out.Devices, func(i, k int) bool { return out.Devices[i].Sessions > out.Devices[k].Sessions })
+	sort.Slice(out.Devices, func(i, k int) bool {
+		if out.Devices[i].Sessions != out.Devices[k].Sessions {
+			return out.Devices[i].Sessions > out.Devices[k].Sessions
+		}
+		return out.Devices[i].Slug < out.Devices[k].Slug // out of a map; ties go by slug
+	})
 	out.Recent = recentOf(ws, slug, latest)
 	return out
 }

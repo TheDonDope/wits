@@ -364,28 +364,12 @@ func (v analysisView) summary(a *App, events []journal.Event, width int) string 
 // perDay draws the daily amounts as columns across the whole scope.
 func (v analysisView) perDay(a *App, events []journal.Event, width int) string {
 	t := a.theme
-	perDay := map[string]float64{}
-	var first, last time.Time
-	for _, e := range events {
-		if e.Type != journal.Grind {
-			continue
-		}
-		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
-		if first.IsZero() || e.OccurredAt.Before(first) {
-			first = e.OccurredAt
-		}
-		if e.OccurredAt.After(last) {
-			last = e.OccurredAt
-		}
-	}
+	perDay, first, last := dailyGrams(events, journal.Grind)
 	if first.IsZero() {
 		return t.Dim.Render("nothing ground in this range")
 	}
 
-	var values []float64
-	for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
-		values = append(values, perDay[d.Format(time.DateOnly)])
-	}
+	values := daySeries(perDay, first, last)
 
 	// The braille area carries two days per cell and the whole range is
 	// resampled to the width, so a four-year scope keeps its shape rather than
@@ -406,20 +390,7 @@ func (v analysisView) perDay(a *App, events []journal.Event, width int) string {
 // whether weekends differ — which is what a year of habit actually consists of.
 func (v analysisView) rhythm(a *App, events []journal.Event, width int) string {
 	t := a.theme
-	perDay := map[string]float64{}
-	var first, last time.Time
-	for _, e := range events {
-		if e.Type != journal.Grind {
-			continue
-		}
-		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
-		if first.IsZero() || e.OccurredAt.Before(first) {
-			first = e.OccurredAt
-		}
-		if e.OccurredAt.After(last) {
-			last = e.OccurredAt
-		}
-	}
+	perDay, first, last := dailyGrams(events, journal.Grind)
 	if first.IsZero() {
 		return t.Dim.Render("nothing ground in this range")
 	}
@@ -453,22 +424,33 @@ func (v analysisView) byProductSections(a *App, events []journal.Event, width in
 // grindTotals sums the grams and active days ground per product, and ranks
 // the products heaviest first.
 func grindTotals(events []journal.Event) (totals map[string]float64, days map[string]map[string]bool, ground float64, slugs []string) {
-	totals, days = map[string]float64{}, map[string]map[string]bool{}
+	cg, days := map[string]journal.Centigrams{}, map[string]map[string]bool{}
+	var all journal.Centigrams
 	for _, e := range events {
 		if e.Type != journal.Grind {
 			continue
 		}
-		totals[e.Product] += e.Grams
-		ground += e.Grams
+		cg[e.Product] += journal.CG(e.Grams)
+		all += journal.CG(e.Grams)
 		if days[e.Product] == nil {
 			days[e.Product] = map[string]bool{}
 		}
 		days[e.Product][e.OccurredAt.Format(time.DateOnly)] = true
 	}
-	for s := range totals {
+	totals = make(map[string]float64, len(cg))
+	for s, g := range cg {
+		totals[s] = g.Grams()
 		slugs = append(slugs, s)
 	}
-	sort.Slice(slugs, func(i, j int) bool { return totals[slugs[i]] > totals[slugs[j]] })
+	ground = all.Grams()
+	// Ties go by slug: the slugs come out of a map, and a ranking that
+	// reshuffled its equal rows on every frame would read as a change.
+	sort.Slice(slugs, func(i, j int) bool {
+		if totals[slugs[i]] != totals[slugs[j]] {
+			return totals[slugs[i]] > totals[slugs[j]]
+		}
+		return slugs[i] < slugs[j]
+	})
 	return totals, days, ground, slugs
 }
 
@@ -630,6 +612,39 @@ func recentSessions(a *App) []journal.Event {
 	return out
 }
 
+// dailyGrams is the grams of one kind of entry by calendar day, as the
+// charts draw them, and the first and last time one happened; zero times when
+// none did. The sums are views.Daily's, in centigrams, so a day adds up to the
+// figure the browser shows for it.
+func dailyGrams(events []journal.Event, kind journal.Type) (perDay map[string]float64, first, last time.Time) {
+	perDay = map[string]float64{}
+	for d, g := range views.Daily(events, kind) {
+		perDay[d] = g.Grams()
+	}
+	for _, e := range events {
+		if e.Type != kind {
+			continue
+		}
+		if first.IsZero() || e.OccurredAt.Before(first) {
+			first = e.OccurredAt
+		}
+		if e.OccurredAt.After(last) {
+			last = e.OccurredAt
+		}
+	}
+	return perDay, first, last
+}
+
+// daySeries lays perDay out day by day from first to last, a day with
+// nothing as zero, for a chart that has a column for every day.
+func daySeries(perDay map[string]float64, first, last time.Time) []float64 {
+	var values []float64
+	for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
+		values = append(values, perDay[d.Format(time.DateOnly)])
+	}
+	return values
+}
+
 // seshes returns the sessions that stand, oldest first.
 func seshes(a *App) []journal.Event {
 	var out []journal.Event
@@ -726,38 +741,17 @@ func (v sessionsView) summary(a *App, events []journal.Event, width int) string 
 // uses, with the same seven-day average riding over it.
 func (v sessionsView) perDay(a *App, events []journal.Event, width int) string {
 	t := a.theme
-	perDay := map[string]float64{}
-	var first, last time.Time
-	for _, e := range events {
-		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
-		if first.IsZero() || e.OccurredAt.Before(first) {
-			first = e.OccurredAt
-		}
-		if e.OccurredAt.After(last) {
-			last = e.OccurredAt
-		}
-	}
-	var values []float64
-	for d := first; !d.After(last); d = d.AddDate(0, 0, 1) {
-		values = append(values, perDay[d.Format(time.DateOnly)])
-	}
+	perDay, first, last := dailyGrams(events, journal.Sesh)
+	values := daySeries(perDay, first, last)
 	chart := AreaChart(values, movingAverage(values, 7), width, 6, t, t.SeshC, t.Alt)
 	return lipgloss.JoinVertical(lipgloss.Left, chart,
 		axisLabels(t, first.Format("02 Jan 06"), last.Format("02 Jan 06"), width))
 }
 
-// deviceUsage is what the sessions drew through one device.
-type deviceUsage struct {
-	grams float64
-	count int
-	temps int
-	tSum  int
-}
-
 // usageByDevice aggregates the sessions per device, heaviest first. Sessions
 // without a device are owned rather than dropped: they happened.
-func usageByDevice(events []journal.Event) ([]string, map[string]*deviceUsage) {
-	byDev := map[string]*deviceUsage{}
+func usageByDevice(events []journal.Event) ([]string, map[string]*views.Use) {
+	byDev := map[string]*views.Use{}
 	for slug, u := range views.Devices(events) {
 		if u.Sessions == 0 {
 			continue // a heater: it heated sessions, but had none
@@ -766,14 +760,28 @@ func usageByDevice(events []journal.Event) ([]string, map[string]*deviceUsage) {
 		if name == "" {
 			name = "no device"
 		}
-		byDev[name] = &deviceUsage{grams: u.Grams.Grams(), count: u.Sessions, temps: u.Temps, tSum: u.TempSum}
+		byDev[name] = u
 	}
 	names := make([]string, 0, len(byDev))
 	for n := range byDev {
 		names = append(names, n)
 	}
-	sort.Slice(names, func(i, j int) bool { return byDev[names[i]].grams > byDev[names[j]].grams })
+	sort.Slice(names, func(i, j int) bool {
+		if byDev[names[i]].Grams != byDev[names[j]].Grams {
+			return byDev[names[i]].Grams > byDev[names[j]].Grams
+		}
+		return names[i] < names[j] // out of a map; ties go by name
+	})
 	return names, byDev
+}
+
+// useNote is what a device drew, how often and how hot, in one line.
+func useNote(u *views.Use) string {
+	note := fmt.Sprintf("%.2f g · %s", u.Grams.Grams(), plural(u.Sessions, "session"))
+	if t := u.MeanTemp(); t > 0 {
+		note += fmt.Sprintf(" · avg %d°C", t)
+	}
+	return note
 }
 
 // byDevice ranks the devices by the grams drawn through them, with how often
@@ -783,11 +791,6 @@ func (v sessionsView) byDevice(a *App, events []journal.Event, width int) string
 	names, byDev := usageByDevice(events)
 	bars := make([]Bar, 0, len(names))
 	for _, n := range names {
-		u := byDev[n]
-		note := plural(u.count, "session")
-		if u.temps > 0 {
-			note = fmt.Sprintf("%s · avg %d°C", note, u.tSum/u.temps)
-		}
 		label := n
 		if a.data.Devices != nil {
 			if d, err := a.data.Devices.Find(n); err == nil {
@@ -796,8 +799,8 @@ func (v sessionsView) byDevice(a *App, events []journal.Event, width int) string
 		}
 		bars = append(bars, Bar{
 			Label: label,
-			Value: u.grams,
-			Note:  fmt.Sprintf("%.2f g · %s", u.grams, note),
+			Value: byDev[n].Grams.Grams(),
+			Note:  useNote(byDev[n]),
 			Color: t.SeshC,
 		})
 	}
@@ -808,17 +811,7 @@ func (v sessionsView) byDevice(a *App, events []journal.Event, width int) string
 // screen reads consumption in.
 func (v sessionsView) rhythm(a *App, events []journal.Event, width int) string {
 	t := a.theme
-	perDay := map[string]float64{}
-	var first, last time.Time
-	for _, e := range events {
-		perDay[e.OccurredAt.Format(time.DateOnly)] += e.Grams
-		if first.IsZero() || e.OccurredAt.Before(first) {
-			first = e.OccurredAt
-		}
-		if e.OccurredAt.After(last) {
-			last = e.OccurredAt
-		}
-	}
+	perDay, first, last := dailyGrams(events, journal.Sesh)
 	return Calendar(perDay, first, last, width, t)
 }
 
