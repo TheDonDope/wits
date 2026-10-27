@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
@@ -14,6 +15,7 @@ import { scoreColor } from '../viz/effect-matrix';
 import { AromaWheel } from '../viz/aroma-wheel';
 import { GlassJar } from '../viz/glass-jar';
 import { MonthBars } from '../viz/month-bars';
+import { DescribeDialog } from './describe';
 import { StrainRatingForm } from './strain-rating';
 import { Terpenes } from './terpenes';
 
@@ -60,6 +62,7 @@ import { Terpenes } from './terpenes';
             First {{ j.first_seen | date: 'd MMMM y' }} · last {{ j.last_seen | date: 'd MMMM y' }}
             @if (j.flushed > 0) { · {{ j.flushed | number: '1.2-2' }} g of what was ground cleared unlogged }
           </p>
+          <button mat-button class="fix" (click)="describe(j)"><mat-icon>edit</mat-icon>Correct the label</button>
         </div>
       </section>
 
@@ -216,6 +219,7 @@ import { Terpenes } from './terpenes';
     .head { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 28px; padding: 24px 28px; align-items: center; }
     .head w-jar { width: 120px; height: 168px; }
     .who { display: grid; gap: 10px; min-width: 0; }
+    .fix { justify-self: start; margin-left: -12px; }
     h1 { font: 600 26px/1.2 var(--w-font); margin: 0; letter-spacing: -0.01em; }
     .chips, .devices { display: flex; gap: 6px; flex-wrap: wrap; }
     .chip { font: 600 11px/1.9 var(--w-font); padding: 0 10px; border-radius: 99px; background: color-mix(in srgb, var(--w-fg) 6%, transparent);
@@ -295,6 +299,7 @@ import { Terpenes } from './terpenes';
 })
 export class JarPage {
   private readonly wits = inject(Wits);
+  private readonly dialog = inject(MatDialog);
   /** The jar's slug, off the route. */
   readonly slug = input.required<string>();
 
@@ -303,6 +308,11 @@ export class JarPage {
   );
 
   protected readonly money = euros;
+
+  /** Opens the label of the jar to be corrected: its name, maker, cultivar, THC and CBD. */
+  protected describe(j: JarDetail): void {
+    this.dialog.open(DescribeDialog, { data: j, autoFocus: 'first-tabbable' });
+  }
 
   /** Each dimension rated, its mean, in the order the dimensions are asked. */
   protected readonly scores = computed(() => {

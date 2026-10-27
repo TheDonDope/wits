@@ -11,7 +11,7 @@ const CHANGE_ECHO = 1500;
 
 
 import {
-  Avb, Costs, Cycle, Findings, Strain, StrainRating, Day, Terpene, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, UnpricedEntry, Verdict, Written,
+  Avb, Costs, Cycle, Findings, Strain, StrainRating, Day, Terpene, Device, DeviceFields, Dimension, EffectLog, Entry, FillLine, InvoiceReading, Jar, LabelReading, Listing, Overview, Place, PriceLine, ProductLabel, UnpricedEntry, Verdict, Written,
 } from './models';
 
 /**
@@ -186,6 +186,22 @@ export class Wits {
     return this.write('undo', { hash });
   }
 
+  /** Corrects an entry's amount: undone, and recorded again as it should have been. */
+  amend(hash: string, grams: number, note: string) {
+    return this.write<{ message: string; entries: Entry[] }>('amend', { hash, grams, note });
+  }
+
+  /** Corrects what a product's label says; its slug, terpenes and rating stay as they are. */
+  async describe(slug: string, label: ProductLabel): Promise<{ message: string }> {
+    try {
+      const out = await firstValueFrom(this.http.put<{ message: string }>(`/api/jars/${encodeURIComponent(slug)}`, label));
+      this.version.update((v) => v + 1);
+      return out;
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
   /** Rates what a session did. */
   rate(session: string, scores: Partial<Record<Dimension, number>>, note: string) {
     return this.write<{ message: string }>('rate', { session, scores, note });
@@ -257,6 +273,18 @@ export class Wits {
   async editDevice(slug: string, device: DeviceFields): Promise<{ message: string }> {
     try {
       const out = await firstValueFrom(this.http.put<{ message: string }>(`/api/devices/${encodeURIComponent(slug)}`, device));
+      this.version.update((v) => v + 1);
+      return out;
+    } catch (err) {
+      throw said(err);
+    }
+  }
+
+  /** Takes a device out of the catalog; the sessions it was used for keep its name. */
+  async removeDevice(slug: string): Promise<{ message: string }> {
+    try {
+      // A body, so the request is JSON as every write is: the server takes no other.
+      const out = await firstValueFrom(this.http.delete<{ message: string }>(`/api/devices/${encodeURIComponent(slug)}`, { body: {} }));
       this.version.update((v) => v + 1);
       return out;
     } catch (err) {

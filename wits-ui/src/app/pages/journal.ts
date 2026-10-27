@@ -15,6 +15,7 @@ import { firstValueFrom } from 'rxjs';
 import { Entry } from '../data/models';
 import { Binding, Keys } from '../data/keys';
 import { Wits } from '../data/wits';
+import { AmendDialog } from './amend';
 import { Confirm, ConfirmDialog } from './confirm';
 
 /** How each kind of entry looks: its icon, its colour, its verb. */
@@ -141,10 +142,12 @@ interface Week {
             </div>
             <span class="g num" [style.--w.%]="share(e)">{{ e.grams | number: '1.2-2' }}<small> g</small></span>
             <span class="hash dim" [matTooltip]="e.hash">{{ e.hash.slice(0, 7) }}</span>
-            @if (!e.reverts && e.type !== 'adjust' && !e.corrected) {
-              <button mat-icon-button (click)="undo(e)" matTooltip="Undo — records a correction">
-                <mat-icon>undo</mat-icon>
-              </button>
+            @if (correctable(e)) {
+              <span class="acts">
+                <button mat-icon-button (click)="amend(e)" matTooltip="Amend the amount — undoes it and records it again"
+                  aria-label="Amend the amount"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button (click)="undo(e)" matTooltip="Undo — records a correction" aria-label="Undo"><mat-icon>undo</mat-icon></button>
+              </span>
             } @else {
               <span class="spacer"></span>
             }
@@ -184,7 +187,7 @@ interface Week {
     .split { display: flex; gap: 2px; height: 5px; border-radius: 99px; overflow: hidden; }
     .split .g, .scrub .g { background: var(--w-stash); }
     .split .v, .scrub .v { background: var(--w-sesh); }
-    .entry { height: 100%; display: grid; grid-template-columns: 96px 36px minmax(0, 1fr) 96px 64px 40px; gap: 14px; align-items: center;
+    .entry { height: 100%; display: grid; grid-template-columns: 96px 36px minmax(0, 1fr) 96px 64px 84px; gap: 14px; align-items: center;
       border-radius: 14px; transition: background .2s; }
     .entry:hover { background: color-mix(in srgb, var(--w-fg) 4%, transparent); }
     .row.cur .entry { background: color-mix(in srgb, var(--w-primary) 14%, transparent); box-shadow: inset 3px 0 0 var(--w-primary); }
@@ -203,6 +206,7 @@ interface Week {
       background: var(--tone); opacity: .7; }
     .g small { color: var(--w-dim); font-size: 11px; }
     .hash { font: 500 11px var(--w-mono); }
+    .acts { display: flex; justify-content: flex-end; }
     .scrub { padding: 12px 18px 8px; display: grid; gap: 6px; }
     .bars { display: flex; align-items: flex-end; gap: 1px; height: 46px; flex-direction: row-reverse; }
     .week { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 1px;
@@ -214,7 +218,8 @@ interface Week {
     .key { display: inline-flex; align-items: center; gap: 4px; }
     .key i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-left: 6px; }
     @media (max-width: 860px) {
-      .entry { grid-template-columns: 40px 30px minmax(0, 1fr) 64px 36px; gap: 8px; }
+      .entry { grid-template-columns: 40px 30px minmax(0, 1fr) 64px 64px; gap: 8px; }
+      .acts button { width: 32px; height: 32px; padding: 4px; }
       .day { grid-template-columns: 70px 30px minmax(0, 1fr); gap: 8px; }
       .dname, .hash { display: none; }
       .row { padding: 0 8px; }
@@ -271,10 +276,16 @@ export class Journal {
       { keys: ['k', 'ArrowUp'], label: 'k', help: 'up', quiet: true, run: () => {
         this.move(-1);
       } },
+      { keys: ['e'], help: 'amend', run: () => {
+        const e = this.rows().at(this.cursor())?.entry;
+        if (e && this.correctable(e)) {
+          this.amend(e);
+        }
+      } },
       { keys: ['d'], help: 'undo', run: () => {
-        const r = this.rows().at(this.cursor());
-        if (r?.entry && !r.entry.reverts && r.entry.type !== 'adjust' && !r.entry.corrected) {
-          void this.undo(r.entry);
+        const e = this.rows().at(this.cursor())?.entry;
+        if (e && this.correctable(e)) {
+          void this.undo(e);
         }
       } },
       { keys: ['f'], help: this.kind() ? `filter: ${KINDS[this.kind() as Entry['type']].verb}` : 'filter', run: () => {
@@ -408,6 +419,15 @@ export class Journal {
   }
 
   protected track = (_: number, r: Row) => r.entry?.hash ?? `day-${r.day}`;
+
+  /** Whether an entry can be amended or undone: one that stands, and is no correction itself. */
+  protected correctable(e: Entry): boolean {
+    return !e.reverts && e.type !== 'adjust' && e.type !== 'merge' && !e.corrected;
+  }
+
+  protected amend(e: Entry): void {
+    this.dialog.open(AmendDialog, { data: { entry: e, verb: KINDS[e.type].verb }, autoFocus: 'first-tabbable' });
+  }
 
   protected async undo(e: Entry): Promise<void> {
     const ok = await firstValueFrom(

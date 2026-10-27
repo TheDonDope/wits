@@ -90,6 +90,15 @@ export interface Overview {
   shelf: Shelf;
 }
 
+/** What a product's label says, as it is corrected: its slug, terpenes and rating are kept apart. */
+export interface ProductLabel {
+  name: string;
+  manufacturer: string;
+  cultivar: string;
+  thc: number;
+  cbd: number;
+}
+
 /** A strain rated as a whole, apart from any one session: each score 1–5, or left out. */
 export interface StrainRating {
   overall?: number;

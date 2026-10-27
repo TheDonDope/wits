@@ -1072,6 +1072,87 @@ func TestDescribeRatesTheStrain(t *testing.T) {
 	assert.Contains(t, out, "Rated: not yet")
 }
 
+// TestDescribeCorrectsTheLabel: what a product is called and what it holds
+// are corrected as far as the flags say, the slug kept, and a share past 100
+// % refused.
+func TestDescribeCorrectsTheLabel(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Describe, "Enua", "--terpenes", "Limonen")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Describe, "Enua", "--name", "Enua Wedding Cake", "--maker", "Enua", "--thc", "23.5")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Enua Wedding Cake (wcake-221)\nEnua · Wedding Cake\nTHC 23.5 %, CBD 1 %\n", "the slug and the cultivar stay, and CBD as it was")
+	assert.Contains(t, out, "Terpenes: Limonen", "the terpenes stay as they were")
+
+	_, err = run(t, dir, Describe, "Enua", "--thc", "230")
+	require.ErrorContains(t, err, "0 to 100 %")
+	_, err = run(t, dir, Describe, "Enua", "--name", " ")
+	require.ErrorContains(t, err, "a product needs a name")
+}
+
+// TestAmendCommand: an amount is corrected by an undo and the entry again,
+// and refused when the jar never held the difference.
+func TestAmendCommand(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "7.5", "--date", "2026-07-02")
+	require.NoError(t, err)
+	log, err := run(t, dir, Log, "--oneline")
+	require.NoError(t, err)
+	hash := strings.Fields(log)[0]
+
+	out, err := run(t, dir, Amend, hash, "0.75", "--note", "misread the scale")
+	require.NoError(t, err)
+	assert.Regexp(t, `^\[[0-9a-f]{7}\] amended grind Enua 22/1 Wedding Cake from 2026-07-02: 0.75g, not 7.50g\n$`, out)
+	status, err := run(t, dir, Status)
+	require.NoError(t, err)
+	assert.Contains(t, status, "9.25", "storage holds the 10 g less the corrected grind")
+
+	_, err = run(t, dir, Amend, hash, "0.5")
+	require.Error(t, err, "an entry already undone is not amended again")
+	log, err = run(t, dir, Log, "--oneline")
+	require.NoError(t, err)
+	_, err = run(t, dir, Amend, strings.Fields(log)[0], "12")
+	require.ErrorContains(t, err, "cannot amend")
+}
+
+// TestDeviceEditAndRemove: a device is changed as far as the flags say and
+// removed, its sessions keeping its name.
+func TestDeviceEditAndRemove(t *testing.T) {
+	dir := repository(t)
+	_, err := run(t, dir, Device, "add", "Storz & Bickel Mighty+", "--max", "210")
+	require.NoError(t, err)
+
+	out, err := run(t, dir, Device, "edit", "mighty", "--load", "0.15", "--default", "185")
+	require.NoError(t, err)
+	assert.Equal(t, "Changed device storz-bickel-mighty (Storz & Bickel Mighty+)\n", out)
+	list, err := run(t, dir, Device, "list")
+	require.NoError(t, err)
+	assert.Regexp(t, `storz-bickel-mighty\s+Storz & Bickel Mighty\+\s+0-210°C\s+185°C`, list)
+
+	_, err = run(t, dir, Device, "edit", "mighty")
+	require.ErrorContains(t, err, "nothing to change")
+	_, err = run(t, dir, Device, "edit", "mighty", "--min", "220")
+	require.ErrorContains(t, err, "lowest temperature")
+
+	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	require.NoError(t, err)
+	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	require.NoError(t, err)
+	_, err = run(t, dir, Sesh, "wedding", "0.2", "--device", "mighty", "--date", "2026-07-02")
+	require.NoError(t, err)
+
+	out, err = run(t, dir, Device, "remove", "mighty")
+	require.NoError(t, err)
+	assert.Equal(t, "Removed device storz-bickel-mighty (Storz & Bickel Mighty+); 1 sessions keep its name\n", out)
+	_, err = run(t, dir, Device, "remove", "mighty")
+	require.Error(t, err)
+}
+
 func TestPackCommand(t *testing.T) {
 	dir := repository(t)
 	today := time.Now()

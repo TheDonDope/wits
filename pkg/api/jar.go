@@ -472,6 +472,40 @@ func (s *Server) research(w http.ResponseWriter, r *http.Request) {
 }
 
 // terpenes writes down a product's terpenes, dominant first; none clears them.
+// describe corrects what a product's label says — its name, maker,
+// cultivar, THC and CBD — keeping its slug, which its entries name it by,
+// and its terpenes and rating, which have their own.
+func (s *Server) describe(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.writable(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		Name         string  `json:"name"`
+		Manufacturer string  `json:"manufacturer"`
+		Cultivar     string  `json:"cultivar"`
+		THC          float64 `json:"thc"`
+		CBD          float64 `json:"cbd"`
+	}
+	if err := decode(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	was := ws.Products.Exact(r.PathValue("slug"))
+	if was == nil {
+		fail(w, http.StatusNotFound, errNoJar)
+		return
+	}
+	next := *was
+	next.Name, next.Manufacturer, next.Cultivar, next.THC, next.CBD = req.Name, req.Manufacturer, req.Cultivar, req.THC, req.CBD
+	p, err := ws.Recorder.Describe(was.Slug, next)
+	if err != nil {
+		fail(w, http.StatusBadRequest, err)
+		return
+	}
+	reply(w, http.StatusCreated, map[string]string{"message": "described " + p.Name})
+}
+
 func (s *Server) terpenes(w http.ResponseWriter, r *http.Request) {
 	ws, ok := s.writable(w, r)
 	if !ok {

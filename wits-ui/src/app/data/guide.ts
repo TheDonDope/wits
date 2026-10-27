@@ -247,7 +247,7 @@ Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, 
     group: 'The shelf',
     title: 'The jars, and one jar in full',
     icon: 'inventory_2',
-    lead: '<b>Shelf → Jars</b> is a gallery: every product a card across its life. Tick cards and <b>Clear leftovers</b> records what is ground of them as consumed; <b>Play back history</b> replays the shelf from empty; <b>Rate</b> rates the strain; <b>Film</b> records the shelf’s three years as a thirty-second video.',
+    lead: '<b>Shelf → Jars</b> is a gallery: every product a card across its life. Tick cards and <b>Clear leftovers</b> records what is ground of them as consumed; <b>Play back history</b> replays the shelf from empty; <b>Rate</b> rates the strain; <b>Correct the label</b>, on a jar, sets its name, maker, cultivar, THC and CBD; <b>Film</b> records the shelf’s three years as a thirty-second video.',
     body: [
       'A card opens the jar in full: what it is (producer, strain, THC and CBD), its terpenes and its taste as a wheel; every fill of it and what each still holds; what it cost a gram; what was ground and used month by month; its sessions by device, temperature and rating; and the products most like it.',
       '<b>What I carry</b>, on the same page, is a signed QR code of what you hold against the fills that dispensed it — what a German patient must be able to show. Any phone that scans it checks the signature.',
@@ -259,9 +259,11 @@ Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, 
     page: { path: '/shelf/jars', label: 'Open the jars' },
     cli: [
       { cmd: 'wits describe cantourage-mac1-251', out: `Cantourage 25/1 MAC1+ (cantourage-mac1-251)
+Cantourage · MAC1+
 THC 25 %, CBD 1 %
 Terpenes: Limonene, Linalool, Pinene, Caryophyllene, Myrcene
 Rated: not yet (--rating)` },
+      { cmd: 'wits describe cantourage-mac1-251 --thc 25.5 --maker Cantourage', note: 'Corrects the label: --name, --maker, --cultivar, --thc, --cbd. The slug its entries name it by stays.' },
       { cmd: 'wits like cantourage-mac1-251', out: `Like Cantourage 25/1 MAC1+ (citrus, flowers and pine):
    99 %  Cantourage 25/1 MAC 1+ — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
    98 %  420 Evolution 25/1 CA MAC: MAC1 — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
@@ -276,7 +278,8 @@ All Nations 29/1 Mac Doughnut      12.42g  3.30g   1.72g  20.00g on 2026-08-29
     tui: [
       { keys: ['space'], does: 'ticks a jar on the storage or stash screen' },
       { keys: ['r'], does: 'weighs the ticked jars together' },
-      { keys: ['e'], does: 'corrects a product’s name' },
+      { keys: ['e'], does: 'corrects a product’s label: name, maker, cultivar, THC, CBD, terpenes' },
+      { keys: ['R'], does: 'rates the strain as a whole: overall, taste, aroma, again, a line' },
       { keys: ['p'], does: 'replays the shelf from empty' },
     ],
     tuiShot: term('tui-storage', 'The storage screen of the terminal interface', 'The storage screen: what still holds something, and every jar worked down to zero.'),
@@ -286,7 +289,7 @@ All Nations 29/1 Mac Doughnut      12.42g  3.30g   1.72g  20.00g on 2026-08-29
     group: 'The shelf',
     title: 'The journal, and putting a mistake right',
     icon: 'receipt_long',
-    lead: '<b>Shelf → Journal</b> is every entry, newest first, on a timeline: each day with what was ground and vaped, each entry with its time and where its grams went. The bars above are every week; pick one to go there. Undo an entry and wits records a correction that moves the same grams back; both stay in the log.',
+    lead: '<b>Shelf → Journal</b> is every entry, newest first, on a timeline: each day with what was ground and vaped, each entry with its time and where its grams went. The bars above are every week; pick one to go there. Undo an entry (<kbd>d</kbd>) and wits records a correction that moves the same grams back; amend one (<kbd>e</kbd>) and it is undone and recorded again with the amount it should have had, what that does to the jar shown first. Every one stays in the log.',
     shots: [web('journal', '/shelf/journal', 'The journal as a timeline, with every week of the history as bars above it', 'The journal, day by day, the whole history above it.')],
     page: { path: '/shelf/journal', label: 'Open the journal' },
     cli: [
@@ -305,6 +308,7 @@ Device      Storz & Bickel Venty at 185°C
 Fill        30, opened 2026-08-29
 Rated       overall 4, sleep 5` },
       { cmd: 'wits revert aceba4e --reason "misread the scale"' },
+      { cmd: 'wits amend aceba4e 0.20 --note "misread the scale"', note: 'Undone, and recorded again as 0.20 g, both in one write.' },
     ],
     tui: [
       { keys: ['e'], does: 'amends an amount' },
@@ -343,7 +347,7 @@ Dry run. Nothing was written. Re-run without --dry-run to record it.` },
     group: 'The shelf',
     title: 'Devices and temperatures',
     icon: 'air',
-    lead: '<b>Shelf → Devices</b> lists what a session is had with, what heats a manual one, and the grinders. <b>Add a device</b> starts from a preset — the Venty, the Mighty+, the Herb Frolic, the Tornado and more — or from nothing.',
+    lead: '<b>Shelf → Devices</b> lists what a session is had with, what heats a manual one, and the grinders. <b>Add a device</b> starts from a preset — the Venty, the Mighty+, the Herb Frolic, the Tornado and more — or from nothing. A device opened again is changed, retired, or removed: removed, its sessions keep its name, and only what is written about it goes.',
     body: [
       'A device has its maker, how it heats, its temperature range and its modes, each with its own temperature and timer, and for a vaporizer or glass what <b>a load holds</b> — 0.15 g on most presets, 0.1 g on the Simrells — which sizes a session you forgot to record. Its card shows what it has done: sessions and grams, when it was last used, and its price per session so far. A retired device is kept, since its sessions name it.',
       'Wits knows the boiling point of every cannabinoid and terpene, so a number on a dial reads as what it releases — up to the point it starts producing benzene.',
@@ -355,6 +359,8 @@ Dry run. Nothing was written. Re-run without --dry-run to record it.` },
     page: { path: '/shelf/devices', label: 'Open the devices' },
     cli: [
       { cmd: 'wits device add "Volcano Hybrid" --min 40 --max 230 --default 185 --load 0.15' },
+      { cmd: 'wits device edit volcano --default 190', note: 'Changes only what the flags say; --name, --kind, --min, --max, --default, --load.' },
+      { cmd: 'wits device remove volcano', note: 'Its sessions keep its name.' },
       { cmd: 'wits temps 190', out: `COMPOUND         BOILS AT  EFFECTS
 THCA             120°C     anti-inflammatory, anti-epileptic, anti-proliferic
 Nerolidol        122°C     sedative, anti-fungal, anti-malarial, anti-parasitic, skin penetration enhancer
@@ -370,7 +376,6 @@ CBDA             130°C     anti-inflammatory, anti-proliferic
   },
   {
     id: 'avb',
-    gaps: { tui: { planned: 'AVB' } },
     group: 'The shelf',
     title: 'AVB',
     icon: 'recycling',
@@ -389,6 +394,9 @@ COLLECTED   DEVICE                 AVB    FROM                  YIELD
 2026-10-12  storz-bickel-mighty    1.55g  3.30g in 15 sessions  47%
 …` },
       { cmd: 'wits avb use 0.1 --note tincture' },
+    ],
+    tui: [
+      { keys: ['v'], does: 'AVB, collected or used, on every screen but the journal; it asks which device when more than one has sessions waiting' },
     ],
   },
   {

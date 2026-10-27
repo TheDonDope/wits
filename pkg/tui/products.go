@@ -105,7 +105,7 @@ func newStorageView() storageView { return storageView{newMarkList()} }
 
 type storageKeys struct {
 	keyMap
-	Mark, Reconcile, Edit, Clean, Play key.Binding
+	Mark, Reconcile, Edit, Rate, Clean, Play key.Binding
 }
 
 // markKey and cleanKey are declared once, shared by the help line and the
@@ -116,11 +116,13 @@ var (
 )
 
 func (k storageKeys) ShortHelp() []key.Binding {
+	// R is on the full help only: the line has no room for it beside clean
+	// history and still says ? and q at 100 columns.
 	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Clean, k.Play, k.Help, k.Quit}
 }
 
 func (k storageKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Clean, k.Play})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Rate, k.Clean, k.Play})
 }
 
 func (v storageView) keys(base keyMap) help.KeyMap {
@@ -129,6 +131,7 @@ func (v storageView) keys(base keyMap) help.KeyMap {
 		Mark:      markKey,
 		Reconcile: withHelp(base.Weigh, "weigh"),
 		Edit:      base.Edit,
+		Rate:      base.Rate,
 		Clean:     cleanKey,
 		Play:      playKey,
 	}
@@ -634,15 +637,15 @@ func newStashView() stashView { return stashView{newMarkList()} }
 
 type stashKeys struct {
 	keyMap
-	Mark, Reconcile, Edit, Play key.Binding
+	Mark, Reconcile, Edit, Rate, Play key.Binding
 }
 
 func (k stashKeys) ShortHelp() []key.Binding {
-	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Play, k.Help, k.Quit}
+	return []key.Binding{k.Up, k.Down, k.Mark, k.Reconcile, k.Edit, k.Rate, k.Play, k.Help, k.Quit}
 }
 
 func (k stashKeys) FullHelp() [][]key.Binding {
-	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Play})
+	return append(k.keyMap.FullHelp(), []key.Binding{k.Mark, k.Reconcile, k.Edit, k.Rate, k.Play})
 }
 
 func (v stashView) keys(base keyMap) help.KeyMap {
@@ -651,6 +654,7 @@ func (v stashView) keys(base keyMap) help.KeyMap {
 		Mark:      markKey,
 		Reconcile: withHelp(base.Weigh, "weigh"),
 		Edit:      base.Edit,
+		Rate:      base.Rate,
 		Play:      playKey,
 	}
 }

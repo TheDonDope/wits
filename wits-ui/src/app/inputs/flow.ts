@@ -1,6 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+import { Accounts, Preview } from '../data/models';
+
 /** One account of the jar, before the entry and after it. */
 export interface FlowLine {
   label: string;
@@ -61,5 +63,25 @@ export class FlowPreview {
       kept: (Math.min(l.before, l.after) / top) * 100,
       moved: (Math.abs(l.after - l.before) / top) * 100,
     }));
+  });
+}
+
+/** The accounts a rehearsal's jars are drawn by, what each is called, and its colour. */
+const FLOWS: [keyof Accounts, string, string][] = [
+  ['storage', 'sealed', 'var(--w-storage)'],
+  ['stash', 'ground', 'var(--w-stash)'],
+  ['avb', 'AVB jar', 'var(--w-avb)'],
+];
+
+/**
+ * The lines a rehearsal draws: each account its jars move grams in, summed
+ * over the jars, before and after — as the server worked them out.
+ */
+export function flowOf(p: Preview): FlowLine[] {
+  const sum = (k: keyof Accounts, when: 'before' | 'after') => p.jars.reduce((s, j) => s + j[when][k], 0);
+  return FLOWS.flatMap(([k, label, tone]) => {
+    const before = sum(k, 'before');
+    const after = sum(k, 'after');
+    return Math.abs(after - before) >= 0.005 ? [{ label, before, after, tone }] : [];
   });
 }

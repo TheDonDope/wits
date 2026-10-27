@@ -6,6 +6,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/views"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +16,7 @@ var (
 	deviceMaxTemp int
 	deviceDefault int
 	deviceLoad    float64
+	deviceName    string
 )
 
 // Device is the `wits device` command.
@@ -53,6 +55,99 @@ var deviceAdd = &cobra.Command{
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Added device %s (%s)\n", device.Slug, device.Name)
+		return nil
+	},
+}
+
+var deviceEdit = &cobra.Command{
+	Use:   "edit <device>",
+	Short: "Change what a device is; its sessions keep naming it",
+	Long: "Change a device's name, kind, temperatures or load, as far as the flags\n" +
+		"say. Its slug stays, since every session it was used for names it by that.",
+	Example: "  wits device edit mighty --load 0.15\n" +
+		"  wits device edit volcano --name \"Volcano Hybrid\" --default 190",
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		var edited catalog.Device
+		if _, err := s.Repo.UpdateDevices(func(c *catalog.Devices) error {
+			d, err := c.Find(args[0])
+			if err != nil {
+				return err
+			}
+			if err := editFromFlags(cmd, d); err != nil {
+				return err
+			}
+			edited = *d
+			return d.Check()
+		}); err != nil {
+			return err
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Changed device %s (%s)\n", edited.Slug, edited.Name)
+		return nil
+	},
+}
+
+// editFromFlags changes a device as far as the flags say, and no further.
+func editFromFlags(cmd *cobra.Command, d *catalog.Device) error {
+	changed := false
+	for _, f := range []struct {
+		name string
+		set  func()
+	}{
+		{"name", func() { d.Name = deviceName }},
+		{"kind", func() { d.Kind = deviceKind }},
+		{"min", func() { d.MinTemp = deviceMinTemp }},
+		{"max", func() { d.MaxTemp = deviceMaxTemp }},
+		{"default", func() { d.DefaultTemp = deviceDefault }},
+		{"load", func() { d.Load = journal.CG(deviceLoad).Grams() }},
+	} {
+		if cmd.Flags().Changed(f.name) {
+			f.set()
+			changed = true
+		}
+	}
+	if !changed {
+		return fmt.Errorf("nothing to change: say what, with --name, --kind, --min, --max, --default or --load")
+	}
+	if d.Load < 0 {
+		return fmt.Errorf("a load holds some grams or none, not %.2f", d.Load)
+	}
+	return nil
+}
+
+var deviceRemove = &cobra.Command{
+	Use:   "remove <device>",
+	Short: "Take a device out of the catalog; its sessions keep its name",
+	Long: "Take a device out of the catalog. The sessions it was used for keep\n" +
+		"naming it, so what is lost is its description, not its history. A device\n" +
+		"put away for good can be retired instead, in the browser, and kept.",
+	Example: "  wits device remove volcano",
+	Args:    cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		var gone *catalog.Device
+		if _, err := s.Repo.UpdateDevices(func(c *catalog.Devices) error {
+			d, err := c.Find(args[0])
+			if err != nil {
+				return err
+			}
+			gone, err = c.Remove(d.Slug)
+			return err
+		}); err != nil {
+			return err
+		}
+		used := 0
+		if u := views.Devices(s.State.Standing)[gone.Slug]; u != nil {
+			used = u.Sessions
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Removed device %s (%s); %d sessions keep its name\n", gone.Slug, gone.Name, used)
 		return nil
 	},
 }
@@ -143,5 +238,11 @@ func init() {
 	deviceAdd.Flags().IntVar(&deviceMaxTemp, "max", 0, "the highest temperature it can be set to")
 	deviceAdd.Flags().IntVar(&deviceDefault, "default", 0, "the temperature to assume when none is given")
 	deviceAdd.Flags().Float64Var(&deviceLoad, "load", 0, "the grams one fill holds, as usually loaded — sizes a forgotten session")
-	Device.AddCommand(deviceAdd, deviceList)
+	deviceEdit.Flags().StringVar(&deviceName, "name", "", "what it is called")
+	deviceEdit.Flags().StringVar(&deviceKind, "kind", "", "the kind of device, for example desktop or portable")
+	deviceEdit.Flags().IntVar(&deviceMinTemp, "min", 0, "the lowest temperature it can be set to")
+	deviceEdit.Flags().IntVar(&deviceMaxTemp, "max", 0, "the highest temperature it can be set to")
+	deviceEdit.Flags().IntVar(&deviceDefault, "default", 0, "the temperature to assume when none is given")
+	deviceEdit.Flags().Float64Var(&deviceLoad, "load", 0, "the grams one fill holds, as usually loaded")
+	Device.AddCommand(deviceAdd, deviceEdit, deviceRemove, deviceList)
 }

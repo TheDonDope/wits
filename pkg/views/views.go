@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/TheDonDope/wits/pkg/journal"
+	"github.com/TheDonDope/wits/pkg/ledger"
 )
 
 // Day is one calendar day's grams ground and vaped, in the zone each entry
@@ -113,4 +114,14 @@ func Devices(events []journal.Event) map[string]*Use {
 		}
 	}
 	return out
+}
+
+// AVBHeld is what the AVB jar holds: every product's AVB, which is one jar
+// on the shelf whatever products it came from.
+func AVBHeld(balances map[string]*ledger.Balance) journal.Centigrams {
+	var held journal.Centigrams
+	for _, b := range balances {
+		held += journal.CG(b.AVB)
+	}
+	return held
 }

@@ -195,6 +195,22 @@ func TestAmend(t *testing.T) {
 	assert.Len(t, rec.State().Events, 4, "Should keep the original, the undo and the replacement")
 }
 
+// An amendment answers with both its entries, the undo first, so a rehearsal
+// folds the pair rather than the corrected entry on top of the original.
+func TestAmendment(t *testing.T) {
+	rec := recorder(t)
+	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())
+	require.NoError(t, err)
+	grind, err := rec.Grind("wedding", 7.5, time.Now())
+	require.NoError(t, err)
+
+	both, err := rec.Amendment(grind.Hash, 0.75, "")
+	require.NoError(t, err)
+	require.Len(t, both, 2)
+	assert.Equal(t, grind.Hash, both[0].Reverts, "Should undo the original first")
+	assert.Equal(t, 0.75, both[1].Grams, "Should record it again as it should have been")
+}
+
 func TestUndoASession(t *testing.T) {
 	rec := recorder(t)
 	_, _, _, err := rec.Buy("Enua 22/1 Wedding Cake", "", 20, time.Now())

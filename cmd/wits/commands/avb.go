@@ -10,6 +10,7 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
+	"github.com/TheDonDope/wits/pkg/views"
 	"github.com/spf13/cobra"
 )
 
@@ -42,11 +43,7 @@ var AVB = &cobra.Command{
 
 // writeAVB is the jar and its yields, newest first.
 func writeAVB(out io.Writer, s *session) {
-	var held journal.Centigrams
-	for _, b := range s.State.Balances {
-		held += journal.CG(b.AVB)
-	}
-	fmt.Fprintf(out, "%.2fg in the AVB jar\n", held.Grams())
+	fmt.Fprintf(out, "%.2fg in the AVB jar\n", views.AVBHeld(s.State.Balances).Grams())
 	yields := ledger.Yields(s.State.Events)
 	if len(yields) == 0 {
 		fmt.Fprintln(out, "\nNothing collected yet: `wits avb collect <grams>` when a device is emptied.")

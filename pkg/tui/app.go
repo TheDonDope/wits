@@ -90,6 +90,7 @@ type keyMap struct {
 	Weigh, Price   key.Binding
 	Edit, Delete   key.Binding
 	Add            key.Binding
+	AVB, Rate      key.Binding
 	Theme          key.Binding
 }
 
@@ -114,8 +115,12 @@ func defaultKeys() keyMap {
 		Edit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 		Delete: key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
 		Add:    key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
-		Theme:  key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "theme")),
-		Help:   key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+		// v is AVB, as in the browser, everywhere but the journal, where it
+		// shows the corrections behind what stands.
+		AVB:   key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "AVB")),
+		Rate:  key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "rate strain")),
+		Theme: key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "theme")),
+		Help:  key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
 		// esc is not a way out: it closes a form or a picker, and one press
 		// too many after closing one used to quit the whole interface.
 		Quit: key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
@@ -139,7 +144,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 		{k.Next, k.Prev},
 		{k.Up, k.Down, k.PageUp, k.PgDown},
 		{k.Top, k.Bottom},
-		{k.Buy, k.New, k.Sesh, k.Weigh, k.Price},
+		{k.Buy, k.New, k.Sesh, k.Weigh, k.AVB, k.Price},
 		{k.Theme, k.Help, k.Quit},
 	}
 }
@@ -593,6 +598,8 @@ func (a *App) entryKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 		return true, nil
 	case key.Matches(msg, a.keys.Weigh) && a.screen != journalScreen:
 		return a.weighKey()
+	case key.Matches(msg, a.keys.AVB) && a.screen != journalScreen:
+		return a.show(newAVBForm(a))
 	case key.Matches(msg, a.keys.Price):
 		return a.priceKey()
 	}
@@ -653,6 +660,8 @@ func (a *App) correctionKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 		action = "delete"
 	case key.Matches(msg, a.keys.Add):
 		action = "add"
+	case key.Matches(msg, a.keys.Rate):
+		action = "rate"
 	default:
 		return false, nil
 	}
@@ -670,18 +679,34 @@ func (a *App) correctionKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 // from what is selected there — or nil when nothing is. A key a screen does
 // not list falls through to navigation.
 var corrections = map[screen]map[string]func(a *App) modal{
-	storageScreen: {"edit": func(a *App) modal {
-		if r := a.storage.Selected(a); r != nil {
-			return newDescribeForm(r.Slug, a)
-		}
-		return nil
-	}},
-	stashScreen: {"edit": func(a *App) modal {
-		if slug := a.stash.Selected(a); slug != "" {
-			return newDescribeForm(slug, a)
-		}
-		return nil
-	}},
+	storageScreen: {
+		"edit": func(a *App) modal {
+			if r := a.storage.Selected(a); r != nil {
+				return newDescribeForm(r.Slug, a)
+			}
+			return nil
+		},
+		"rate": func(a *App) modal {
+			if r := a.storage.Selected(a); r != nil {
+				return newStrainForm(r.Slug, a)
+			}
+			return nil
+		},
+	},
+	stashScreen: {
+		"edit": func(a *App) modal {
+			if slug := a.stash.Selected(a); slug != "" {
+				return newDescribeForm(slug, a)
+			}
+			return nil
+		},
+		"rate": func(a *App) modal {
+			if slug := a.stash.Selected(a); slug != "" {
+				return newStrainForm(slug, a)
+			}
+			return nil
+		},
+	},
 	journalScreen: {
 		"edit": func(a *App) modal {
 			if e := a.journal.Selected(); e != nil {

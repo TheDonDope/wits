@@ -19,6 +19,19 @@ func TestDevices(t *testing.T) {
 		assert.Equal(t, 185, device.DefaultTemp, "Should keep the default temperature")
 	})
 
+	t.Run("Remove", func(t *testing.T) {
+		d := &Devices{}
+		require.NoError(t, d.Add(&Device{Name: "Volcano Hybrid"}))
+		require.NoError(t, d.Add(&Device{Name: "Mighty+"}))
+
+		gone, err := d.Remove("volcano-hybrid")
+		require.NoError(t, err)
+		assert.Equal(t, "Volcano Hybrid", gone.Name, "Should answer with the device it took out")
+		assert.Len(t, d.Devices, 1, "Should leave the others")
+		_, err = d.Remove("volcano-hybrid")
+		assert.ErrorIs(t, err, ErrNoDevice, "Should say a device is not there to remove")
+	})
+
 	t.Run("RefusesADuplicate", func(t *testing.T) {
 		d := &Devices{}
 		require.NoError(t, d.Add(&Device{Name: "Volcano Hybrid"}))
