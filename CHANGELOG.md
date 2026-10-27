@@ -2,9 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.111.0"></a>
+## [v0.111.0] - 2026-10-27
+### Chore
+- **vhs:** re-record wits-tour.gif, which visits Insights now
+
+### Feat
+- **tui:** insights — the day, the cost, the year, the history, a trip, what is carried, the map
+
+
 <a name="v0.110.0"></a>
 ## [v0.110.0] - 2026-10-27
 ### Docs
+- update changelog for v0.110.0
 - **diary:** the morning after the merge
 - **roadmap:** three surfaces, one set of capabilities, and every gap said
 - **roadmap:** the merging pull came in v0.108.0, not v0.107.0
@@ -1358,7 +1368,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.110.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.111.0...HEAD
+[v0.111.0]: https://github.com/TheDonDope/wits/compare/v0.110.0...v0.111.0
 [v0.110.0]: https://github.com/TheDonDope/wits/compare/v0.109.0...v0.110.0
 [v0.109.0]: https://github.com/TheDonDope/wits/compare/v0.108.0...v0.109.0
 [v0.108.0]: https://github.com/TheDonDope/wits/compare/v0.107.0...v0.108.0
