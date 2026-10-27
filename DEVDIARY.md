@@ -1,6 +1,44 @@
 # Development Diary
 
+## 2026-10-27
+
+### The morning after the merge
+
+The morning after the merge, the house was swept. The chained logs could rename the entry a rating or a price was about, so it would follow an entry a rebase had given a new hash; a pull merges now, `remote.Pull` passed an empty map every time, and `Names`, `Rename` and `follows` are gone. `wits pull --help` still promised new hashes and a `journal.ndjson.orig`, and says what a pull does now: the remote's entries appended as they are, and a merge entry naming both heads. `pkg/views` was made so the terminal would stop summing floats, but five loops in the dashboard, analysis and sessions screens still added grams by hand; they read `views.Daily` and `views.Use` now. Canopy Hindu Kush's 1.63 g and 1.18 g had come to 2.8099… g and read 1.40 g/day; in centigrams it is 2.81 g over two days, 1.41 g/day. Rankings out of a map broke no ties, and the all-time analysis drew three different screens in three runs; ties go by slug now, and every screen and scope, photographed on the workbook and the demo, is otherwise the same before and after. Shipped as v0.109.0.
+
+- `36bf4ed` refactor(chain): a log names what it names, since nothing moves any more
+- `4cb4e91` docs(pull): the help says what a pull does now
+- `5a25f0f` fix(tui): the screens add in centigrams, and a tie ranks the same twice
+- `10f7c1c` docs: update changelog for v0.109.0
+
+### Notes for 2026-10-27
+
+The session first started on the SteamOS host, where the distrobox `archmachine` had exited 26 hours before, and `make` was missing. That was blamed on a SteamOS update and a host `make` was put into `~/.local/bin`, which shadows the box's own; the maintainer corrected it, and `~/.local/bin/make` is gone, so inside the box `make` is `/usr/bin/make` again. Three local branches, `docs/ship-from-a-clean-main`, `feat/drop-the-seance` and `feat/jar-detail-and-terpenes`, were deleted: `git cherry` found every one of their commits on main under a rebased hash. The pull's help commit and v0.109.0's notes say a pull stopped rebasing in v0.107.0, but `3ca8338` first shipped in v0.108.0; ROADMAP.md dates the reader split and the rehearsed prices to v0.107.0 too, and its "until v0.107.0" lines are true only read as "up to and including". Left open.
+
 ## 2026-10-26
+
+### Everything on the table
+
+The whole architecture was put on the table and questioned; the ledger stayed, and what changed is how devices agree, how the browser learns of a change, and who does the arithmetic. A pull took the remote's copy of any product or device that differed, so a terpene profile, a rename or a load written here and not yet pushed was gone at the next pull; every field is stamped when it changes, carried in bundles, and the later change wins. A pull rebased, chaining this device's own on top with new hashes, and everything naming them — a rating, a price, an undo, a seal — had to follow; now the remote's entries are appended as they are and a `merge` entry names both heads, as git merges, and a seal made before a sync verifies on the other device after it. Bundles are format 11. Every write takes `?dry=1`, built and checked as it would be and written nowhere, so the browser's `rowCents` and `fillCents` are gone; the page hears of a change on `/api/changes` instead of asking every four seconds and reading 2.4 MB, and reads the journal from where it left off. On the phone one tab records under a Web Lock and another reads until it closes. `make types` holds the models to the server's shapes, `pkg/views` works out once what both sides show, and the phone's engine left the .xlsx reader behind, 4.32 MB gzipped rather than 5.24 MB, still importing the workbook's 1429 entries. The journal became a timeline, a rail of days and entries under every week of the history. Shipped as v0.108.0.
+
+- `735058b` fix(remote): catalogs merge field by field, the later change winning
+- `7a06477` feat(api): every write can be rehearsed, and the phone has one writer
+- `4c0d5da` feat(ui): read again when the repository changes, only what a page shows, and the journal from where it was left
+- `3ca8338` feat(journal)!: a pull merges, and no entry is ever chained again
+- `e7b3547` build: the API's shapes held in TypeScript, one place for shared figures, the phone's engine without the .xlsx reader
+- `c3faf37` feat(journal): the journal as a timeline, every week of it in reach
+- `031bb11` style: gofmt
+- `149da21` refactor(record): an entry built by the kind it is, which Codacy can count
+- `947e8a7` docs: update changelog for v0.108.0
+
+### The dialog drawn
+
+Record looked like a tax form, outlined fields stacked one under another, and every tab is drawn now. Grind, Session, Weigh and AVB pick a jar from a row of glasses filled as they stand, take an amount as a large figure with − and + and a slider up to what the jar holds, a device from tiles with the four most used first, and the heat from a 240° dial with the device's modes on it and the jar's terpenes lit as it passes their boiling points; Weigh reads into a scale's display with the difference lit. Every tab shows the jar before and after: Grind's 0.50 g of Morning Sun reads sealed 11.37 → 10.87 g and ground 3.40 → 3.90 g, and a session with the dial stepped to 185 °C was written as 0.20 g on the Venty at 185 °C. Then the last two plain forms: a prescription is a stack of jar cards and a receipt, invoices dropped as well as picked, and a device is put together from preset tiles, pills, a two-thumbed range and the session's dial. On the demo, 20 g of Morning Sun at last time's 5.80 € and 15 g of a new Pink Kush at 8.50 € before VAT read 267.73 €, written down as 116.00 € and 151.73 €, and a Venty from its preset was written with 40–210 °C, 180 °C, its four modes, 0.15 g and 180 s. Every tab fits 375 px. Shipped as v0.106.0 and v0.107.0.
+
+- `024c01d` feat(record): the dialog drawn — jars to pick, a dial to turn, a scale to read
+- `e15d32b` docs: update changelog for v0.106.0
+- `f50965a` feat(record): a prescription as cards and a receipt, a device from tiles and a dial
+- `7addf11` docs: update changelog for v0.107.0
 
 ### Grams do not vanish
 
