@@ -2,6 +2,29 @@
 
 ## 2026-10-27
 
+### The year in a terminal
+
+The terminal interface could record everything and read only the jars. Insights is its eighth screen, a page each, ←/→ between them, every figure from the package the command line and the browser read: Today, its THC also the last line of the dashboard's Sessions card; Costs; Year, `-`/`+` for another, its findings moved into `review.Findings` so `wits review` prints the same lines; History, a year of grinding as a calendar, `w` writing the report for the prescriber; Trip, `-`/`+` for the days away and `o` for the oldest fill first; Carry; and Strains, the map, the jars on the shelf numbered. On Trip and Carry `w` signs the statement, writes its QR code as an .svg and draws it in half blocks, dark on light whatever the theme, when the terminal holds all of it with its quiet zone; a test reads the drawn code back module by module against the encoder. On the demo Year 2025 reads 446.34 g on 221 of 365 days, the 53-day break and 190–199 °C at 4.2 over 67 ratings, and Trip 16.30 g for 7 days; on the workbook 2026 reads 242.12 g on 106 of 300 days, each as the command prints it. `wits-tour.gif` visits Year and Trip now. No gap in the table of the three surfaces is planned any more. Shipped as v0.111.0.
+
+- `796f716` feat(tui): insights — the day, the cost, the year, the history, a trip, what is carried, the map
+- `846972f` chore(vhs): re-record wits-tour.gif, which visits Insights now
+- `2fe9f54` docs: update changelog for v0.111.0
+
+### Every write, everywhere
+
+What one surface could record, another could not, and now all three can, each through the recorder. `wits amend` and the journal's edit button undo an entry and record it again, as the terminal interface's `e` always did; `Recorder.Amendment` answers with both entries, so the browser's rehearsal folds the pair. On the workbook Morning Sun's 1.50 g grind of 23 Oct amended to 1.40 g read 11.37 → 11.47 g sealed and 8.63 → 8.53 g ground, and `wits fsck` accounted for every gram after. `wits describe --name, --maker, --cultivar, --thc, --cbd` and Correct the label on a jar set the label, the recorder refusing a share outside 0–100 %. `v` records AVB in the terminal interface, as in the browser, but on the journal; `R` rates the strain on storage and stash. `wits device edit` and `remove`, and Remove in the browser, all by `Devices.Remove`. The AVB jar's total is worked out once, `views.AVBHeld`. Every dialog was looked at in headless Chromium at 1440 px and on a 375 px phone, and the guide's journal and jar pictures were taken again. Shipped as v0.110.0.
+
+- `323a2e2` feat: every write on every surface — wits amend, v and R, correct the label
+- `96ebb4b` refactor(api): the routes that put the record right, in a handler of their own, which Codacy can count
+- `65b6d0f` docs: update changelog for v0.110.0
+
+### Three surfaces, one set of capabilities
+
+Asked for a plan to bring the command line, the terminal interface and the browser to parity, the answer was a table first: 30 capabilities, each surface's command, key or page, every gap planned or kept with its reason, in ROADMAP.md under the model. The guide's sections say the same in `gaps`, and its spec refuses a section with no command and no terminal key unless it says why. The maintainer chose parity of capability, not of look, and the table was the first step; the two releases above emptied its planned cells the same day. The pull that merges was found dated v0.107.0 in ROADMAP.md and in v0.109.0's notes; it shipped in v0.108.0, and both say so now.
+
+- `45cd715` docs(roadmap): the merging pull came in v0.108.0, not v0.107.0
+- `e2c8a7e` docs(roadmap): three surfaces, one set of capabilities, and every gap said
+
 ### The morning after the merge
 
 The morning after the merge, the house was swept. The chained logs could rename the entry a rating or a price was about, so it would follow an entry a rebase had given a new hash; a pull merges now, `remote.Pull` passed an empty map every time, and `Names`, `Rename` and `follows` are gone. `wits pull --help` still promised new hashes and a `journal.ndjson.orig`, and says what a pull does now: the remote's entries appended as they are, and a merge entry naming both heads. `pkg/views` was made so the terminal would stop summing floats, but five loops in the dashboard, analysis and sessions screens still added grams by hand; they read `views.Daily` and `views.Use` now. Canopy Hindu Kush's 1.63 g and 1.18 g had come to 2.8099… g and read 1.40 g/day; in centigrams it is 2.81 g over two days, 1.41 g/day. Rankings out of a map broke no ties, and the all-time analysis drew three different screens in three runs; ties go by slug now, and every screen and scope, photographed on the workbook and the demo, is otherwise the same before and after. Shipped as v0.109.0.
@@ -13,7 +36,9 @@ The morning after the merge, the house was swept. The chained logs could rename 
 
 ### Notes for 2026-10-27
 
-The session first started on the SteamOS host, where the distrobox `archmachine` had exited 26 hours before, and `make` was missing. That was blamed on a SteamOS update and a host `make` was put into `~/.local/bin`, which shadows the box's own; the maintainer corrected it, and `~/.local/bin/make` is gone, so inside the box `make` is `/usr/bin/make` again. Three local branches, `docs/ship-from-a-clean-main`, `feat/drop-the-seance` and `feat/jar-detail-and-terpenes`, were deleted: `git cherry` found every one of their commits on main under a rebased hash. The pull's help commit and v0.109.0's notes say a pull stopped rebasing in v0.107.0, but `3ca8338` first shipped in v0.108.0; ROADMAP.md dates the reader split and the rehearsed prices to v0.107.0 too, and its "until v0.107.0" lines are true only read as "up to and including". Left open.
+The session first started on the SteamOS host, where the distrobox `archmachine` had exited 26 hours before, and `make` was missing. That was blamed on a SteamOS update and a host `make` was put into `~/.local/bin`, which shadows the box's own; the maintainer corrected it, and `~/.local/bin/make` is gone, so inside the box `make` is `/usr/bin/make` again. Three local branches, `docs/ship-from-a-clean-main`, `feat/drop-the-seance` and `feat/jar-detail-and-terpenes`, were deleted: `git cherry` found every one of their commits on main under a rebased hash. The pull's help commit and v0.109.0's notes say a pull stopped rebasing in v0.107.0, but `3ca8338` first shipped in v0.108.0; ROADMAP.md dated the reader split and the rehearsed prices to v0.107.0 too; both, and v0.109.0's release notes, say v0.108.0 now, and the commit message stays as it was.
+
+A device removed does not last with a remote: a pull brings back any device the remote holds and this one lacks, and a push is refused until it has, the catalogs keeping no tombstone; the docs say to retire a shared device instead. The DELETE for a device carries a `{}` body, since the server takes no write that is not JSON. `R` is on the storage screen's full help only, the short line having no room beside clean history at 100 columns; it was already cut at "q qui" there before today. At 80 columns the tab bar shows neither Devices, as before, nor Insights. The terminal interface's journal still offers to amend an undo, which the browser does not; the recorder refuses most of those anyway. The browser's pictures were taken by a go-rod program in the session's scratchpad, not committed: waiting for the page to go idle hung on the change stream, so it waits for load. A Chromium thought left over turned out to be `pgrep` matching its own shell. Bare `vitest` fails 22 specs on a clean tree too; `make ui-test` is how they run. The Insights table first padded by bytes and cut a `€` in half.
 
 ## 2026-10-26
 
