@@ -114,8 +114,9 @@ one ledger, and every write goes through the same recorder. They are held to
 the same **capabilities**, not the same look: what can be recorded on one can
 be recorded on all three, and what can be read on one can be read on the
 others where a screen of it makes sense. A gap is either **planned**, and then
-it is in *One wits, three ways* under Planned, or **kept**, with the reason
-here. The user guide says the same per section (`gaps` in
+it has its place under Planned, or **kept**, with the reason here. None is
+planned now: the writes came first (*Every write on every surface*), then
+the terminal interface's Insights screen. The user guide says the same per section (`gaps` in
 `wits-ui/src/app/data/guide.ts`), and its spec refuses a section with no
 command and no terminal key unless it says why, or a planned gap this table
 does not list.
@@ -137,16 +138,16 @@ does not list.
 | **A device added** | `wits device add` | `a` on devices | Shelf → Devices |
 | **A device edited or removed** | `wits device edit`, `wits device remove` | `e`, `d` on devices | Shelf → Devices: changed, retired or removed |
 | **Where things stand** | `wits status` | the dashboard | the dashboard |
-| **Today** | `wits today` | planned | the dashboard |
+| **Today** | `wits today` | the dashboard, Insights → Today | the dashboard |
 | **The journal** | `wits log`, `wits show` | the journal | the journal |
 | **Analysis, the replay** | `wits export` | the analysis screen | Insights → Analysis, Jars |
 | **The refill** | `wits refill` | the dashboard | the dashboard |
 | **Temperatures** | `wits temps` | the devices screen | the session's dial |
-| **Costs** | `wits costs` | planned | Insights → Costs |
-| **Effects, the strain map** | `wits rate`, `wits like` | the sessions screen; the map planned | Insights → Effects |
-| **History, the report** | `wits report` | planned | Insights → History |
-| **The year** | `wits review` | planned | Insights → Year |
-| **A trip, carry** | `wits pack`, `wits carry` | planned | Shelf → Trip |
+| **Costs** | `wits costs` | Insights → Costs | Insights → Costs |
+| **Effects, the strain map** | `wits rate`, `wits like` | the sessions screen, Insights → Strains | Insights → Effects |
+| **History, the report** | `wits report` | Insights → History, `w` | Insights → History |
+| **The year** | `wits review` | Insights → Year | Insights → Year |
+| **A trip, carry** | `wits pack`, `wits carry` | Insights → Trip, Carry, `w` | Shelf → Trip |
 | **A repository, a workbook** | `wits init`, `wits import` | kept | Repository |
 | **Backups and checks** | `wits bundle`, `restore`, `export`, `fsck` | kept | kept |
 | **Sync** | `wits remote`, `push`, `pull` | kept | Sync, on the phone |
@@ -1809,6 +1810,33 @@ through the recorder, so they refuse the same things in the same words
 
 The AVB jar's total is worked out once (`views.AVBHeld`) for all three.
 
+### What the others read, in a terminal — the Insights screen
+
+The terminal interface's eighth screen, **Insights**, has what the command
+line and the browser showed and it did not, a page each, ←/→ between them,
+each from the package the other two read: **Today** (`pkg/today`: the day's
+sessions and the THC in the material against a usual day, also the last
+line of the dashboard's Sessions card), **Costs** (`prices.Analyse`), **Year**
+(`review.Year`, `-`/`+` for the year; its findings are written once, in
+`review.Findings`, for `wits review` too), **History** (a year of grinding as
+a calendar; `w` writes the report for the prescriber, the last 90 days, as
+`wits report` does), **Trip** (`pack.Make`, `-`/`+` for the days away, `o`
+for the oldest fill first), **Carry** (`report.Holdings`), and **Strains**
+(`report.Strains`: every placed strain a dot, the jars on the shelf
+numbered). On Trip and Carry, `w` signs the statement as `wits pack` and
+`wits carry` do — the sealing key made the first time — writes its QR code as
+`wits-trip-<day>.svg` or `wits-carry-<day>.svg`, and draws it in half blocks,
+dark on light whatever the theme, when the terminal has room for all of it
+with its quiet zone: a code cut off scans as nothing. A test reads the drawn
+code back module by module. A page is drawn once for the journal it shows
+and kept while nothing changes, since the clock redraws every second.
+
+On the demo, Year 2025 reads 446.34 g on 221 of 365 days, the 53-day break
+and 190–199 °C at 4.2 over 67 ratings, as `wits review 2025` does; Trip, 16.30
+g for 7 days at 1.93 g a day; Carry, 82.63 g held. On the workbook, 2026 reads
+242.12 g on 106 of 300 days, as `wits review` does. `wits-tour.gif` visits
+the Year and Trip pages.
+
 ---
 
 ## 📌 Planned
@@ -1863,21 +1891,6 @@ at once, and what the review found broken — are built, above. What is left:
   wrapped (a trusted web activity for Android, the AppImage on Flathub or
   AppImageHub for the desktop) with a listing, screenshots, and a privacy
   statement that says what wits sends: nothing, unless asked.
-
-### Next · One wits, three ways
-
-The planned cells of *The three surfaces*, above. The writes came first — for
-a ledger an entry one surface can make and another cannot is the worse gap —
-and are built (*Every write on every surface*, above). What is left reads
-through `pkg/views`, so no surface gains a sum of its own.
-
-#### 🔹 The terminal interface reads what the others read
-
-- **Status**: Planned
-- Today on the dashboard, then Costs and Effects as screens with the strain
-  map, then the year, History with the report, and a trip with what is
-  carried, in that order, each from the figures the browser and the command
-  line already take from `pkg/views`.
 
 ### 5 · More than one device
 

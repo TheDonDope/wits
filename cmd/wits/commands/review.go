@@ -11,7 +11,6 @@ import (
 	"text/tabwriter"
 	"unicode/utf8"
 
-	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/review"
 	"github.com/spf13/cobra"
 )
@@ -74,7 +73,7 @@ func writeReview(out io.Writer, r review.Review) {
 	months(out, r)
 	fmt.Fprintln(out)
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	for _, l := range findings(r) {
+	for _, l := range r.Findings() {
 		fmt.Fprintf(w, "  %s\t%s\n", l[0], l[1])
 	}
 	w.Flush()
@@ -123,54 +122,4 @@ func bar(v, top float64, width int) string {
 	}
 	eighths := int(math.Round(v / top * float64(width*8)))
 	return strings.Repeat("█", eighths/8) + []string{"", "▏", "▎", "▍", "▌", "▋", "▊", "▉"}[eighths%8]
-}
-
-// findings is the year's other figures, label and line, those it has.
-func findings(r review.Review) [][2]string {
-	var out [][2]string
-	add := func(label, line string) { out = append(out, [2]string{label, line}) }
-	for i, s := range r.Strains[:min(3, len(r.Strains))] {
-		label := ""
-		if i == 0 {
-			label = "Strains"
-		}
-		add(label, fmt.Sprintf("%d  %s, %.2f g (%.0f %%)", i+1, s.Name, s.Ground, s.Share*100))
-	}
-	if r.Busiest.Ground > 0 {
-		add("Busiest day", fmt.Sprintf("%s, %.2f g ground", r.Busiest.Day.Format("Mon 2 January"), r.Busiest.Ground))
-	}
-	if b := r.Break; b != nil {
-		add("Longest break", fmt.Sprintf("%s, %s to %s (%s in all)", plural(b.Days, "day"),
-			b.From.Format("2 January"), b.To.Format("2 January"), plural(b.Breaks, "break")))
-	}
-	if b := r.Best; b != nil {
-		add("Best temperature", fmt.Sprintf("%s, %.1f overall over %s", b.Label, b.Mean, plural(b.Count, "rating")))
-	}
-	if l := r.Liked; l != nil {
-		add("Rated best", fmt.Sprintf("%s, %.1f overall over %s", l.Name, l.Mean, plural(l.Count, "rating")))
-	}
-	if d := r.Device; d != nil {
-		add("Most used", fmt.Sprintf("%s, %s and %.2f g", d.Name, plural(d.Sessions, "session"), d.Seshed))
-	}
-	if t := r.Terpene; t != nil {
-		add("Terpene of the year", fmt.Sprintf("%s — %s, %.0f %% of the grams ground", t.Name,
-			strings.Join(t.Flavors, ", "), t.Share*100))
-	}
-	return append(out, costLines(r)...)
-}
-
-// costLines is what the year cost, when any of it had a price.
-func costLines(r review.Review) [][2]string {
-	if r.Priced <= 0 {
-		return nil
-	}
-	euro := func(c float64) string { return prices.Format(int64(math.Round(c))) }
-	out := [][2]string{{"Paid", fmt.Sprintf("%s for %.2f g with a price, %s a gram", prices.Format(r.Paid), r.Priced, euro(r.PerGram()))}}
-	if d := r.Dearest; d != nil {
-		out = append(out, [2]string{"Dearest gram", fmt.Sprintf("%s, %s on %s", euro(d.PerGram), d.Name, d.At.Format("2 January"))})
-	}
-	if c := r.Cheapest; c != nil {
-		out = append(out, [2]string{"Cheapest gram", fmt.Sprintf("%s, %s on %s", euro(c.PerGram), c.Name, c.At.Format("2 January"))})
-	}
-	return out
 }

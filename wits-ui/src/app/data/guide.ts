@@ -208,7 +208,8 @@ Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, 
     ],
     tui: [
       { keys: ['wits'], does: 'on its own, opens the terminal interface on its dashboard' },
-      { keys: ['tab'], does: 'the next screen: journal, analysis, storage, stash, sessions, devices' },
+      { keys: ['tab'], does: 'the next screen: journal, analysis, storage, stash, sessions, devices, insights' },
+      { keys: ['Insights'], does: 'Today, Costs, Year, History, Trip, Carry and Strains, ← and → between them; the Sessions card ends on today’s THC' },
       { keys: ['?'], does: 'every key the screen honours' },
       { keys: ['q'], does: 'quits' },
     ],
@@ -401,7 +402,10 @@ COLLECTED   DEVICE                 AVB    FROM                  YIELD
   },
   {
     id: 'trip',
-    gaps: { tui: { planned: 'A trip, carry' } },
+    tui: [
+      { keys: ['Insights', '←', '→'], does: 'Trip: what to take, -/+ for the days away, o for the oldest fill first' },
+      { keys: ['w'], does: 'signs what is packed, or on Carry what is held, writes its QR code as an .svg and draws it when the terminal has room' },
+    ],
     group: 'The shelf',
     title: 'Packing for a trip',
     icon: 'luggage',
@@ -467,12 +471,16 @@ All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
       { cmd: 'wits rate last sleep=5 calm=4 --note "slept through"' },
       { cmd: 'wits like enua-wedding' },
     ],
-    tui: [{ keys: ['e'], does: 'on the sessions screen, rates a session: ← → or 1–5 to score, 0 to leave one out' }],
+    tui: [{ keys: ['e'], does: 'on the sessions screen, rates a session: ← → or 1–5 to score, 0 to leave one out' },
+      { keys: ['Insights', '←', '→'], does: 'Strains: the map of the strains by their terpenes, the jars on the shelf numbered' }],
     tuiShot: term('tui-sessions', 'The sessions screen of the terminal interface', 'The sessions screen: the newest, as rated, and what works by product.'),
   },
   {
     id: 'history',
-    gaps: { tui: { planned: 'History, the report' } },
+    tui: [
+      { keys: ['Insights', '←', '→'], does: 'History: a year of grinding as a calendar' },
+      { keys: ['w'], does: 'writes the report for the prescriber, the last 90 days, as wits report does' },
+    ],
     group: 'Insights',
     title: 'History, and a page for the prescriber',
     icon: 'timeline',
@@ -509,11 +517,14 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
 28    2026-06-16  25.00g  159.75 €  6.39 €
 …` },
     ],
-    tui: [{ keys: ['$'], does: 'walks every purchase without a price' }],
+    tui: [
+      { keys: ['$'], does: 'walks every purchase without a price' },
+      { keys: ['Insights', '←', '→'], does: 'Costs: in all and a gram, the newest fills, the last twelve months' },
+    ],
   },
   {
     id: 'year',
-    gaps: { tui: { planned: 'The year' } },
+    tui: [{ keys: ['Insights', '←', '→'], does: 'Year: the year on one card; - and + step through the years' }],
     group: 'Insights',
     title: 'The year, on one card',
     icon: 'auto_awesome',

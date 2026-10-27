@@ -72,10 +72,11 @@ const (
 	stashScreen
 	sessionsScreen
 	devicesScreen
+	insightsScreen
 )
 
 // tabs are the screen names, in order.
-var tabs = []string{"Dashboard", "Journal", "Analysis", "Storage", "Stash", "Sessions", "Devices"}
+var tabs = []string{"Dashboard", "Journal", "Analysis", "Storage", "Stash", "Sessions", "Devices", "Insights"}
 
 // keyMap is the global key bindings. Screens add their own on top, borrowing
 // from here where the key is shared, so that a binding is declared once and
@@ -188,6 +189,7 @@ type App struct {
 	stash     stashView
 	sessions  sessionsView
 	devices   devicesView
+	insights  insightsView
 }
 
 // modal is a form in front of the screens. There is one slot for it, so the
@@ -234,6 +236,7 @@ func New(data Data) *App {
 	a.stash = newStashView()
 	a.sessions = newSessionsView()
 	a.devices = newDevicesView()
+	a.insights = newInsightsView()
 	return a
 }
 
@@ -366,6 +369,8 @@ func (a *App) toScreen(msg tea.Msg) tea.Cmd {
 		a.sessions, cmd = a.sessions.Update(msg, a)
 	case devicesScreen:
 		a.devices, cmd = a.devices.Update(msg, a)
+	case insightsScreen:
+		a.insights, cmd = a.insights.Update(msg, a)
 	}
 	return cmd
 }
@@ -423,6 +428,8 @@ func (a *App) View() tea.View {
 		body = a.sessions.View(a, bodyHeight)
 	case devicesScreen:
 		body = a.devices.View(a, bodyHeight)
+	case insightsScreen:
+		body = a.insights.View(a, bodyHeight)
 	}
 
 	// Clamp the finished frame. Inner layout tries to fit, but a narrow terminal
@@ -503,7 +510,7 @@ func (a *App) navKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 // only tab and shift+tab to change screens.
 func (a *App) slides() bool {
 	switch a.screen {
-	case journalScreen, analysisScreen, storageScreen, stashScreen:
+	case journalScreen, analysisScreen, storageScreen, stashScreen, insightsScreen:
 		return true
 	}
 	return false
@@ -816,6 +823,8 @@ func (a *App) screenKeys() help.KeyMap {
 		return a.sessions.keys(a.keys)
 	case devicesScreen:
 		return a.devices.keys(a.keys)
+	case insightsScreen:
+		return a.insights.keys(a.keys)
 	default:
 		return a.keys
 	}

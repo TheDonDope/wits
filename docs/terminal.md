@@ -131,7 +131,7 @@ Ground 0.60 g. A usual day of the last 30 with a session: 0.83 g, 239 mg THC (21
 sessions, devices, two rhythm calendars and a projection of the supply's
 decline to its empty day — then the journal, an analysis view scoping from the
 current cycle out to the whole history, the storage, the stash, the sessions,
-and the devices. `tab` moves between them. Entries can be recorded
+the devices, and Insights. `tab` moves between them. Entries can be recorded
 there too — `b` for a fill, `g` to grind, `s` for a session, `r` to weigh, `$`
 to price the purchases still without one — and `?` lists every key the current screen honours. `q` quits; `esc` only ever
 closes the form in front.
@@ -153,6 +153,18 @@ seven-day average riding over it, and the longer scopes as a calendar heatmap �
 one cell per day, colour carrying the amount — so a year of habit reads the way
 a contribution graph does: the heavy weeks, the pauses, whether weekends
 differ. `s` changes the scope.
+
+**Insights** has, a page each, what the commands below print and the
+browser draws: **Today** (also the last line of the dashboard's Sessions
+card), **Costs**, **Year** (`-`/`+` for another), **History** (a year of
+grinding as a calendar; `w` writes the report for the prescriber, as `wits
+report` does), **Trip** (`-`/`+` for the days away, `o` for the oldest fill
+first), **Carry**, and **Strains** — the map of the strains by their
+terpenes, the jars on the shelf numbered. `←`/`→` turns the pages. On Trip
+and Carry, `w` signs the statement as `wits pack` and `wits carry` do,
+writes its QR code as `wits-trip-<day>.svg` or `wits-carry-<day>.svg`, and
+draws it in the terminal when there is room for all of it: at 120 × 60 a
+statement of five jars fits.
 
 Because everything is replayed from the log, the analysis, storage and stash
 screens can start from empty and grow the way the record grew: `p` plays,
@@ -602,7 +614,8 @@ $ wits review 2025
   Cheapest gram        3.99 €, Canopy Bakerstreeet 22/1 Hindu Kush on 30 September
 ```
 
-The browser draws the same, with more room: **Insights → Year**.
+The browser draws the same, with more room: **Insights → Year**; the
+terminal interface, **Insights → Year**.
 
 ## What it costs
 

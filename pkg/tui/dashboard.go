@@ -14,6 +14,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/repo"
+	"github.com/TheDonDope/wits/pkg/today"
 )
 
 // dashboard is the screen you land on: a grid of cards, one per corner of the
@@ -281,7 +282,23 @@ func (d dashboard) sessionsCard(a *App, w int) string {
 		lipgloss.NewStyle().Foreground(t.SeshC).Render(Sparkline(values, min(w, 28), lipgloss.NewStyle()))+
 			t.Dim.Render("  last 14 days"),
 		t.Dim.Render(lastLine),
+		todayLine(a),
 	)
+}
+
+// todayLine is the day so far in one line, the THC in what went through a
+// device against a usual day, as `wits status` ends; Insights has the rest.
+func todayLine(a *App) string {
+	t := a.theme
+	d := today.Of(a.data.Workspace, a.data.Now)
+	if len(d.Sessions) == 0 {
+		return t.Dim.Render("today: no session yet")
+	}
+	line := fmt.Sprintf("today: %.0f mg THC in %.2f g", d.THC, d.Seshed)
+	if d.Usual.Days > 0 {
+		line += fmt.Sprintf(" · a usual day %.0f mg", d.Usual.THC)
+	}
+	return lipgloss.NewStyle().Foreground(t.SeshC).Render(line)
 }
 
 // devicesCard is the devices at a glance: which one does the work, and how hot.
