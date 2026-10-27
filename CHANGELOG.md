@@ -2,9 +2,24 @@
 ## [Unreleased]
 
 
+<a name="v0.110.0"></a>
+## [v0.110.0] - 2026-10-27
+### Docs
+- **diary:** the morning after the merge
+- **roadmap:** three surfaces, one set of capabilities, and every gap said
+- **roadmap:** the merging pull came in v0.108.0, not v0.107.0
+
+### Feat
+- every write on every surface — wits amend, v and R, correct the label
+
+### Refactor
+- **api:** the routes that put the record right, in a handler of their own, which Codacy can count
+
+
 <a name="v0.109.0"></a>
 ## [v0.109.0] - 2026-10-27
 ### Docs
+- update changelog for v0.109.0
 - **pull:** the help says what a pull does now
 
 ### Fix
@@ -1343,7 +1358,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.109.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.110.0...HEAD
+[v0.110.0]: https://github.com/TheDonDope/wits/compare/v0.109.0...v0.110.0
 [v0.109.0]: https://github.com/TheDonDope/wits/compare/v0.108.0...v0.109.0
 [v0.108.0]: https://github.com/TheDonDope/wits/compare/v0.107.0...v0.108.0
 [v0.107.0]: https://github.com/TheDonDope/wits/compare/v0.106.0...v0.107.0
