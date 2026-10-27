@@ -129,12 +129,6 @@ func (r *Rating) Link() chain.Link {
 // SetLink places the rating in the log.
 func (r *Rating) SetLink(l chain.Link) { r.Seq, r.At, r.Prev, r.Hash = l.Seq, l.At, l.Prev, l.Hash }
 
-// Names is the session the rating rates.
-func (r *Rating) Names() string { return r.Session }
-
-// Rename rates the session by a new hash.
-func (r *Rating) Rename(hash string) { r.Session = hash }
-
 // Latest returns each session's newest rating: a session rated again is rated
 // as it was rated last.
 func Latest(ratings []Rating) map[string]Rating {

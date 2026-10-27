@@ -63,12 +63,12 @@ func TestRebase(t *testing.T) {
 	phone, deck := testLog(t), testLog(t)
 	_, err := phone.Append(Price{Purchase: "theirs", At: at, Cents: 100})
 	require.NoError(t, err)
-	_, err = deck.Append(Price{Purchase: "old", At: at, Cents: 200})
+	_, err = deck.Append(Price{Purchase: "ours", At: at, Cents: 200})
 	require.NoError(t, err)
 	theirs, err := phone.All()
 	require.NoError(t, err)
 
-	fetched, rechained, err := deck.Rebase(theirs, map[string]string{"old": "new"})
+	fetched, rechained, err := deck.Rebase(theirs)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, fetched)
@@ -78,7 +78,7 @@ func TestRebase(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, ours, 2)
 	assert.Equal(t, theirs[0], ours[0], "Should keep the other copy's price as it is")
-	assert.Equal(t, "new", ours[1].Purchase, "Should price the purchase by its new hash")
+	assert.Equal(t, "ours", ours[1].Purchase, "Should still price the purchase it priced")
 }
 
 func TestAnalyse(t *testing.T) {

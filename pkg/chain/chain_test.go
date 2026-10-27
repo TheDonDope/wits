@@ -29,10 +29,8 @@ func (n *note) Validate() error {
 	}
 	return nil
 }
-func (n *note) Link() Link          { return Link{Seq: n.Seq, At: n.At, Prev: n.Prev, Hash: n.Hash} }
-func (n *note) SetLink(l Link)      { n.Seq, n.At, n.Prev, n.Hash = l.Seq, l.At, l.Prev, l.Hash }
-func (n *note) Names() string       { return n.About }
-func (n *note) Rename(about string) { n.About = about }
+func (n *note) Link() Link     { return Link{Seq: n.Seq, At: n.At, Prev: n.Prev, Hash: n.Hash} }
+func (n *note) SetLink(l Link) { n.Seq, n.At, n.Prev, n.Hash = l.Seq, l.At, l.Prev, l.Hash }
 
 var errBroken = errors.New("note log hash chain is broken")
 
@@ -153,16 +151,16 @@ func TestVerify(t *testing.T) {
 }
 
 func TestRebase(t *testing.T) {
-	t.Run("FollowsAnEntryThatMoved", func(t *testing.T) {
+	t.Run("TakesTheirsAndChainsOursOnTop", func(t *testing.T) {
 		phone, deck := testLog(t), testLog(t)
 		_, err := phone.Append(note{About: "theirs", At: at, Text: "one"})
 		require.NoError(t, err)
-		_, err = deck.Append(note{About: "old", At: at, Text: "two"})
+		_, err = deck.Append(note{About: "ours", At: at, Text: "two"})
 		require.NoError(t, err)
 		theirs, err := phone.All()
 		require.NoError(t, err)
 
-		fetched, rechained, err := deck.Rebase(theirs, map[string]string{"old": "new"})
+		fetched, rechained, err := deck.Rebase(theirs)
 
 		require.NoError(t, err)
 		assert.Equal(t, 1, fetched)
@@ -172,7 +170,8 @@ func TestRebase(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, ours, 2)
 		assert.Equal(t, theirs[0], ours[0], "Should keep the other copy's record as it is")
-		assert.Equal(t, "new", ours[1].About, "Should name the entry by its new hash")
+		assert.Equal(t, "ours", ours[1].About, "Should keep naming the entry it named")
+		assert.Equal(t, ours[0].Hash, ours[1].Prev, "Should chain its own onto theirs")
 	})
 
 	t.Run("NothingNew", func(t *testing.T) {
@@ -182,7 +181,7 @@ func TestRebase(t *testing.T) {
 		same, err := deck.All()
 		require.NoError(t, err)
 
-		fetched, rechained, err := deck.Rebase(same, nil)
+		fetched, rechained, err := deck.Rebase(same)
 
 		require.NoError(t, err)
 		assert.Zero(t, fetched)
@@ -197,7 +196,7 @@ func TestRebase(t *testing.T) {
 		require.NoError(t, err)
 		theirs[0].Text = "changed"
 
-		_, _, err = testLog(t).Rebase(theirs, nil)
+		_, _, err = testLog(t).Rebase(theirs)
 
 		assert.ErrorIs(t, err, errBroken)
 		assert.ErrorContains(t, err, "at note 1 of the other copy")
