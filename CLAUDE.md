@@ -303,6 +303,11 @@ Angular client (signals, zoneless, standalone components, `httpResource`).
   interface also updates its section of the user guide (`wits-ui/src/app/data/guide.ts`):
   its words, its terminal equivalents, and its picture in `wits-ui/public/guide`
   (WebP, taken on the demo) when the page looks different.
+- **Three surfaces, one set of capabilities.** A new write or view lands on
+  the command line, the terminal interface and the browser, or its gap goes
+  into ROADMAP.md's table of the three surfaces — planned, or kept with the
+  reason — and into the guide section's `gaps`. The guide's spec refuses a
+  section with neither.
 - Branch → PR → green checks → rebase-merge → release. Nothing merges red.
 - Commit messages: conventional prefixes in the repo's own voice — lowercase,
   declarative, a body that says *why* ("cycles close on empty, and every gram
