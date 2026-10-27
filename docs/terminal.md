@@ -315,8 +315,7 @@ weighing forms ask the same question.
   config.yml      # settings — the interface theme
   products.yml    # the catalog
   devices.yml     # vaporizers and their temperature ranges
-  journal.ndjson  # append-only, one entry per line; only a pull rewrites it
-  journal.ndjson.orig  # the journal as it was before a pull chained entries again
+  journal.ndjson  # append-only, one entry per line; a pull appends too
   effects.ndjson  # the effect log: ratings of sessions, append-only too
   prices.ndjson   # the price log: what each purchase cost, append-only too
   remote.key      # the age key the remote is encrypted to; never in the remote
