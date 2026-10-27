@@ -65,5 +65,16 @@ Sleep 3500ms
 # Devices.
 Tab
 Sleep 3500ms
+# Insights: the year on one card, then a trip packed for ten days.
+Tab
+Sleep 2500ms
+Right
+Right
+Sleep 4s
+Right
+Right
+Sleep 2s
+Type "+++"
+Sleep 3500ms
 Type "q"
 Sleep 1s
