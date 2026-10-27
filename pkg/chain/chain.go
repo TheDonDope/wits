@@ -34,18 +34,14 @@ type Link struct {
 }
 
 // Record is what a log holds, through a pointer to it: a record that can say
-// whether it is well formed, where it stands in the chain, and which journal
-// entry it is about.
+// whether it is well formed and where it stands in the chain. The journal
+// entry it is about is named by a hash that never changes, so the log has no
+// need to know which field holds it.
 type Record[T any] interface {
 	*T
 	Validate() error
 	Link() Link
 	SetLink(Link)
-	// Names is the hash of the journal entry the record is about — the session
-	// rated, the purchase priced; Rename points it at another after a rebase
-	// gave that entry a new hash.
-	Names() string
-	Rename(hash string)
 }
 
 // Log is a chained log stored at a path.
@@ -159,12 +155,12 @@ func (l *Log[T, P]) Verify() error {
 	return nil
 }
 
-// Rebase brings in another device's copy of the log the way the journal's
-// Rebase does: shared records kept, the other's taken as they are, and this
-// log's own chained again on top, each pointed at the new hash of an entry
-// that moved (moved, from the journal's rebase). It returns how many of the
-// other's it lacked and how many of its own it chained again.
-func (l *Log[T, P]) Rebase(onto []T, moved map[string]string) (fetched, rechained int, err error) {
+// Rebase brings in another device's copy of the log: shared records kept, the
+// other's taken as they are, and this log's own chained again on top. The
+// records keep naming the entries they named, since a pull moves no journal
+// entry. It returns how many of the other's it lacked and how many of its own
+// it chained again.
+func (l *Log[T, P]) Rebase(onto []T) (fetched, rechained int, err error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	release, err := journal.Lock(l.path)
@@ -184,14 +180,11 @@ func (l *Log[T, P]) Rebase(onto []T, moved map[string]string) (fetched, rechaine
 		k++
 	}
 	tail := local[k:]
-	if len(onto) == k && !follows[T, P](tail, moved) {
-		return 0, 0, nil // nothing new, and nothing of ours points anywhere new
+	if len(onto) == k {
+		return 0, 0, nil // nothing new
 	}
 	merged := slices.Clone(onto)
 	for _, r := range tail {
-		if to, ok := moved[P(&r).Names()]; ok {
-			P(&r).Rename(to)
-		}
 		if r, err = seal[T, P](r, merged); err != nil {
 			return 0, 0, err
 		}
@@ -273,16 +266,6 @@ func (l *Log[T, P]) whole(records []T) error {
 		prev = P(&r).Link().Hash
 	}
 	return nil
-}
-
-// follows reports whether any of the records is about an entry in moved.
-func follows[T any, P Record[T]](records []T, moved map[string]string) bool {
-	for i := range records {
-		if _, ok := moved[P(&records[i]).Names()]; ok {
-			return true
-		}
-	}
-	return false
 }
 
 // read loads the complete lines and the records they hold; a line cut off

@@ -4,11 +4,12 @@
 // encrypted with age to a key that stays in each device's .wits and never in
 // the folder.
 //
-// The journal is hash-chained, so a pull works the way a git rebase does: the
-// entries both devices share are kept, the remote's are taken as they are, and
-// this device's own are chained again on top of them, with new hashes. A push
-// writes only a repository that already holds everything on the remote, so
-// two devices cannot keep rewriting each other's entries.
+// The journal is hash-chained, so a pull works the way a git merge does: the
+// remote's entries this device lacks are appended as they are, hashes and all,
+// and when both devices recorded, a merge entry names both heads. No entry is
+// chained again, so an entry's hash is its name on every device. A push writes
+// only a repository that already holds everything on the remote, so neither
+// device's entries can be lost to the other's.
 package remote
 
 import (
@@ -308,14 +309,12 @@ func Pull(r *repo.Repo) (Pulled, error) {
 	if done.Products, done.Devices, err = mergeCatalogs(r, *theirs); err != nil {
 		return done, err
 	}
-	// No entry moves, so what the logs name stays named as it was.
-	none := map[string]string{}
 	merged, err := r.Journal().Merge(theirs.Events, func(journal.Merged) error {
 		var rerr error
-		if done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings, none); rerr != nil {
+		if done.Ratings, _, rerr = r.Effects().Rebase(theirs.Ratings); rerr != nil {
 			return rerr
 		}
-		done.Prices, _, rerr = r.Prices().Rebase(theirs.Prices, none)
+		done.Prices, _, rerr = r.Prices().Rebase(theirs.Prices)
 		return rerr
 	})
 	if err != nil {

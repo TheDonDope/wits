@@ -113,12 +113,6 @@ func (p *Price) Link() chain.Link {
 // SetLink places the price in the log.
 func (p *Price) SetLink(l chain.Link) { p.Seq, p.At, p.Prev, p.Hash = l.Seq, l.At, l.Prev, l.Hash }
 
-// Names is the purchase the price was paid for.
-func (p *Price) Names() string { return p.Purchase }
-
-// Rename names the purchase by a new hash.
-func (p *Price) Rename(hash string) { p.Purchase = hash }
-
 // Latest returns each purchase's newest price: a purchase priced again costs
 // what it was priced at last.
 func Latest(prices []Price) map[string]Price {
