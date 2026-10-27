@@ -107,6 +107,65 @@ An entry has **no identifier of its own** — its hash names it, the way a commi
 hash names a commit. That is what lets a bundle restore into a journal that
 verifies against the one it came from.
 
+### The three surfaces
+
+The command line, the terminal interface and the browser are three ways into
+one ledger, and every write goes through the same recorder. They are held to
+the same **capabilities**, not the same look: what can be recorded on one can
+be recorded on all three, and what can be read on one can be read on the
+others where a screen of it makes sense. A gap is either **planned**, and then
+it is in *One wits, three ways* under Planned, or **kept**, with the reason
+here. The user guide says the same per section (`gaps` in
+`wits-ui/src/app/data/guide.ts`), and its spec refuses a section with no
+command and no terminal key unless it says why, or a planned gap this table
+does not list.
+
+| Capability | Command line | Terminal interface | Browser |
+| --- | --- | --- | --- |
+| **A fill** | `wits buy` | `b` | Record → Prescription |
+| **A grind, a session** | `wits grind`, `wits sesh` | `g`, `s` | Record |
+| **Weighing** | `wits reconcile` | `r` | Record → Weigh |
+| **AVB** | `wits avb collect`, `wits avb use` | planned | Record → AVB |
+| **An undo** | `wits revert` | `d` on the journal | the journal |
+| **An amended amount** | planned | `e` on the journal | planned |
+| **A product described** | planned | `e` on storage or stash | planned |
+| **Terpenes** | `wits describe --terpenes` | `e` on storage or stash | the jar's page |
+| **A strain rated** | `wits describe --rating` | planned | Shelf, the jar's page, I forgot to |
+| **A session rated** | `wits rate` | `e` on sessions | Effects, I forgot to |
+| **A price** | `wits price` | `$` | Costs, I forgot to |
+| **Old stashes cleared** | `wits reconcile stash <jar> 0`, a jar at a time | `c` on storage | I forgot to |
+| **A device added** | `wits device add` | `a` on devices | Shelf → Devices |
+| **A device edited or removed** | planned | `e`, `d` on devices | edited and retired; removing planned |
+| **Where things stand** | `wits status` | the dashboard | the dashboard |
+| **Today** | `wits today` | planned | the dashboard |
+| **The journal** | `wits log`, `wits show` | the journal | the journal |
+| **Analysis, the replay** | `wits export` | the analysis screen | Insights → Analysis, Jars |
+| **The refill** | `wits refill` | the dashboard | the dashboard |
+| **Temperatures** | `wits temps` | the devices screen | the session's dial |
+| **Costs** | `wits costs` | planned | Insights → Costs |
+| **Effects, the strain map** | `wits rate`, `wits like` | the sessions screen; the map planned | Insights → Effects |
+| **History, the report** | `wits report` | planned | Insights → History |
+| **The year** | `wits review` | planned | Insights → Year |
+| **A trip, carry** | `wits pack`, `wits carry` | planned | Shelf → Trip |
+| **A repository, a workbook** | `wits init`, `wits import` | kept | Repository |
+| **Backups and checks** | `wits bundle`, `restore`, `export`, `fsck` | kept | kept |
+| **Sync** | `wits remote`, `push`, `pull` | kept | Sync, on the phone |
+| **Seals** | `wits seal`, `wits verify` | kept | kept |
+| **Invoices, labels, terpenes from the web** | kept | kept | Record → Prescription, the jar's page |
+
+Kept, and why:
+
+- **A repository, a workbook, backups, checks, sync and seals** in the terminal
+  interface: each is done once, by a command run in the folder the interface
+  opens on, so a screen of it would only ask what the command line already
+  takes as arguments.
+- **Backups, checks and seals** in the browser, and sync on the desk: the
+  desk's browser stands beside a command line on the same machine, and the
+  phone's Sync writes the whole repository as one bundle already.
+- **Invoices, labels and terpenes from the web** in a terminal: they read a
+  PDF, a photograph or a web page and end in a fill or a product's terpenes,
+  which both terminals record by hand.
+
 ---
 
 ## ✅ Built
@@ -1770,6 +1829,30 @@ at once, and what the review found broken — are built, above. What is left:
   wrapped (a trusted web activity for Android, the AppImage on Flathub or
   AppImageHub for the desktop) with a listing, screenshots, and a privacy
   statement that says what wits sends: nothing, unless asked.
+
+### Next · One wits, three ways
+
+The planned cells of *The three surfaces*, above, writes first: for a ledger
+an entry one surface can make and another cannot is the worse gap. Each goes
+through `ws.Recorder`, and each figure through `pkg/views`, so no surface
+gains a rule or a sum of its own.
+
+#### 🔹 Every write on every surface
+
+- **Status**: Planned
+- The terminal interface records AVB, collected and used, and rates a strain.
+  The command line describes a product (`wits describe` with its name, maker,
+  cultivar, THC and CBD), amends an amount (`Recorder.Amend`, which only the
+  terminal interface calls), and edits and removes a device. The browser
+  amends an amount, describes a product, and removes a device.
+
+#### 🔹 The terminal interface reads what the others read
+
+- **Status**: Planned
+- Today on the dashboard, then Costs and Effects as screens with the strain
+  map, then the year, History with the report, and a trip with what is
+  carried, in that order, each from the figures the browser and the command
+  line already take from `pkg/views`.
 
 ### 5 · More than one device
 

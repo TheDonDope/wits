@@ -35,6 +35,12 @@ export interface TuiKey {
   does: string;
 }
 
+/**
+ * Why a section has no counterpart on one surface: planned names its row in
+ * ROADMAP.md's table of the three surfaces; kept says why it stays apart.
+ */
+export type Gap = { planned: string } | { kept: string };
+
 export interface GuideSection {
   id: string;
   group: string;
@@ -56,6 +62,8 @@ export interface GuideSection {
   cli?: Example[];
   tui?: TuiKey[];
   tuiShot?: Shot;
+  /** What the command line or the terminal interface lacks here, and why. */
+  gaps?: { cli?: Gap; tui?: Gap };
   tip?: string;
 }
 
@@ -69,6 +77,7 @@ const term = (src: string, alt: string, caption: string, w = 1500, h = 900): Sho
 export const GUIDE: readonly GuideSection[] = [
   {
     id: 'thinks',
+    gaps: { tui: { kept: 'an explanation, with nothing to do' } },
     group: 'Start here',
     title: 'How wits thinks',
     icon: 'account_tree',
@@ -93,6 +102,7 @@ export const GUIDE: readonly GuideSection[] = [
   },
   {
     id: 'start',
+    gaps: { tui: { kept: 'the terminal interface opens on the folder it runs in; wits init and wits import make and fill it' } },
     group: 'Start here',
     title: 'A repository to work in',
     icon: 'folder_open',
@@ -360,6 +370,7 @@ CBDA             130°C     anti-inflammatory, anti-proliferic
   },
   {
     id: 'avb',
+    gaps: { tui: { planned: 'AVB' } },
     group: 'The shelf',
     title: 'AVB',
     icon: 'recycling',
@@ -382,6 +393,7 @@ COLLECTED   DEVICE                 AVB    FROM                  YIELD
   },
   {
     id: 'trip',
+    gaps: { tui: { planned: 'A trip, carry' } },
     group: 'The shelf',
     title: 'Packing for a trip',
     icon: 'luggage',
@@ -452,6 +464,7 @@ All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
   },
   {
     id: 'history',
+    gaps: { tui: { planned: 'History, the report' } },
     group: 'Insights',
     title: 'History, and a page for the prescriber',
     icon: 'timeline',
@@ -492,6 +505,7 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
   },
   {
     id: 'year',
+    gaps: { tui: { planned: 'The year' } },
     group: 'Insights',
     title: 'The year, on one card',
     icon: 'auto_awesome',
@@ -521,6 +535,7 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
   },
   {
     id: 'keep',
+    gaps: { tui: { kept: 'bundles, restores and sync are done once, by command' } },
     group: 'Keeping it',
     title: 'Backups, and more than one device',
     icon: 'sync',
@@ -538,6 +553,7 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
   },
   {
     id: 'seal',
+    gaps: { tui: { kept: 'a seal is made and checked by command' } },
     group: 'Keeping it',
     title: 'A record others can check',
     icon: 'verified',
@@ -552,6 +568,7 @@ Sealed the journal's 2619 entries, head aceba4e, as 2026-10-26-aceba4e497d9.seal
   },
   {
     id: 'keys',
+    gaps: { cli: { kept: 'the command line has flags, not keys: wits <command> --help' } },
     group: 'Around',
     title: 'Keys and themes',
     icon: 'keyboard',
@@ -579,6 +596,7 @@ Sealed the journal's 2619 entries, head aceba4e, as 2026-10-26-aceba4e497d9.seal
   },
   {
     id: 'phone',
+    gaps: { tui: { kept: 'the phone runs the browser interface' } },
     group: 'Around',
     title: 'On the phone',
     icon: 'smartphone',

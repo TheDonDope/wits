@@ -34,8 +34,31 @@ describe('the user guide', () => {
     expect(shots.filter((sh) => !there.has(sh.src)).map((sh) => sh.src)).toEqual([]);
   });
 
-  it('gives every section the same done in a terminal', () => {
-    const without = GUIDE.filter((s) => !s.cli?.length && !s.tui?.length).map((s) => s.id);
-    expect(without).toEqual([]);
+  it('gives every section the same on the command line and in the terminal interface, or says why not', () => {
+    const unsaid = GUIDE.flatMap((s) => [
+      ...(!s.cli?.length && !s.gaps?.cli ? [`${s.id}: the command line`] : []),
+      ...(!s.tui?.length && !s.gaps?.tui ? [`${s.id}: the terminal interface`] : []),
+    ]);
+    expect(unsaid).toEqual([]);
+  });
+
+  it('states a gap only where there is one', () => {
+    const both = GUIDE.flatMap((s) => [
+      ...(s.cli?.length && s.gaps?.cli ? [`${s.id}: the command line`] : []),
+      ...(s.tui?.length && s.gaps?.tui ? [`${s.id}: the terminal interface`] : []),
+    ]);
+    expect(both).toEqual([]);
+  });
+
+  it('plans only what the roadmap’s table of the three surfaces lists as planned', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const roadmap = await readFile('../ROADMAP.md', 'utf8');
+    const table = roadmap.split('### The three surfaces')[1]?.split('\n### ')[0] ?? '';
+    const planned = new Map([...table.matchAll(/^\| \*\*(.+?)\*\* \|(.*)$/gm)].map((m) => [m[1], m[2]]));
+    expect(planned.size).toBeGreaterThan(0);
+    const unlisted = GUIDE.flatMap((s) => Object.values(s.gaps ?? {}))
+      .flatMap((g) => ('planned' in g ? [g.planned] : []))
+      .filter((row) => !planned.get(row)?.includes('planned'));
+    expect(unlisted).toEqual([]);
   });
 });
