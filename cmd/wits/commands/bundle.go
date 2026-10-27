@@ -239,11 +239,11 @@ var Push = &cobra.Command{
 var Pull = &cobra.Command{
 	Use:   "pull",
 	Short: "Bring in what other devices pushed",
-	Long: "Bring in the remote's entries, ratings, products and devices. Entries\n" +
-		"this device made since its last push are chained again on top of the\n" +
-		"remote's, the way git rebases, and get new hashes; the old journal is kept\n" +
-		"as .wits/journal.ndjson.orig. Where the remote holds a product or a device\n" +
-		"differently, the remote's stands.\n\n" +
+	Long: "Bring in the remote's entries, ratings, prices, products and devices.\n" +
+		"The remote's entries are appended as they are, the way git merges, and\n" +
+		"when both devices recorded, a merge entry names both heads; no entry gets\n" +
+		"a new hash. Where the remote holds a product or a device differently, the\n" +
+		"remote's stands.\n\n" +
 		"Two devices can each record the same last grams of a jar. Both entries are\n" +
 		"kept, as written, and named; the jar takes nothing more until one of them\n" +
 		"is undone with wits revert.",
