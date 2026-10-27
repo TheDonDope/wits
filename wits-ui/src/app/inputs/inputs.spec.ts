@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { ChoiceInput } from './choice';
-import { FlowPreview } from './flow';
+import { FlowPreview, flowOf } from './flow';
 import { GramsInput } from './grams';
 import { ScaleInput } from './scale';
 import { TempDial } from './temp-dial';
@@ -141,5 +141,20 @@ describe('TempRange', () => {
     hi.value = '20';
     hi.dispatchEvent(new Event('input'));
     expect(f.componentInstance.to()).toBe(210);
+  });
+});
+
+describe('flowOf', () => {
+  it('draws only the accounts the rehearsal moves grams in, summed over its jars', () => {
+    const none = { storage: 0, stash: 0, consumed: 0, avb: 0 };
+    const lines = flowOf({
+      entries: [],
+      message: '',
+      jars: [
+        // An amendment's undo and its entry again: the stash 0.50 g lighter, the seal 0.50 g fuller.
+        { product: 'wcake-221', name: 'Wedding Cake', before: { ...none, storage: 18.75, stash: 1.25 }, after: { ...none, storage: 19.25, stash: 0.75 } },
+      ],
+    });
+    expect(lines.map((l) => [l.label, l.before, l.after])).toEqual([['sealed', 18.75, 19.25], ['ground', 1.25, 0.75]]);
   });
 });

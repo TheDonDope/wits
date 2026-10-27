@@ -146,6 +146,69 @@ func TestWrites(t *testing.T) {
 	assert.Equal(t, "lost 1.00 g of Enua 22/1 Wedding Cake in storage", decodeInto[written](t, w).Message)
 }
 
+// TestAmend: an amount is corrected by the undo and the entry again, the
+// rehearsal folding the pair and writing nothing, and the recorder's refusal
+// answered as it is.
+func TestAmend(t *testing.T) {
+	s, _ := server(t, "")
+	w := call(t, s, "POST", "/api/grind", `{"product":"wcake","grams":1.25}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	ground := decodeInto[written](t, w).Entry.Hash
+	before := len(must(t, s.snapshot).State.Events)
+
+	w = call(t, s, "POST", "/api/amend?dry=1", `{"hash":"`+ground+`","grams":0.75}`)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	p := decodeInto[preview](t, w)
+	require.Len(t, p.Entries, 2, "the undo and the entry again")
+	require.Len(t, p.Jars, 1)
+	assert.InDelta(t, 1.25, p.Jars[0].Before.Stash-p.Jars[0].After.Stash+0.75, 1e-9, "the stash ends 0.50 g lighter")
+	assert.Len(t, must(t, s.snapshot).State.Events, before, "a rehearsal writes nothing")
+
+	w = call(t, s, "POST", "/api/amend", `{"hash":"`+ground+`","grams":0.75,"note":"misread"}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Equal(t, "amended the grind of Enua 22/1 Wedding Cake to 0.75 g, from 1.25 g", decodeInto[flushed](t, w).Message)
+
+	w = call(t, s, "POST", "/api/amend", `{"hash":"`+ground+`","grams":0.5}`)
+	assert.Equal(t, http.StatusBadRequest, w.Code, "an entry already undone is not amended again")
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "POST", "/api/amend", `{"hash":"`+ground+`","grams":0}`).Code)
+}
+
+// TestDescribe: a product's label is corrected, its slug, terpenes and
+// rating kept, and a share past 100 % refused.
+func TestDescribe(t *testing.T) {
+	s, _ := server(t, "")
+	require.Equal(t, http.StatusCreated, call(t, s, "PUT", "/api/jars/wcake-221/terpenes", `{"terpenes":["Limonene"]}`).Code)
+
+	w := call(t, s, "PUT", "/api/jars/wcake-221", `{"name":" Enua Wedding Cake ","manufacturer":"Enua","cultivar":"Wedding Cake","thc":23.5,"cbd":1}`)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	j := decodeInto[jarDetail](t, call(t, s, "GET", "/api/jars/wcake-221", ""))
+	assert.Equal(t, "Enua Wedding Cake", j.Name)
+	assert.Equal(t, "Enua", j.Manufacturer)
+	assert.InDelta(t, 23.5, j.THC, 1e-9)
+	assert.Equal(t, []string{"Limonene"}, j.Terpenes, "the terpenes stay")
+
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "PUT", "/api/jars/wcake-221", `{"name":"x","thc":230}`).Code)
+	assert.Equal(t, http.StatusBadRequest, call(t, s, "PUT", "/api/jars/wcake-221", `{"name":" "}`).Code)
+	assert.Equal(t, http.StatusNotFound, call(t, s, "PUT", "/api/jars/nothing", `{"name":"x"}`).Code)
+}
+
+// TestRemoveDevice: a device leaves the catalog, its sessions keeping its
+// name, and one not there is said to be missing.
+func TestRemoveDevice(t *testing.T) {
+	s, _ := server(t, "")
+	require.Equal(t, http.StatusCreated, call(t, s, "POST", "/api/sesh", `{"product":"wcake","grams":0.3,"device":"volcano"}`).Code)
+
+	w := call(t, s, "DELETE", "/api/devices/volcano", "{}")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), "sessions keep its name")
+	for _, d := range decodeInto[[]device](t, call(t, s, "GET", "/api/devices", "")) {
+		assert.NotEqual(t, "volcano", d.Slug)
+	}
+	ws := must(t, s.snapshot)
+	assert.Equal(t, "volcano", ws.State.Events[len(ws.State.Events)-1].Device, "the session still names it")
+	assert.Equal(t, http.StatusNotFound, call(t, s, "DELETE", "/api/devices/volcano", "{}").Code)
+}
+
 func TestWritesAreRefusedWhereTheCommandsRefuseThem(t *testing.T) {
 	s, _ := server(t, "")
 

@@ -307,14 +307,9 @@ func (f *deviceForm) commit(a *App) error {
 func (f *deviceForm) apply(devices *catalog.Devices) error {
 	switch {
 	case f.remove:
-		kept := devices.Devices[:0]
-		for _, d := range devices.Devices {
-			if d.Slug != f.editing.Slug {
-				kept = append(kept, d)
-			}
-		}
-		devices.Devices = kept
 		f.name = f.editing.Name
+		_, err := devices.Remove(f.editing.Slug)
+		return err
 
 	case f.editing != nil:
 		d, err := devices.Find(f.editing.Slug)
@@ -341,7 +336,6 @@ func (f *deviceForm) apply(devices *catalog.Devices) error {
 		}
 		return devices.Add(d)
 	}
-	return nil
 }
 
 // validTemps rejects a range that cannot be set, which would otherwise only

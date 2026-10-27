@@ -188,6 +188,19 @@ func (d *Devices) Update(slug string, next *Device) error {
 	return fmt.Errorf("%w: %q", ErrNoDevice, slug)
 }
 
+// Remove takes a device out of the catalog and answers with it. The journal
+// keeps naming it on the sessions it was used for, so what is lost is its
+// description, not its history.
+func (d *Devices) Remove(slug string) (*Device, error) {
+	for i, existing := range d.Devices {
+		if existing.Slug == slug {
+			d.Devices = append(d.Devices[:i], d.Devices[i+1:]...)
+			return existing, nil
+		}
+	}
+	return nil, fmt.Errorf("%w: %q", ErrNoDevice, slug)
+}
+
 // String returns the display name of the device.
 func (d Device) String() string { return d.Name }
 

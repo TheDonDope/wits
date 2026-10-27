@@ -419,10 +419,21 @@ func (r *Recorder) undo(hash string, reason string) (journal.Event, error) {
 // lock and in one write, so another writer cannot slip between them and leave
 // the entry undone but not re-recorded.
 func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event, error) {
-	if grams <= 0 {
-		return journal.Event{}, fmt.Errorf("grams must be positive, got %v", grams)
+	stored, err := r.Amendment(hash, grams, note)
+	if err != nil {
+		return journal.Event{}, err
 	}
-	stored, err := r.write(func() ([]journal.Event, error) {
+	return stored[1], nil
+}
+
+// Amendment is Amend, answering with both entries it writes — the undo and
+// the entry as it should have been — so a rehearsal can show what the pair
+// does to the jar, not the second alone.
+func (r *Recorder) Amendment(hash string, grams float64, note string) ([]journal.Event, error) {
+	if grams <= 0 {
+		return nil, fmt.Errorf("grams must be positive, got %v", grams)
+	}
+	return r.write(func() ([]journal.Event, error) {
 		original, err := r.Find(hash)
 		if err != nil {
 			return nil, err
@@ -447,10 +458,6 @@ func (r *Recorder) Amend(hash string, grams float64, note string) (journal.Event
 		}
 		return []journal.Event{undo, corrected}, nil
 	})
-	if err != nil {
-		return journal.Event{}, err
-	}
-	return stored[1], nil
 }
 
 // Find returns the event with the given hash, which may be abbreviated.
@@ -662,6 +669,14 @@ func (r *Recorder) Rename(ref, name string) (*catalog.Product, error) {
 func (r *Recorder) Describe(ref string, p catalog.Product) (*catalog.Product, error) {
 	if strings.TrimSpace(p.Name) == "" {
 		return nil, fmt.Errorf("a product needs a name")
+	}
+	for _, c := range []struct {
+		name string
+		pct  float64
+	}{{"THC", p.THC}, {"CBD", p.CBD}} {
+		if c.pct < 0 || c.pct > 100 {
+			return nil, fmt.Errorf("%s is a share of the flower, 0 to 100 %%, not %g", c.name, c.pct)
+		}
 	}
 	return r.changeProduct(ref, func(product *catalog.Product) {
 		product.Name = strings.TrimSpace(p.Name)

@@ -125,17 +125,17 @@ does not list.
 | **A fill** | `wits buy` | `b` | Record → Prescription |
 | **A grind, a session** | `wits grind`, `wits sesh` | `g`, `s` | Record |
 | **Weighing** | `wits reconcile` | `r` | Record → Weigh |
-| **AVB** | `wits avb collect`, `wits avb use` | planned | Record → AVB |
+| **AVB** | `wits avb collect`, `wits avb use` | `v`, but on the journal | Record → AVB |
 | **An undo** | `wits revert` | `d` on the journal | the journal |
-| **An amended amount** | planned | `e` on the journal | planned |
-| **A product described** | planned | `e` on storage or stash | planned |
+| **An amended amount** | `wits amend` | `e` on the journal | the journal, `e` |
+| **A product described** | `wits describe --name`, `--maker`, `--cultivar`, `--thc`, `--cbd` | `e` on storage or stash | the jar's page, Correct the label |
 | **Terpenes** | `wits describe --terpenes` | `e` on storage or stash | the jar's page |
-| **A strain rated** | `wits describe --rating` | planned | Shelf, the jar's page, I forgot to |
+| **A strain rated** | `wits describe --rating` | `R` on storage or stash | Shelf, the jar's page, I forgot to |
 | **A session rated** | `wits rate` | `e` on sessions | Effects, I forgot to |
 | **A price** | `wits price` | `$` | Costs, I forgot to |
 | **Old stashes cleared** | `wits reconcile stash <jar> 0`, a jar at a time | `c` on storage | I forgot to |
 | **A device added** | `wits device add` | `a` on devices | Shelf → Devices |
-| **A device edited or removed** | planned | `e`, `d` on devices | edited and retired; removing planned |
+| **A device edited or removed** | `wits device edit`, `wits device remove` | `e`, `d` on devices | Shelf → Devices: changed, retired or removed |
 | **Where things stand** | `wits status` | the dashboard | the dashboard |
 | **Today** | `wits today` | planned | the dashboard |
 | **The journal** | `wits log`, `wits show` | the journal | the journal |
@@ -1775,6 +1775,40 @@ day a node with what was ground and vaped on it, each entry a bead with its
 time and the accounts its grams moved between, and above it the whole
 history week by week, the week in sight marked, a week picked to go there.
 
+### Every write on every surface — `wits amend`, `v` and `R`, Correct the label
+
+What one of the three surfaces could record, the other two can now, each
+through the recorder, so they refuse the same things in the same words
+(*The three surfaces*, above).
+
+- **An amount amended**: `wits amend <entry> <grams>` and the journal's
+  **edit** button (`e`) undo an entry and record it again with the amount it
+  should have had, in one write, as the terminal interface's `e` always did.
+  The browser shows what the pair does to the jar before it is recorded
+  (`POST /api/amend?dry=1`; `Recorder.Amendment` answers with both entries,
+  the undo first). On the workbook, the grind of 1.50 g of Morning Sun on
+  23 Oct amended to 1.40 g put 0.10 g back in the seal: 11.37 → 11.47 g
+  sealed, 8.63 → 8.53 g ground.
+- **A label corrected**: `wits describe --name, --maker, --cultivar, --thc,
+  --cbd`, and **Correct the label** on a jar's page (`PUT /api/jars/{slug}`),
+  as the terminal interface's `e` on storage. The slug, the terpenes and the
+  rating stay; the recorder now refuses a THC or CBD outside 0–100 %.
+- **AVB in the terminal interface**: `v`, as in the browser, on every screen
+  but the journal (where `v` shows the corrections), collected out of a
+  device — chosen when more than one has sessions waiting — or used up.
+- **A strain rated in the terminal interface**: `R` on storage or stash, the
+  three scores, again, and a line, opened on the standing rating; cleared of
+  every answer, the rating is taken away.
+- **A device changed or removed** from the command line, `wits device edit`
+  (only what the flags say) and `wits device remove`, and removed in the
+  browser (`DELETE /api/devices/{slug}`), all three by `Devices.Remove`. The
+  sessions keep its name. With a remote it does not last: a pull brings back
+  any device the remote holds and this one lacks, and a push is refused until
+  it has (`holds` in pkg/remote). The catalogs keep no tombstone; retiring a device
+  is what travels.
+
+The AVB jar's total is worked out once (`views.AVBHeld`) for all three.
+
 ---
 
 ## 📌 Planned
@@ -1832,19 +1866,10 @@ at once, and what the review found broken — are built, above. What is left:
 
 ### Next · One wits, three ways
 
-The planned cells of *The three surfaces*, above, writes first: for a ledger
-an entry one surface can make and another cannot is the worse gap. Each goes
-through `ws.Recorder`, and each figure through `pkg/views`, so no surface
-gains a rule or a sum of its own.
-
-#### 🔹 Every write on every surface
-
-- **Status**: Planned
-- The terminal interface records AVB, collected and used, and rates a strain.
-  The command line describes a product (`wits describe` with its name, maker,
-  cultivar, THC and CBD), amends an amount (`Recorder.Amend`, which only the
-  terminal interface calls), and edits and removes a device. The browser
-  amends an amount, describes a product, and removes a device.
+The planned cells of *The three surfaces*, above. The writes came first — for
+a ledger an entry one surface can make and another cannot is the worse gap —
+and are built (*Every write on every surface*, above). What is left reads
+through `pkg/views`, so no surface gains a sum of its own.
 
 #### 🔹 The terminal interface reads what the others read
 

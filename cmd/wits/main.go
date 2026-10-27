@@ -53,6 +53,7 @@ func init() {
 		commands.Reconcile,
 		commands.Restore,
 		commands.Revert,
+		commands.Amend,
 		commands.Export,
 		commands.Report,
 		commands.Fsck,

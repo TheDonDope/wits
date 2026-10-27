@@ -94,12 +94,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/jars", s.read(jarsOf))
 	mux.HandleFunc("GET /api/jars/{slug}", s.jarAt)
 	mux.HandleFunc("GET /api/jars/{slug}/research", s.research)
+	mux.HandleFunc("PUT /api/jars/{slug}", s.describe)
 	mux.HandleFunc("PUT /api/jars/{slug}/terpenes", s.terpenes)
 	mux.HandleFunc("PUT /api/jars/{slug}/rating", s.rateStrain)
 	mux.HandleFunc("GET /api/cycles", s.read(cyclesOf))
 	mux.HandleFunc("GET /api/devices", s.read(devicesOf))
 	mux.HandleFunc("POST /api/devices", s.addDevice)
 	mux.HandleFunc("PUT /api/devices/{slug}", s.editDevice)
+	mux.HandleFunc("DELETE /api/devices/{slug}", s.removeDevice)
 	mux.HandleFunc("GET /api/days", s.read(daysOf))
 	mux.HandleFunc("GET /api/effects", s.read(effectsOf))
 	mux.HandleFunc("POST /api/rate", s.rate)
@@ -112,6 +114,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/weigh/forgotten", s.forgottenAt)
 	mux.HandleFunc("POST /api/weigh/forgotten", s.batch(weighForgotten))
 	mux.HandleFunc("POST /api/undo", s.write(undo))
+	mux.HandleFunc("POST /api/amend", s.batch(amend))
 	mux.HandleFunc("POST /api/flush", s.flush)
 	mux.HandleFunc("GET /api/avb", s.read(avbOf))
 	mux.HandleFunc("GET /api/costs", s.read(costsOf))
@@ -377,11 +380,7 @@ type yieldOfEntry struct {
 
 func avbOf(ws *workspace.Workspace) any {
 	out := avb{Waiting: []waiting{}, Yields: []yieldOfEntry{}}
-	var held journal.Centigrams
-	for _, b := range ws.State.Balances {
-		held += journal.CG(b.AVB)
-	}
-	out.Held = held.Grams()
+	out.Held = views.AVBHeld(ws.State.Balances).Grams()
 	for device, sessions := range ledger.Uncollected(ws.State.Events, ws.OpenedAt) {
 		var g journal.Centigrams
 		for _, e := range sessions {
@@ -1226,6 +1225,31 @@ func weigh(ws *workspace.Workspace, r *http.Request) (journal.Event, string, err
 type undoRequest struct {
 	Hash   string `json:"hash"`
 	Reason string `json:"reason"`
+}
+
+type amendRequest struct {
+	Hash  string  `json:"hash"`
+	Grams float64 `json:"grams"`
+	Note  string  `json:"note"`
+}
+
+// amend corrects an entry's amount: the undo and the entry again, both
+// answered, so a rehearsal shows what the pair does to the jar.
+func amend(ws *workspace.Workspace, r *http.Request) ([]journal.Event, string, error) {
+	var req amendRequest
+	if err := decode(r, &req); err != nil {
+		return nil, "", err
+	}
+	original, err := ws.Recorder.Find(req.Hash)
+	if err != nil {
+		return nil, "", err
+	}
+	both, err := ws.Recorder.Amendment(original.Hash, req.Grams, strings.TrimSpace(req.Note))
+	if err != nil {
+		return nil, "", err
+	}
+	return both, fmt.Sprintf("amended the %s of %s to %.2f g, from %.2f g", original.Type,
+		ws.ProductName(original.Product), both[1].Grams, original.Grams), nil
 }
 
 func undo(ws *workspace.Workspace, r *http.Request) (journal.Event, string, error) {

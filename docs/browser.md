@@ -124,6 +124,10 @@ A jar, on the dashboard or on the Shelf, opens in full:
   rating's mean and the latest eight;
 - the products most like it.
 
+**Correct the label** sets its name, maker, cultivar, THC and CBD, as
+`wits describe --name` does; its slug, which its entries name it by, stays,
+and so do its terpenes and rating.
+
 The jar's own figures are its whole life; each fill's are that fill's. (The
 picture is the workbook's MAC1+ with ten sessions, their ratings and four
 prices added, since the workbook has none of them.)
@@ -281,8 +285,10 @@ The jars are a gallery, every product a card across its life; tick the cards
 — or **Select all** — and **Clear leftovers** records what is ground of them
 as consumed, one adjustment each in a single write: the terminal's history
 clean-up, for the jars you choose. **Play back history** opens the replay
-above the cards; `p` does too. The journal scrolls all of its entries and undoes one
-with a correction. It is a timeline: a rail through every day and entry, each
+above the cards; `p` does too. The journal scrolls all of its entries, undoes one
+with a correction (`d`), and amends one (`e`): undone and recorded again with
+the amount it should have had, what that does to the jar shown before it is
+written, and refused in the recorder's words when the jar never held it. It is a timeline: a rail through every day and entry, each
 day a node with what was ground and vaped on it, each entry a bead with its
 time and the accounts its grams moved between — sealed to ground, ground to
 vaped. Above it the whole history runs week by week, ground and vaped as bars,
@@ -424,7 +430,10 @@ A device has:
 
 A card also shows what the device has done: its sessions and grams, the
 sessions it heated, when it was last used, and its price per session so far.
-A device can be retired; it's kept, since its sessions name it. Recording a
+A device can be retired; it's kept, since its sessions name it. Or it can be
+removed, from its form: its sessions keep its name, and only what is written
+about it goes — though a remote that still holds it brings it back at the
+next pull, so a device shared between devices is better retired. Recording a
 session asks for the device's mode, when it has modes, and starts from that
 mode's temperature and timer. A manual vaporizer or glass also asks what
 heated it, and at which of the heater's settings: an induction heater's

@@ -733,3 +733,68 @@ func TestPricePurchasesWalksThemAndWritesWhatWasAnswered(t *testing.T) {
 	require.Len(t, paid, 1)
 	assert.Equal(t, f.purchases[0].Hash, paid[0].Purchase)
 }
+
+// TestRateTheStrainFromStorage: R on the storage screen rates the jar under
+// the cursor as a whole, and opens again on what was said.
+func TestRateTheStrainFromStorage(t *testing.T) {
+	app := seshed(t)
+	app.screen = storageScreen
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	selected := app.storage.Selected(app)
+	require.NotNil(t, selected)
+
+	down := tea.KeyPressMsg{Code: tea.KeyDown}
+	m = typeText(m, "R4") // overall 4
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "Rate the strain", "Should fit the whole form on a 30-row terminal")
+	m, _ = send(m, down) // taste
+	m = typeText(m, "5")
+	m, _ = send(m, down) // aroma, left unrated
+	m, _ = send(m, down) // again
+	m = typeText(m, "l") // yes
+	m, _ = send(m, down) // the note
+	m = typeText(m, "lemon, then jk")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	data, err := Load(app.data.Repo)
+	require.NoError(t, err)
+	rated, err := data.Products.Find(selected.Slug)
+	require.NoError(t, err)
+	require.NotNil(t, rated.Rating)
+	assert.Equal(t, catalog.StrainRating{Overall: 4, Taste: 5, Again: catalog.AgainYes, Note: "lemon, then jk", At: rated.Rating.At},
+		*rated.Rating, "j and k typed into the note are text")
+	assert.Contains(t, stripANSI(m.View().Content), "rated "+rated.Name+": overall 4, taste 5 · again")
+
+	m = typeText(m, "R")
+	assert.Contains(t, stripANSI(m.View().Content), "● ● ● ● ○  4", "Should open on the standing rating")
+}
+
+// TestAVBFromTheDashboard: v collects AVB out of the device chosen among
+// those with sessions waiting, shared between what they put in.
+func TestAVBFromTheDashboard(t *testing.T) {
+	app := seshed(t)
+	var m tea.Model = app
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	enter := tea.KeyPressMsg{Code: tea.KeyEnter}
+
+	m = typeText(m, "v")
+	assert.Contains(t, stripANSI(m.View().Content), "The AVB jar holds 0.00 g")
+	m, _ = send(m, enter) // collected out of a device
+	m = typeText(m, "0.4")
+	m, _ = send(m, enter)
+	out := stripANSI(m.View().Content)
+	assert.Contains(t, out, "Volcano Hybrid — 2 sessions, 3.00 g", "two devices have sessions waiting, so it asks which")
+	m, _ = send(m, tea.KeyPressMsg{Code: tea.KeyDown})
+	m, _ = send(m, enter)
+	m, _ = send(m, enter) // no note
+
+	data, err := Load(app.data.Repo)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.4, data.State.Balances["lemon"].AVB, 1e-9, "the volcano's sessions were all of lemon")
+	assert.Contains(t, stripANSI(m.View().Content), "collected 0.40 g of AVB, shared between 1 product")
+
+	app.screen = journalScreen
+	m = typeText(m, "v")
+	assert.NotContains(t, stripANSI(m.View().Content), "The AVB jar holds", "v on the journal shows the corrections")
+}

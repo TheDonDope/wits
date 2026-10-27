@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 
 import { CATEGORIES, PRESETS, SIGNATURES, USES, blankDevice } from '../data/devices';
 import { Device, DeviceCategory, DeviceFields, DeviceMode } from '../data/models';
@@ -11,6 +12,7 @@ import { Choice, ChoiceInput } from '../inputs/choice';
 import { TempDial } from '../inputs/temp-dial';
 import { TempRange } from '../inputs/temp-range';
 import { isoDay } from '../inputs/when';
+import { Confirm, ConfirmDialog } from './confirm';
 
 /**
  * Adding a device, or changing one: from a preset of what is known about it,
@@ -158,6 +160,9 @@ import { isoDay } from '../inputs/when';
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
+      @if (editing) {
+        <button mat-button class="remove" [disabled]="busy()" (click)="remove()"><mat-icon>delete</mat-icon>Remove</button>
+      }
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-flat-button [disabled]="busy() || !d().name.trim()" (click)="save()">{{ editing ? 'Save' : 'Add' }}</button>
     </mat-dialog-actions>
@@ -198,6 +203,7 @@ import { isoDay } from '../inputs/when';
       background: color-mix(in srgb, var(--w-fg) 3%, transparent); }
     .four { display: grid; grid-template-columns: 1fr 1.4fr 1.2fr 1.6fr; gap: 10px; }
     .bad { color: var(--w-warn); margin: 8px 0 0; }
+    .remove { margin-right: auto; color: var(--w-warn); }
     @include bp.phone {
       .three, .pair, .heat { grid-template-columns: minmax(0, 1fr); }
       .four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -210,6 +216,7 @@ export class DeviceForm {
   private readonly wits = inject(Wits);
   private readonly snack = inject(MatSnackBar);
   private readonly ref = inject(MatDialogRef<DeviceForm>);
+  private readonly dialog = inject(MatDialog);
   /** The device changed, or none when one is being added. */
   protected readonly editing = inject<{ device?: Device } | null>(MAT_DIALOG_DATA, { optional: true })?.device ?? null;
 
@@ -332,6 +339,37 @@ export class DeviceForm {
 
   protected removeMode(i: number): void {
     this.d.update((d) => ({ ...d, modes: d.modes.filter((_, n) => n !== i) }));
+  }
+
+  /**
+   * Takes the device out of the catalog, once asked: its sessions keep its
+   * name, so only its description goes. Retired keeps it, and says so.
+   */
+  protected async remove(): Promise<void> {
+    const d = this.editing;
+    if (!d) {
+      return;
+    }
+    const ok = await firstValueFrom(this.dialog.open<ConfirmDialog, Confirm, boolean>(ConfirmDialog, {
+      data: {
+        title: `Remove ${d.name}?`,
+        body: `${String(d.sessions)} ${d.sessions === 1 ? 'session names' : 'sessions name'} it, and keep its name; only what is written about it here goes. Retired, it would stay.`,
+        yes: 'Remove it',
+      },
+    }).afterClosed());
+    if (!ok) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const out = await this.wits.removeDevice(d.slug);
+      this.snack.open(out.message, undefined, { duration: 3000 });
+      this.ref.close(true);
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : String(e));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected async save(): Promise<void> {

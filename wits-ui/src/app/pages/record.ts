@@ -10,10 +10,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
-import { Accounts, Device, DeviceMode, Dimension, Entry, ForgottenPlan, Jar, Preview, Written } from '../data/models';
+import { Device, DeviceMode, Dimension, Entry, ForgottenPlan, Jar, Preview, Written } from '../data/models';
 import { CATEGORIES, heats, needsHeat, sessionWith } from '../data/devices';
 import { Choice, ChoiceInput } from '../inputs/choice';
-import { FlowLine, FlowPreview } from '../inputs/flow';
+import { FlowLine, FlowPreview, flowOf } from '../inputs/flow';
 import { GramsInput } from '../inputs/grams';
 import { JarOption, JarPick } from '../inputs/jar-pick';
 import { ScaleInput } from '../inputs/scale';
@@ -429,19 +429,7 @@ export class RecordDialog {
   });
   protected readonly flow = computed<FlowLine[]>(() => {
     const p = this.rehearsal.hasValue() ? this.rehearsal.value() : undefined;
-    if (!p || this.refusal()) {
-      return [];
-    }
-    const sum = (k: keyof Accounts, when: 'before' | 'after') => p.jars.reduce((s, j) => s + j[when][k], 0);
-    const lines: FlowLine[] = [];
-    for (const [k, label, tone] of FLOWS) {
-      const before = sum(k, 'before');
-      const after = sum(k, 'after');
-      if (Math.abs(after - before) >= 0.005) {
-        lines.push({ label, before, after, tone });
-      }
-    }
-    return lines;
+    return p && !this.refusal() ? flowOf(p) : [];
   });
   /** The device emptied: the one picked, or the only one with sessions waiting. */
   protected readonly emptied = computed(() => {
@@ -678,13 +666,6 @@ export class RecordDialog {
     }
   }
 }
-
-/** The accounts a rehearsal's jars are drawn by, what each is called, and its colour. */
-const FLOWS: [keyof Accounts, string, string][] = [
-  ['storage', 'sealed', 'var(--w-storage)'],
-  ['stash', 'ground', 'var(--w-stash)'],
-  ['avb', 'AVB jar', 'var(--w-avb)'],
-];
 
 /** What an account's grams are called on a jar's tile. */
 const ACCOUNT_WORDS: Record<string, string> = { storage: 'sealed', stash: 'ground', avb: 'vaped' };

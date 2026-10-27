@@ -1,6 +1,6 @@
 // Package api serves a repository over HTTP; this file serves the devices:
 // each with what it is, what it cost and what has been done with it, and
-// adding one or changing one, through the catalog's own locked update.
+// adding, changing or removing one, through the catalog's own locked update.
 package api
 
 import (
@@ -120,6 +120,29 @@ func (s *Server) editDevice(w http.ResponseWriter, r *http.Request) {
 		}
 		return fmt.Sprintf("changed %s", d.Name), nil
 	})
+}
+
+// removeDevice takes a device out of the catalog. Its sessions keep naming
+// it, so what is lost is its description, not its history.
+func (s *Server) removeDevice(w http.ResponseWriter, r *http.Request) {
+	ws, ok := s.writable(w, r)
+	if !ok {
+		return
+	}
+	var gone *catalog.Device
+	if _, err := ws.Repo.UpdateDevices(func(c *catalog.Devices) error {
+		var err error
+		gone, err = c.Remove(r.PathValue("slug"))
+		return err
+	}); err != nil {
+		fail(w, http.StatusNotFound, err)
+		return
+	}
+	used := 0
+	if u := views.Devices(ws.State.Standing)[gone.Slug]; u != nil {
+		used = u.Sessions
+	}
+	reply(w, http.StatusOK, map[string]string{"message": fmt.Sprintf("removed %s; %d sessions keep its name", gone.Name, used)})
 }
 
 // changeDevices reads a device from the request, checks it, and changes the

@@ -166,7 +166,7 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it, `--price` for what it cost |
 | `wits price <purchase> <euros>` | Write down what a purchase cost; `wits reconcile purchases` walks every one without |
 | `wits costs` | What the prescriptions cost: per gram, by fill, by month, and per session that helped |
-| `wits describe <product>` | What is known about a product; `--terpenes` writes down its profile, dominant first; `--rating "overall=4 taste=5" --again yes` rates the strain as a whole |
+| `wits describe <product>` | What is known about a product; `--name`, `--maker`, `--cultivar`, `--thc`, `--cbd` correct its label, the slug kept; `--terpenes` writes down its profile, dominant first; `--rating "overall=4 taste=5" --again yes` rates the strain as a whole |
 | `wits like <product>` | The products most like one, by name, cannabinoids and terpenes |
 | `wits grind <product> <amount>` | Move product from storage into its stash |
 | `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--mode`, `--timer`, `--heater`, `--setting`, `--note` |
@@ -178,8 +178,9 @@ screens can start from empty and grow the way the record grew: `p` plays,
 | `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
 | `wits show [entry]` | One entry in full: what it moved, the jar before and after, what corrects it |
 | `wits revert <entry>` | Undo an entry by recording a correction |
+| `wits amend <entry> <grams>` | Correct an entry's amount: undone and recorded again, in one write; `--note` |
 | `wits reconcile [account] [product] [weight]` | Make an account agree with the scale; interactive with no arguments |
-| `wits device add <name>` / `list` | Register a vaporizer, its temperature range and its load (`--load 0.15`); list them |
+| `wits device add <name>` / `edit <device>` / `remove <device>` / `list` | Register a vaporizer, its temperature range and its load (`--load 0.15`); change what the flags say; take it out of the catalog, its sessions keeping its name; list them |
 | `wits temps <celsius>` | What a temperature is hot enough to release |
 | `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
 | `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
@@ -228,9 +229,12 @@ moves the same grams back the way they came, so both stay in the log:
 ```sh
 wits log --oneline -n 1
 wits revert 8297238 --reason "misread the scale"
+wits amend 8297238 0.75 --note "misread the scale"
 ```
 
-In the journal, `e` amends an amount and `d` undoes an entry. The log shows
+`wits amend` undoes the entry and records it again with the amount it should
+have had, both in one write, and refuses an amount the jar never held. In the
+journal, `e` amends an amount and `d` undoes an entry. The log shows
 what currently stands; `v` reveals the corrections behind it, `f` filters it,
 and `←/→` browses the entries as cards.
 
@@ -244,7 +248,9 @@ charts the analysis view uses. Its newest sessions are listed with what each
 was rated; `e` rates the one under the cursor — a line a dimension, `←`/`→` or
 `1`–`5` to score, `0` to leave one out — and under the list each product's
 overall rating, with how many ratings it stands on. Space ticks jars in either table and `r` weighs
-the ticked ones together; `e` corrects a name; `c` records stale stash
+the ticked ones together; `e` corrects a product's label — name, maker,
+cultivar, THC, CBD, terpenes; `R` rates the strain as a whole — overall, taste,
+aroma, whether again, a line — opened on its standing rating; `c` records stale stash
 remainders from earlier cycles as consumed, which is what four imported years of
 grind-only records leave behind. Product names are never abbreviated — the name
 column takes what the longest name needs.
@@ -651,7 +657,9 @@ emptied twice without a session between. `--device` can be left out when only
 one device has sessions waiting. `avb use` draws the jar down as a whole, each
 product's share in proportion to what it holds. What stays behind in
 **consumed**, here 0.54 g, is what the vapour took. The browser records both
-on the **AVB** tab of Record (`v`), and its AVB tile shows the last yield.
+on the **AVB** tab of Record (`v`), and its AVB tile shows the last yield; the
+terminal interface on `v` too, on every screen but the journal, asking which
+device when more than one has sessions waiting.
 
 ## Temperatures
 
