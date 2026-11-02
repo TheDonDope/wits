@@ -1530,6 +1530,7 @@ gram lately, a month at this rate, the bands, the fill trend) are in
 10,156.01 € for 1,244 g, and the years add up to it: 10.73, 9.75, 6.96 and
 6.25 € a gram from 2023 to 2026. Every page measures 375 px on the phone, and
 the colours were checked in a dark theme and in Paper.
+
 ### The effect log — `wits rate session`
 
 What a session did, rated afterwards from 1 to 5 on any of overall, pain,
