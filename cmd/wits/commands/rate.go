@@ -1,4 +1,5 @@
-// Package commands holds `wits rate` here: what a session did, rated afterwards.
+// Package commands holds `wits rate` here: what a session did, rated
+// afterwards, and the strain rated as a whole.
 package commands
 
 import (
@@ -7,36 +8,61 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
+	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/effects"
 	"github.com/TheDonDope/wits/pkg/journal"
-	"github.com/spf13/cobra"
 )
 
-var rateNote string
+var (
+	rateNote  string
+	rateAgain string
+	rateClear bool
+)
 
-// Rate is the `wits rate` command.
+// Rate is the `wits rate` command, which only groups: a session is rated,
+// or a strain.
 var Rate = &cobra.Command{
-	Use:   "rate <session|last> <dimension=score>...",
-	Short: "Rate what a session did",
+	Use:   "rate <session|strain>",
+	Short: "Rate what a session did, or a strain as a whole",
+	Args:  cobra.NoArgs,
+}
+
+var rateSession = &cobra.Command{
+	Use:     "session [<rev>] <dimension=score>...",
+	Aliases: []string{"sesh"},
+	Short:   "Rate what a session did, 1 to 5; without a session, the last",
 	Long: "Rate a session afterwards, 1 (not at all) to 5 (very well), on any of:\n" +
 		"overall, pain, sleep, calm, mood, focus, appetite. Rate it again and the\n" +
 		"newer rating stands; the effect log keeps both.\n\n" +
-		"The session is named by its hash, as wits log shows it, or as last.",
-	Example: "  wits rate last overall=4 sleep=5\n" +
-		"  wits rate 8297238 pain=4 calm=3 --note \"took the edge off\"",
-	Args: cobra.MinimumNArgs(2),
+		"The session is named by its hash, as wits log shows it, or as HEAD~n;\n" +
+		"named not at all, it is the last session that stands.",
+	Example: "  wits rate session overall=4 sleep=5\n" +
+		"  wits rate session 8297238 pain=4 calm=3 --note \"took the edge off\"",
+	Args:              cobra.MinimumNArgs(1),
+	Annotations:       rehearsable(),
+	ValidArgsFunction: completeRev,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {
 			return err
 		}
-		session := args[0]
-		if session == "last" {
-			if session = lastSession(s.State.Standing); session == "" {
-				return fmt.Errorf("no session to rate yet")
+		session := lastSession(s.State.Standing)
+		if !strings.Contains(args[0], "=") {
+			e, err := resolve(s, args[0])
+			if err != nil {
+				return err
 			}
+			session, args = e.Hash, args[1:]
 		}
-		scores, err := parseScores(args[1:])
+		if session == "" {
+			return fmt.Errorf("no session to rate yet")
+		}
+		if len(args) == 0 {
+			return fmt.Errorf("rate it on something: overall=4, sleep=5")
+		}
+		scores, err := parseScores(args)
 		if err != nil {
 			return err
 		}
@@ -50,8 +76,51 @@ var Rate = &cobra.Command{
 	},
 }
 
+var rateStrain = &cobra.Command{
+	Use:     "strain <product> [<dimension=score>...]",
+	Aliases: []string{"product"},
+	Short:   "Rate a strain as a whole: overall, taste and aroma, 1 to 5",
+	Long: "Rate the strain as a whole, apart from any one session: overall, taste\n" +
+		"and aroma, 1 to 5. --again says whether you would have it again, --note\n" +
+		"adds a line, and --clear takes the rating away. Rated again, the newer\n" +
+		"rating stands.",
+	Example: "  wits rate strain wedding overall=4 taste=5 --again yes --note \"lemon, then pepper\"\n" +
+		"  wits rate strain wedding --clear",
+	Args:              cobra.MinimumNArgs(1),
+	Annotations:       rehearsable(),
+	ValidArgsFunction: completeProduct(""),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		s, err := open()
+		if err != nil {
+			return err
+		}
+		p, err := s.Products.Find(args[0])
+		if err != nil {
+			return err
+		}
+		var rating *catalog.StrainRating
+		if !rateClear {
+			r, err := catalog.ParseRating(strings.Join(args[1:], " "))
+			if err != nil {
+				return err
+			}
+			r.Again, r.Note = catalog.Again(strings.ToLower(rateAgain)), rateNote
+			rating = &r
+		}
+		if p, err = s.Recorder.RateStrain(p.Slug, rating, time.Now()); err != nil {
+			return err
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "%s: %s\n", p.Name, ratedLine(p.Rating))
+		return nil
+	},
+}
+
 func init() {
-	Rate.Flags().StringVar(&rateNote, "note", "", "a line about how it went")
+	rateSession.Flags().StringVar(&rateNote, "note", "", "a line about how it went")
+	rateStrain.Flags().StringVar(&rateNote, "note", "", "a line about the strain")
+	rateStrain.Flags().StringVar(&rateAgain, "again", "", "whether you would have it again: yes or no")
+	rateStrain.Flags().BoolVar(&rateClear, "clear", false, "take the strain's rating away")
+	Rate.AddCommand(rateSession, rateStrain)
 }
 
 // lastSession is the newest session that stands, by when it happened: the

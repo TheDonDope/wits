@@ -61,8 +61,9 @@ func writeAVB(out io.Writer, s *session) {
 }
 
 var avbCollect = &cobra.Command{
-	Use:   "collect <grams>",
-	Short: "Record the AVB weighed out of a device",
+	Use:         "collect <grams>",
+	Short:       "Record the AVB weighed out of a device",
+	Annotations: rehearsable(),
 	Long: "Record what was weighed out of a device when it was emptied. It came from\n" +
 		"the sessions put through it since it was last emptied, and is shared\n" +
 		"between their products in proportion to what each put in. --device names\n" +
@@ -87,11 +88,12 @@ var avbCollect = &cobra.Command{
 }
 
 var avbUse = &cobra.Command{
-	Use:     "use <grams>",
-	Short:   "Record AVB used up",
-	Long:    "Record AVB drawn down — for butter, a tincture — from the jar as a whole.",
-	Example: "  wits avb use 5 --note butter",
-	Args:    cobra.ExactArgs(1),
+	Use:         "use <grams>",
+	Short:       "Record AVB used up",
+	Annotations: rehearsable(),
+	Long:        "Record AVB drawn down — for butter, a tincture — from the jar as a whole.",
+	Example:     "  wits avb use 5 --note butter",
+	Args:        cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, grams, at, err := avbArgs(args[0])
 		if err != nil {

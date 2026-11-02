@@ -520,7 +520,7 @@ const entryDescribe entryKind = iota + 300
 const entryWeighMany entryKind = iota + 400
 
 // newWeighManyForm asks which account is on the scale, then for each ticked
-// jar's reading in turn, the way `wits reconcile` does. A blank reading skips
+// jar's reading in turn, the way `wits weigh` does. A blank reading skips
 // a jar, and nothing is written until every question is answered.
 func newWeighManyForm(slugs []string, a *App, account journal.Account) *entryForm {
 	f := &entryForm{kind: entryWeighMany, slugs: slugs, readings: make([]string, len(slugs))}
@@ -765,7 +765,7 @@ func parseFloatOrZero(s string) float64 {
 const entryPrices entryKind = iota + 600
 
 // newPriceForm asks what each purchase was paid, in turn, the way `wits
-// reconcile purchases` does: a blank answer skips one, and nothing is written
+// wits price` does: a blank answer skips one, and nothing is written
 // until every question is answered.
 func newPriceForm(purchases []journal.Event, a *App) *entryForm {
 	f := &entryForm{kind: entryPrices, purchases: purchases, readings: make([]string, len(purchases))}

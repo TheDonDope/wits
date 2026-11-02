@@ -29,7 +29,7 @@ Type "wits buy 'Cantourage 25/1 MAC1+' 20g" Sleep 400ms Enter
 Sleep 2500ms
 
 # Register the vaporizer, so a session can name it.
-Type "wits device add 'Volcano Hybrid' --kind desktop --max 230 --default 185" Sleep 400ms Enter
+Type "wits create device 'Volcano Hybrid' --kind desktop --max 230 --default 185" Sleep 400ms Enter
 Sleep 2500ms
 
 # Grind into the stash, then a session out of it.

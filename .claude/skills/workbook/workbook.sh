@@ -65,8 +65,8 @@ figures() {
 	extract "${1:-work}" book
 	import book | tail -3
 	cd "$scratch/book"
-	"$wits" bundle --out ../plain.wits >/dev/null 2>&1
-	"$wits" bundle --gzip --out ../packed.wits >/dev/null 2>&1
+	"$wits" bundle create ../plain.wits >/dev/null 2>&1
+	"$wits" bundle create ../packed.wits.gz >/dev/null 2>&1
 	python3 -I - .wits/journal.ndjson ../plain.wits ../packed.wits <<'PY'
 import json, sys
 journal, plain, packed = (len(open(p, "rb").read()) for p in sys.argv[1:4])
@@ -81,7 +81,7 @@ print(f"ground       {ground:.2f} g")
 print(f"last entry   {events[-1]['occurred_at'][:10]}")
 print(f"journal      {journal:,} bytes")
 print(f"bundle       {plain:,} bytes  {journal / plain:.0f}x")
-print(f"bundle gzip  {packed:,} bytes  {journal / packed:.0f}x   (wits bundle --gzip)")
+print(f"bundle gzip  {packed:,} bytes  {journal / packed:.0f}x   (wits bundle create x.gz)")
 PY
 	"$wits" status | head -1
 }

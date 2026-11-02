@@ -41,7 +41,7 @@ type Filled struct {
 var ErrEmptyFill = errors.New("a fill names at least one product")
 
 // ErrUnpriced is why a fill that was recorded says one of its prices was not:
-// the purchases stand, and wits reconcile asks for the price later.
+// the purchases stand, and wits price asks for the price later.
 var ErrUnpriced = errors.New("the fill is recorded, but a price is not")
 
 // Fill records a fill of one product or several, picked up at the same time:

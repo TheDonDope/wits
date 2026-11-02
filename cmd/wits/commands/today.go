@@ -1,4 +1,4 @@
-// Package commands holds `wits today` here: the day so far, and the THC in it.
+// Package commands holds `wits report today` here: the day so far, and the THC in it.
 package commands
 
 import (
@@ -13,7 +13,7 @@ import (
 
 var todayDate string
 
-// Today is the `wits today` command.
+// Today is the `wits report today` command.
 var Today = &cobra.Command{
 	Use:   "today",
 	Short: "The day so far: its sessions, and the THC and CBD in them",
@@ -23,7 +23,7 @@ var Today = &cobra.Command{
 		"the material, not what reached the body: a vaporizer releases part of it.\n" +
 		"A strain with no THC written down is counted, not guessed at. --date for\n" +
 		"another day; the dashboard's Today draws the same.",
-	Example: "  wits today\n  wits today --date 2026-10-24",
+	Example: "  wits report today\n  wits report today --date 2026-10-24",
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
@@ -45,7 +45,7 @@ var Today = &cobra.Command{
 func writeToday(out io.Writer, d today.Today) {
 	fmt.Fprintf(out, "%s: %s\n", d.Day.Format("Monday 2 January"), todayLine(d))
 	if d.Unknown > 0 {
-		fmt.Fprintf(out, "%s of a strain with no THC written down; `wits describe` gives it one.\n", plural(d.Unknown, "session"))
+		fmt.Fprintf(out, "%s of a strain with no THC written down; `wits edit product --thc` gives it one.\n", plural(d.Unknown, "session"))
 	}
 	if len(d.Sessions) > 0 {
 		fmt.Fprintln(out)

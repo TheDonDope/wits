@@ -7,7 +7,7 @@ import { Jar, ProductLabel } from '../data/models';
 import { Wits } from '../data/wits';
 
 /**
- * What a product's label says, corrected, as `wits describe --name` corrects
+ * What a product's label says, corrected, as `wits edit product --name` corrects
  * it: its name, maker, cultivar, THC and CBD. The slug its entries name it by
  * stays, and so do its terpenes and its rating, which are written elsewhere.
  * The recorder refuses a product with no name, or a share past 100 %.

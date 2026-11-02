@@ -15,7 +15,7 @@ import { TempGauge } from '../viz/temp-gauge';
 import { YearMonths } from '../viz/year-months';
 
 /**
- * The year on one card, as wits review gathers it: the grams and the days,
+ * The year on one card, as wits report year gathers it: the grams and the days,
  * the months, every day of it, the strains, the terpene most of it led with,
  * the longest break, the temperature and the strain rated best, the device
  * most used, and what it cost from the cheapest gram to the dearest. Every

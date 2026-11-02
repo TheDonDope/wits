@@ -1,3 +1,6 @@
+// Package commands holds the repository carried elsewhere here: a bundle
+// written, a repository cloned from one or from a shared folder, the remote,
+// and push and pull.
 package commands
 
 import (
@@ -13,46 +16,54 @@ import (
 	"github.com/TheDonDope/wits/pkg/catalog"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/remote"
+	"github.com/TheDonDope/wits/pkg/repo"
 	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/spf13/cobra"
 )
 
 var (
-	bundleOut  string
-	bundleGzip bool
-	remoteKey  string
+	remoteKey string
+	cloneKey  string
 )
 
-// Bundle is the `wits bundle` command.
+// Bundle is the `wits bundle` command, which only groups: a bundle is
+// created, and read back by wits clone.
 var Bundle = &cobra.Command{
 	Use:   "bundle",
+	Short: "Pack the whole repository into one file",
+	Args:  cobra.NoArgs,
+}
+
+var bundleCreate = &cobra.Command{
+	Use:   "create <file>",
 	Short: "Write the whole repository to a single compact file",
-	Long: "Write the catalogs and every event to one file, the way `git bundle`\n" +
-		"packs a repository for carrying elsewhere. `wits restore` reads it back\n" +
-		"into an empty repository, reproducing the journal exactly, hashes and\n" +
-		"all.\n\n" +
+	Long: "Write the catalogs and every event to one file, the way `git bundle\n" +
+		"create` packs a repository for carrying elsewhere. `wits clone` reads it\n" +
+		"back into a new repository, reproducing the journal exactly, hashes and\n" +
+		"all. A file ending in .gz is compressed; - writes to the standard output.\n\n" +
 		"The format is plain text, so the record stays legible with nothing but a\n" +
 		"text editor, and diffs cleanly in git. It is small anyway: what the\n" +
 		"journal spends most of its bytes on — sequence numbers, account pairs\n" +
-		"and the hash chain — is recomputed on restore rather than written down.",
-	Example: "  wits bundle --out history.wits\n" +
-		"  wits bundle --gzip --out history.wits.gz",
-	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
+		"and the hash chain — is recomputed on clone rather than written down.",
+	Example: "  wits bundle create history.wits\n" +
+		"  wits bundle create history.wits.gz",
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {
 			return err
 		}
+		name := args[0]
 		var out io.Writer = cmd.OutOrStdout()
-		if bundleOut != "" {
-			f, err := os.OpenFile(bundleOut, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+		if name != "-" {
+			f, err := os.OpenFile(name, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 			if err != nil {
 				return err
 			}
 			defer f.Close()
 			out = f
 		}
-		if bundleGzip {
+		if strings.HasSuffix(name, ".gz") {
 			z := gzip.NewWriter(out)
 			defer z.Close()
 			out = z
@@ -78,73 +89,137 @@ var Bundle = &cobra.Command{
 		}); err != nil {
 			return err
 		}
-		if bundleOut != "" {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Bundled %d events into %s\n", len(events), bundleOut)
+		if name != "-" {
+			fmt.Fprintf(cmd.ErrOrStderr(), "Bundled %d events into %s\n", len(events), name)
 		}
 		return nil
 	},
 }
 
-// Restore is the `wits restore` command.
-var Restore = &cobra.Command{
-	Use:   "restore <file>",
-	Short: "Rebuild a repository from a bundle",
-	Long: "Read a bundle back into the repository, replaying its events in order\n" +
-		"so that the journal, its hash chain included, comes out identical to the\n" +
-		"one the bundle was written from.\n\n" +
-		"The repository must be empty. Restoring into a journal that already holds\n" +
-		"events would interleave two histories, and there is no way to do that\n" +
-		"without deciding which one is right.",
-	Example: "  wits init . && wits restore history.wits",
-	Args:    cobra.ExactArgs(1),
+// Clone is the `wits clone` command.
+var Clone = &cobra.Command{
+	Use:   "clone <bundle | folder> [<directory>]",
+	Short: "Make a new repository from a bundle, or from a shared folder",
+	Long: "Make a new repository the way `git clone` does, from a bundle that\n" +
+		"wits bundle create wrote or from a remote's folder another device pushes\n" +
+		"to. A bundle is replayed in order, so the journal, its hash chain\n" +
+		"included, comes out identical to the one it was written from. A folder is\n" +
+		"read with the key the first device made: --key, brought by hand.\n\n" +
+		"The directory is made, or must be empty; without one it is named after\n" +
+		"the bundle or the folder.",
+	Example: "  wits clone history.wits\n" +
+		"  wits clone history.wits.gz restored\n" +
+		"  wits clone ~/Sync/wits --key remote.key",
+	Args: cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		s, err := open()
-		if err != nil {
+		source := args[0]
+		into := cloneTarget(source)
+		if len(args) == 2 {
+			into = args[1]
+		}
+		if err := emptyOrAbsent(into); err != nil {
 			return err
 		}
-		if n := len(s.State.Events); n > 0 {
-			return fmt.Errorf("journal already holds %d events; restore into an empty repository", n)
+		if info, err := os.Stat(source); err == nil && info.IsDir() {
+			return cloneFolder(cmd, source, into)
 		}
-
-		f, err := os.Open(args[0])
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		var in io.Reader = f
-		if strings.HasSuffix(args[0], ".gz") {
-			z, err := gzip.NewReader(f)
-			if err != nil {
-				return err
-			}
-			defer z.Close()
-			in = z
-		}
-
-		step := progress(cmd.ErrOrStderr())
-		step("reading " + filepath.Base(args[0]))
-		contents, err := bundle.Read(in)
-		if err != nil {
-			return err
-		}
-		if err := bundle.Restore(s.Repo, contents, step); err != nil {
-			return err
-		}
-		step("done")
-		// Restored faithfully all the same: a backup gives back what it holds.
-		if short := ledger.Shortfalls(contents.Events); len(short) > 0 {
-			verb := "take"
-			if len(short) == 1 {
-				verb = "takes"
-			}
-			fmt.Fprintf(cmd.ErrOrStderr(), "⚠ %s %s grams that were not in the jar at the time; wits fsck lists them\n",
-				entries(len(short)), verb)
-		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Restored %s, %s and %s.\n", plural(len(products(contents)), "product"),
-			plural(len(devices(contents)), "device"), plural(len(contents.Events), "event"))
-		return nil
+		return cloneBundle(cmd, source, into)
 	},
+}
+
+// cloneTarget names the directory a clone makes when none is given: the
+// source's name without its extensions, as git names a clone.
+func cloneTarget(source string) string {
+	name := filepath.Base(filepath.Clean(source))
+	for _, ext := range []string{".gz", ".wits"} {
+		name = strings.TrimSuffix(name, ext)
+	}
+	return name
+}
+
+// emptyOrAbsent refuses a directory that already holds something: a clone
+// never interleaves two histories.
+func emptyOrAbsent(dir string) error {
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if len(entries) > 0 {
+		return fmt.Errorf("%s already exists and is not empty", dir)
+	}
+	return nil
+}
+
+// cloneBundle makes a repository from a bundle, replayed in order.
+func cloneBundle(cmd *cobra.Command, file, into string) error {
+	f, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var in io.Reader = f
+	if strings.HasSuffix(file, ".gz") {
+		z, err := gzip.NewReader(f)
+		if err != nil {
+			return err
+		}
+		defer z.Close()
+		in = z
+	}
+
+	step := progress(cmd.ErrOrStderr())
+	step("reading " + filepath.Base(file))
+	contents, err := bundle.Read(in)
+	if err != nil {
+		return err
+	}
+	r, err := repo.Init(into)
+	if err != nil {
+		return err
+	}
+	if err := bundle.Restore(r, contents, step); err != nil {
+		return err
+	}
+	step("done")
+	// Cloned faithfully all the same: a backup gives back what it holds.
+	if short := ledger.Shortfalls(contents.Events); len(short) > 0 {
+		verb := "take"
+		if len(short) == 1 {
+			verb = "takes"
+		}
+		fmt.Fprintf(cmd.ErrOrStderr(), "⚠ %s %s grams that were not in the jar at the time; wits fsck lists them\n",
+			entries(len(short)), verb)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "Cloned %s, %s and %s into %s.\n", plural(len(products(contents)), "product"),
+		plural(len(devices(contents)), "device"), plural(len(contents.Events), "event"), filepath.Dir(r.Root()))
+	return nil
+}
+
+// cloneFolder makes a repository from a remote's folder: one made new, the
+// folder set as its remote with the key brought from the first device, and
+// everything in it pulled.
+func cloneFolder(cmd *cobra.Command, folder, into string) error {
+	if cloneKey == "" {
+		return fmt.Errorf("a shared folder is read with the first device's key: wits clone %s --key <file>", folder)
+	}
+	r, err := repo.Init(into)
+	if err != nil {
+		return err
+	}
+	if err := remote.Add(r, folder, cloneKey); err != nil {
+		return err
+	}
+	done, err := remote.Pull(r)
+	if err != nil {
+		return err
+	}
+	reportPull(cmd.OutOrStdout(), done)
+	fmt.Fprintf(cmd.OutOrStdout(), "Cloned into %s, its remote %s.\n", filepath.Dir(r.Root()), r.Config.Remote)
+	return nil
 }
 
 // products returns a bundle's products, or none when it carried no catalog.
@@ -170,7 +245,8 @@ var Remote = &cobra.Command{
 	Long: "A remote is a folder more than one device can reach — a Syncthing share,\n" +
 		"a USB stick — holding the repository as one file, encrypted with age to a\n" +
 		"key kept in .wits/remote.key and never in the folder. Bring that key to\n" +
-		"another device by hand, and give it to `wits remote add --key` there.",
+		"another device by hand, and give it to `wits clone --key` or `wits remote\n" +
+		"add --key` there.",
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
@@ -289,8 +365,8 @@ func reportPull(out io.Writer, done remote.Pulled) {
 func init() {
 	Remote.AddCommand(remoteAdd)
 	remoteAdd.Flags().StringVar(&remoteKey, "key", "", "the key file brought from the first device")
-	Bundle.Flags().StringVar(&bundleOut, "out", "", "write to this file instead of stdout")
-	Bundle.Flags().BoolVar(&bundleGzip, "gzip", false, "compress the bundle")
+	Clone.Flags().StringVar(&cloneKey, "key", "", "cloning a folder: the key file brought from the first device")
+	Bundle.AddCommand(bundleCreate)
 }
 
 // andPrices names the prices a push or a pull carried, when it carried any.

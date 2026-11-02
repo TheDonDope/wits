@@ -38,5 +38,5 @@ node node_modules/.cache/wits/demo-seed.mjs "${args[@]}"
 
 kill "$server"
 wait "$server" 2>/dev/null || true
-(cd "$work/demo" && "$root/bin/wits" fsck | tail -1 && "$root/bin/wits" bundle --out "$root/assets/demo-seed.wits")
+(cd "$work/demo" && "$root/bin/wits" fsck | tail -1 && "$root/bin/wits" bundle create "$root/assets/demo-seed.wits")
 ls -l "$root/assets/demo-seed.wits"

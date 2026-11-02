@@ -16,7 +16,7 @@ import { tone } from '../viz/tones';
 import { openRecord } from './record';
 
 /**
- * The day so far, on the dashboard, as wits today says it: the THC and CBD
+ * The day so far, on the dashboard, as wits report today says it: the THC and CBD
  * in what went through a device — grams × the strain's per cent × 10 — summed
  * and against a usual day, by strain and by device as rings, the sessions on
  * a clock of the day, and each session in a row with its share. What was in

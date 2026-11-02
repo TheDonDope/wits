@@ -97,7 +97,7 @@ order the next prescription by, and the last twenty weeks of grinding and
 sessions as calendars.
 
 Under the shelf's three accounts stands **Today**, with **Same as last time**
-to record the last session again in one tap (the snackbar can undo it), as `wits today` says it:
+to record the last session again in one tap (the snackbar can undo it), as `wits report today` says it:
 the THC in what went through a device so far, in milligrams — grams × the
 strain's per cent × 10 — with the CBD beside it and a bar against a usual
 day of the last 30. Then two rings, the THC by strain and the grams by
@@ -125,7 +125,7 @@ A jar, on the dashboard or on the Shelf, opens in full:
 - the products most like it.
 
 **Correct the label** sets its name, maker, cultivar, THC and CBD, as
-`wits describe --name` does; its slug, which its entries name it by, stays,
+`wits edit product --name` does; its slug, which its entries name it by, stays,
 and so do its terpenes and rating.
 
 The jar's own figures are its whole life; each fill's are that fill's. (The
@@ -276,7 +276,7 @@ A strain can be rated as a whole, apart from any one session: overall, its
 taste and its aroma, 1 to 5 each or left out, whether you would have it again,
 and a line about it. **Rate** on its card on the Shelf, its own page, or
 **I forgot to**, which asks after every strain used in the last 90 days that
-has no rating; on the command line, `wits describe enua-wedding --rating
+has no rating; on the command line, `wits rate strain enua-wedding
 "overall=4 taste=5" --again yes --say "lemon, then pepper"`. Rated again, the
 newer rating stands. It is kept with the product, travels in bundles and
 syncs: of two devices' ratings of one strain, the one given last stays.
@@ -340,7 +340,7 @@ calm, mood, focus or appetite, any of them — and what the ratings add up to is
 drawn three ways: every product against every dimension, each dimension by
 temperature band, and by time of day as a wheel. Every mean says how many
 ratings it stands on, and one that stands on a single rating is hatched: a
-rating, not a finding. `wits rate last sleep=5` does the same from the command
+rating, not a finding. `wits rate session sleep=5` does the same from the command
 line, and `e` on the terminal interface's sessions screen.
 
 ![What works, by product, temperature and time of day](../assets/wits-ui-effects.png)
@@ -363,11 +363,13 @@ that taste alike — citrus-led, say — count as nearer even through different
 terpenes. The cultivar's name counts a little, THC and CBD hardly: between 20
 and 30 % they say almost nothing of what a strain is like. A product with no
 terpenes written down is compared by name alone and ranks below any known
-profile. `wits like` says the same on the command line:
+profile. `wits describe product` says the same on the command line:
 
 ```console
-$ wits like cantourage-mac1-251
-Like Cantourage 25/1 MAC1+ (citrus, flowers and pine):
+$ wits describe product cantourage-mac1-251
+Cantourage 25/1 MAC1+ (cantourage-mac1-251)
+…
+Like it (citrus, flowers and pine):
    99 %  Cantourage 25/1 MAC 1+ — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
    98 %  420 Evolution 25/1 CA MAC: MAC1 — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
    87 %  enua 22/1 Black Cherry Punch — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene — rated 4.1 overall, over 39 sessions
@@ -386,7 +388,7 @@ and what it is most like.
 
 The workbook names its cultivars but lists no terpenes, so until profiles are
 written down the map has nothing to place. Look them up from **I forgot to**,
-or write one down as the label gives it — `wits describe enua-wedding --terpenes
+or write one down as the label gives it — `wits edit product enua-wedding --terpenes
 "Myrcen, Limonen, Caryophyllen"` or the terminal's product form.
 
 ## Devices
@@ -444,7 +446,7 @@ wattage. The Journal shows it all, as in "Vestratto Tornado · heated with YLL
 
 ![2025, on one card](../assets/wits-ui-year.png)
 
-**Insights → Year** is the year in wits, `wits review` with more room: the
+**Insights → Year** is the year in wits, `wits report year` with more room: the
 year in big numerals with what was ground and on how many days, then a card
 for each finding. The months as bars, the busiest lit; every day of the year
 as a calendar; the strains of the year ranked, the first crowned; the terpene

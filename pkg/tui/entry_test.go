@@ -560,7 +560,7 @@ func TestDeviceFormKeepsADeviceAddedElsewhere(t *testing.T) {
 	volcano, err := app.data.Devices.Find("volcano")
 	require.NoError(t, err)
 
-	// wits device add, in another terminal, after the screen was drawn.
+	// wits create device, in another terminal, after the screen was drawn.
 	other, err := repo.Discover(app.data.Repo.WorkTree())
 	require.NoError(t, err)
 	_, err = other.UpdateDevices(func(d *catalog.Devices) error { return d.Add(&catalog.Device{Name: "Mighty"}) })

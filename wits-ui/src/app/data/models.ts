@@ -559,7 +559,7 @@ export interface Findings {
   suggested: string[];
 }
 
-/** The year on one card, as wits review gathers it: every figure the year's own. */
+/** The year on one card, as wits report year gathers it: every figure the year's own. */
 export interface YearReview {
   year: number;
   years: number[];
@@ -628,7 +628,7 @@ export interface Packing {
   qr: string;
 }
 
-/** The day so far, as wits today says it: THC and CBD in milligrams, in the material put through a device. */
+/** The day so far, as wits report today says it: THC and CBD in milligrams, in the material put through a device. */
 export interface DayToday {
   day: string;
   sessions: {

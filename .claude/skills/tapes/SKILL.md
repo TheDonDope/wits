@@ -13,7 +13,7 @@ show what the docs beside it say (README.md, docs/terminal.md, docs/browser.md).
 | `wits-tour.tape` | the interface, screen by screen | every screen; `demo-seed.sh` |
 | `wits-cli.tape` | recording a fill and a session | `buy`, `grind`, `sesh`, `status` output |
 | `wits-import.tape` | importing the workbook | the importer's report |
-| `wits-reconcile.tape` | weighing against the scale | `reconcile`; `demo-seed.sh` |
+| `wits-reconcile.tape` | weighing against the scale | `weigh`; `demo-seed.sh` |
 | `wits-bundle.tape` | bundle and restore | the workbook's byte counts |
 
 ## Render

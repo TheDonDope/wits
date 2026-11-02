@@ -1,5 +1,5 @@
 // Package api serves a repository over HTTP; this file serves the year on one
-// card, as wits review gathers it, for Insights → Year.
+// card, as wits report year gathers it, for Insights → Year.
 package api
 
 import (

@@ -12,18 +12,21 @@ var amendNote string
 
 // Amend is the `wits amend` command.
 var Amend = &cobra.Command{
-	Use:   "amend <entry> <grams>",
+	Use:   "amend <rev> <grams>",
 	Short: "Correct an entry's amount, keeping the original",
 	Long: "Correct the amount of an earlier entry.\n\n" +
 		"Nothing is edited in place: the entry is undone, as `wits revert` undoes it,\n" +
 		"and recorded again with the amount it should have had, both in one write.\n" +
 		"The journal keeps the original, the undo and the correction. The new amount\n" +
 		"is checked as any entry is: a jar gives no more than it held.\n\n" +
-		"The entry is named by its hash, abbreviated as `wits log` shows it.",
-	Example: "  wits amend 8297238 0.75\n" +
+		"The entry is named by its hash, abbreviated as `wits log` shows it, or\n" +
+		"as HEAD~n, counted back from the entry written last.",
+	Annotations: rehearsable(),
+	Example: "  wits amend HEAD 0.75\n" +
+		"  wits amend 8297238 0.75\n" +
 		"  wits amend 8297238 0.75 --note \"misread the scale\"",
 	Args:              cobra.ExactArgs(2),
-	ValidArgsFunction: completeEntry,
+	ValidArgsFunction: completeRev,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {
@@ -33,7 +36,7 @@ var Amend = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		original, err := s.Recorder.Find(args[0])
+		original, err := resolve(s, args[0])
 		if err != nil {
 			return err
 		}

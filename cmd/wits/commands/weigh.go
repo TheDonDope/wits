@@ -1,13 +1,13 @@
+// Package commands holds `wits weigh` here: a jar put on the scale, and the
+// ledger made to agree with it.
 package commands
 
 import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"strings"
-	"time"
 
 	"charm.land/huh/v2"
 	"github.com/charmbracelet/x/term"
@@ -15,132 +15,90 @@ import (
 
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
-	"github.com/TheDonDope/wits/pkg/prices"
 	"github.com/TheDonDope/wits/pkg/record"
 )
 
 var (
-	reconcileStash  bool
-	reconcileAVB    bool
-	reconcileReason string
-	reconcileDryRun bool
-	reconcileForgot bool
+	weighReason string
+	weighForgot bool
 )
 
 // accountNames maps the words the command line accepts to the accounts that
-// can be put on a scale. Consumed is absent for the same reason it cannot be
-// reconciled: there is no jar of it to weigh.
+// can be put on a scale. Consumed is absent: there is no jar of it to weigh.
 var accountNames = map[string]journal.Account{
 	"storage": journal.Storage,
 	"stash":   journal.Stash,
 	"avb":     journal.AVB,
 }
 
-// Reconcile is the `wits reconcile` command.
-var Reconcile = &cobra.Command{
-	Use:   "reconcile [account] [product] [weight]",
-	Short: "Make an account agree with the scale",
-	Long: "Record the difference between what the ledger believes an account holds\n" +
-		"and what it actually weighs.\n\n" +
+// Weigh is the `wits weigh` command.
+var Weigh = &cobra.Command{
+	Use:   "weigh [storage|stash|avb] [<product> <grams>]",
+	Short: "Make a jar agree with the scale",
+	Long: "Record the difference between what the ledger believes a jar holds and\n" +
+		"what it weighs.\n\n" +
 		"Ledgers drift: a little is spilled, a session goes unlogged, a scale is\n" +
 		"read wrong. The past is not edited to hide it, because nobody knows which\n" +
 		"entry was wrong. Instead the difference is recorded as an adjustment, and\n" +
 		"the account agrees with the jar again.\n\n" +
 		"Run without arguments it is interactive: pick storage or the stash, tick\n" +
 		"the jars to weigh, and each is asked for in turn. Naming just the account\n" +
-		"skips the first question. The full form records one jar directly.\n\n" +
+		"skips the first question. <product> <grams> weighs one jar of storage;\n" +
+		"stash <product> <grams> one of the stash. With --dry-run it says what the\n" +
+		"scale and the ledger disagree by, and records nothing.\n\n" +
 		"A jar lighter than the ledger says was most likely ground, and ground\n" +
 		"grams that are gone most likely vaped: the interactive form asks whether\n" +
 		"a grind or sessions were forgotten, and --forgot says yes up front. A\n" +
 		"forgotten grind is dated just after the jar's last entry; forgotten\n" +
 		"sessions take the usual size and the last session's device, spread from\n" +
-		"then until now. Weigh the ground after a forgotten grind.\n\n" +
-		"`reconcile purchases` walks every purchase still in storage without a\n" +
-		"price, one at a time, to write down what was paid; --all takes every\n" +
-		"purchase without one, however long ago it was emptied.",
-	Example: "  wits reconcile\n" +
-		"  wits reconcile stash\n" +
-		"  wits reconcile stash wcake-221 1.75\n" +
-		"  wits reconcile storage wcake-221 17.6 --dry-run\n" +
-		"  wits reconcile storage wcake-221 16.4 --forgot\n" +
-		"  wits reconcile wedding-cake 17.6\n" +
-		"  wits reconcile purchases --all",
+		"then until now. Weigh the ground after a forgotten grind.",
+	Example: "  wits weigh\n" +
+		"  wits weigh stash\n" +
+		"  wits weigh wedding 17.6\n" +
+		"  wits weigh stash wedding 1.75\n" +
+		"  wits weigh wedding 17.6 --dry-run\n" +
+		"  wits weigh wedding 16.4 --forgot",
 	Args:              cobra.MaximumNArgs(3),
-	ValidArgsFunction: completeReconcile,
+	Annotations:       rehearsable(),
+	ValidArgsFunction: completeWeigh,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {
 			return err
 		}
-
-		if len(args) > 0 && args[0] == "purchases" {
-			return reconcilePurchases(cmd, s, args[1:])
+		account, rest := journal.Storage, args
+		if len(args) > 0 {
+			if named, ok := accountNames[args[0]]; ok {
+				account, rest = named, args[1:]
+			} else if len(args) != 2 {
+				return fmt.Errorf("%q is not an account; weigh storage, stash or avb — or give <product> <grams>", args[0])
+			}
 		}
-		flagged, err := flaggedAccount()
-		if err != nil {
-			return err
-		}
-
-		switch len(args) {
-		case 0:
-			return reconcileInteractively(cmd, s, flagged)
-		case 1:
-			account, ok := accountNames[args[0]]
-			if !ok {
-				return fmt.Errorf("%q is not an account; weigh storage, stash or avb — or give <product> <weight>", args[0])
-			}
-			if flagged != "" {
-				return fmt.Errorf("the account is already named in the arguments; drop the flag")
-			}
-			return reconcileInteractively(cmd, s, account)
-		case 2:
-			if _, ok := accountNames[args[0]]; ok {
-				return fmt.Errorf("which product? try `wits reconcile %s <product> <weight>`", args[0])
-			}
-			// The original form: product and weight, the account in the flags.
-			if flagged == "" {
-				flagged = journal.Storage
-			}
-			return reconcileOne(cmd, s, flagged, args[0], args[1])
+		switch {
+		case len(args) == 0:
+			return weighInteractively(cmd, s, "")
+		case len(rest) == 0:
+			return weighInteractively(cmd, s, account)
+		case len(rest) == 1:
+			return fmt.Errorf("how much? try `wits weigh %s %s <grams>`", args[0], rest[0])
 		default:
-			account, ok := accountNames[args[0]]
-			if !ok {
-				return fmt.Errorf("%q is not an account; weigh storage, stash or avb", args[0])
-			}
-			if flagged != "" {
-				return fmt.Errorf("the account is already named in the arguments; drop the flag")
-			}
-			return reconcileOne(cmd, s, account, args[1], args[2])
+			return weighOne(cmd, s, account, rest[0], rest[1])
 		}
 	},
 }
 
-// flaggedAccount reads which account the flags select, or "" for none.
-func flaggedAccount() (journal.Account, error) {
-	switch {
-	case reconcileStash && reconcileAVB:
-		return "", fmt.Errorf("weigh one account at a time: --stash or --avb")
-	case reconcileStash:
-		return journal.Stash, nil
-	case reconcileAVB:
-		return journal.AVB, nil
-	default:
-		return "", nil
-	}
-}
-
-// reconcileOne records a single jar against the scale, which is the shorthand
+// weighOne records a single jar against the scale, which is the shorthand
 // for the daily case of one suspicious balance.
-func reconcileOne(cmd *cobra.Command, s *session, account journal.Account, ref, weight string) error {
+func weighOne(cmd *cobra.Command, s *session, account journal.Account, ref, weight string) error {
 	weighed, err := parseWeight(weight)
 	if err != nil {
 		return err
 	}
 	out := cmd.OutOrStdout()
-	if reconcileForgot {
-		return reconcileForgotten(out, s, account, ref, weighed)
+	if weighForgot {
+		return weighForgotten(out, s, account, ref, weighed)
 	}
-	if reconcileDryRun {
+	if dryRun {
 		expected, difference, err := s.Recorder.Difference(ref, account, weighed)
 		if err != nil {
 			return err
@@ -148,17 +106,16 @@ func reconcileOne(cmd *cobra.Command, s *session, account journal.Account, ref, 
 		fmt.Fprintf(out, "%s holds %.2fg by the ledger and %.2fg on the scale: %+.2fg\n",
 			account, expected, weighed, difference)
 		if difference == 0 {
-			fmt.Fprintln(out, "Nothing to reconcile.")
+			fmt.Fprintln(out, "The jar already agrees with the scale.")
 			return nil
 		}
 		if planned, err := s.Recorder.Forgotten(ref, account, weighed); err == nil {
 			fmt.Fprintf(out, "Forgotten rather than lost? --forgot records %s.\n", record.ForgottenWords(planned, s.Devices))
 		}
-		fmt.Fprintln(out, "\nDry run. Nothing was written. Re-run without --dry-run to record it.")
 		return nil
 	}
 
-	e, err := s.Recorder.Reconcile(ref, account, weighed, reconcileReason)
+	e, err := s.Recorder.Reconcile(ref, account, weighed, weighReason)
 	if err != nil {
 		return err
 	}
@@ -196,17 +153,17 @@ func jarsOf(s *session, account journal.Account) []jar {
 	return jars
 }
 
-// reconcileInteractively walks the jars of an account past the scale: pick the
+// weighInteractively walks the jars of an account past the scale: pick the
 // account if it was not named, tick the jars to weigh — all of them by
 // default — and each asks for its reading in turn. A blank reading skips a
 // jar, because walking past one is not the same as claiming it is empty.
 //
 // Nothing is written until every question is answered: abandoning the forms
 // halfway records nothing, which is the only honest meaning of escape.
-func reconcileInteractively(cmd *cobra.Command, s *session, account journal.Account) error {
+func weighInteractively(cmd *cobra.Command, s *session, account journal.Account) error {
 	if !term.IsTerminal(os.Stdin.Fd()) {
-		return fmt.Errorf("reconcile without a product is interactive and needs a terminal; " +
-			"use `wits reconcile <account> <product> <weight>`")
+		return fmt.Errorf("weigh without a product is interactive and needs a terminal; " +
+			"use `wits weigh [stash] <product> <grams>`")
 	}
 	if account == "" {
 		if err := askAccount(s, &account); err != nil {
@@ -318,13 +275,13 @@ func applyReadings(out io.Writer, s *session, account journal.Account, slugs, re
 			return err
 		}
 		if forgot[slug] {
-			if err := reconcileForgotten(out, s, account, slug, weighed); err != nil {
+			if err := weighForgotten(out, s, account, slug, weighed); err != nil {
 				return err
 			}
 			recorded++
 			continue
 		}
-		if reconcileDryRun {
+		if dryRun {
 			expected, difference, err := s.Recorder.Difference(slug, account, weighed)
 			if err != nil {
 				return err
@@ -334,7 +291,7 @@ func applyReadings(out io.Writer, s *session, account journal.Account, slugs, re
 			recorded++
 			continue
 		}
-		e, err := s.Recorder.Reconcile(slug, account, weighed, reconcileReason)
+		e, err := s.Recorder.Reconcile(slug, account, weighed, weighReason)
 		if errors.Is(err, record.ErrNothingToReconcile) {
 			fmt.Fprintf(out, "%s: the ledger already matches the scale (%.2f g)\n", slug, weighed)
 			continue
@@ -347,8 +304,6 @@ func applyReadings(out io.Writer, s *session, account journal.Account, slugs, re
 	}
 	if recorded == 0 {
 		fmt.Fprintln(out, "Every jar was skipped or already matched; nothing to record.")
-	} else if reconcileDryRun {
-		fmt.Fprintln(out, "\nDry run. Nothing was written. Re-run without --dry-run to record it.")
 	}
 	return nil
 }
@@ -372,7 +327,7 @@ func askForgotten(s *session, account journal.Account, slugs, readings []string)
 		}
 		answer := true
 		answers[slug] = &answer
-		if !reconcileForgot {
+		if !weighForgot {
 			groups = append(groups, forgottenQuestion(s, account, slug, planned, &answer))
 		}
 	}
@@ -400,10 +355,10 @@ func forgottenQuestion(s *session, account journal.Account, slug string, planned
 		Value(answer))
 }
 
-// reconcileForgotten records — or, under --dry-run, shows — what a jar short
+// weighForgotten records — or, under --dry-run, shows — what a jar short
 // of the ledger is put down to: a grind, or sessions.
-func reconcileForgotten(out io.Writer, s *session, account journal.Account, ref string, weighed float64) error {
-	if reconcileDryRun {
+func weighForgotten(out io.Writer, s *session, account journal.Account, ref string, weighed float64) error {
+	if dryRun {
 		planned, err := s.Recorder.Forgotten(ref, account, weighed)
 		if err != nil {
 			return err
@@ -420,7 +375,7 @@ func reconcileForgotten(out io.Writer, s *session, account journal.Account, ref 
 			e.OccurredAt.Format("Mon 02 Jan 15:04"))
 	}
 	if account == journal.Storage {
-		fmt.Fprintf(out, "Now weigh what is ground: wits reconcile stash %s <weight>\n", written[0].Product)
+		fmt.Fprintf(out, "Now weigh what is ground: wits weigh stash %s <grams>\n", written[0].Product)
 	}
 	return nil
 }
@@ -458,20 +413,18 @@ func formErr(err error) error {
 	if errors.Is(err, huh.ErrUserAborted) {
 		return fmt.Errorf("cancelled; nothing was written")
 	}
-	return fmt.Errorf("cannot ask interactively (%w); use `wits reconcile <account> <product> <weight>`", err)
+	return fmt.Errorf("cannot ask interactively (%w); use `wits weigh [stash] <product> <grams>`", err)
 }
 
-// completeReconcile offers the accounts first, then the jars of the account
-// already named. The old <product> <weight> form still completes through the
-// products offered beside the accounts.
-func completeReconcile(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+// completeWeigh offers the accounts first, beside the products of storage,
+// then the jars of the account already named.
+func completeWeigh(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
 	switch len(args) {
 	case 0:
 		out := []string{
 			"storage\tweigh the sealed product",
 			"stash\tweigh the ground product",
 			"avb\tweigh the already vaped bud",
-			"purchases\twrite down what was paid",
 		}
 		if products, _ := completeProduct("")(nil, nil, prefix); products != nil {
 			out = append(out, products...)
@@ -505,85 +458,6 @@ func completeReconcile(_ *cobra.Command, args []string, prefix string) ([]string
 }
 
 func init() {
-	Reconcile.Flags().BoolVar(&reconcileStash, "stash", false, "weigh the stash rather than storage")
-	Reconcile.Flags().BoolVar(&reconcileAVB, "avb", false, "weigh the already vaped bud")
-	Reconcile.Flags().StringVar(&reconcileReason, "reason", "", "why the amounts differ")
-	Reconcile.Flags().BoolVar(&reconcileDryRun, "dry-run", false, "show the difference without recording it")
-	Reconcile.Flags().BoolVar(&reconcileForgot, "forgot", false, "put a jar short of the ledger down to a forgotten grind, or forgotten sessions")
-	Reconcile.Flags().BoolVar(&reconcileAll, "all", false, "with purchases: every purchase without a price, not only those in storage")
-}
-
-var reconcileAll bool
-
-// reconcilePurchases walks the purchases without a price, one question each,
-// and writes down what was paid. A blank answer skips one; nothing is written
-// until every question is answered.
-func reconcilePurchases(cmd *cobra.Command, s *session, rest []string) error {
-	if len(rest) > 0 {
-		return fmt.Errorf("reconcile purchases takes no arguments; `wits price <purchase> <euros>` prices one")
-	}
-	unpriced, err := s.Recorder.Unpriced(reconcileAll)
-	if err != nil {
-		return err
-	}
-	if len(unpriced) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "Every purchase has its price.")
-		return nil
-	}
-	if !term.IsTerminal(os.Stdin.Fd()) {
-		return fmt.Errorf("reconcile purchases is interactive and needs a terminal; use `wits price <purchase> <euros>`")
-	}
-	answers, err := askPrices(s, unpriced)
-	if err != nil {
-		return err
-	}
-	return applyPrices(cmd.OutOrStdout(), s, unpriced, answers)
-}
-
-// askPrices asks what each purchase cost, a question a purchase.
-func askPrices(s *session, purchases []journal.Event) ([]string, error) {
-	answers := make([]string, len(purchases))
-	groups := make([]*huh.Group, 0, len(purchases))
-	for i, e := range purchases {
-		groups = append(groups, huh.NewGroup(
-			huh.NewInput().
-				Title(fmt.Sprintf("%s · %.2f g of %s", e.OccurredAt.Format(time.DateOnly), e.Grams, s.ProductName(e.Product))).
-				Description(fmt.Sprintf("%d of %d. What was paid, in euros. Blank to skip.", i+1, len(purchases))).
-				Value(&answers[i]).
-				Validate(optionalEuros),
-		))
-	}
-	return answers, formErr(huh.NewForm(groups...).Run())
-}
-
-// optionalEuros accepts a blank answer or an amount of euros.
-func optionalEuros(s string) error {
-	if strings.TrimSpace(s) == "" {
-		return nil
-	}
-	_, err := prices.ParseEuros(s)
-	return err
-}
-
-// applyPrices writes down the prices answered, and says what it wrote.
-func applyPrices(out io.Writer, s *session, purchases []journal.Event, answers []string) error {
-	written := 0
-	for i, e := range purchases {
-		if strings.TrimSpace(answers[i]) == "" {
-			continue
-		}
-		cents, err := prices.ParseEuros(answers[i])
-		if err != nil {
-			return err
-		}
-		p, err := s.Recorder.Price(e.Hash, cents, "", time.Now())
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(out, "[%s] %s for %.2fg of %s, %s a gram\n", shortHash(p.Hash), prices.Format(cents),
-			e.Grams, e.Product, prices.Format(int64(math.Round(float64(cents)/e.Grams))))
-		written++
-	}
-	fmt.Fprintf(out, "Priced %s; %d left without one.\n", plural(written, "purchase"), len(purchases)-written)
-	return nil
+	Weigh.Flags().StringVar(&weighReason, "reason", "", "why the amounts differ")
+	Weigh.Flags().BoolVar(&weighForgot, "forgot", false, "put a jar short of the ledger down to a forgotten grind, or forgotten sessions")
 }

@@ -1,4 +1,4 @@
-// Package commands holds `wits review` here: the year on one card.
+// Package commands holds `wits report year` here: the year on one card.
 package commands
 
 import (
@@ -15,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Review is the `wits review` command.
+// Review is the `wits report year` command.
 var Review = &cobra.Command{
-	Use:   "review [year]",
+	Use:   "year [<year>]",
 	Short: "The year on one card: the grams, the strains, the longest break, the best temperature",
 	Long: "The year in wits: what was ground and on how many days, month by month,\n" +
 		"the strains, the longest break, the temperature rated best, the strain\n" +
@@ -25,7 +25,7 @@ var Review = &cobra.Command{
 		"and what it cost — the dearest gram and the cheapest. Every figure is the\n" +
 		"year's own, to today in the year still running. This year unless a year\n" +
 		"is given; the browser's Insights → Year draws the same.",
-	Example: "  wits review\n  wits review 2025",
+	Example: "  wits report year\n  wits report year 2025",
 	Args:    cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()

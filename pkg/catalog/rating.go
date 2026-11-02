@@ -77,7 +77,7 @@ func (r StrainRating) Summary() string {
 	return strings.TrimPrefix(out, " · ")
 }
 
-// ParseRating reads scores as `wits describe --rating` takes them:
+// ParseRating reads scores as `wits rate strain` takes them:
 // "overall=4 taste=5", by spaces or commas.
 func ParseRating(s string) (StrainRating, error) {
 	var r StrainRating

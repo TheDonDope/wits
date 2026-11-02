@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/TheDonDope/wits/pkg/journal"
 	"io"
 	"os"
 	"strings"
 
+	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/seal"
 	"github.com/spf13/cobra"
 )

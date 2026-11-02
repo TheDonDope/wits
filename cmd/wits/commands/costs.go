@@ -1,4 +1,4 @@
-// Package commands holds `wits costs` here: what the prescriptions cost.
+// Package commands holds `wits report costs` here: what the prescriptions cost.
 package commands
 
 import (
@@ -18,7 +18,7 @@ func init() {
 	Costs.Flags().BoolVar(&costsAll, "all", false, "every fill and month, not only the last twelve")
 }
 
-// Costs is the `wits costs` command.
+// Costs is the `wits report costs` command.
 var Costs = &cobra.Command{
 	Use:   "costs",
 	Short: "Show what the prescriptions cost",
@@ -40,7 +40,7 @@ var Costs = &cobra.Command{
 // writeCosts is the costs, the newest fills and months first.
 func writeCosts(out io.Writer, c prices.Costs, all bool) {
 	if c.Priced == 0 {
-		fmt.Fprintf(out, "No purchase has a price yet; %s without one. `wits reconcile purchases --all` walks them.\n",
+		fmt.Fprintf(out, "No purchase has a price yet; %s without one. `wits price --all` asks for each.\n",
 			plural(c.Unpriced, "purchase"))
 		return
 	}

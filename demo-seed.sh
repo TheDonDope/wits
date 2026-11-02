@@ -14,8 +14,8 @@ mkdir -p "$dir"
 cd "$dir"
 
 wits init . >/dev/null
-wits device add 'Volcano Hybrid' --kind desktop --min 40 --max 230 --default 185 >/dev/null
-wits device add 'Mighty+' --kind portable --min 40 --max 210 --default 180 >/dev/null
+wits create device 'Volcano Hybrid' --kind desktop --min 40 --max 230 --default 185 >/dev/null
+wits create device 'Mighty+' --kind portable --min 40 --max 210 --default 180 >/dev/null
 
 # An earlier, finished cycle, so the analysis view has history to scope out to:
 # the rhythm heatmap and the cycle comparison only appear past the current one.
