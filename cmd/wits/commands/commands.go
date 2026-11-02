@@ -1,9 +1,11 @@
-// Package commands implements the git-shaped command surface of Wits.
+// Package commands implements the command line of Wits, in two grammars.
 //
-// Only the parts of git's vocabulary that have a real referent here are
-// borrowed: a repository, an append-only log of commits, and a working state
-// derived from it. Branching and merging have no meaning for a prescription
-// and are deliberately absent.
+// The journal is written the way git commits: a repository, an append-only
+// log, short verbs run as things happen (buy, grind, sesh, weigh), and log,
+// show, revert and amend over it, naming entries by hash or as HEAD~n.
+// Everything else is read the way kubectl reads a cluster: get lists a kind
+// of thing, describe tells one in full, edit, create and delete change the
+// catalogs. Branching has no meaning for a prescription and is absent.
 package commands
 
 import (
@@ -25,13 +27,29 @@ type session struct {
 	*workspace.Workspace
 }
 
-// open reads the repository containing the working directory.
+// open reads the repository containing the working directory. Under
+// --dry-run its recorder rehearses: every entry built and checked as it
+// would be, and none written.
 func open() (*session, error) {
 	ws, err := workspace.Here()
 	if err != nil {
 		return nil, err
 	}
+	if dryRun {
+		ws.Recorder = ws.Recorder.Dry()
+	}
 	return &session{Workspace: ws}, nil
+}
+
+// left is what an entry leaves in the account it draws on: the jar as it
+// stands, or, rehearsed, as the entry would leave it — a rehearsal writes
+// nothing, so the jar has not moved yet.
+func left(s *session, e journal.Event, from journal.Account) float64 {
+	have := s.Recorder.Available(e.Product, from)
+	if dryRun {
+		return (journal.CG(have) - journal.CG(e.Grams)).Grams()
+	}
+	return have
 }
 
 // parseGrams reads an amount written as "0.75", "0.75g" or "0,75 g".
@@ -60,8 +78,12 @@ func parseDate(s string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("%q is not a date, expected YYYY-MM-DD", s)
 }
 
-// shortHash abbreviates an event hash the way git abbreviates a commit.
+// shortHash abbreviates an event hash the way git abbreviates a commit. A
+// rehearsed entry has none: it was never chained, so it says so.
 func shortHash(h string) string {
+	if h == "" {
+		return "rehearsed"
+	}
 	if len(h) > 7 {
 		return h[:7]
 	}

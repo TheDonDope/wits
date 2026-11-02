@@ -55,7 +55,7 @@ data ends (`figures` prints the last entry), and stop. Do not invent work.
    fills, grinds, grams, entries), `docs/terminal.md` (grams ground, the bundle table),
    `ROADMAP.md` (the bundle figures, the cached-fold entry count) and the
    comment in `wits-bundle.tape`. The bundle figures come from `figures`:
-   journal, bundle, and `wits bundle --gzip`, with ratios rounded to whole ×.
+   journal, bundle, and `wits bundle create <file>.gz`, with ratios rounded to whole ×.
 
 4. **Importer findings.** If `wits import` now reports problems, or stops
    reporting ones ROADMAP lists under "Findings in the imported records",

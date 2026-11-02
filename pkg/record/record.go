@@ -627,12 +627,17 @@ func (r *Recorder) Rate(session string, scores map[effects.Dimension]int, note s
 	if r.RevertOf(e.Hash) != nil {
 		return effects.Rating{}, fmt.Errorf("the session %s was undone", short(e.Hash))
 	}
-	return r.repo.Effects().Append(effects.Rating{
+	rating := effects.Rating{
 		Session: e.Hash,
 		At:      at,
 		Scores:  scores,
 		Note:    strings.TrimSpace(note),
-	})
+	}
+	if r.dry {
+		// A rehearsal checks the rating as the log would, and keeps it.
+		return rating, rating.Validate()
+	}
+	return r.repo.Effects().Append(rating)
 }
 
 // Difference reports what reconciling an account to a weighed amount would
@@ -831,7 +836,11 @@ func (r *Recorder) Price(purchase string, cents int64, note string, at time.Time
 	if err != nil {
 		return prices.Price{}, err
 	}
-	return r.repo.Prices().Append(prices.Price{Purchase: e.Hash, At: at, Cents: cents, Note: strings.TrimSpace(note)})
+	p := prices.Price{Purchase: e.Hash, At: at, Cents: cents, Note: strings.TrimSpace(note)}
+	if r.dry {
+		return p, p.Validate()
+	}
+	return r.repo.Prices().Append(p)
 }
 
 // PriceAll records what each of several purchases cost — a fill's, priced
@@ -878,7 +887,7 @@ func (r *Recorder) priceable(purchase string) (journal.Event, error) {
 
 // Unpriced is every purchase that stands without a price, oldest first:
 // only those whose fill still holds the product in storage, or every one with
-// all set — what reconcile purchases walks through.
+// all set — what wits price walks through.
 func (r *Recorder) Unpriced(all bool) ([]journal.Event, error) {
 	paid, err := r.repo.Prices().All()
 	if err != nil {

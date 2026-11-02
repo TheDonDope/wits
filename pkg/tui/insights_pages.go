@@ -41,7 +41,7 @@ func table(a *App, header []string, rows [][]string) string {
 	return strings.Join(out, "\n")
 }
 
-// todayPage is the day so far, as `wits today` says it: every session with
+// todayPage is the day so far, as `wits report today` says it: every session with
 // the THC and CBD in the material, their sum against a usual day.
 func todayPage(a *App, width int) string {
 	t := a.theme
@@ -104,7 +104,7 @@ func stars(n int) string {
 	return fmt.Sprintf("%d of 5", n)
 }
 
-// costsPage is what the prescriptions cost, as `wits costs` says it: in all
+// costsPage is what the prescriptions cost, as `wits report costs` says it: in all
 // and a gram, the newest fills, and month by month.
 func costsPage(a *App, width int) string {
 	t := a.theme
@@ -150,7 +150,7 @@ func monthsPaid(a *App, c prices.Costs, width int) string {
 	return strings.Join(lines, "\n")
 }
 
-// yearPage is the year on one card, as `wits review` draws it: the
+// yearPage is the year on one card, as `wits report year` draws it: the
 // headline, the months as bars, and the year's findings.
 func yearPage(a *App, year, width int) string {
 	t := a.theme
@@ -220,5 +220,5 @@ func historyPage(a *App, width int) string {
 	}, "\n")
 }
 
-// reportName is the report's file, named for its last day as `wits report` names it.
+// reportName is the report's file, named for its last day as `wits report prescriber` names it.
 func reportName(to time.Time) string { return "wits-report-" + to.Format(time.DateOnly) + ".pdf" }

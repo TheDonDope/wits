@@ -16,8 +16,9 @@ var (
 
 // Buy is the `wits buy` command.
 var Buy = &cobra.Command{
-	Use:   "buy <product> <amount>",
-	Short: "Record a prescription fill into storage",
+	Use:         "buy <product> <grams>",
+	Short:       "Record a prescription fill into storage",
+	Annotations: rehearsable(),
 	Long: "Record a prescription fill, moving grams into storage.\n\n" +
 		"A product that is not in the catalog yet is added to it. The name is\n" +
 		"parsed for a manufacturer, a THC/CBD ratio and a cultivar where it\n" +

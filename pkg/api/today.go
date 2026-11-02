@@ -1,6 +1,6 @@
 // Package api serves a repository over HTTP; this file serves the day so far
 // — its sessions with the THC and CBD in each, and what else it saw — for the
-// dashboard's Today, as wits today says it.
+// dashboard's Today, as wits report today says it.
 package api
 
 import (

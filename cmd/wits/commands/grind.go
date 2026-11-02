@@ -11,8 +11,9 @@ var grindDate string
 
 // Grind is the `wits grind` command.
 var Grind = &cobra.Command{
-	Use:   "grind <product> <amount>",
-	Short: "Move ground product from storage into the stash",
+	Use:         "grind <product> <grams>",
+	Short:       "Move ground product from storage into the stash",
+	Annotations: rehearsable(),
 	Long: "Record grinding product for the day, moving grams from storage into\n" +
 		"that product's stash.\n\n" +
 		"The product can be given as a slug or as any unambiguous part of its\n" +
@@ -39,7 +40,7 @@ var Grind = &cobra.Command{
 			return err
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "[%s] grind %.2fg %s, %.2fg left in storage\n",
-			shortHash(e.Hash), e.Grams, e.Product, s.Recorder.Available(e.Product, journal.Storage))
+			shortHash(e.Hash), e.Grams, e.Product, left(s, e, journal.Storage))
 		return nil
 	},
 }

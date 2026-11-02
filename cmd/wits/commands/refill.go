@@ -1,4 +1,4 @@
-// Package commands holds `wits refill` here: when to order the next prescription.
+// Package commands holds `wits report refill` here: when to order the next prescription.
 package commands
 
 import (
@@ -23,7 +23,7 @@ func init() {
 	Refill.Flags().StringVar(&refillICS, "ics", "", "write a calendar reminder to this file")
 }
 
-// Refill is the `wits refill` command.
+// Refill is the `wits report refill` command.
 var Refill = &cobra.Command{
 	Use:   "refill",
 	Short: "Say when to order the next prescription",
@@ -31,8 +31,8 @@ var Refill = &cobra.Command{
 		"empty day — and so, less the pharmacy's lead time, when to order the next\n" +
 		"prescription. --lead sets the lead time and keeps it; it starts at 3 days.\n" +
 		"--ics writes a calendar reminder for the day to order by.",
-	Example: "  wits refill\n" +
-		"  wits refill --lead 5 --ics refill.ics",
+	Example: "  wits report refill\n" +
+		"  wits report refill --lead 5 --ics refill.ics",
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		s, err := open()

@@ -24,9 +24,9 @@ var (
 
 // Sesh is the `wits sesh` command.
 var Sesh = &cobra.Command{
-	Use:     "sesh <product> <amount>",
-	Aliases: []string{"session"},
-	Short:   "Record a session, drawing from the stash",
+	Use:         "sesh <product> <grams>",
+	Short:       "Record a session, drawing from the stash",
+	Annotations: rehearsable(),
 	Long: "Record a session: ground product comes out of that product's stash and\n" +
 		"goes through a device. What is left of it becomes AVB, which is weighed\n" +
 		"and credited separately.\n\n" +
@@ -59,7 +59,7 @@ var Sesh = &cobra.Command{
 		}
 		out := cmd.OutOrStdout()
 		fmt.Fprintf(out, "[%s] sesh %.2fg %s, %.2fg left in the stash\n",
-			shortHash(e.Hash), e.Grams, e.Product, s.Recorder.Available(e.Product, journal.Stash))
+			shortHash(e.Hash), e.Grams, e.Product, left(s, e, journal.Stash))
 		if e.Temperature > 0 {
 			writeReleased(out, e.Temperature)
 		}

@@ -30,19 +30,21 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// run executes a command in dir and returns its combined output.
-func run(t *testing.T, dir string, cmd *cobra.Command, args ...string) (string, error) {
+// run executes the command line in dir, as `wits <args>` would, and returns
+// its combined output. It goes through the root, so the global flags and
+// the root's checks run as they do for anyone typing it.
+func run(t *testing.T, dir string, args ...string) (string, error) {
 	t.Helper()
 	t.Chdir(dir)
 
 	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	cmd.SetArgs(args)
-	defer cmd.SetArgs(nil)
+	Root.SetOut(&out)
+	Root.SetErr(&out)
+	Root.SetArgs(args)
+	defer Root.SetArgs(nil)
 
-	err := cmd.Execute()
-	resetFlags(cmd)
+	err := Root.Execute()
+	resetFlags(Root)
 	return out.String(), err
 }
 
@@ -51,6 +53,10 @@ func run(t *testing.T, dir string, cmd *cobra.Command, args ...string) (string, 
 // a run: a --date given to one buy used to date every buy after it in the
 // same test binary, and a test could pass on a date it never asked for.
 func resetFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		_ = f.Value.Set(f.DefValue)
+		f.Changed = false
+	})
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		_ = f.Value.Set(f.DefValue)
 		f.Changed = false
@@ -64,7 +70,7 @@ func resetFlags(cmd *cobra.Command) {
 func repository(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	_, err := run(t, dir, Init, ".")
+	_, err := run(t, dir, "init", ".")
 	require.NoError(t, err)
 	return dir
 }
@@ -73,7 +79,7 @@ func TestInitCommand(t *testing.T) {
 	t.Run("CreatesARepository", func(t *testing.T) {
 		dir := t.TempDir()
 
-		out, err := run(t, dir, Init, ".")
+		out, err := run(t, dir, "init", ".")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "Initialised empty Wits repository", "Should say what it did")
@@ -83,7 +89,7 @@ func TestInitCommand(t *testing.T) {
 	t.Run("RefusesToInitialiseTwice", func(t *testing.T) {
 		dir := repository(t)
 
-		_, err := run(t, dir, Init, ".")
+		_, err := run(t, dir, "init", ".")
 
 		assert.Error(t, err, "Should not clobber an existing repository")
 	})
@@ -93,22 +99,22 @@ func TestBuyAndGrind(t *testing.T) {
 	t.Run("RecordsAFillAndAGrind", func(t *testing.T) {
 		dir := repository(t)
 
-		out, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+		out, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 		require.NoError(t, err)
 		assert.Contains(t, out, "refer to it as wcake-221\n",
 			"Should register the product and say what to call it, ratio and all")
 
-		out, err = run(t, dir, Grind, "wedding", "0.75", "--date", "2026-07-02")
+		out, err = run(t, dir, "grind", "wedding", "0.75", "--date", "2026-07-02")
 		require.NoError(t, err)
 		assert.Contains(t, out, "19.25g left in storage", "Should report the new balance")
 	})
 
 	t.Run("RefusesToGrindMoreThanIsThere", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "1g")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "1g")
 		require.NoError(t, err)
 
-		_, err = run(t, dir, Grind, "wedding", "5")
+		_, err = run(t, dir, "grind", "wedding", "5")
 
 		assert.ErrorContains(t, err, "cannot take", "Should not let the balance go negative")
 	})
@@ -116,23 +122,23 @@ func TestBuyAndGrind(t *testing.T) {
 	t.Run("RefusesAnUnknownProduct", func(t *testing.T) {
 		dir := repository(t)
 
-		_, err := run(t, dir, Grind, "blueberry", "1")
+		_, err := run(t, dir, "grind", "blueberry", "1")
 
 		assert.Error(t, err, "Should not grind a product it has never seen")
 	})
 
 	t.Run("RejectsANonsenseAmount", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g")
 		require.NoError(t, err)
 
-		_, err = run(t, dir, Grind, "wedding", "lots")
+		_, err = run(t, dir, "grind", "wedding", "lots")
 
 		assert.ErrorContains(t, err, "not an amount", "Should reject an amount it cannot read")
 	})
 
 	t.Run("OutsideARepository", func(t *testing.T) {
-		_, err := run(t, t.TempDir(), Status)
+		_, err := run(t, t.TempDir(), "status")
 
 		assert.ErrorContains(t, err, "not a wits repository", "Should say there is no repository")
 	})
@@ -142,12 +148,12 @@ func TestStatusCommand(t *testing.T) {
 	t.Run("ReportsTheCurrentCycle", func(t *testing.T) {
 		dir := repository(t)
 		yesterday := time.Now().AddDate(0, 0, -1).Format(time.DateOnly)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", yesterday)
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", yesterday)
 		require.NoError(t, err)
-		_, err = run(t, dir, Grind, "wedding", "2", "--date", yesterday)
+		_, err = run(t, dir, "grind", "wedding", "2", "--date", yesterday)
 		require.NoError(t, err)
 
-		out, err := run(t, dir, Status)
+		out, err := run(t, dir, "status")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "On cycle 1", "Should report the cycle")
@@ -159,12 +165,12 @@ func TestStatusCommand(t *testing.T) {
 	// the first anyone reads.
 	t.Run("CountsTheFirstDayInTheSingular", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g")
 		require.NoError(t, err)
-		_, err = run(t, dir, Grind, "wedding", "0.75")
+		_, err = run(t, dir, "grind", "wedding", "0.75")
 		require.NoError(t, err)
 
-		out, err := run(t, dir, Status)
+		out, err := run(t, dir, "status")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "left over 1 day,", "Should not report a cycle as being 1 days old")
@@ -172,7 +178,7 @@ func TestStatusCommand(t *testing.T) {
 	})
 
 	t.Run("EmptyRepository", func(t *testing.T) {
-		out, err := run(t, repository(t), Status)
+		out, err := run(t, repository(t), "status")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "No cycle in progress", "Should not pretend there is a cycle")
@@ -181,20 +187,20 @@ func TestStatusCommand(t *testing.T) {
 
 func TestLogCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "0.75", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "0.75", "--date", "2026-07-02")
 	require.NoError(t, err)
 
 	t.Run("NewestFirst", func(t *testing.T) {
-		out, err := run(t, dir, Log, "--oneline")
+		out, err := run(t, dir, "log", "--oneline")
 
 		require.NoError(t, err)
 		assert.Less(t, indexOf(out, "grind"), indexOf(out, "purchase"), "Should show the newest event first")
 	})
 
 	t.Run("FiltersByProduct", func(t *testing.T) {
-		out, err := run(t, dir, Log, "--product", "wedding")
+		out, err := run(t, dir, "log", "--product", "wedding")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "wcake", "Should show the product's events")
@@ -204,12 +210,12 @@ func TestLogCommand(t *testing.T) {
 func TestExportCommand(t *testing.T) {
 	t.Run("Markdown", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 		require.NoError(t, err)
-		_, err = run(t, dir, Grind, "wedding", "0.75", "--date", "2026-07-02")
+		_, err = run(t, dir, "grind", "wedding", "0.75", "--date", "2026-07-02")
 		require.NoError(t, err)
 
-		out, err := run(t, dir, Export)
+		out, err := run(t, dir, "export")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "# Wits journal", "Should have a title")
@@ -220,7 +226,7 @@ func TestExportCommand(t *testing.T) {
 	t.Run("RejectsAnUnknownFormat", func(t *testing.T) {
 		dir := repository(t)
 
-		_, err := run(t, dir, Export, "--format", "pdf")
+		_, err := run(t, dir, "export", "--format", "pdf")
 
 		assert.ErrorContains(t, err, "unknown format", "Should not silently write the wrong thing")
 	})
@@ -234,11 +240,11 @@ func TestExportCommand(t *testing.T) {
 			{"Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01"},
 			{"Enua 22/1 Wedding Cake", "15g", "--date", "2026-08-15"},
 		} {
-			_, err := run(t, dir, Buy, args...)
+			_, err := run(t, dir, append([]string{"buy"}, args...)...)
 			require.NoError(t, err)
 		}
 		for _, date := range []string{"2026-07-02", "2026-08-16"} {
-			_, err := run(t, dir, Grind, "wedding", "0.5", "--date", date)
+			_, err := run(t, dir, "grind", "wedding", "0.5", "--date", date)
 			require.NoError(t, err)
 		}
 		return dir
@@ -247,7 +253,7 @@ func TestExportCommand(t *testing.T) {
 	t.Run("ARangeHoldsOnlyItsDays", func(t *testing.T) {
 		dir := twoFills(t)
 
-		out, err := run(t, dir, Export, "--from", "2026-08-01", "--to", "2026-08-31")
+		out, err := run(t, dir, "export", "--from", "2026-08-01", "--to", "2026-08-31")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "# Wits journal, 2026-08-01 to 2026-08-31", "Should name the range")
@@ -260,7 +266,7 @@ func TestExportCommand(t *testing.T) {
 	t.Run("RefusesABackwardRange", func(t *testing.T) {
 		dir := repository(t)
 
-		_, err := run(t, dir, Export, "--from", "2026-08-31", "--to", "2026-08-01")
+		_, err := run(t, dir, "export", "--from", "2026-08-31", "--to", "2026-08-01")
 
 		assert.ErrorContains(t, err, "is before", "Should refuse a range that ends before it starts")
 	})
@@ -268,7 +274,7 @@ func TestExportCommand(t *testing.T) {
 	t.Run("RefusesAMalformedDate", func(t *testing.T) {
 		dir := repository(t)
 
-		_, err := run(t, dir, Export, "--from", "August")
+		_, err := run(t, dir, "export", "--from", "August")
 
 		assert.ErrorContains(t, err, "not a date", "Should say what it expected")
 	})
@@ -277,7 +283,7 @@ func TestExportCommand(t *testing.T) {
 		dir := twoFills(t)
 		site := filepath.Join(dir, "docs")
 
-		_, err := run(t, dir, Export, "--site", site)
+		_, err := run(t, dir, "export", "--site", site)
 
 		require.NoError(t, err)
 		index, err := os.ReadFile(filepath.Join(site, "index.md"))
@@ -343,7 +349,7 @@ func TestHomeCommand(t *testing.T) {
 	t.Run("OutsideARepository", func(t *testing.T) {
 		// It must fail on discovery, before it reaches for a terminal: a error
 		// about a missing repository is useful, one about /dev/tty is not.
-		_, err := run(t, t.TempDir(), Home)
+		_, err := run(t, t.TempDir())
 
 		assert.ErrorContains(t, err, "not a wits repository",
 			"Should say there is no repository rather than fail opening a terminal")
@@ -356,7 +362,7 @@ func TestHomeCommand(t *testing.T) {
 
 		// From a subdirectory it gets past discovery and fails only for want of a
 		// terminal, which is as far as a test can drive an interactive program.
-		_, err := run(t, nested, Home)
+		_, err := run(t, nested)
 
 		require.Error(t, err)
 		assert.NotContains(t, err.Error(), "not a wits repository",
@@ -366,13 +372,13 @@ func TestHomeCommand(t *testing.T) {
 	})
 }
 
-func TestReconcileCommand(t *testing.T) {
+func TestWeighCommand(t *testing.T) {
 	stocked := func(t *testing.T) string {
 		t.Helper()
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g")
 		require.NoError(t, err)
-		_, err = run(t, dir, Grind, "wedding", "2")
+		_, err = run(t, dir, "grind", "wedding", "2")
 		require.NoError(t, err)
 		return dir
 	}
@@ -380,7 +386,7 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("RecordsTheDifference", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "wedding", "17.6")
+		out, err := run(t, dir, "weigh", "wedding", "17.6")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "0.40g", "Should record the difference, not the weight")
@@ -391,13 +397,13 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("DryRunWritesNothing", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "wedding", "17.6", "--dry-run")
+		out, err := run(t, dir, "weigh", "wedding", "17.6", "--dry-run")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "-0.40g", "Should show the signed difference")
 		assert.Contains(t, out, "Dry run", "Should say it wrote nothing")
 
-		status, err := run(t, dir, Status)
+		status, err := run(t, dir, "status")
 		require.NoError(t, err)
 		assert.Contains(t, status, "18.00g", "and storage should be untouched")
 	})
@@ -405,35 +411,24 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("TheStash", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "wedding", "1.75", "--stash")
+		_, err := run(t, dir, "weigh", "wedding", "1.75", "--stash")
 
-		require.NoError(t, err)
-		assert.Contains(t, out, "out of stash", "Should weigh the stash when asked to")
+		assert.ErrorContains(t, err, "unknown flag", "The account is named first, not flagged")
 	})
 
 	t.Run("NothingToReconcile", func(t *testing.T) {
 		dir := stocked(t)
 
-		_, err := run(t, dir, Reconcile, "wedding", "18")
+		_, err := run(t, dir, "weigh", "wedding", "18")
 
 		assert.ErrorContains(t, err, "already matches the scale",
 			"Should say so rather than record a zero-gram adjustment")
 	})
 
-	t.Run("RefusesTwoAccountsAtOnce", func(t *testing.T) {
-		dir := stocked(t)
-		defer func() { reconcileStash, reconcileAVB = false, false }()
-
-		_, err := run(t, dir, Reconcile, "wedding", "1", "--stash", "--avb")
-
-		assert.ErrorContains(t, err, "one account at a time",
-			"Should refuse rather than silently pick one")
-	})
-
 	t.Run("AccountFirstShorthand", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "stash", "wedding", "1.75")
+		out, err := run(t, dir, "weigh", "stash", "wedding", "1.75")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "out of stash", "Should weigh the account named first")
@@ -443,7 +438,7 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("AnEmptyJarIsARealReading", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "stash", "wedding", "0")
+		out, err := run(t, dir, "weigh", "stash", "wedding", "0")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "now 0.00g", "Should record a jar weighed at zero rather than refuse it")
@@ -452,31 +447,23 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("RefusesAnUnknownAccount", func(t *testing.T) {
 		dir := stocked(t)
 
-		_, err := run(t, dir, Reconcile, "shelf", "wedding", "1")
+		_, err := run(t, dir, "weigh", "shelf", "wedding", "1")
 
 		assert.ErrorContains(t, err, "not an account", "Should name the accounts that exist")
-	})
-
-	t.Run("AccountAndFlagTogetherAreRefused", func(t *testing.T) {
-		dir := stocked(t)
-
-		_, err := run(t, dir, Reconcile, "stash", "wedding", "1.75", "--stash")
-
-		assert.ErrorContains(t, err, "drop the flag", "Should not let the two forms disagree")
 	})
 
 	t.Run("AccountAndWeightWithoutAProduct", func(t *testing.T) {
 		dir := stocked(t)
 
-		_, err := run(t, dir, Reconcile, "stash", "1.75")
+		_, err := run(t, dir, "weigh", "stash", "1.75")
 
-		assert.ErrorContains(t, err, "which product", "Should say what is missing")
+		assert.ErrorContains(t, err, "how much?", "Should say what is missing")
 	})
 
 	t.Run("InteractiveNeedsATerminal", func(t *testing.T) {
 		dir := stocked(t)
 
-		_, err := run(t, dir, Reconcile)
+		_, err := run(t, dir, "weigh")
 
 		assert.ErrorContains(t, err, "needs a terminal",
 			"Should refuse under a pipe rather than hang on a form nobody can see")
@@ -514,16 +501,17 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("ForgotPutsAShortJarDownToAGrind", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "storage", "wedding", "17.6", "--forgot", "--dry-run")
+		out, err := run(t, dir, "weigh", "storage", "wedding", "17.6", "--forgot", "--dry-run")
 		require.NoError(t, err)
 		assert.Contains(t, out, "would record a grind of 0.40 g", "Should say what it would record")
+		assert.Contains(t, out, "Dry run: nothing was written.")
 
-		out, err = run(t, dir, Reconcile, "storage", "wedding", "17.6", "--forgot")
+		out, err = run(t, dir, "weigh", "storage", "wedding", "17.6", "--forgot")
 		require.NoError(t, err)
 		assert.Contains(t, out, "forgotten grind of 0.40g", "Should record a grind, not a loss")
-		assert.Contains(t, out, "wits reconcile stash wcake-221", "Should ask for the ground to be weighed next")
+		assert.Contains(t, out, "wits weigh stash wcake-221", "Should ask for the ground to be weighed next")
 
-		status, err := run(t, dir, Status)
+		status, err := run(t, dir, "status")
 		require.NoError(t, err)
 		assert.Contains(t, status, "2.40", "Should have put the grams in the stash")
 	})
@@ -531,7 +519,7 @@ func TestReconcileCommand(t *testing.T) {
 	t.Run("DryRunOffersForgot", func(t *testing.T) {
 		dir := stocked(t)
 
-		out, err := run(t, dir, Reconcile, "wedding", "17.6", "--dry-run")
+		out, err := run(t, dir, "weigh", "wedding", "17.6", "--dry-run")
 		require.NoError(t, err)
 		assert.Contains(t, out, "--forgot records a grind of 0.40 g", "Should offer the likelier story")
 	})
@@ -539,20 +527,20 @@ func TestReconcileCommand(t *testing.T) {
 
 func TestBundleKeepsTheRecordedOrder(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "1", "--date", "2026-07-02")
 	require.NoError(t, err)
 	// Typed in last, dated first: the fold reads it first, the chain last.
-	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "5g", "--date", "2026-05-01")
+	_, err = run(t, dir, "buy", "Enua 22/1 Wedding Cake", "5g", "--date", "2026-05-01")
 	require.NoError(t, err)
 
 	file := filepath.Join(t.TempDir(), "history.wits")
-	_, err = run(t, dir, Bundle, "--out", file)
+	_, err = run(t, dir, "bundle", "create", file)
 	require.NoError(t, err)
 
-	again := repository(t)
-	_, err = run(t, again, Restore, file)
+	again := filepath.Join(t.TempDir(), "again")
+	_, err = run(t, dir, "clone", file, again)
 	require.NoError(t, err, "A backdated entry should not break the chain on the way back")
 
 	want, err := os.ReadFile(filepath.Join(dir, ".wits", "journal.ndjson"))
@@ -565,12 +553,12 @@ func TestBundleKeepsTheRecordedOrder(t *testing.T) {
 func TestFsckCommand(t *testing.T) {
 	t.Run("ACleanRepository", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 		require.NoError(t, err)
-		_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+		_, err = run(t, dir, "grind", "wedding", "1", "--date", "2026-07-02")
 		require.NoError(t, err)
 
-		out, err := run(t, dir, Fsck)
+		out, err := run(t, dir, "fsck")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "2 entries, 1 product, 0 devices")
@@ -580,7 +568,7 @@ func TestFsckCommand(t *testing.T) {
 
 	t.Run("ReportsWhatIsWrongAndFails", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "1g", "--date", "2026-07-01")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "1g", "--date", "2026-07-01")
 		require.NoError(t, err)
 		r, err := repo.Discover(dir)
 		require.NoError(t, err)
@@ -598,7 +586,7 @@ func TestFsckCommand(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, os.WriteFile(path, bytes.Replace(data, []byte(`"grams":1,`), []byte(`"grams":1.0,`), 1), 0600))
 
-		out, err := run(t, dir, Fsck)
+		out, err := run(t, dir, "fsck")
 
 		assert.EqualError(t, err, "3 problems found")
 		assert.Contains(t, out, "grind 5.00 g of wcake-221 took more than storage held — 1.00 g",
@@ -606,14 +594,14 @@ func TestFsckCommand(t *testing.T) {
 		assert.Contains(t, out, "✗ journal hash chain is broken: event 1")
 		assert.Contains(t, out, "✗ ghost is named by 1 entry but is not in the product catalog")
 
-		status, err := run(t, dir, Status)
+		status, err := run(t, dir, "status")
 		require.NoError(t, err)
 		assert.Contains(t, status, "⚠ the journal was changed outside wits", "status should say so too")
 	})
 
 	t.Run("AnAmountFinerThanACentigram", func(t *testing.T) {
 		dir := repository(t)
-		_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+		_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 		require.NoError(t, err)
 		r, err := repo.Discover(dir)
 		require.NoError(t, err)
@@ -632,7 +620,7 @@ func TestFsckCommand(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, os.WriteFile(path, append(append(data, line...), '\n'), 0600))
 
-		out, err := run(t, dir, Fsck)
+		out, err := run(t, dir, "fsck")
 
 		assert.EqualError(t, err, "1 problem found")
 		assert.Contains(t, out, "is 0.333 g, finer than a centigram; a bundle keeps 0.33 g")
@@ -641,7 +629,7 @@ func TestFsckCommand(t *testing.T) {
 
 func TestBuyRefusesADateAhead(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "2g", "--date", "2099-01-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "2g", "--date", "2099-01-01")
 	assert.ErrorContains(t, err, "purchase is dated 2099-01-01 00:00, after now: an entry is recorded once it has happened")
 
 	// One written before the recorder refused them is found by fsck.
@@ -650,7 +638,7 @@ func TestBuyRefusesADateAhead(t *testing.T) {
 	_, err = r.Journal().Append(journal.Event{Type: journal.Purchase, Product: "wcake", Grams: 2,
 		OccurredAt: time.Date(2099, 1, 1, 0, 0, 0, 0, time.Local)})
 	require.NoError(t, err)
-	out, err := run(t, dir, Fsck)
+	out, err := run(t, dir, "fsck")
 	assert.Error(t, err)
 	assert.Contains(t, out, "purchase 2.00 g of wcake, is dated 2099-01-01")
 }
@@ -668,10 +656,10 @@ func TestRestoreWarnsOfWhatWasNotThere(t *testing.T) {
 		require.NoError(t, err)
 	}
 	file := filepath.Join(t.TempDir(), "history.wits")
-	_, err = run(t, dir, Bundle, "--out", file)
+	_, err = run(t, dir, "bundle", "create", file)
 	require.NoError(t, err)
 
-	out, err := run(t, repository(t), Restore, file)
+	out, err := run(t, t.TempDir(), "clone", file, "restored")
 
 	require.NoError(t, err, "A backup gives back what it holds")
 	assert.Contains(t, out, "⚠ 1 entry takes grams that were not in the jar at the time; wits fsck lists them")
@@ -679,42 +667,42 @@ func TestRestoreWarnsOfWhatWasNotThere(t *testing.T) {
 
 func TestRateCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "1", "--date", "2026-07-02")
 	require.NoError(t, err)
 
-	_, err = run(t, dir, Rate, "last", "overall=4")
+	_, err = run(t, dir, "rate", "session", "overall=4")
 	assert.ErrorContains(t, err, "no session to rate yet")
 
-	_, err = run(t, dir, Sesh, "wedding", "0.3", "--date", "2026-07-02")
+	_, err = run(t, dir, "sesh", "wedding", "0.3", "--date", "2026-07-02")
 	require.NoError(t, err)
-	out, err := run(t, dir, Rate, "last", "overall=4", "Sleep=5", "--note", "slept")
+	out, err := run(t, dir, "rate", "session", "overall=4", "Sleep=5", "--note", "slept")
 	require.NoError(t, err)
 	assert.Contains(t, out, "overall 4, sleep 5")
 
-	_, err = run(t, dir, Rate, "last", "sleep")
+	_, err = run(t, dir, "rate", "session", "HEAD", "sleep")
 	assert.ErrorContains(t, err, "dimension=1 to 5")
 
-	fsck, err := run(t, dir, Fsck)
+	fsck, err := run(t, dir, "fsck")
 	require.NoError(t, err, fsck)
 }
 
 func TestShowCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Show)
+	_, err := run(t, dir, "show")
 	assert.ErrorContains(t, err, "no entries yet")
 
-	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err = run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "2", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "2", "--date", "2026-07-02")
 	require.NoError(t, err)
-	_, err = run(t, dir, Sesh, "wedding", "0.3", "--date", "2026-07-02", "--note", "evening")
+	_, err = run(t, dir, "sesh", "wedding", "0.3", "--date", "2026-07-02", "--note", "evening")
 	require.NoError(t, err)
-	_, err = run(t, dir, Rate, "last", "overall=4", "sleep=5")
+	_, err = run(t, dir, "rate", "session", "overall=4", "sleep=5")
 	require.NoError(t, err)
 
-	out, err := run(t, dir, Show)
+	out, err := run(t, dir, "show")
 	require.NoError(t, err)
 	assert.Contains(t, out, "sesh ", "the newest entry by default")
 	assert.Contains(t, out, "entry 3, chained onto")
@@ -728,16 +716,16 @@ func TestShowCommand(t *testing.T) {
 	assert.Contains(t, out, "days later", "it was written down long after")
 
 	grind := lastOf(t, dir, journal.Grind)
-	_, err = run(t, dir, Revert, grind[:7])
+	_, err = run(t, dir, "revert", grind[:7])
 	require.Error(t, err, "the session still needs the grind's grams")
 
 	sesh := lastOf(t, dir, journal.Sesh)
-	_, err = run(t, dir, Revert, sesh[:7])
+	_, err = run(t, dir, "revert", sesh[:7])
 	require.NoError(t, err)
-	out, err = run(t, dir, Show, sesh[:7])
+	out, err = run(t, dir, "show", sesh[:7])
 	require.NoError(t, err)
 	assert.Contains(t, out, "Undone      by ")
-	out, err = run(t, dir, Show, "last")
+	out, err = run(t, dir, "show", "HEAD")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Undoes      "+sesh[:7]+", sesh 0.30 g of Enua 22/1 Wedding Cake on 2026-07-02")
 }
@@ -761,41 +749,41 @@ func lastOf(t *testing.T, dir string, typ journal.Type) string {
 func TestSyncCommands(t *testing.T) {
 	share := t.TempDir()
 	deck, phone := repository(t), repository(t)
-	_, err := run(t, deck, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, deck, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
 
-	_, err = run(t, deck, Remote)
+	_, err = run(t, deck, "remote")
 	assert.ErrorContains(t, err, "no remote is set", "Should say how to set one")
 
-	out, err := run(t, deck, Remote, "add", share)
+	out, err := run(t, deck, "remote", "add", share)
 	require.NoError(t, err)
 	assert.Contains(t, out, "bring it to every other device", "Should say what to do with the key")
 
-	out, err = run(t, deck, Push)
+	out, err = run(t, deck, "push")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Pushed 1 entry and 0 ratings.")
 
-	_, err = run(t, phone, Remote, "add", share, "--key", filepath.Join(deck, ".wits", "remote.key"))
+	_, err = run(t, phone, "remote", "add", share, "--key", filepath.Join(deck, ".wits", "remote.key"))
 	require.NoError(t, err)
-	out, err = run(t, phone, Pull)
+	out, err = run(t, phone, "pull")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Pulled 1 entry and 0 ratings.")
 	assert.Contains(t, out, "Took the remote's wcake-221.", "Should name the product it brought")
 
-	_, err = run(t, phone, Grind, "wedding", "1", "--date", "2026-07-02")
+	_, err = run(t, phone, "grind", "wedding", "1", "--date", "2026-07-02")
 	require.NoError(t, err)
-	_, err = run(t, phone, Push)
+	_, err = run(t, phone, "push")
 	require.NoError(t, err)
-	_, err = run(t, deck, Grind, "wedding", "2", "--date", "2026-07-03")
+	_, err = run(t, deck, "grind", "wedding", "2", "--date", "2026-07-03")
 	require.NoError(t, err)
 
-	_, err = run(t, deck, Push)
+	_, err = run(t, deck, "push")
 	assert.ErrorContains(t, err, "wits pull first", "Should not write over the phone's grind")
-	out, err = run(t, deck, Pull)
+	out, err = run(t, deck, "pull")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Merged with this device's own, which keep their hashes.")
 
-	out, err = run(t, deck, Pull)
+	out, err = run(t, deck, "pull")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Already up to date.")
 }
@@ -803,20 +791,20 @@ func TestSyncCommands(t *testing.T) {
 func TestRefillCommand(t *testing.T) {
 	dir := repository(t)
 	today := time.Now()
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", today.AddDate(0, 0, -2).Format(time.DateOnly))
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", today.AddDate(0, 0, -2).Format(time.DateOnly))
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "2", "--date", today.AddDate(0, 0, -1).Format(time.DateOnly))
+	_, err = run(t, dir, "grind", "wedding", "2", "--date", today.AddDate(0, 0, -1).Format(time.DateOnly))
 	require.NoError(t, err)
 	orderBy := today.AddDate(0, 0, 9-3)
 
-	out, err := run(t, dir, Refill)
+	out, err := run(t, dir, "report", "refill")
 
 	require.NoError(t, err)
 	assert.Contains(t, out, "18.00 g on the shelf, at 2.00 g a day", "Should say what it projects from")
 	assert.Contains(t, out, "Order the next prescription by "+orderBy.Format("Mon 2 January")+", with 3 days for the pharmacy.")
 
 	ics := filepath.Join(t.TempDir(), "refill.ics")
-	out, err = run(t, dir, Refill, "--lead", "5", "--ics", ics)
+	out, err = run(t, dir, "report", "refill", "--lead", "5", "--ics", ics)
 	require.NoError(t, err)
 	assert.Contains(t, out, "with 5 days for the pharmacy", "Should use the lead time given")
 	cal, err := os.ReadFile(ics)
@@ -824,23 +812,23 @@ func TestRefillCommand(t *testing.T) {
 	assert.Contains(t, string(cal), "DTSTART;VALUE=DATE:"+today.AddDate(0, 0, 9-5).Format("20060102")+"\r\n",
 		"Should remind on the day to order by, in iCalendar's line endings")
 
-	out, err = run(t, dir, Status)
+	out, err = run(t, dir, "status")
 	require.NoError(t, err)
 	assert.Contains(t, out, "with 5 days for the pharmacy", "Should keep the lead time, and status should say it")
 
-	_, err = run(t, dir, Refill, "--lead", "-1")
+	_, err = run(t, dir, "report", "refill", "--lead", "-1")
 	assert.ErrorContains(t, err, "0 or more")
 }
 
 func TestPriceCommands(t *testing.T) {
 	dir := repository(t)
-	out, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01", "--price", "170,00")
+	out, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01", "--price", "170,00")
 	require.NoError(t, err)
 	assert.Contains(t, out, "paid 170.00 €, 8.50 € a gram", "Should price it as it is bought")
-	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-02")
+	_, err = run(t, dir, "buy", "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-02")
 	require.NoError(t, err)
 
-	out, err = run(t, dir, Costs)
+	out, err = run(t, dir, "report", "costs")
 	require.NoError(t, err)
 	assert.Contains(t, out, "170.00 € for 20.00g with a price, 8.50 € a gram; 1 purchase without one")
 
@@ -855,23 +843,23 @@ func TestPriceCommands(t *testing.T) {
 	assert.Contains(t, buf.String(), "90.00 € for 10.00g of wcake-221, 9.00 € a gram")
 	assert.Contains(t, buf.String(), "Priced 1 purchase; 0 left without one.")
 
-	out, err = run(t, dir, Costs)
+	out, err = run(t, dir, "report", "costs")
 	require.NoError(t, err)
 	assert.Contains(t, out, "260.00 € for 30.00g with a price, 8.67 € a gram\n", "Should count both now, and none without")
 
-	_, err = run(t, dir, Price, unpriced[0].Hash[:7], "abc")
+	_, err = run(t, dir, "price", unpriced[0].Hash[:7], "abc")
 	assert.ErrorContains(t, err, "not an amount of euros")
-	out, err = run(t, dir, Fsck)
+	out, err = run(t, dir, "fsck")
 	require.NoError(t, err, out)
 }
 
 func TestReportCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", time.Now().AddDate(0, 0, -3).Format(time.DateOnly))
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", time.Now().AddDate(0, 0, -3).Format(time.DateOnly))
 	require.NoError(t, err)
 	pdf := filepath.Join(t.TempDir(), "report.pdf")
 
-	out, err := run(t, dir, Report, "--out", pdf)
+	out, err := run(t, dir, "report", "prescriber", "--out", pdf)
 
 	require.NoError(t, err)
 	assert.Contains(t, out, "Wrote a report for ", "Should say what it wrote")
@@ -879,46 +867,46 @@ func TestReportCommand(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, bytes.HasPrefix(data, []byte("%PDF-")), "Should write a PDF")
 
-	_, err = run(t, dir, Report, "--from", "2026-10-31", "--to", "2026-10-01", "--out", pdf)
+	_, err = run(t, dir, "report", "prescriber", "--from", "2026-10-31", "--to", "2026-10-01", "--out", pdf)
 	assert.ErrorContains(t, err, "is before")
 }
 
 func TestSealCommands(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
 
-	out, err := run(t, dir, Seal)
+	out, err := run(t, dir, "seal")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Made a sealing key", "Should make a key the first time")
 	assert.Contains(t, out, "Sealed the journal's 1 entry")
-	out, err = run(t, dir, Seal)
+	out, err = run(t, dir, "seal")
 	require.NoError(t, err)
 	assert.Contains(t, out, "is sealed already", "Should not seal one head twice")
 
 	seals, err := filepath.Glob(filepath.Join(dir, ".wits", "seals", "*.seal"))
 	require.NoError(t, err)
 	require.Len(t, seals, 1)
-	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "1", "--date", "2026-07-02")
 	require.NoError(t, err)
-	out, err = run(t, dir, Verify, seals[0])
+	out, err = run(t, dir, "verify", seals[0])
 	require.NoError(t, err)
 	assert.Contains(t, out, "holds what was sealed: 1 entry, up to", "A journal grown since still holds what was sealed")
-	out, err = run(t, dir, Fsck)
+	out, err = run(t, dir, "fsck")
 	require.NoError(t, err, out)
 
 	other := repository(t)
-	_, err = run(t, other, Buy, "Enua 22/1 Wedding Cake", "21g", "--date", "2026-07-01")
+	_, err = run(t, other, "buy", "Enua 22/1 Wedding Cake", "21g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, other, Verify, seals[0])
+	_, err = run(t, other, "verify", seals[0])
 	assert.ErrorContains(t, err, "does not hold the sealed head", "Should notice another journal")
 
 	text, err := os.ReadFile(seals[0])
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(seals[0], []byte(strings.Replace(string(text), "entries 1", "entries 2", 1)), 0600))
-	_, err = run(t, dir, Verify, seals[0])
+	_, err = run(t, dir, "verify", seals[0])
 	assert.ErrorContains(t, err, "signature does not match", "Should refuse a seal changed after signing")
-	out, err = run(t, dir, Fsck)
+	out, err = run(t, dir, "fsck")
 	assert.Error(t, err)
 	assert.Contains(t, out, "signature does not match", "fsck should name it too")
 }
@@ -959,210 +947,225 @@ func TestSealTimestamp(t *testing.T) {
 	seal.Calendars = []string{srv.URL}
 	t.Cleanup(func() { seal.Calendars = saved })
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
 
-	out, err := run(t, dir, Seal, "--timestamp")
+	out, err := run(t, dir, "seal", "--timestamp")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Sent the seal's SHA-256, and nothing else, to 1 calendar")
 	seals, err := filepath.Glob(filepath.Join(dir, ".wits", "seals", "*.seal"))
 	require.NoError(t, err)
 	require.Len(t, seals, 1)
-	out, err = run(t, dir, Verify, seals[0])
+	out, err = run(t, dir, "verify", seals[0])
 	require.NoError(t, err)
 	assert.Contains(t, out, "timestamp pending at 1 calendar")
 
-	out, err = run(t, dir, Seal, "--upgrade")
+	out, err = run(t, dir, "seal", "--upgrade")
 	require.NoError(t, err)
 	assert.Contains(t, out, "in Bitcoin block 912180")
-	out, err = run(t, dir, Verify, seals[0])
+	out, err = run(t, dir, "verify", seals[0])
 	require.NoError(t, err)
 	assert.Contains(t, out, "timestamped in Bitcoin block 912180")
-	out, err = run(t, dir, Seal, "--upgrade")
+	out, err = run(t, dir, "seal", "--upgrade")
 	require.NoError(t, err)
 	assert.Contains(t, out, "No seal is waiting for its proof.")
-	out, err = run(t, dir, Seal, "--key")
+	out, err = run(t, dir, "seal", "--key")
 	require.NoError(t, err)
 	assert.Contains(t, out, "SHA256:")
-	out, err = run(t, dir, Fsck)
+	out, err = run(t, dir, "fsck")
 	require.NoError(t, err, out)
 }
 
 func TestCarryCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "2", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "2", "--date", "2026-07-02")
 	require.NoError(t, err)
 	out := t.TempDir()
 
-	text, err := run(t, dir, Carry, "--out", filepath.Join(out, "carry.txt"))
+	text, err := run(t, dir, "carry", "--out", filepath.Join(out, "carry.txt"))
 	require.NoError(t, err)
 	assert.Contains(t, text, "18.00g  2.00g   0.00g  20.00g on 2026-07-01", "Should list what is held against its fill")
 	for _, name := range []string{"carry.svg", "carry.png"} {
-		_, err = run(t, dir, Carry, "--out", filepath.Join(out, name))
+		_, err = run(t, dir, "carry", "--out", filepath.Join(out, name))
 		require.NoError(t, err, name)
 		assert.FileExists(t, filepath.Join(out, name))
 	}
-	_, err = run(t, dir, Carry, "--out", filepath.Join(out, "carry.pdf"))
+	_, err = run(t, dir, "carry", "--out", filepath.Join(out, "carry.pdf"))
 	assert.ErrorContains(t, err, ".svg or .png")
 
-	verified, err := run(t, dir, Verify, filepath.Join(out, "carry.txt"))
+	verified, err := run(t, dir, "verify", filepath.Join(out, "carry.txt"))
 	require.NoError(t, err)
 	assert.Contains(t, verified, "✓ signed by SHA256:")
 	assert.Contains(t, verified, "holds what was sealed", "Should check it against the journal here")
 }
 
-func TestDescribeAndLike(t *testing.T) {
+func TestDescribeProductAndWhatIsLikeIt(t *testing.T) {
 	dir := repository(t)
 	for _, name := range []string{"Enua 22/1 Wedding Cake", "Khiron 20/1 Wedding Cake", "Sumo 25/1 Papaya Bomb"} {
-		_, err := run(t, dir, Buy, name, "10g", "--date", "2026-07-01")
+		_, err := run(t, dir, "buy", name, "10g", "--date", "2026-07-01")
 		require.NoError(t, err)
 	}
 
-	out, err := run(t, dir, Describe, "Enua", "--terpenes", "Caryophyllen, Limonen")
+	out, err := run(t, dir, "edit", "product", "Enua", "--terpenes", "Caryophyllen, Limonen")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Terpenes: Caryophyllen, Limonen")
-	out, err = run(t, dir, Describe, "Khiron")
+	out, err = run(t, dir, "describe", "product", "Khiron")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Terpenes: none written down yet")
+	assert.Contains(t, out, "Jar: 10.00 g sealed, 0.00 g ground", "Should say what its jar holds")
 
-	out, err = run(t, dir, Like, "Enua")
+	out, err = run(t, dir, "describe", "product", "Enua")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Like Enua 22/1 Wedding Cake (pepper, citrus and wood):\n   49 %  Khiron 20/1 Wedding Cake\n")
+	assert.Contains(t, out, "Like it (pepper, citrus and wood):\n   49 %  Khiron 20/1 Wedding Cake\n")
 
 	// With a profile of its own, the other Wedding Cake is liked for it, and
 	// says which terpenes the two share.
-	_, err = run(t, dir, Describe, "Khiron", "--terpenes", "Limonen, Caryophyllen")
+	_, err = run(t, dir, "edit", "product", "Khiron", "--terpenes", "Limonen, Caryophyllen")
 	require.NoError(t, err)
-	out, err = run(t, dir, Like, "Enua")
+	out, err = run(t, dir, "describe", "product", "Enua")
 	require.NoError(t, err)
 	assert.Regexp(t, `\d+ %  Khiron 20/1 Wedding Cake — shares Caryophyllen, Limonen\n`, out)
+
+	_, err = run(t, dir, "edit", "product", "Enua")
+	assert.ErrorContains(t, err, "nothing to change", "An edit says what it changes")
 }
 
-// TestDescribeRatesTheStrain: a strain is rated as a whole, shown, rated
-// again over the first, refused a score past 5 or a rating that says nothing,
-// and its rating taken away.
-func TestDescribeRatesTheStrain(t *testing.T) {
+// TestRateStrain: a strain is rated as a whole, shown, rated again over the
+// first, refused a score past 5 or a rating that says nothing, and its
+// rating taken away.
+func TestRateStrain(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
 	require.NoError(t, err)
 
-	out, err := run(t, dir, Describe, "Enua")
+	out, err := run(t, dir, "describe", "product", "Enua")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Rated: not yet")
 
-	out, err = run(t, dir, Describe, "Enua", "--rating", "overall=4, taste=5", "--again", "yes", "--say", "lemon, then pepper")
+	out, err = run(t, dir, "rate", "strain", "Enua", "overall=4", "taste=5", "--again", "yes", "--note", "lemon, then pepper")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Rated: overall 4, taste 5 · again — lemon, then pepper (")
+	assert.Contains(t, out, "overall 4, taste 5 · again — lemon, then pepper (")
 
-	out, err = run(t, dir, Describe, "Enua", "--rating", "aroma=2", "--again", "no")
+	out, err = run(t, dir, "rate", "strain", "Enua", "aroma=2", "--again", "no")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Rated: aroma 2 · not again (", "the newer rating stands, whole")
+	assert.Contains(t, out, "aroma 2 · not again (", "the newer rating stands, whole")
 
-	_, err = run(t, dir, Describe, "Enua", "--rating", "overall=6")
+	_, err = run(t, dir, "rate", "strain", "Enua", "overall=6")
 	require.ErrorContains(t, err, "a score is 1 to 5")
-	_, err = run(t, dir, Describe, "Enua", "--rating", "")
+	_, err = run(t, dir, "rate", "strain", "Enua")
 	require.ErrorIs(t, err, catalog.ErrNothingRated)
-	_, err = run(t, dir, Describe, "Enua", "--rating", "colour=3")
+	_, err = run(t, dir, "rate", "strain", "Enua", "colour=3")
 	require.ErrorContains(t, err, "not \"colour\"")
 
-	out, err = run(t, dir, Describe, "Enua", "--unrate")
+	out, err = run(t, dir, "rate", "strain", "Enua", "--clear")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Rated: not yet")
+	assert.Contains(t, out, "not yet")
 }
 
-// TestDescribeCorrectsTheLabel: what a product is called and what it holds
-// are corrected as far as the flags say, the slug kept, and a share past 100
-// % refused.
-func TestDescribeCorrectsTheLabel(t *testing.T) {
+// TestEditProductCorrectsTheLabel: what a product is called and what it
+// holds are corrected as far as the flags say, the slug kept, and a share
+// past 100 % refused.
+func TestEditProductCorrectsTheLabel(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Describe, "Enua", "--terpenes", "Limonen")
+	_, err = run(t, dir, "edit", "product", "Enua", "--terpenes", "Limonen")
 	require.NoError(t, err)
 
-	out, err := run(t, dir, Describe, "Enua", "--name", "Enua Wedding Cake", "--maker", "Enua", "--thc", "23.5")
+	out, err := run(t, dir, "edit", "product", "Enua", "--name", "Enua Wedding Cake", "--maker", "Enua", "--thc", "23.5")
 	require.NoError(t, err)
 	assert.Contains(t, out, "Enua Wedding Cake (wcake-221)\nEnua · Wedding Cake\nTHC 23.5 %, CBD 1 %\n", "the slug and the cultivar stay, and CBD as it was")
 	assert.Contains(t, out, "Terpenes: Limonen", "the terpenes stay as they were")
 
-	_, err = run(t, dir, Describe, "Enua", "--thc", "230")
+	_, err = run(t, dir, "edit", "product", "Enua", "--thc", "230")
 	require.ErrorContains(t, err, "0 to 100 %")
-	_, err = run(t, dir, Describe, "Enua", "--name", " ")
+	_, err = run(t, dir, "edit", "product", "Enua", "--name", " ")
 	require.ErrorContains(t, err, "a product needs a name")
+
+	// Rehearsed, the label is checked and stays as it was.
+	out, err = run(t, dir, "edit", "product", "Enua", "--name", "Something Else", "--dry-run")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Something Else", "Should say what it would be")
+	out, err = run(t, dir, "describe", "product", "Enua")
+	require.NoError(t, err)
+	assert.Contains(t, out, "Enua Wedding Cake (wcake-221)", "and have written nothing")
 }
 
 // TestAmendCommand: an amount is corrected by an undo and the entry again,
 // and refused when the jar never held the difference.
 func TestAmendCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "7.5", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "7.5", "--date", "2026-07-02")
 	require.NoError(t, err)
-	log, err := run(t, dir, Log, "--oneline")
+	log, err := run(t, dir, "log", "--oneline")
 	require.NoError(t, err)
 	hash := strings.Fields(log)[0]
 
-	out, err := run(t, dir, Amend, hash, "0.75", "--note", "misread the scale")
+	out, err := run(t, dir, "amend", hash, "0.75", "--note", "misread the scale")
 	require.NoError(t, err)
 	assert.Regexp(t, `^\[[0-9a-f]{7}\] amended grind Enua 22/1 Wedding Cake from 2026-07-02: 0.75g, not 7.50g\n$`, out)
-	status, err := run(t, dir, Status)
+	status, err := run(t, dir, "status")
 	require.NoError(t, err)
 	assert.Contains(t, status, "9.25", "storage holds the 10 g less the corrected grind")
 
-	_, err = run(t, dir, Amend, hash, "0.5")
+	_, err = run(t, dir, "amend", hash, "0.5")
 	require.Error(t, err, "an entry already undone is not amended again")
-	log, err = run(t, dir, Log, "--oneline")
+	log, err = run(t, dir, "log", "--oneline")
 	require.NoError(t, err)
-	_, err = run(t, dir, Amend, strings.Fields(log)[0], "12")
+	_, err = run(t, dir, "amend", strings.Fields(log)[0], "12")
 	require.ErrorContains(t, err, "cannot amend")
 }
 
 // TestDeviceEditAndRemove: a device is changed as far as the flags say and
 // removed, its sessions keeping its name.
-func TestDeviceEditAndRemove(t *testing.T) {
+func TestCreateEditAndDeleteDevice(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Device, "add", "Storz & Bickel Mighty+", "--max", "210")
+	_, err := run(t, dir, "create", "device", "Storz & Bickel Mighty+", "--max", "210")
 	require.NoError(t, err)
 
-	out, err := run(t, dir, Device, "edit", "mighty", "--load", "0.15", "--default", "185")
+	out, err := run(t, dir, "edit", "device", "mighty", "--load", "0.15", "--default", "185")
 	require.NoError(t, err)
 	assert.Equal(t, "Changed device storz-bickel-mighty (Storz & Bickel Mighty+)\n", out)
-	list, err := run(t, dir, Device, "list")
+	list, err := run(t, dir, "get", "devices")
 	require.NoError(t, err)
-	assert.Regexp(t, `storz-bickel-mighty\s+Storz & Bickel Mighty\+\s+0-210°C\s+185°C`, list)
+	assert.Regexp(t, `storz-bickel-mighty\s+Storz & Bickel Mighty\+\s+vaporizer\s+0-210°C · usually 185°C`, list)
 
-	_, err = run(t, dir, Device, "edit", "mighty")
+	_, err = run(t, dir, "edit", "device", "mighty")
 	require.ErrorContains(t, err, "nothing to change")
-	_, err = run(t, dir, Device, "edit", "mighty", "--min", "220")
+	_, err = run(t, dir, "edit", "device", "mighty", "--min", "220")
 	require.ErrorContains(t, err, "lowest temperature")
 
-	_, err = run(t, dir, Buy, "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
+	_, err = run(t, dir, "buy", "Enua 22/1 Wedding Cake", "10g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "1", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "1", "--date", "2026-07-02")
 	require.NoError(t, err)
-	_, err = run(t, dir, Sesh, "wedding", "0.2", "--device", "mighty", "--date", "2026-07-02")
+	_, err = run(t, dir, "sesh", "wedding", "0.2", "--device", "mighty", "--date", "2026-07-02")
 	require.NoError(t, err)
 
-	out, err = run(t, dir, Device, "remove", "mighty")
+	out, err = run(t, dir, "delete", "device", "mighty")
 	require.NoError(t, err)
-	assert.Equal(t, "Removed device storz-bickel-mighty (Storz & Bickel Mighty+); 1 sessions keep its name\n", out)
-	_, err = run(t, dir, Device, "remove", "mighty")
+	assert.Equal(t, "Deleted device storz-bickel-mighty (Storz & Bickel Mighty+); 1 session keeps its name\n", out)
+	_, err = run(t, dir, "delete", "device", "mighty")
 	require.Error(t, err)
+
+	_, err = run(t, dir, "delete", "device", "volcano", "--dry-run")
+	require.ErrorContains(t, err, "cannot be rehearsed", "A write the recorder does not make refuses --dry-run, rather than write")
 }
 
 func TestPackCommand(t *testing.T) {
 	dir := repository(t)
 	today := time.Now()
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", today.AddDate(0, 0, -2).Format(time.DateOnly))
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", today.AddDate(0, 0, -2).Format(time.DateOnly))
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "2", "--date", today.AddDate(0, 0, -1).Format(time.DateOnly))
+	_, err = run(t, dir, "grind", "wedding", "2", "--date", today.AddDate(0, 0, -1).Format(time.DateOnly))
 	require.NoError(t, err)
 	statement := filepath.Join(t.TempDir(), "trip.txt")
 
-	out, err := run(t, dir, Pack, "--days", "3", "--margin", "0", "--out", statement)
+	out, err := run(t, dir, "pack", "--days", "3", "--margin", "0", "--out", statement)
 
 	require.NoError(t, err)
 	assert.Contains(t, out, "Take 6.00 g: 3 days at 2.00 g a day, with 0 % to spare.")
@@ -1174,21 +1177,21 @@ func TestPackCommand(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, c.Verify())
 
-	out, err = run(t, dir, Pack, "--days", "30")
+	out, err = run(t, dir, "pack", "--days", "30")
 	require.NoError(t, err)
 	assert.Contains(t, out, "and the shelf holds 20.00 g: take it all, 10.0 days' worth.")
 }
 
 func TestReviewCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g", "--date", "2025-03-01")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g", "--date", "2025-03-01")
 	require.NoError(t, err)
 	for _, d := range []string{"2025-03-02", "2025-03-20"} {
-		_, err = run(t, dir, Grind, "wedding", "2", "--date", d)
+		_, err = run(t, dir, "grind", "wedding", "2", "--date", d)
 		require.NoError(t, err)
 	}
 
-	out, err := run(t, dir, Review, "2025")
+	out, err := run(t, dir, "report", "year", "2025")
 
 	require.NoError(t, err)
 	assert.Contains(t, out, "│  2025 in wits")
@@ -1197,22 +1200,22 @@ func TestReviewCommand(t *testing.T) {
 	assert.Contains(t, out, "Longest break  286 days, 21 March to 31 December (3 breaks in all)")
 	assert.Contains(t, out, "Strains        1  Enua 22/1 Wedding Cake, 4.00 g (100 %)")
 
-	_, err = run(t, dir, Review, "2019")
+	_, err = run(t, dir, "report", "year", "2019")
 	assert.ErrorContains(t, err, "nothing was recorded in 2019; the journal has 2025")
 }
 
 func TestTodayCommand(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 20/1 Wedding Cake", "20g", "--date", "2026-07-01")
+	_, err := run(t, dir, "buy", "Enua 20/1 Wedding Cake", "20g", "--date", "2026-07-01")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wedding", "2", "--date", "2026-07-02")
+	_, err = run(t, dir, "grind", "wedding", "2", "--date", "2026-07-02")
 	require.NoError(t, err)
 	for _, g := range []string{"0.15", "0.25"} {
-		_, err = run(t, dir, Sesh, "wedding", g, "--date", "2026-07-03")
+		_, err = run(t, dir, "sesh", "wedding", g, "--date", "2026-07-03")
 		require.NoError(t, err)
 	}
 
-	out, err := run(t, dir, Today, "--date", "2026-07-03")
+	out, err := run(t, dir, "report", "today", "--date", "2026-07-03")
 
 	require.NoError(t, err)
 	assert.Contains(t, out, "Friday 3 July: 2 sessions, 0.40 g through a device: 80 mg THC and 4 mg CBD in the material")

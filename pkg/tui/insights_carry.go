@@ -157,7 +157,7 @@ func boolInt(b bool) int {
 }
 
 // writeReport writes the page for the prescriber, the 90 days to today, as
-// `wits report` writes it by default.
+// `wits report prescriber` writes it by default.
 func writeReport(a *App) (string, error) {
 	to := time.Date(a.data.Now.Year(), a.data.Now.Month(), a.data.Now.Day(), 0, 0, 0, 0, time.Local)
 	from := to.AddDate(0, 0, -89)
@@ -177,7 +177,7 @@ func writeReport(a *App) (string, error) {
 }
 
 // strainsPage is the map of the strains, as the browser's Effects page and
-// `wits like` place them by their terpenes: every strain a dot, those on the
+// `wits describe product` place them by their terpenes: every strain a dot, those on the
 // shelf numbered and named under it.
 func strainsPage(a *App, width int) string {
 	t := a.theme
@@ -189,7 +189,7 @@ func strainsPage(a *App, width int) string {
 		}
 	}
 	if len(placed) < 2 {
-		return t.Dim.Render("The map needs terpenes: e on storage writes a strain's down, as `wits describe --terpenes` does.")
+		return t.Dim.Render("The map needs terpenes: e on storage writes a strain's down, as `wits edit product --terpenes` does.")
 	}
 	w, h := min(width-2, 72), 16
 	grid, shelf := strainGrid(a, placed, w, h)

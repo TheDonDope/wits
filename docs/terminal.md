@@ -89,13 +89,13 @@ shelf.
 
 The last line is the refill planner. The shelf, 44.80 g in every jar, runs
 out on 17 November at the fill's 1.93 g a day, and the pharmacy needs its lead
-time before that. `wits refill` says it at length, `--lead 5` changes the lead
+time before that. `wits report refill` says it at length, `--lead 5` changes the lead
 time and keeps it, and `--ics refill.ics` writes a calendar reminder for the
 morning of the day to order by. The dashboards say it under their projection
 of the supply.
 
 ```console
-$ wits refill --ics refill.ics
+$ wits report refill --ics refill.ics
 44.80 g on the shelf, at 1.93 g a day with grinding: empty on Tue 17 November.
 Order the next prescription by Sat 14 November, with 3 days for the pharmacy.
 Wrote a reminder for 2026-11-14 to refill.ics
@@ -103,7 +103,7 @@ Wrote a reminder for 2026-11-14 to refill.ics
 
 ### Today, and the THC in it
 
-The last line of `wits status` is the day so far, and `wits today` has it at
+The last line of `wits status` is the day so far, and `wits report today` has it at
 length: every session with the THC and CBD in the grams put through the
 device — grams × the strain's per cent × 10, in milligrams, so 0.15 g of a
 32 % strain is 48 mg — their sum, and a usual day of the last 30 with a
@@ -113,7 +113,7 @@ with no THC written down is counted, not guessed at. `--date 2026-10-24` for
 another day.
 
 ```console
-$ wits today
+$ wits report today
 Monday 26 October: 4 sessions, 0.67 g through a device: 206 mg THC and 7 mg CBD in the material
 
 TIME   PRODUCT                DEVICE                           GRAMS  THC      CBD     RATED
@@ -172,44 +172,94 @@ screens can start from empty and grow the way the record grew: `p` plays,
 
 ## Commands
 
+The command line speaks two grammars, and `wits --help` lists the commands
+under them. **The journal is written the way git commits**: short verbs, run
+as things happen, with `log`, `show`, `revert` and `amend` over what was
+written, an entry named by its hash or counted back from the newest as
+`HEAD`, `HEAD~1`, `HEAD~2`. **Everything else is read the way kubectl reads a
+cluster**: `get` lists one kind of thing, `describe` tells one in full, and
+`edit`, `create` and `delete` change the catalogs. The developer cookbook
+([docs/cookbook/cli.md](cookbook/cli.md)) says why, and how to add a command.
+
+### The journal, written as it happens
+
 | | |
 | --- | --- |
-| `wits init [dir]` | Create a repository |
-| `wits buy <product> <amount>` | Record a prescription fill, `--slug` to name it, `--price` for what it cost |
-| `wits price <purchase> <euros>` | Write down what a purchase cost; `wits reconcile purchases` walks every one without |
-| `wits costs` | What the prescriptions cost: per gram, by fill, by month, and per session that helped |
-| `wits describe <product>` | What is known about a product; `--name`, `--maker`, `--cultivar`, `--thc`, `--cbd` correct its label, the slug kept; `--terpenes` writes down its profile, dominant first; `--rating "overall=4 taste=5" --again yes` rates the strain as a whole |
-| `wits like <product>` | The products most like one, by name, cannabinoids and terpenes |
-| `wits grind <product> <amount>` | Move product from storage into its stash |
-| `wits sesh <product> <amount>` | Record a session, drawing on the stash; `--device`, `--temp`, `--mode`, `--timer`, `--heater`, `--setting`, `--note` |
-| `wits avb collect <grams>` / `use <grams>` | AVB weighed out of a device, or used up; `wits avb` for the jar and every yield |
-| `wits rate <session\|last> <dimension=1–5>…` | Rate what a session did; `--note` |
+| `wits buy <product> <grams>` | Record a prescription fill, `--slug` to name it, `--price` for what it cost |
+| `wits grind <product> <grams>` | Move product from storage into its stash |
+| `wits sesh <product> <grams>` | Record a session, drawing on the stash; `--device`, `--temp`, `--mode`, `--timer`, `--heater`, `--setting`, `--note` |
+| `wits weigh [storage\|stash\|avb] [<product> <grams>]` | Make a jar agree with the scale; interactive with no arguments, `--forgot` for a forgotten grind or sessions |
+| `wits avb [collect\|use] <grams>` | AVB weighed out of a device, or used up; `wits avb` alone for the jar and every yield |
+| `wits price [<rev> <euros>]` | Write down what a purchase cost; alone, it asks for every one without, `--all` however old |
 | `wits status` | What is left, and how long it will last |
-| `wits today` | The day so far: every session with the THC and CBD in it, their sum, and a usual day; `--date` for another |
-| `wits refill` | When to order the next prescription; `--lead` for the pharmacy's days, `--ics` for a reminder |
 | `wits log` | The journal, newest first; `--oneline`, `-n`, `--product`, `--current` |
-| `wits show [entry]` | One entry in full: what it moved, the jar before and after, what corrects it |
-| `wits revert <entry>` | Undo an entry by recording a correction |
-| `wits amend <entry> <grams>` | Correct an entry's amount: undone and recorded again, in one write; `--note` |
-| `wits reconcile [account] [product] [weight]` | Make an account agree with the scale; interactive with no arguments |
-| `wits device add <name>` / `edit <device>` / `remove <device>` / `list` | Register a vaporizer, its temperature range and its load (`--load 0.15`); change what the flags say; take it out of the catalog, its sessions keeping its name; list them |
-| `wits temps <celsius>` | What a temperature is hot enough to release |
-| `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
-| `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
-| `wits report` | One page for the prescriber, as a PDF; `--from`/`--to`, the last 90 days by default |
-| `wits bundle` | The whole repository as one compact file; `--gzip` to compress it |
-| `wits restore <file>` | Rebuild a repository from a bundle |
-| `wits remote add <folder>` | Share the repository through a folder; `--key` on every device after the first |
+| `wits show [<rev>]` | One entry in full: what it moved, the jar before and after, what corrects it; `HEAD` without one |
+| `wits revert <rev>` | Undo an entry by recording a correction |
+| `wits amend <rev> <grams>` | Correct an entry's amount: undone and recorded again, in one write; `--note` |
+
+### Looking, and the catalogs
+
+| | |
+| --- | --- |
+| `wits get products\|devices\|fills\|sessions\|entries` | A list of one kind; `-o wide` adds columns, `-o json` prints every field, `-l maker=enua` keeps what matches, `--all` the empty jars and retired devices too |
+| `wits describe product <product>` | What is known about a product: its label, its jar, its terpenes, its rating, and the products most like it |
+| `wits describe device <device>` | A device in full, and what its usual setting releases |
+| `wits describe fill [<n>]` | One fill: what it dispensed, and what of each jar is still its own; the latest without a number |
+| `wits describe temperature <celsius>` | What a temperature is hot enough to release, and whether it reaches benzene |
+| `wits edit product <product>` | `--name`, `--maker`, `--cultivar`, `--thc`, `--cbd` correct its label, the slug kept; `--terpenes` writes down its profile, dominant first |
+| `wits create device <name>` | A vaporizer, its temperature range and its load (`--load 0.15`) |
+| `wits edit device <device>` / `wits delete device <device>` | Change what the flags say; take it out of the catalog, its sessions keeping its name |
+| `wits rate session [<rev>] <dimension=1–5>…` | Rate what a session did, the last one without a revision; `--note` |
+| `wits rate strain <product> <dimension=1–5>…` | Rate the strain as a whole: overall, taste, aroma; `--again yes`, `--note`, `--clear` |
+| `wits report today` | The day so far: every session with the THC and CBD in it, their sum, and a usual day; `--date` for another |
+| `wits report costs` | What the prescriptions cost: per gram, by fill, by month, and per session that helped |
+| `wits report year [<year>]` | The year on one card: the grams, the strains, the longest break, the best temperature, the dearest gram |
+| `wits report refill` | When to order the next prescription; `--lead` for the pharmacy's days, `--ics` for a reminder |
+| `wits report prescriber` | One page for the prescriber, as a PDF; `--from`/`--to`, the last 90 days by default, `--seal` |
+
+### The repository
+
+| | |
+| --- | --- |
+| `wits init [<dir>]` | Create a repository |
+| `wits clone <bundle\|folder> [<dir>]` | A new repository from a bundle, or from a shared folder with `--key` |
+| `wits remote` / `wits remote add <folder>` | The folder push and pull share; `--key` on every device after the first |
 | `wits push` / `wits pull` | Write the repository to the folder; bring in what other devices wrote there |
 | `wits fsck` | Check the journal and the catalogs for damage |
+| `wits bundle create <file>` | The whole repository as one compact file; a name ending in `.gz` is compressed, `-` writes to the terminal |
+| `wits import <file.xlsx>` | Import a tracking spreadsheet; a dry run without `--commit` |
+| `wits export` | The current cycle as Markdown; `--all` for every cycle, `--from`/`--to` for a range of days, `--site <dir>` for GitHub Pages |
+| `wits config [<key> [<value>]]` | The repository's settings — `theme`, `lead`, `remote` — and its aliases, `alias.<name>` |
+| `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
+
+### Proof of what is held
+
+| | |
+| --- | --- |
 | `wits seal` | Sign the journal's head; `--timestamp` anchors it with OpenTimestamps, `--upgrade` fetches the proof |
 | `wits verify <file.seal>` | Check a seal, or a statement from `wits carry`: its signature, the journal it seals, its timestamp |
 | `wits carry` | What is held, against the fills that dispensed it, signed; `--out` a QR code (.svg, .png) or the statement (.txt) |
 | `wits pack --days <n>` | What to take on a trip, from which jars, signed for exactly that; `--margin`, `--oldest`, `--out` |
-| `wits review [year]` | The year on one card: the grams, the strains, the longest break, the best temperature, the dearest gram |
-| `wits completion <shell>` | The tab-completion script for bash, zsh or fish |
+
+### Every command
 
 Every command takes `--help`, and `buy`, `grind` and `sesh` take `--date`.
+Two flags work everywhere:
+
+- `-C <dir>` runs a command as if wits was started there, as `git -C` does.
+- `--dry-run` builds an entry, checks it as the recorder would, prints it,
+  and writes nothing. It works on what the recorder writes — buy, grind, sesh,
+  weigh, avb, price, revert, amend, edit product and rate. Anything else
+  refuses it rather than write.
+
+An alias is a repository's own shorthand, as in git:
+
+```console
+$ wits config alias.evening "sesh --device mighty --temp 185"
+$ wits evening wedding 0.2
+```
+
+A command of wits's own always wins, so an alias can never hide one.
 
 ## Bringing a spreadsheet across
 
@@ -275,21 +325,21 @@ wrong — instead the difference is recorded, and the account agrees with the ja
 again:
 
 ```console
-$ wits reconcile storage wcake-221 16.5 --dry-run
+$ wits weigh storage wcake-221 16.5 --dry-run
 storage holds 16.90g by the ledger and 16.50g on the scale: -0.40g
 
 Dry run. Nothing was written. Re-run without --dry-run to record it.
 
-$ wits reconcile storage wcake-221 16.5 --reason "spilled on the desk"
+$ wits weigh storage wcake-221 16.5 --reason "spilled on the desk"
 [4b36264] adjusted 0.40g out of storage of wcake-221, now 16.50g
 ```
 
 ![Reconciling against the scale](../assets/wits-reconcile.gif)
 
-For weighing day, `wits reconcile` on its own is interactive. Pick the account
+For weighing day, `wits weigh` on its own is interactive. Pick the account
 on the scale (storage, the stash, or the AVB once it holds anything) and tick
 the jars to weigh, all of them by default. Each is asked for in turn, with the
-ledger's figure beside the prompt, and a blank reading skips a jar; `wits reconcile stash` skips the first question. Nothing is
+ledger's figure beside the prompt, and a blank reading skips a jar; `wits weigh stash` skips the first question. Nothing is
 written until every question is answered. In the interface this is `r`, on any
 screen — it weighs the jars ticked on the storage screen, the one under the
 cursor, or otherwise the fullest one, since that is the one worth checking.
@@ -303,15 +353,15 @@ forgotten — the interactive form asks, `Forgotten` the default, and
 `--forgot` says yes up front:
 
 ```console
-$ wits reconcile storage nice-morning-sun-321 10.5 --dry-run
+$ wits weigh storage nice-morning-sun-321 10.5 --dry-run
 storage holds 11.37g by the ledger and 10.50g on the scale: -0.87g
 Forgotten rather than lost? --forgot records a grind of 0.87 g on Fri 23 Oct, just after the jar's last entry.
 
-$ wits reconcile storage nice-morning-sun-321 10.5 --forgot
+$ wits weigh storage nice-morning-sun-321 10.5 --forgot
 [9a12b3c] forgotten grind of 0.87g of nice-morning-sun-321, Fri 23 Oct 00:01
-Now weigh what is ground: wits reconcile stash nice-morning-sun-321 <weight>
+Now weigh what is ground: wits weigh stash nice-morning-sun-321 <weight>
 
-$ wits reconcile stash nice-morning-sun-321 7.5 --forgot --dry-run
+$ wits weigh stash nice-morning-sun-321 7.5 --forgot --dry-run
 nice-morning-sun-321: would record 13 sessions of about 0.15 g, 23 Oct – 26 Oct, with the Storz & Bickel Mighty+
 ```
 
@@ -319,7 +369,7 @@ A forgotten grind is dated just after the jar's last entry, and forgotten
 sessions are spread from then until now, so no entry already recorded loses
 a gram to them. A session takes the size your last thirty sessions most often
 took, had as the last one was — its device, mode and temperature. With no
-session on record it takes a **load** of your gear (`wits device add
+session on record it takes a **load** of your gear (`wits create device
 <name> --load 0.15`), and with none of that, one a day. A shortfall that
 would take more than 30 sessions is a leftover, or lost, and is refused as
 forgotten. Each entry carries the note "forgotten, worked out at the scale",
@@ -378,11 +428,12 @@ the seal's hash and nothing else, to the public OpenTimestamps calendars.
 
 ## Bundles
 
-`wits bundle` writes the catalogs and every entry to a single file that
-`wits restore` reads back, reproducing the journal **exactly, hash chain
-included**. That is what makes it worth trusting as a backup. A restore writes
-every entry in one go and checks the chain it made; a bundle that does not
-restore whole restores nothing. Bundles written before v0.41.0 left out the
+`wits bundle create <file>` writes the catalogs and every entry to a single
+file that `wits clone <file>` reads back into a new repository, reproducing the
+journal **exactly, hash chain included**. That is what makes it worth trusting
+as a backup. A clone writes every entry in one go and checks the chain it made;
+a bundle that does not restore whole restores nothing, and a clone never lands
+in a directory that already holds something. Bundles written before v0.41.0 left out the
 accounts of undos and weighings; they are recovered when such a bundle is
 restored, and one that cannot be recovered is refused rather than restored
 wrong. The effect log, the price log and the seals with their timestamps
@@ -400,10 +451,10 @@ Three years of real history, 1429 entries across 53 products:
 | | bytes | |
 | --- | ---: | --- |
 | journal | 528,321 | |
-| **bundle** | **29,417** | **18×** |
-| bundle, `--gzip` | 6,693 | 79× |
+| **bundle** | **34,306** | **15×** |
+| bundle, `.gz` | 6,810 | 78× |
 
-![Bundling and restoring](../assets/wits-bundle.gif)
+![Bundling and cloning](../assets/wits-bundle.gif)
 
 ## More than one device
 
@@ -450,7 +501,7 @@ as usual.
 
 ## For the prescriber
 
-`wits report` writes one page for an appointment, as a PDF. It covers the days
+`wits report prescriber` writes one page for an appointment, as a PDF. It covers the days
 asked for (the last 90 unless `--from` and `--to` say otherwise): grams a day,
 with grinding and per calendar day, the weeks as bars, which strains, what the
 sessions did by the effect log, each mean with the count it stands on, and
@@ -459,7 +510,7 @@ names the head of the journal's hash chain. The browser's History page
 downloads the same file, and a phone hands it over to share.
 
 ```console
-$ wits report --from 2026-08-01 --to 2026-10-24
+$ wits report prescriber --from 2026-08-01 --to 2026-10-24
 Wrote a report for 2026-08-01 to 2026-10-24 to wits-report-2026-10-24.pdf
 ```
 
@@ -495,7 +546,7 @@ A seal is six lines of text: the head, how many entries it closes, when, the
 public key, and the signature over the lines before it. Hand out the key's
 fingerprint (`wits seal --key`) once, to the person who checks, and never the
 key file. A proof is pending for a few hours until a calendar's commitment is
-in a block; `wits seal --upgrade` then fetches it. `wits report --seal` seals
+in a block; `wits seal --upgrade` then fetches it. `wits report prescriber --seal` seals
 the head before writing the page, so the page names the seal it can be
 checked against. Seals travel in bundles and through push and pull, and fsck
 checks every one: its signature, its head in the journal, and its proof.
@@ -570,8 +621,8 @@ A shelf that holds less than the trip wants says so, and packs it all.
 
 ## The year, on one card
 
-`wits review` is the year in wits, to today in a year still running;
-`wits review 2025` a year gone by. Every figure is the year's own, and is one
+`wits report year` is the year in wits, to today in a year still running;
+`wits report year 2025` a year gone by. Every figure is the year's own, and is one
 the report, the effect log or the price log already computes: the grams and
 the days, month by month, the strains, the busiest day, the longest break (a
 week or more with nothing ground and no session, the tolerance curve's rule),
@@ -580,7 +631,7 @@ strain rated best, the device most used, the terpene most of the grams led
 with, and what it cost, from the cheapest gram to the dearest.
 
 ```console
-$ wits review 2025
+$ wits report year 2025
 ╭─────────────────────────────────────────────────────────────╮
 │  2025 in wits                                               │
 │  446.34 g ground on 221 of 365 days · 2.02 g an active day  │
@@ -626,8 +677,8 @@ in one sitting for every purchase still in storage without one:
 ```console
 $ wits price 52b8 "180,00 €" --note "the label said 180"
 [ea22d7e] 180.00 € for 20.00g of sumo-papaya-bomb-251 on 2026-08-29, 9.00 € a gram
-$ wits reconcile purchases          # one question a purchase; --all for every one
-$ wits costs
+$ wits price          # one question a purchase; --all for every one
+$ wits report costs
 520.00 € for 60.00g with a price, 8.67 € a gram; 85 purchases without one
 
 FILL  DISPENSED   GRAMS   PAID      A GRAM
@@ -681,7 +732,7 @@ dial reads as what it actually does — including the point at which it starts
 producing benzene.
 
 ```console
-$ wits temps 210
+$ wits describe temperature 210
 COMPOUND         BOILS AT  EFFECTS
 THCA             120°C     anti-inflammatory, anti-epileptic, anti-proliferic
 Nerolidol        122°C     sedative, anti-fungal, anti-malarial, anti-parasitic, skin penetration enhancer

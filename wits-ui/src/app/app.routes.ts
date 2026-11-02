@@ -34,7 +34,7 @@ export const routes: Routes = [
       { path: 'effects', loadComponent: () => import('./pages/effects').then((m) => m.Effects), title: 'wits · effects' },
       { path: 'history', loadComponent: () => import('./pages/history').then((m) => m.History), title: 'wits · history' },
       { path: 'costs', loadComponent: () => import('./pages/costs').then((m) => m.Costs), title: 'wits · costs' },
-      // The year on one card: wits review.
+      // The year on one card: wits report year.
       { path: 'year', loadComponent: () => import('./pages/year').then((m) => m.Year), title: 'wits · the year' },
     ],
   },

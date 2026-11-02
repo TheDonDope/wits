@@ -1,6 +1,6 @@
 // Package tui holds the strain's rating form here: what a strain is thought of
 // as a whole — overall, taste and aroma, whether it would be had again, and a
-// line — apart from any one session, as `wits describe --rating` writes it.
+// line — apart from any one session, as `wits rate strain` writes it.
 package tui
 
 import (
@@ -117,7 +117,7 @@ func (f *strainForm) move(by int) tea.Cmd {
 }
 
 // rating is what the form says, or nil when it says nothing at all: a rating
-// cleared of every answer is taken away, as --unrate takes it.
+// cleared of every answer is taken away, as --clear takes it.
 func (f *strainForm) rating() *catalog.StrainRating {
 	r := catalog.StrainRating{Overall: f.scores[0], Taste: f.scores[1], Aroma: f.scores[2],
 		Again: againChoices[f.again], Note: strings.TrimSpace(f.note.Value())}

@@ -7,8 +7,8 @@ import { InvoiceBatch, Read } from './invoice-batch';
 import { Pickup, PickupCard, Scan, byFill } from './pickup';
 
 /**
- * The purchases still to be priced, walked a fill at a time — reconcile
- * purchases, grouped as they were picked up: a price a gram for each strain,
+ * The purchases still to be priced, walked a fill at a time — wits price
+ * on the command line, grouped as they were picked up: a price a gram for each strain,
  * VAT on top when it is due, or its invoice scanned (PickupCard) — or many
  * invoices at once (InvoiceBatch). Newest fill first, every purchase without
  * a price unless asked for only those in storage. A price goes beside the

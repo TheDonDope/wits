@@ -23,7 +23,7 @@ type unpricedEntry struct {
 	FillStart time.Time `json:"fill_start"`
 }
 
-// unpriced is the purchases without a price, for reconcile purchases: those
+// unpriced is the purchases without a price, for wits price: those
 // still in storage, or every one with ?all=1.
 func (s *Server) unpriced(w http.ResponseWriter, r *http.Request) {
 	ws, err := s.snapshot()

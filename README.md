@@ -53,6 +53,7 @@ the last of it is ground.
 | **The terminal** — `wits` and its commands, and the interface `wits` opens on its own | [docs/terminal.md](./docs/terminal.md) |
 | **A browser or a window** — `wits-server` and the interface it serves, the AppImage's window | [docs/browser.md](./docs/browser.md) |
 | **The phone** — the same interface with wits inside it, from GitHub Pages | [docs/browser.md#on-the-phone](./docs/browser.md#on-the-phone) |
+| **The code** — how wits is built, and recipes for changing it | [docs/cookbook](./docs/cookbook/README.md) |
 
 All three read and write one repository through the same recorder, so they
 refuse the same things in the same words. The browser interface carries a

@@ -614,7 +614,7 @@ func (a *App) entryKey(msg tea.KeyPressMsg) (bool, tea.Cmd) {
 }
 
 // priceKey walks the purchases still in storage without a price, the way
-// `wits reconcile purchases` does.
+// `wits price` does.
 func (a *App) priceKey() (bool, tea.Cmd) {
 	if a.data.Repo == nil {
 		return false, nil

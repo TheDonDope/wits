@@ -26,18 +26,18 @@ Sleep 3s
 
 # One jar against the scale, account first. Nothing is written by a dry run,
 # and a jar found light is offered as a grind forgotten.
-Type "wits reconcile storage wcake 16.40 --dry-run" Sleep 400ms Enter
+Type "wits weigh storage wcake 16.40 --dry-run" Sleep 400ms Enter
 Sleep 4s
 
 # Grams do not vanish: record the grind that went unrecorded.
-Type "wits reconcile storage wcake 16.40 --forgot" Sleep 400ms Enter
+Type "wits weigh storage wcake 16.40 --forgot" Sleep 400ms Enter
 Sleep 3500ms
 Hide
 Type "clear" Enter
 Show
 
 # Weighing day: the interactive form walks every stash past the scale.
-Type "wits reconcile stash" Sleep 400ms Enter
+Type "wits weigh stash" Sleep 400ms Enter
 Sleep 2500ms
 # Every jar is ticked; take them all.
 Enter

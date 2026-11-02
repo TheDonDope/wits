@@ -2,8 +2,10 @@
 
 Guidance for Claude Code in this repository. README.md is for people using
 wits, with `docs/terminal.md` (the command line and the terminal interface) and
-`docs/browser.md` (the server, the window, the phone) beside it; ROADMAP.md is
-the plan and the record of what is built; this file is how to work on it.
+`docs/browser.md` (the server, the window, the phone) beside it, and the
+developer cookbook (`docs/cookbook/`, a chapter a part: the command line so
+far) for people changing it; ROADMAP.md is the plan and the record of what is
+built; this file is how to work on it.
 
 ## Start here
 
@@ -227,6 +229,17 @@ are reconciled against the cells read **independently of the importer**
 (`.claude/skills/workbook/cells.py`). When a screen's arithmetic changes,
 verify it against the imported workbook via witsnap, not only against synthetic
 events.
+
+## The command line
+
+`cmd/wits/commands` is a Cobra tree rooted in `root.go`, in two grammars
+(`docs/cookbook/cli.md` says why): the journal's verbs as git's (`grind`,
+`weigh`, `revert HEAD~1`), everything else verb-kind-name as kubectl's (`get
+devices -o json`, `describe fill 30`, `edit product`). A new list is a kind
+under `get` through `list[T]`, never a `<noun> list`. A write the recorder
+makes carries `Annotations: rehearsable()`, or `--dry-run` is refused on it;
+one that bypasses the recorder (devices, config, seals) must not carry it.
+Tests run the whole tree as typed: `run(t, dir, "weigh", "stash", …)`.
 
 ## The browser interface
 

@@ -125,31 +125,32 @@ does not list.
 | --- | --- | --- | --- |
 | **A fill** | `wits buy` | `b` | Record → Prescription |
 | **A grind, a session** | `wits grind`, `wits sesh` | `g`, `s` | Record |
-| **Weighing** | `wits reconcile` | `r` | Record → Weigh |
+| **Weighing** | `wits weigh` | `r` | Record → Weigh |
 | **AVB** | `wits avb collect`, `wits avb use` | `v`, but on the journal | Record → AVB |
 | **An undo** | `wits revert` | `d` on the journal | the journal |
 | **An amended amount** | `wits amend` | `e` on the journal | the journal, `e` |
-| **A product described** | `wits describe --name`, `--maker`, `--cultivar`, `--thc`, `--cbd` | `e` on storage or stash | the jar's page, Correct the label |
-| **Terpenes** | `wits describe --terpenes` | `e` on storage or stash | the jar's page |
-| **A strain rated** | `wits describe --rating` | `R` on storage or stash | Shelf, the jar's page, I forgot to |
-| **A session rated** | `wits rate` | `e` on sessions | Effects, I forgot to |
+| **A product described** | `wits edit product --name`, `--maker`, `--cultivar`, `--thc`, `--cbd` | `e` on storage or stash | the jar's page, Correct the label |
+| **Terpenes** | `wits edit product --terpenes` | `e` on storage or stash | the jar's page |
+| **A strain rated** | `wits rate strain` | `R` on storage or stash | Shelf, the jar's page, I forgot to |
+| **A session rated** | `wits rate session` | `e` on sessions | Effects, I forgot to |
 | **A price** | `wits price` | `$` | Costs, I forgot to |
-| **Old stashes cleared** | `wits reconcile stash <jar> 0`, a jar at a time | `c` on storage | I forgot to |
-| **A device added** | `wits device add` | `a` on devices | Shelf → Devices |
-| **A device edited or removed** | `wits device edit`, `wits device remove` | `e`, `d` on devices | Shelf → Devices: changed, retired or removed |
+| **Old stashes cleared** | `wits weigh stash <jar> 0`, a jar at a time | `c` on storage | I forgot to |
+| **Lists of a kind** | `wits get products`, `devices`, `fills`, `sessions`, `entries`; `-o json` | the screens | the pages |
+| **A device added** | `wits create device` | `a` on devices | Shelf → Devices |
+| **A device edited or removed** | `wits edit device`, `wits delete device` | `e`, `d` on devices | Shelf → Devices: changed, retired or removed |
 | **Where things stand** | `wits status` | the dashboard | the dashboard |
-| **Today** | `wits today` | the dashboard, Insights → Today | the dashboard |
+| **Today** | `wits report today` | the dashboard, Insights → Today | the dashboard |
 | **The journal** | `wits log`, `wits show` | the journal | the journal |
 | **Analysis, the replay** | `wits export` | the analysis screen | Insights → Analysis, Jars |
-| **The refill** | `wits refill` | the dashboard | the dashboard |
-| **Temperatures** | `wits temps` | the devices screen | the session's dial |
-| **Costs** | `wits costs` | Insights → Costs | Insights → Costs |
-| **Effects, the strain map** | `wits rate`, `wits like` | the sessions screen, Insights → Strains | Insights → Effects |
-| **History, the report** | `wits report` | Insights → History, `w` | Insights → History |
-| **The year** | `wits review` | Insights → Year | Insights → Year |
+| **The refill** | `wits report refill` | the dashboard | the dashboard |
+| **Temperatures** | `wits describe temperature` | the devices screen | the session's dial |
+| **Costs** | `wits report costs` | Insights → Costs | Insights → Costs |
+| **Effects, the strain map** | `wits rate session`, `wits describe product` | the sessions screen, Insights → Strains | Insights → Effects |
+| **History, the report** | `wits report prescriber` | Insights → History, `w` | Insights → History |
+| **The year** | `wits report year` | Insights → Year | Insights → Year |
 | **A trip, carry** | `wits pack`, `wits carry` | Insights → Trip, Carry, `w` | Shelf → Trip |
 | **A repository, a workbook** | `wits init`, `wits import` | kept | Repository |
-| **Backups and checks** | `wits bundle`, `restore`, `export`, `fsck` | kept | kept |
+| **Backups and checks** | `wits bundle create`, `clone`, `export`, `fsck` | kept | kept |
 | **Sync** | `wits remote`, `push`, `pull` | kept | Sync, on the phone |
 | **Seals** | `wits seal`, `wits verify` | kept | kept |
 | **Invoices, labels, terpenes from the web** | kept | kept | Record → Prescription, the jar's page |
@@ -247,13 +248,22 @@ record.
 
 ### The commands
 
-`init`, `buy`, `grind`, `sesh`, `rate`, `status`, `log`, `show`, `revert`, `reconcile`,
-`device add` and `device list`, `temps`, `import`, `export`, `bundle`, `restore`, `fsck`,
-`remote`, `push`, `pull`, `refill`, `avb collect` and `avb use`, `price`, `costs`, `report`, `seal`, `verify`, `carry`, `describe`, `like`,
-and `completion` for bash, zsh and fish — which offers product handles with what each holds, and
-only the ones the command can act on. Only the parts of git's vocabulary with
-a real referent were borrowed; branching and merging mean nothing for a
-prescription and are absent.
+Two grammars, as `wits --help` groups them (v0.113.0 renamed every command
+that spoke neither, with no old name kept). The journal is written the way
+git commits: `buy`, `grind`, `sesh`, `weigh`, `avb collect` and `avb use`,
+`price`, `status`, `log`, `show`, `revert` and `amend`, an entry named by hash
+or as `HEAD~n`. The rest is read the way kubectl reads a cluster: `get
+products|devices|fills|sessions|entries` with `-o wide|json` and `-l`
+selectors, `describe product|device|fill|temperature`, `edit product|device`,
+`create device`, `delete device`, `rate session|strain`, and `report
+today|costs|year|refill|prescriber`. The repository: `init`, `clone` (a bundle,
+or a shared folder with `--key`), `remote`, `push`, `pull`, `fsck`, `bundle
+create`, `import`, `export`, `config` (theme, lead, aliases), and
+`completion` for bash, zsh and fish — which offers product handles with what
+each holds, and only the ones the command can act on. Proof: `seal`,
+`verify`, `carry`, `pack`. Everywhere, `-C <dir>` and `--dry-run`, the
+recorder's rehearsal, refused by any command that writes past it. Branching
+means nothing for a prescription and is absent; a pull merges, as git's does.
 
 References resolve by prefix, except for `buy`: a purchase that matches nothing
 adds a product, so it takes only a handle or a full name. Part of a name is
@@ -314,11 +324,11 @@ Grinding or seshing more than an account holds is refused. The journal would
 record it happily, but grams that are not in the jar cannot come out of it, and
 a log that says they did has stopped describing the stash on the table.
 
-### Bundles — `wits bundle` / `wits restore`
+### Bundles — `wits bundle` / `wits clone`
 
 The whole repository as one plain-text file, restoring to a journal identical
 **byte for byte**, hash chain included. 1429 entries: 528,321 bytes as a journal,
-29,417 as a bundle, 6,693 with `--gzip`.
+34,306 as a bundle, 6,810 gzipped (a name ending in `.gz`).
 
 Plain text and line-oriented on purpose: the record may outlive this program, and
 it diffs cleanly in git. Base 36 was tried for the integers and reverted — it
@@ -520,7 +530,7 @@ shelf, and the two read better apart. Names are never abbreviated: the name
 column takes what the longest name needs, and the numbers are narrow instead.
 
 Jars can be ticked in either table with space and weighed together on `r`, the
-way `wits reconcile` walks an account. `c` cleans the history: a stash whose
+way `wits weigh` walks an account. `c` cleans the history: a stash whose
 storage is long gone and whose sessions were never logged — the shape the
 imported years left — is reconciled to zero, recorded as consumed at some
 point, which is the only honest reading of an empty jar.
@@ -555,7 +565,7 @@ A handle is fixed once and never changes: it is the name every entry refers to,
 so `e` on the storage screen corrects what a product is *called*, not which
 product it *is*.
 
-`wits reconcile`, and `r` in the interface, record the difference between what
+`wits weigh`, and `r` in the interface, record the difference between what
 the ledger believes an account holds and what it actually weighs. Nothing in the
 past is edited: the difference becomes an adjustment, which is a transfer like
 any other, so the accounts still balance afterwards.
@@ -563,7 +573,7 @@ any other, so the accounts still balance afterwards.
 Run bare, reconcile is interactive: it asks which account is on the scale,
 offers the jars as a ticked checklist, and asks for each reading in turn with
 the ledger's figure beside the prompt — a blank reading skips a jar. Naming the
-account skips the first question, and `wits reconcile stash wcake-221 1.75` is
+account skips the first question, and `wits weigh stash wcake-221 1.75` is
 the whole thing as one line. Nothing is written until every question is
 answered, so abandoning the forms halfway records nothing.
 
@@ -748,7 +758,7 @@ for every gram. Every page measures 375 px on the phone. On a computer, the
 clock goes below 1100 px and the tab labels below 780; measured every 20 px
 from 641 to 1920, no tab bar pages and no page scrolls sideways.
 
-### A strain rated as a whole — the Shelf, I forgot to, `wits describe --rating`
+### A strain rated as a whole — the Shelf, I forgot to, `wits rate strain`
 
 A session's rating says what that session did; nothing said what a strain is
 thought of as a whole, the thing a next prescription is chosen by. A strain
@@ -767,8 +777,8 @@ or a rating that says nothing, is refused). Rated again, the newer stands.
   product to compare it, and a rating would have printed as a pointer, so it
   compares ratings by value. A rating taken away on one device and still
   there on the other comes back on pull; there is no tombstone for it.
-- **The command line**: `wits describe <product> --rating "overall=4 taste=5"
-  --again yes --say "…"`, `--unrate`, and a `Rated:` line in what describe
+- **The command line**: `wits rate strain <product> "overall=4 taste=5"
+  --again yes --say "…"`, `--clear`, and a `Rated:` line in what describe
   shows.
 - **The browser** (`PUT /api/jars/{slug}/rating`): **Rate** on a Shelf card
   opens the form over it, a jar's page has it inline, and **I forgot to**
@@ -781,7 +791,7 @@ or a rating that says nothing, is refused). Rated again, the newer stands.
 `readProduct` reached complexity 16 with the rating, so its four plain text
 attributes are read from a table.
 
-### What a strain is like, by its terpenes — the map, the jar, `wits like`
+### What a strain is like, by its terpenes — the map, the jar, `wits describe product`
 
 With terpenes written down for 50 of the demo's 53 products, the map of the
 strains and "most like it" were rebuilt around them (`pkg/report`). Alike was
@@ -877,7 +887,7 @@ folder, `/wits-demo` on the phone, and served; asked for again, the repository
 there opens as it was left, and a folder by that name holding anything else is
 left alone. The interface ships the bundle (`wits-ui/public/demo-seed.wits`, a
 link to the one in assets, which the AppImage copies as the file); the phone
-restores it on its own storage like the computer. `wits restore`'s code moved
+restores it on its own storage like the computer. `wits clone`'s code moved
 to `bundle.Restore` so the server can run it.
 
 `./demo-bundle.sh` (`make demo-seed`) makes it: the workbook imported into a
@@ -1095,7 +1105,7 @@ back byte for byte. The JavaScript reference library would have been the
 independent check, and installing it here was refused. `ots verify` on the
 user's side is the check that needs neither wits nor that library.
 
-`wits report --seal` seals before writing, and the footer names the seal and
+`wits report prescriber --seal` seals before writing, and the footer names the seal and
 its key. Bundle format 5 carries the seals and their proofs, which travel in
 push and pull as well. A proof is only completed, never undone, so a push is
 refused if it would take back a proof the remote finished, and a pull keeps
@@ -1270,7 +1280,7 @@ On the workbook: 2.5 MB, 1280×720, 30.00 s by ffmpeg, which decodes it
 cleanly, and its frames read, November 2023 to the shelf of September 2026.
 The README's GIF is made from it.
 
-### A map of the strains — `wits like`, the Effects page
+### A map of the strains — `wits describe product`, the Effects page
 
 Every product dispensed, placed by its profile (`report.Strains`). Across is
 its THC, readable off the map; up and down is the rest of the profile — the
@@ -1284,7 +1294,7 @@ terpene profile not written down counts as halfway alike, not as alike: at
 first it made two unknown profiles nearer than two matching ones. Each point
 is coloured by the effect log's overall mean and sized by the grams dispensed.
 
-Terpenes are written down with `wits describe --terpenes` or on the second
+Terpenes are written down with `wits edit product --terpenes` or on the second
 page of the terminal's product form; that form is two pages so it does not
 outgrow the terminal. "Myrcen" and "β-Myrcene" are one terpene
 (`catalog.TerpeneKey`). Bundles had never carried a product's terpenes, so a
@@ -1383,7 +1393,7 @@ journal's last 14 days, 10.48 g. The workbook has no ratings, so the rating line
 waits for them and the legend says so. The terminal interface does not draw it
 yet.
 
-### The report — `wits report`
+### The report — `wits report prescriber`
 
 One page for the prescriber (`pkg/report`): the days asked for, the last 90 by
 default, with grams a day with grinding and per calendar day, the weeks as
@@ -1410,17 +1420,17 @@ reads 67.56 g on 33 of 85 days, 2.05 g a day with grinding, 0.79 g per
 calendar day and 60.00 g in 3 purchases, the same figures as `export --from
 --to`, rendered with pdf.js and looked at.
 
-### What it costs — `wits price`, `wits costs`
+### What it costs — `wits price`, `wits report costs`
 
 A price goes in `.wits/prices.ndjson` (`pkg/prices`), the effect log's twin:
 append-only, locked, hash-chained and verified over the stored bytes, naming its
 purchase by hash, a re-pricing superseding (`prices.Latest`), the log keeping
 both. Amounts are euro cents, parsed as typed: "120,50 €" and "€120.50" alike.
 A price is given with `buy --price`, with `price <purchase> <euros>`, or in one
-sitting by **reconcile purchases** (`Recorder.Unpriced`): every purchase still
+sitting by **wits price** (`Recorder.Unpriced`): every purchase still
 in storage without one, or every purchase with `--all`, a question each, a blank
 one skipped, nothing written until the end. It is the same walk in all three
-interfaces: `wits reconcile purchases`, `$` in the terminal, and the browser's
+interfaces: `wits price`, `$` in the terminal, and the browser's
 **I forgot to** (`PriceWalk`). A buy whose price fails still stands, and says how to price it.
 
 The browser walks it a fill at a time (`PickupCard`): `/api/unpriced` names
@@ -1461,7 +1471,7 @@ and 34 purchases without, and the walk moved on to fill 11. A build from
 before this reads such a record as a price of nothing, so an older page, such
 as a phone's cached one, should be reloaded.
 
-`wits costs` and `/api/costs` (`prices.Analyse`) give what was paid in all and
+`wits report costs` and `/api/costs` (`prices.Analyse`) give what was paid in all and
 per gram, by fill and by month, and per session that helped: rated 4 or more
 overall, at its product's price per gram. An undone purchase cost nothing, and
 an unpriced one is counted, not guessed at. Bundle format 4 carries the log
@@ -1520,7 +1530,7 @@ gram lately, a month at this rate, the bands, the fill trend) are in
 10,156.01 € for 1,244 g, and the years add up to it: 10.73, 9.75, 6.96 and
 6.25 € a gram from 2023 to 2026. Every page measures 375 px on the phone, and
 the colours were checked in a dark theme and in Paper.
-### The effect log — `wits rate`
+### The effect log — `wits rate session`
 
 What a session did, rated afterwards from 1 to 5 on any of overall, pain,
 sleep, calm, mood, focus and appetite. It is kept beside the journal in
@@ -1581,7 +1591,7 @@ moved along by a transition as long as one step, so it keeps pace from 1.2 to
 20 a second. Live, it shows the last entries recorded. It was looked
 at in Aurora and Paper, and fits 375 px on the phone.
 
-### The year, on one card — `wits review`, Insights → Year
+### The year, on one card — `wits report year`, Insights → Year
 
 `pkg/review` gathers a year: the report's range figures over the days from
 New Year to New Year's Eve (or today, the year still running), the effect
@@ -1590,7 +1600,7 @@ its own — the longest break, a week or more with nothing ground and no
 session as the tolerance curve has it, counted by calendar date since an
 entry keeps the zone it was written in; and the terpene of the year, the
 dominant terpene of each grind's product weighted by its grams. A band is
-named best only on five ratings or more. `wits review [year]` draws it as a
+named best only on five ratings or more. `wits report year [year]` draws it as a
 card in the terminal, the months as bars of eighths; `GET /api/review?year=`
 serves it; **Insights → Year** draws it as a hero and twelve-column bento of
 cards (`viz/year-months`, `temp-gauge`, `break-line`, `price-strip`, the
@@ -1615,7 +1625,7 @@ sealed. The plan is signed as a carry statement of exactly the grams packed
 Nothing is recorded. On the demo, ten days at 1.93 g a day with 20 % is
 23.20 g, 4.60 or 4.70 g from each of five jars.
 
-### Today, and the THC in it — `wits today`, the dashboard
+### Today, and the THC in it — `wits report today`, the dashboard
 
 `pkg/today` is a day's record: its sessions, each with the THC and CBD in
 the grams put through the device — grams × the strain's per cent × 10, in
@@ -1624,7 +1634,7 @@ grinding, pickups and AVB, the THC by strain and the grams by device, and a
 usual day: the mean of the last 30 before it with a session. Days are matched
 by calendar date where each entry was written. It is what was in the
 material, not what reached the body, and every place it shows says so; a
-strain with no THC written down is counted, not guessed at. `wits today
+strain with no THC written down is counted, not guessed at. `wits report today
 [--date]` lists it, `wits status` ends with it in one line, `GET /api/today`
 serves it, and the dashboard draws it under the shelf: the sum against a
 usual day, two rings (`viz/donut`, d3-shape) with legends, a clock of the day
@@ -1678,7 +1688,7 @@ and add up to the shortfall exactly. More than 30 sessions is refused
 (`record.ErrTooMany`) — a leftover or a loss, not something forgotten. The
 AVB jar, and a reading over the ledger, stay plain adjustments.
 
-`wits reconcile` asks of each jar found short — `Forgotten` the default —
+`wits weigh` asks of each jar found short — `Forgotten` the default —
 and `--forgot` answers yes; `--dry-run` shows what it would write, and a dry
 run of a plain reconcile offers it. After a grind it says to weigh the ground.
 The terminal interface's weighing forms ask the same, one question a jar or
@@ -1790,7 +1800,7 @@ through the recorder, so they refuse the same things in the same words
   the undo first). On the workbook, the grind of 1.50 g of Morning Sun on
   23 Oct amended to 1.40 g put 0.10 g back in the seal: 11.37 → 11.47 g
   sealed, 8.63 → 8.53 g ground.
-- **A label corrected**: `wits describe --name, --maker, --cultivar, --thc,
+- **A label corrected**: `wits edit product --name, --maker, --cultivar, --thc,
   --cbd`, and **Correct the label** on a jar's page (`PUT /api/jars/{slug}`),
   as the terminal interface's `e` on storage. The slug, the terpenes and the
   rating stay; the recorder now refuses a THC or CBD outside 0–100 %.
@@ -1800,8 +1810,8 @@ through the recorder, so they refuse the same things in the same words
 - **A strain rated in the terminal interface**: `R` on storage or stash, the
   three scores, again, and a line, opened on the standing rating; cleared of
   every answer, the rating is taken away.
-- **A device changed or removed** from the command line, `wits device edit`
-  (only what the flags say) and `wits device remove`, and removed in the
+- **A device changed or removed** from the command line, `wits edit device`
+  (only what the flags say) and `wits delete device`, and removed in the
   browser (`DELETE /api/devices/{slug}`), all three by `Devices.Remove`. The
   sessions keep its name. With a remote it does not last: a pull brings back
   any device the remote holds and this one lacks, and a push is refused until
@@ -1818,9 +1828,9 @@ each from the package the other two read: **Today** (`pkg/today`: the day's
 sessions and the THC in the material against a usual day, also the last
 line of the dashboard's Sessions card), **Costs** (`prices.Analyse`), **Year**
 (`review.Year`, `-`/`+` for the year; its findings are written once, in
-`review.Findings`, for `wits review` too), **History** (a year of grinding as
+`review.Findings`, for `wits report year` too), **History** (a year of grinding as
 a calendar; `w` writes the report for the prescriber, the last 90 days, as
-`wits report` does), **Trip** (`pack.Make`, `-`/`+` for the days away, `o`
+`wits report prescriber` does), **Trip** (`pack.Make`, `-`/`+` for the days away, `o`
 for the oldest fill first), **Carry** (`report.Holdings`), and **Strains**
 (`report.Strains`: every placed strain a dot, the jars on the shelf
 numbered). On Trip and Carry, `w` signs the statement as `wits pack` and
@@ -1832,10 +1842,40 @@ code back module by module. A page is drawn once for the journal it shows
 and kept while nothing changes, since the clock redraws every second.
 
 On the demo, Year 2025 reads 446.34 g on 221 of 365 days, the 53-day break
-and 190–199 °C at 4.2 over 67 ratings, as `wits review 2025` does; Trip, 16.30
+and 190–199 °C at 4.2 over 67 ratings, as `wits report year 2025` does; Trip, 16.30
 g for 7 days at 1.93 g a day; Carry, 82.63 g held. On the workbook, 2026 reads
-242.12 g on 106 of 300 days, as `wits review` does. `wits-tour.gif` visits
+242.12 g on 106 of 300 days, as `wits report year` does. `wits-tour.gif` visits
 the Year and Trip pages.
+
+### Two grammars — the command line, named again
+
+With the feature set settled, the command line was named again from a clean
+slate, no old name kept (v0.113.0). The journal is written the way git
+commits: `buy`, `grind`, `sesh`, `weigh` (was `reconcile`, its account the
+first argument, `--stash` and `--avb` gone), `avb`, `price` (alone, it asks
+for every purchase without one, as `reconcile purchases` did), `status`,
+`log`, `show`, `revert`, `amend` — an entry named by hash or as `HEAD`,
+`HEAD~n`, `HEAD^`, `@`, counted in recorded order (`rev.go`). Everything else
+is read the way kubectl reads a cluster: `get
+products|devices|fills|sessions|entries`, every list through one generic
+`list[T]`, with `-o table|wide|json` and `-l key=value` selectors matched on
+the JSON field names; `describe product` (the label, the jar, the rating and
+what is like it, once `describe` and `like`), `describe device|fill|temperature`
+(`temps`), `edit product|device`, `create device`, `delete device`, `rate
+session|strain` (`rate last`, `describe --rating`), `report
+today|costs|year|refill|prescriber` (`today`, `costs`, `review`, `refill`,
+`report`). The repository: `clone <bundle|folder> [dir]` (`init` and
+`restore`; a folder with the first device's `--key`), `bundle create <file>`
+(`.gz` compresses, `--gzip` gone), and `config` for the theme, the lead time
+and **aliases** in `.wits/config`, expanded before the line is parsed, never
+over a command of wits's own. Every command takes `-C <dir>` and
+`--dry-run`: the recorder's rehearsal, now also of a rating and a price, and
+refused by any command that writes past the recorder rather than written. The
+root moved into `cmd/wits/commands` (`root.go`), so the tests run the tree as
+it is typed, and `wits --help` lists the four groups in the order a day goes.
+The developer cookbook begins with it: `docs/cookbook/cli.md`, the Go, Cobra,
+the wiring and the naming, its recipe for `get ratings` built and run on the
+demo (718 ratings) before it was written down.
 
 ---
 

@@ -123,7 +123,7 @@ export const GUIDE: readonly GuideSection[] = [
       { cmd: 'mkdir -p ~/wits && cd ~/wits\nwits init .' },
       { cmd: 'wits import Tracking.xlsx', note: 'A dry run: what it would record, and anything in the sheet that does not add up.' },
       { cmd: 'wits import Tracking.xlsx --commit' },
-      { cmd: 'wits restore demo-seed.wits', out: `Restored 53 products, 15 devices and 2617 events.` },
+      { cmd: 'wits clone demo-seed.wits ~/wits', out: `Cloned 53 products, 15 devices and 2617 events into ~/wits.`, note: 'A new repository from a bundle, the way git clone makes one; --key clones a shared folder instead.' },
     ],
     tip: 'Every command finds its repository by walking up from the folder it runs in, as git does.',
   },
@@ -197,13 +197,13 @@ total                         36.73g                 61%
 1.93g per active day, 1.69g median, 0.81g per elapsed day
 About 19 days' worth at that rate
 Order the next prescription by Mon 16 November, with 3 days for the pharmacy.` },
-      { cmd: 'wits today', out: `Monday 26 October: 4 sessions, 0.67 g through a device: 206 mg THC and 7 mg CBD in the material
+      { cmd: 'wits report today', out: `Monday 26 October: 4 sessions, 0.67 g through a device: 206 mg THC and 7 mg CBD in the material
 
 TIME   PRODUCT                DEVICE                           GRAMS  THC      CBD     RATED
 07:50  NICE 32/1 Morning Sun  Storz & Bickel Venty at 180°C    0.15g  48.0 mg  1.5 mg  4 of 5
 09:30  Sumo 25/1 Papaya Bomb  Storz & Bickel Mighty+ at 190°C  0.22g  55.0 mg  2.2 mg  -
 …`, note: 'The last line of wits status says the same in one line.' },
-      { cmd: 'wits refill --ics refill.ics', out: `44.80 g on the shelf, at 1.93 g a day with grinding: empty on Thu 19 November.
+      { cmd: 'wits report refill --ics refill.ics', out: `44.80 g on the shelf, at 1.93 g a day with grinding: empty on Thu 19 November.
 Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, note: '--ics writes a calendar reminder for the morning to order by; --lead 5 changes the pharmacy’s days.' },
     ],
     tui: [
@@ -232,10 +232,10 @@ Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, 
     shots: [web('forgot', '/forgot', 'I forgot to: sessions of the last week waiting for a rating', 'Three sessions waiting for a rating, and six strains.')],
     page: { path: '/forgot', label: 'Open I forgot to' },
     cli: [
-      { cmd: 'wits rate last overall=4 sleep=5', out: '[edf332f] rated session aceba4e: overall 4, sleep 5' },
-      { cmd: 'wits describe enua-wedding --rating "overall=4 taste=5" --again yes' },
-      { cmd: 'wits reconcile purchases', note: 'One question for every purchase without a price; --all for every one.' },
-      { cmd: 'wits describe enua-wedding --terpenes "Myrcen, Limonen, Caryophyllen"' },
+      { cmd: 'wits rate session overall=4 sleep=5', out: '[edf332f] rated session aceba4e: overall 4, sleep 5' },
+      { cmd: 'wits rate strain enua-wedding overall=4 taste=5 --again yes' },
+      { cmd: 'wits price', note: 'One question for every purchase without a price; --all for every one.' },
+      { cmd: 'wits edit product enua-wedding --terpenes "Myrcen, Limonen, Caryophyllen"' },
     ],
     tui: [
       { keys: ['e'], does: 'on the sessions screen, rates the session under the cursor' },
@@ -259,17 +259,20 @@ Order the next prescription by Mon 16 November, with 3 days for the pharmacy.`, 
     ],
     page: { path: '/shelf/jars', label: 'Open the jars' },
     cli: [
-      { cmd: 'wits describe cantourage-mac1-251', out: `Cantourage 25/1 MAC1+ (cantourage-mac1-251)
+      { cmd: 'wits describe product cantourage-mac1-251', out: `Cantourage 25/1 MAC1+ (cantourage-mac1-251)
 Cantourage · MAC1+
 THC 25 %, CBD 1 %
+Jar: 0.00 g sealed, 0.00 g ground, 15.25 g given as AVB, 16.30 g consumed
 Terpenes: Limonene, Linalool, Pinene, Caryophyllene, Myrcene
-Rated: not yet (--rating)` },
-      { cmd: 'wits describe cantourage-mac1-251 --thc 25.5 --maker Cantourage', note: 'Corrects the label: --name, --maker, --cultivar, --thc, --cbd. The slug its entries name it by stays.' },
-      { cmd: 'wits like cantourage-mac1-251', out: `Like Cantourage 25/1 MAC1+ (citrus, flowers and pine):
+Rated: not yet (wits rate strain)
+
+Like it (citrus, flowers and pine):
    99 %  Cantourage 25/1 MAC 1+ — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
    98 %  420 Evolution 25/1 CA MAC: MAC1 — shares Limonene, Linalool, Pinene, Caryophyllene, Myrcene
    87 %  enua 22/1 Black Cherry Punch — shares Limonene, Linalool, Pinene, … — rated 4.1 overall, over 39 sessions
    …` },
+      { cmd: 'wits edit product cantourage-mac1-251 --thc 25.5 --maker Cantourage', note: 'Corrects the label: --name, --maker, --cultivar, --thc, --cbd, --terpenes. The slug its entries name it by stays.' },
+      { cmd: 'wits get jars -o wide', note: 'Every jar holding something, a row each; --all for the empty ones, -o json for a script.' },
       { cmd: 'wits carry --out carry.svg', out: `PRODUCT                            SEALED  GROUND  AVB    DISPENSED
 Sumo 25/1 Papaya Bomb              12.44g  2.51g   2.15g  20.00g on 2026-08-29
 All Nations 29/1 Mac Doughnut      12.42g  3.30g   1.72g  20.00g on 2026-08-29
@@ -335,11 +338,11 @@ Rated       overall 4, sleep 5` },
     shots: [{ src: 'guide/record-weigh.webp', alt: 'The Weigh tab: a jar on the scale reading 12.6 g against the ledger’s 12.94 g, offered as a forgotten grind', caption: 'On the scale: 0.34 g light, and most likely a grind you forgot to record.', frame: 'dialog', w: 630, h: 845 }],
     record: { tab: 3, label: 'Weigh a jar' },
     cli: [
-      { cmd: 'wits reconcile storage sumo 12.4 --dry-run', out: `storage holds 12.44g by the ledger and 12.40g on the scale: -0.04g
+      { cmd: 'wits weigh storage sumo 12.4 --dry-run', out: `storage holds 12.44g by the ledger and 12.40g on the scale: -0.04g
 
 Dry run. Nothing was written. Re-run without --dry-run to record it.` },
-      { cmd: 'wits reconcile', note: 'With no arguments it asks: which account, which jars, then each reading in turn, and of a jar found short whether a grind or sessions were forgotten. Nothing is written until every question is answered.' },
-      { cmd: 'wits reconcile stash sumo 6.5 --forgot', note: 'Puts a shortfall down to forgotten sessions — of the usual size, or your gear’s load — without asking.' },
+      { cmd: 'wits weigh', note: 'With no arguments it asks: which account, which jars, then each reading in turn, and of a jar found short whether a grind or sessions were forgotten. Nothing is written until every question is answered.' },
+      { cmd: 'wits weigh stash sumo 6.5 --forgot', note: 'Puts a shortfall down to forgotten sessions — of the usual size, or your gear’s load — without asking.' },
     ],
     tui: [{ keys: ['r'], does: 'weighs the ticked jars, the one under the cursor, or the fullest; a jar found short asks whether something was forgotten' }],
   },
@@ -359,10 +362,10 @@ Dry run. Nothing was written. Re-run without --dry-run to record it.` },
     ],
     page: { path: '/shelf/devices', label: 'Open the devices' },
     cli: [
-      { cmd: 'wits device add "Volcano Hybrid" --min 40 --max 230 --default 185 --load 0.15' },
-      { cmd: 'wits device edit volcano --default 190', note: 'Changes only what the flags say; --name, --kind, --min, --max, --default, --load.' },
-      { cmd: 'wits device remove volcano', note: 'Its sessions keep its name.' },
-      { cmd: 'wits temps 190', out: `COMPOUND         BOILS AT  EFFECTS
+      { cmd: 'wits create device "Volcano Hybrid" --min 40 --max 230 --default 185 --load 0.15' },
+      { cmd: 'wits edit device volcano --default 190', note: 'Changes only what the flags say; --name, --kind, --min, --max, --default, --load.' },
+      { cmd: 'wits delete device volcano', note: 'Its sessions keep its name.' },
+      { cmd: 'wits describe temperature 190', out: `COMPOUND         BOILS AT  EFFECTS
 THCA             120°C     anti-inflammatory, anti-epileptic, anti-proliferic
 Nerolidol        122°C     sedative, anti-fungal, anti-malarial, anti-parasitic, skin penetration enhancer
 CBDA             130°C     anti-inflammatory, anti-proliferic
@@ -468,8 +471,8 @@ All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
     shots: [web('effects', '/insights/effects', 'Effects: products by dimension, by temperature and by time of day', 'What works, by product, temperature and time of day.')],
     page: { path: '/insights/effects', label: 'Open Effects' },
     cli: [
-      { cmd: 'wits rate last sleep=5 calm=4 --note "slept through"' },
-      { cmd: 'wits like enua-wedding' },
+      { cmd: 'wits rate session sleep=5 calm=4 --note "slept through"' },
+      { cmd: 'wits describe product enua-wedding' },
     ],
     tui: [{ keys: ['e'], does: 'on the sessions screen, rates a session: ← → or 1–5 to score, 0 to leave one out' },
       { keys: ['Insights', '←', '→'], does: 'Strains: the map of the strains by their terpenes, the jars on the shelf numbered' }],
@@ -479,7 +482,7 @@ All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
     id: 'history',
     tui: [
       { keys: ['Insights', '←', '→'], does: 'History: a year of grinding as a calendar' },
-      { keys: ['w'], does: 'writes the report for the prescriber, the last 90 days, as wits report does' },
+      { keys: ['w'], does: 'writes the report for the prescriber, the last 90 days, as wits report prescriber does' },
     ],
     group: 'Insights',
     title: 'History, and a page for the prescriber',
@@ -491,8 +494,8 @@ All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
     shots: [web('history', '/insights/history', 'History: a calendar of every day and every fill as a lane', 'Three years of days, and every fill on one timeline.')],
     page: { path: '/insights/history', label: 'Open History' },
     cli: [
-      { cmd: 'wits report --from 2026-08-01 --to 2026-10-25', out: 'Wrote a report for 2026-08-01 to 2026-10-25 to wits-report-2026-10-25.pdf' },
-      { cmd: 'wits report --seal', note: 'Seals the journal first, so the page names the seal it can be checked against.' },
+      { cmd: 'wits report prescriber --from 2026-08-01 --to 2026-10-25', out: 'Wrote a report for 2026-08-01 to 2026-10-25 to wits-report-2026-10-25.pdf' },
+      { cmd: 'wits report prescriber --seal', note: 'Seals the journal first, so the page names the seal it can be checked against.' },
     ],
   },
   {
@@ -509,7 +512,7 @@ All Nations 29/1 Mac Doughnut      3.30g   1.40g   4.70g  2.4   11.02g
     page: { path: '/insights/costs', label: 'Open Costs' },
     cli: [
       { cmd: 'wits price 3f9a2c1 120,50 --note "the label said 120"' },
-      { cmd: 'wits costs', out: `10156.01 € for 1244.00g with a price, 8.16 € a gram; 1 purchase without one
+      { cmd: 'wits report costs', out: `10156.01 € for 1244.00g with a price, 8.16 € a gram; 1 purchase without one
 
 FILL  DISPENSED   GRAMS   PAID      A GRAM
 30    2026-08-29  60.00g  351.80 €  5.86 €
@@ -535,7 +538,7 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
     shots: [web('year', '/insights/year?year=2025', 'The year 2025 on one card', '2025: 446.3 g on 221 days, a 53-day break, 190–199 °C rated best.')],
     page: { path: '/insights/year', label: 'Open the year' },
     cli: [
-      { cmd: 'wits review 2025', out: `╭─────────────────────────────────────────────────────────────╮
+      { cmd: 'wits report year 2025', out: `╭─────────────────────────────────────────────────────────────╮
 │  2025 in wits                                               │
 │  446.34 g ground on 221 of 365 days · 2.02 g an active day  │
 │  11 prescriptions · 309 sessions · 25 strains               │
@@ -549,7 +552,7 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
   Best temperature     190–199 °C, 4.2 overall over 67 ratings
   Terpene of the year  Limonene — citrus, lemon, orange, 60 % of the grams ground
   Dearest gram         10.99 €, Pedanios 22/1 DNK Ghost Train Haze on 6 February` },
-      { cmd: 'wits review', note: 'This year, so far.' },
+      { cmd: 'wits report year', note: 'This year, so far.' },
     ],
   },
   {
@@ -564,8 +567,8 @@ FILL  DISPENSED   GRAMS   PAID      A GRAM
       'The phone keeps its own copy and syncs through the same folder, by hand: see <a href="#phone">On the phone</a>.',
     ],
     cli: [
-      { cmd: 'wits bundle --gzip --out history.wits.gz', note: 'The workbook’s 1429 entries are 6,693 bytes gzipped.' },
-      { cmd: 'wits restore history.wits.gz' },
+      { cmd: 'wits bundle create history.wits.gz', note: 'The workbook’s 1429 entries are 6,810 bytes gzipped.' },
+      { cmd: 'wits clone history.wits.gz' },
       { cmd: 'wits remote add ~/Sync/wits', note: 'Its key is .wits/remote.key: bring it to every other device, and pass it to wits remote add --key there.' },
       { cmd: 'wits push\nwits pull' },
     ],

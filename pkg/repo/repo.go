@@ -67,6 +67,9 @@ type Config struct {
 	Theme    string `yaml:"theme,omitempty"`
 	Remote   string `yaml:"remote,omitempty"`
 	LeadDays int    `yaml:"lead_days,omitempty"`
+	// Aliases are the command line's own shorthands, as git keeps them: a
+	// name standing for a command and its arguments.
+	Aliases map[string]string `yaml:"aliases,omitempty"`
 }
 
 // DefaultLead is the pharmacy's lead time, in days, until one is given.
@@ -241,6 +244,21 @@ func (r *Repo) SealKeyPath() string { return filepath.Join(r.root, sealKeyFile) 
 
 // SealsDir is where the seals of the journal's head are kept.
 func (r *Repo) SealsDir() string { return filepath.Join(r.root, sealsDir) }
+
+// SetAlias records what an alias stands for, or, standing for nothing,
+// takes it away.
+func (r *Repo) SetAlias(name, stands string) error {
+	return r.setConfig(func(c *Config) {
+		if stands == "" {
+			delete(c.Aliases, name)
+			return
+		}
+		if c.Aliases == nil {
+			c.Aliases = map[string]string{}
+		}
+		c.Aliases[name] = stands
+	})
+}
 
 // SetLead records the pharmacy's lead time, in days.
 func (r *Repo) SetLead(days int) error {

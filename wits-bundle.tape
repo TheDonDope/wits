@@ -22,16 +22,16 @@ Type "clear" Enter
 Show
 
 # Three years of history, 1429 entries.
-Type "wits bundle --out history.wits" Sleep 400ms Enter
+Type "wits bundle create history.wits" Sleep 400ms Enter
 Sleep 2s
 Type "ls -l .wits/journal.ndjson history.wits" Sleep 400ms Enter
 Sleep 4s
 
-# Restore it into an empty repository and compare the journals.
-Type "mkdir /tmp/wits-copy && cd /tmp/wits-copy && wits init . >/dev/null" Sleep 300ms Enter
-Sleep 1500ms
-Type "wits restore /tmp/wits-bun/history.wits" Sleep 400ms Enter
+# Clone it into a new repository and compare the journals.
+Type "wits clone history.wits /tmp/wits-copy" Sleep 400ms Enter
 Sleep 3s
+Type "cd /tmp/wits-copy" Sleep 300ms Enter
+Sleep 1s
 
 # Identical, hash chain included.
 Type "diff .wits/journal.ndjson /tmp/wits-bun/.wits/journal.ndjson && echo 'identical, hash chain included'" Sleep 400ms Enter

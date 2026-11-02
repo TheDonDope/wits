@@ -71,7 +71,7 @@ func TestImportCommand(t *testing.T) {
 	t.Run("DryRunReportsAndWritesNothing", func(t *testing.T) {
 		dir := repository(t)
 
-		out, err := run(t, dir, Import, workbook(t, false))
+		out, err := run(t, dir, "import", workbook(t, false))
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "1 worksheets, 2 products, 4 entries", "Should summarise what it found")
@@ -88,7 +88,7 @@ func TestImportCommand(t *testing.T) {
 	})
 
 	t.Run("ReportsWhatDoesNotAddUp", func(t *testing.T) {
-		out, err := run(t, repository(t), Import, workbook(t, true))
+		out, err := run(t, repository(t), "import", workbook(t, true))
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "worth checking", "Should flag the orphaned row")
@@ -99,7 +99,7 @@ func TestImportCommand(t *testing.T) {
 	t.Run("CommitWrites", func(t *testing.T) {
 		dir := repository(t)
 
-		out, err := run(t, dir, Import, workbook(t, false), "--commit")
+		out, err := run(t, dir, "import", workbook(t, false), "--commit")
 
 		require.NoError(t, err)
 		assert.Contains(t, out, "Imported 2 products and 4 entries", "Should say what it wrote")
@@ -110,7 +110,7 @@ func TestImportCommand(t *testing.T) {
 		assert.Less(t, strings.Index(out, "writing 4 entries"), strings.Index(out, "s  done"),
 			"in the order it does it")
 
-		status, err := run(t, dir, Status)
+		status, err := run(t, dir, "status")
 		require.NoError(t, err)
 		assert.Contains(t, status, "28.00g", "The ledger should reflect the import")
 	})
@@ -118,28 +118,28 @@ func TestImportCommand(t *testing.T) {
 	t.Run("RefusesToImportTwice", func(t *testing.T) {
 		dir := repository(t)
 		path := workbook(t, false)
-		_, err := run(t, dir, Import, path, "--commit")
+		_, err := run(t, dir, "import", path, "--commit")
 		require.NoError(t, err)
 
-		_, err = run(t, dir, Import, path, "--commit")
+		_, err = run(t, dir, "import", path, "--commit")
 
 		assert.ErrorContains(t, err, "already holds entries",
 			"Should refuse, since a second import would double every gram")
 	})
 
 	t.Run("MissingFile", func(t *testing.T) {
-		_, err := run(t, repository(t), Import, filepath.Join(t.TempDir(), "nope.xlsx"))
+		_, err := run(t, repository(t), "import", filepath.Join(t.TempDir(), "nope.xlsx"))
 		assert.Error(t, err, "Should report a workbook it cannot open")
 	})
 }
 
 func TestCompletion(t *testing.T) {
 	dir := repository(t)
-	_, err := run(t, dir, Buy, "Enua 22/1 Wedding Cake", "20g")
+	_, err := run(t, dir, "buy", "Enua 22/1 Wedding Cake", "20g")
 	require.NoError(t, err)
-	_, err = run(t, dir, Buy, "Cannamedical 28/1 Lemon Cookie", "10g")
+	_, err = run(t, dir, "buy", "Cannamedical 28/1 Lemon Cookie", "10g")
 	require.NoError(t, err)
-	_, err = run(t, dir, Grind, "wcake", "2")
+	_, err = run(t, dir, "grind", "wcake", "2")
 	require.NoError(t, err)
 	t.Chdir(dir)
 

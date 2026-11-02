@@ -91,16 +91,17 @@ func init() {
 
 // Show is the `wits show` command.
 var Show = &cobra.Command{
-	Use:   "show [entry]",
+	Use:   "show [<rev>]",
 	Short: "Show one entry in full",
 	Long: "Show one entry the way `git show` shows a commit: its place in the chain,\n" +
 		"when it happened and when it was written down, what it moved and what\n" +
 		"each account held before and after, the fill it fell in, what corrects\n" +
 		"it or what it corrects, and — for a session — how it was rated.\n\n" +
-		"The entry is named by its hash, as wits log shows it. With none, or\n" +
-		"with last, the entry written most recently.",
-	Example: "  wits show\n  wits show 8297238",
-	Args:    cobra.MaximumNArgs(1),
+		"The entry is named by its hash, as wits log shows it, or counted back\n" +
+		"from the newest: HEAD, HEAD~1, HEAD~2. With none, HEAD.",
+	Example:           "  wits show\n  wits show HEAD~2\n  wits show 8297238",
+	ValidArgsFunction: completeRev,
+	Args:              cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		s, err := open()
 		if err != nil {
@@ -115,21 +116,12 @@ var Show = &cobra.Command{
 	},
 }
 
-// entryNamed finds the entry an argument names, or the newest one written.
+// entryNamed finds the entry an argument names, or HEAD when none does.
 func entryNamed(s *session, args []string) (journal.Event, error) {
-	if len(args) == 1 && args[0] != "last" {
-		return s.Recorder.Find(args[0])
+	if len(args) == 0 {
+		return resolve(s, "HEAD")
 	}
-	var newest *journal.Event
-	for i, e := range s.State.Events {
-		if newest == nil || e.Seq > newest.Seq {
-			newest = &s.State.Events[i]
-		}
-	}
-	if newest == nil {
-		return journal.Event{}, fmt.Errorf("no entries yet")
-	}
-	return *newest, nil
+	return resolve(s, args[0])
 }
 
 // show writes one entry in full.
