@@ -89,14 +89,29 @@ func (d dashboard) grid(a *App, c *ledger.Cycle, width int) []string {
 	inner := colW - 4 // the card's border and padding
 
 	return []string{
-		pair(card(a, "Storage", d.storageCard(a, c, inner), colW),
-			card(a, "Stash", d.stashCard(a, inner), colW)),
-		pair(card(a, "Sessions", d.sessionsCard(a, inner), colW),
-			card(a, "Devices", d.devicesCard(a, inner), colW)),
+		pair(level(a, "Storage", d.storageCard(a, c, inner), "Stash", d.stashCard(a, inner), colW, width >= 84)),
+		pair(level(a, "Sessions", d.sessionsCard(a, inner), "Devices", d.devicesCard(a, inner), colW, width >= 84)),
 		card(a, "Supply projection", d.projectionCard(a, c, width-4), width),
 		pair(card(a, "Rhythm · grinding", rhythmCard(a, journal.Grind, inner), colW),
 			card(a, "Rhythm · sessions", rhythmCard(a, journal.Sesh, inner), colW)),
 	}
+}
+
+// level frames two cards side by side at one height, the shorter body given
+// blank lines at its foot, so the pair reads as one row; stacked, each keeps
+// its own.
+func level(a *App, leftTitle, left, rightTitle, right string, w int, abreast bool) (string, string) {
+	l, r := card(a, leftTitle, left, w), card(a, rightTitle, right, w)
+	if !abreast {
+		return l, r
+	}
+	switch d := lipgloss.Height(l) - lipgloss.Height(r); {
+	case d > 0:
+		r = card(a, rightTitle, right+strings.Repeat("\n", d), w)
+	case d < 0:
+		l = card(a, leftTitle, left+strings.Repeat("\n", -d), w)
+	}
+	return l, r
 }
 
 // card frames a body the way every card is framed, so the grid reads as one
@@ -114,7 +129,7 @@ func card(a *App, title, body string, w int) string {
 func (d dashboard) quickActions(a *App, width int) string {
 	t := a.theme
 	actions := []struct{ key, label string }{
-		{"b", "buy"}, {"g", "grind"}, {"s", "sesh"}, {"r", "weigh"},
+		{"b", "buy"}, {"g", "grind"}, {"s", "sesh"}, {"r", "weigh"}, {"v", "AVB"},
 	}
 	cells := make([]string, 0, len(actions))
 	for _, act := range actions {
@@ -152,25 +167,27 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 		fraction = clamp(float64(remaining/held), 0, 1)
 	}
 
-	headline := t.Big.Render(fmt.Sprintf("%.2f g", remaining)) +
-		t.Dim.Render(fmt.Sprintf("  of %.0f g · cycle %d (started: %s), day %d",
-			held, c.Seq+1, c.Start.Format("2006-01-02"),
-			daysBetween(c.Start, a.data.Now)+1))
+	top := headline(t, fmt.Sprintf("%.2f g", remaining),
+		fmt.Sprintf("of %.0f g · cycle %d · day %d since %s",
+			held, c.Seq+1, daysBetween(c.Start, a.data.Now)+1, c.Start.Format("2 Jan")), w)
 	bar := GradientGauge(w, fraction, t.Good, t.Level(fraction), t.Dim)
 
 	runway := "nothing ground yet, no rate to project"
 	if days := stats.DaysWorth(float64(remaining)); days > 0 {
-		runway = fmt.Sprintf("~%.0f days' worth at %.2f g per active day", days, stats.PerActiveDay)
+		runway = fmt.Sprintf("~%.0f days' worth at %.2f g an active day", days, stats.PerActiveDay)
 	}
+	// The fill's products, not the shelf's: the card speaks for the fill,
+	// and what older fills still hold is the line under it.
 	lines := []string{
-		headline,
+		top,
 		bar,
-		t.Dim.Render(fmt.Sprintf("%s on the shelf · %s", plural(len(c.Products), "product"), runway)),
+		t.Dim.Render(plural(len(c.Products), "product") + " in this fill"),
+		t.Dim.Render(runway),
 	}
 	if carried, jars, open := a.data.State.CarriedOnShelf(c); carried > 0 {
 		lines = append(lines, t.Dim.Render(
-			fmt.Sprintf("+ %.2f g in %s from %s still open",
-				carried, plural(jars, "older jar"), plural(open, "earlier cycle"))))
+			fmt.Sprintf("+ %.2f g in %s of %s",
+				carried, plural(jars, "older jar"), plural(open, "earlier fill"))))
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, append(lines, d.storageRows(a, c, w)...)...)
 }
@@ -180,12 +197,12 @@ func (d dashboard) storageCard(a *App, c *ledger.Cycle, w int) string {
 // much remains but whose jar it is in.
 func (d dashboard) storageRows(a *App, c *ledger.Cycle, w int) []string {
 	t, data := a.theme, a.data
-	labelW := min(w/2, 22)
-	rows := []string{""}
 	products := c.Products
 	if len(products) > 4 {
 		products = products[:4]
 	}
+	labelW := namesWidth(a, products, w/2)
+	rows := []string{""}
 	for _, slug := range products {
 		b := data.State.Balances[slug]
 		if b == nil {
@@ -225,14 +242,22 @@ func (d dashboard) stashCard(a *App, w int) string {
 		}
 		return tins[i].slug < tins[j].slug
 	})
-	if len(tins) > 3 {
-		tins = tins[:3]
+	held := len(tins)
+	if len(tins) > 5 {
+		tins = tins[:5]
 	}
+	slugs := make([]string, len(tins))
+	for i, tn := range tins {
+		slugs[i] = tn.slug
+	}
+	labelW := namesWidth(a, slugs, w/2)
 
-	lines := []string{t.Big.Render(fmt.Sprintf("%.2f g", total)) +
-		t.Dim.Render(fmt.Sprintf("  ground, across %s", plural(len(tins), "stash")))}
+	across := fmt.Sprintf("ground, across %s", plural(held, "stash"))
+	if held > len(tins) {
+		across += fmt.Sprintf(" · the %d fullest", len(tins))
+	}
+	lines := []string{headline(t, fmt.Sprintf("%.2f g", total), across, w)}
 	for _, tn := range tins {
-		labelW := min(w/2, 24)
 		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Left,
 			t.Value.Width(labelW).Render(truncate(data.ProductName(tn.slug), labelW)),
 			" ",
@@ -266,10 +291,11 @@ func (d dashboard) sessionsCard(a *App, w int) string {
 	}
 	perDay, _, _ := dailyGrams(events, journal.Sesh)
 	last := events[len(events)-1]
-	lastLine := fmt.Sprintf("last: %.2f g %s", last.Grams, truncate(a.data.ProductName(last.Product), 20))
+	lastLine := fmt.Sprintf("last: %.2f g %s", last.Grams, a.data.ProductName(last.Product))
 	if last.Device != "" {
 		lastLine += " · " + deviceName(a, last.Device)
 	}
+	lastLine = truncate(lastLine, w)
 
 	values := make([]float64, 0, 14)
 	for i := 13; i >= 0; i-- {
@@ -310,16 +336,14 @@ func (d dashboard) devicesCard(a *App, w int) string {
 	}
 	names, byDev := usageByDevice(seshes(a))
 	lines := []string{t.Big.Render(fmt.Sprintf("%d", len(devices))) +
-		t.Dim.Render("  "+plural(len(devices), "device")[2:]+" on the shelf")}
+		t.Dim.Render("  "+nounOnly(len(devices), "device")+" · the two most used:")}
 	shown := 0
 	for _, n := range names {
 		if n == "no device" || shown == 2 {
 			continue
 		}
-		note := useNote(byDev[n])
-		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Left,
-			t.Value.Width(min(w/2, 20)).Render(truncate(deviceName(a, n), min(w/2, 20))),
-			t.Dim.Render(" "+note)))
+		lines = append(lines, t.Value.Render(truncate(deviceName(a, n), w)),
+			t.Dim.Render(truncate("  "+useNote(byDev[n]), w)))
 		shown++
 	}
 	if shown == 0 {
@@ -431,4 +455,25 @@ func clip(s string, lines int) string {
 		return s
 	}
 	return strings.Join(rows[:lines], "\n")
+}
+
+// namesWidth is the width the longest of the products' names needs, up to
+// most: a name is cut short only when the card has no room for it.
+func namesWidth(a *App, slugs []string, most int) int {
+	w := 0
+	for _, slug := range slugs {
+		w = max(w, lipgloss.Width(a.data.ProductName(slug)))
+	}
+	return min(w, most)
+}
+
+// headline sets a card's big figure and what it is of on one line, or, when
+// the card is too narrow for both, what it is of whole on the line under it
+// rather than broken wherever the card's edge falls.
+func headline(t *Theme, big, rest string, w int) string {
+	b := t.Big.Render(big)
+	if lipgloss.Width(b)+2+lipgloss.Width(rest) <= w {
+		return b + t.Dim.Render("  "+rest)
+	}
+	return b + "\n" + t.Dim.Render(rest)
 }

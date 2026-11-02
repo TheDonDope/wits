@@ -266,7 +266,7 @@ func TestDashboardWallClockAndCycleStart(t *testing.T) {
 
 	assert.Contains(t, out, "Mon 03 Aug 2026 · 14:30:05",
 		"The quick-action line should carry the ticking wall clock")
-	assert.Contains(t, out, "(started: ",
+	assert.Contains(t, out, "day 5 since 9 Jul",
 		"The storage card should date the cycle it counts")
 }
 

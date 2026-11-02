@@ -533,7 +533,7 @@ func TestStashScreenShowsBothTables(t *testing.T) {
 	assert.Contains(t, out, "Enua 22/1 Wedding Cake", "The holding stash sits above")
 	assert.Contains(t, out, "Cannamedical 28/1 Lemon Cookie", "The finished stash sits below")
 	assert.Contains(t, out, "holding · 1   finished · 1", "Should count both tables")
-	assert.Contains(t, out, "2 sessions", "Should say how many sessions finished it")
+	assert.Regexp(t, `Cannamedical 28/1 Lemon Cookie\s+28/1\s+3\.00 g\s+2\s`, out, "Should say how many sessions finished it, under SESSIONS")
 
 	// The finished stash is grouped under the day it was consumed.
 	ended := stashHistoryOf(app.data.State.Events)["lemon"].EmptiedAt.Format("Mon 02 Jan 2006")

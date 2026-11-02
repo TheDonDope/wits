@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"github.com/TheDonDope/wits/pkg/journal"
 	"github.com/TheDonDope/wits/pkg/ledger"
 	"github.com/TheDonDope/wits/pkg/record"
+	"github.com/TheDonDope/wits/pkg/views"
 )
 
 // devicesView lists the vaporizers and what each one's temperature range
@@ -83,58 +86,133 @@ func (v devicesView) View(a *App, height int) string {
 				t.Subtitle.Render(" to add one. A device gives a session its temperature,\nand a temperature is what decides which compounds come off."))
 	}
 
-	var rows []string
+	use := views.Devices(a.data.State.Standing)
+	heatW := heatWidth(width)
+	rows := []string{deviceHeader(a, heatW)}
+	group := ""
 	for i, d := range devices {
+		if d.Is() != group {
+			group = d.Is()
+			rows = append(rows, "", t.Rule(categoryNames[group], width))
+		}
 		selected := i == v.cursor
-		rows = append(rows, v.deviceLine(a, d, selected))
-		// Under the selected device, say what its default setting releases:
+		rows = append(rows, v.deviceLine(a, d, use[d.Slug], heatW, selected))
+		// Under the selected device, say what its usual setting releases:
 		// the point of recording a temperature at all.
-		if selected && d.DefaultTemp > 0 {
-			rows = append(rows, "", t.Rule(fmt.Sprintf("At %d°C", d.DefaultTemp), width))
-			rows = append(rows, releasedSummary(a, d.DefaultTemp, width), "")
+		if at := usualTemp(d); selected && at > 0 {
+			rows = append(rows, "", t.Rule(fmt.Sprintf("At %d°C, as it is usually set", at), width), releasedSummary(a, at, width), "")
 		}
 	}
-
-	header := lipgloss.JoinHorizontal(lipgloss.Left,
-		t.Label.Width(32).Render("DEVICE"),
-		t.Label.Width(12).Render("KIND"),
-		t.Label.Width(12).Render("RANGE"),
-		t.Label.Width(8).Render("DEFAULT"),
-		t.Label.Render("USE"),
-	)
-	return lipgloss.NewStyle().Padding(1, 1).Render(
-		clip(lipgloss.JoinVertical(lipgloss.Left, append([]string{header, ""}, rows...)...), height-2))
+	return lipgloss.NewStyle().Padding(1, 1).Render(clip(lipgloss.JoinVertical(lipgloss.Left, rows...), height-2))
 }
 
-// deviceLine renders one device as a row.
-func (v devicesView) deviceLine(a *App, d *catalog.Device, selected bool) string {
+// categoryNames are the groups the devices screen draws, as the browser names them.
+var categoryNames = map[string]string{
+	catalog.Vaporizer: "Vaporizers", catalog.Induction: "Induction heaters", catalog.Torch: "Torches",
+	catalog.Grinder: "Grinders", catalog.Glass: "Glass",
+}
+
+// Column widths of the devices screen. HEAT takes what the others leave,
+// so every column stands on screen from 100 columns up.
+const (
+	devNameW, devMakerW, devUseW, devGramW, devLastW = 21, 12, 12, 9, 13
+	devFixedW                                        = 2 + devNameW + devMakerW + devUseW + devGramW + devLastW
+)
+
+// heatWidth is what the HEAT column has at a width.
+func heatWidth(width int) int { return min(max(width-devFixedW, 12), 40) }
+
+func deviceHeader(a *App, heatW int) string {
 	t := a.theme
-	name := t.Value.Render(truncate(d.Name, 28))
-	marker := "  "
+	return lipgloss.JoinHorizontal(lipgloss.Left, "  ",
+		t.Label.Width(devNameW).Render("DEVICE"),
+		t.Label.Width(devMakerW).Render("MAKER"),
+		t.Label.Width(heatW).Render("HEAT"),
+		t.Label.Width(devUseW).Align(lipgloss.Right).Render("USED"),
+		t.Label.Width(devGramW).Align(lipgloss.Right).Render("GRAMS"),
+		t.Label.Render("  LAST USED"),
+	)
+}
+
+// deviceLine renders one device as a row: what it is, how it heats, and what
+// it has done — sessions for what a session is had with, sessions heated for
+// a heater — each figure from views.Devices, as the browser's cards read them.
+func (v devicesView) deviceLine(a *App, d *catalog.Device, u *views.Use, heatW int, selected bool) string {
+	t := a.theme
+	if u == nil {
+		u = &views.Use{}
+	}
+	style, marker := t.Value, "  "
+	if d.Retired {
+		style = t.Dim
+	}
 	if selected {
-		name = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(truncate(d.Name, 28))
-		marker = lipgloss.NewStyle().Foreground(t.Accent).Render("│ ")
+		style, marker = lipgloss.NewStyle().Foreground(t.Accent).Bold(true), lipgloss.NewStyle().Foreground(t.Accent).Render("│ ")
 	}
-	kind := d.Kind
-	if kind == "" {
-		kind = "—"
+	name := d.Name
+	if d.Retired {
+		name += " · retired"
 	}
-	temps := "—"
-	if d.MaxTemp > 0 {
-		temps = fmt.Sprintf("%d–%d°C", d.MinTemp, d.MaxTemp)
+	used, grams := plural(u.Sessions, "session"), fmt.Sprintf("%.2f g", u.Grams.Grams())
+	switch {
+	case d.Heats():
+		used, grams = fmt.Sprintf("heated %d", u.Heated), ""
+	case d.Is() == catalog.Grinder:
+		used, grams = "", ""
 	}
-	def := "—"
-	if d.DefaultTemp > 0 {
-		def = fmt.Sprintf("%d°C", d.DefaultTemp)
+	last := ""
+	if !u.LastUsed.IsZero() {
+		last = "  " + humanDay(u.LastUsed, a.data.Now)
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Left,
 		marker,
-		lipgloss.NewStyle().Width(30).Render(name),
-		t.Dim.Width(12).Render(kind),
-		t.Label.Width(12).Render(temps),
-		t.Value.Width(8).Render(def),
-		t.Dim.Render(plural(a.sessionsWith(d.Slug), "session")),
+		style.Width(devNameW).Render(truncate(name, devNameW-1)),
+		t.Dim.Width(devMakerW).Render(truncate(orDash(d.Maker), devMakerW-1)),
+		t.Label.Width(heatW).Render(truncate(heatOf(d), heatW-1)),
+		t.Value.Width(devUseW).Align(lipgloss.Right).Render(used),
+		t.Dim.Width(devGramW).Align(lipgloss.Right).Render(grams),
+		t.Dim.Render(last),
 	)
+}
+
+// heatOf says how a device heats: its range, its usual setting and its
+// modes, those it has, or a dash for what does not heat.
+func heatOf(d *catalog.Device) string {
+	var parts []string
+	if d.MaxTemp > 0 {
+		parts = append(parts, fmt.Sprintf("%d–%d°C", d.MinTemp, d.MaxTemp))
+	}
+	if d.DefaultTemp > 0 {
+		parts = append(parts, fmt.Sprintf("usually %d°C", d.DefaultTemp))
+	}
+	if len(d.Modes) > 0 {
+		parts = append(parts, strings.Join(d.ModeNames(), ", "))
+	}
+	if len(parts) == 0 {
+		return "—"
+	}
+	return strings.Join(parts, " · ")
+}
+
+// usualTemp is the temperature a device is usually set to: its default, or
+// its first mode's.
+func usualTemp(d *catalog.Device) int {
+	if d.DefaultTemp > 0 {
+		return d.DefaultTemp
+	}
+	for _, m := range d.Modes {
+		if m.Temp > 0 {
+			return m.Temp
+		}
+	}
+	return 0
+}
+
+func orDash(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return "—"
+	}
+	return s
 }
 
 // releasedSummary lists what a temperature reaches, and warns if it is hot
@@ -171,12 +249,22 @@ func plural(n int, noun string) string {
 	return fmt.Sprintf("%d %ss", n, noun)
 }
 
-// deviceList returns the device catalog as a slice.
+// deviceList is the devices in the order the screen draws them: by what they
+// are, as catalog.Categories orders them, then by name, so the cursor and the
+// rows agree.
 func (a *App) deviceList() []*catalog.Device {
 	if a.data.Devices == nil {
 		return nil
 	}
-	return a.data.Devices.Devices
+	out := slices.Clone(a.data.Devices.Devices)
+	rank := func(d *catalog.Device) int { return slices.Index(catalog.Categories, d.Is()) }
+	slices.SortStableFunc(out, func(x, y *catalog.Device) int {
+		if c := cmp.Compare(rank(x), rank(y)); c != 0 {
+			return c
+		}
+		return cmp.Compare(strings.ToLower(x.Name), strings.ToLower(y.Name))
+	})
+	return out
 }
 
 // sessionsWith counts how many sessions used a device, which is the only honest

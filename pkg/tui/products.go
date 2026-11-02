@@ -181,8 +181,10 @@ func addJar(j ledger.Jar, grams float64) ledger.Jar {
 	return ledger.Jar((journal.CG(float64(j)) + journal.CG(grams)).Grams())
 }
 
-// gone reports whether the product has been weighed down to nothing.
-func (p productRow) gone() bool { return p.Held() <= 0 && p.AVB <= 0 }
+// gone reports whether the jar holds nothing sealed or ground. What it gave
+// as AVB is in the AVB jar, one jar whatever the products, so a jar holding
+// only that is off the shelf: as the browser's Shelf and wits carry count it.
+func (p productRow) gone() bool { return p.Held() <= 0 }
 
 func (v storageView) Update(msg tea.Msg, a *App) (storageView, tea.Cmd) {
 	rows := v.rows(a)
@@ -467,12 +469,13 @@ func (v storageView) historyHeader(a *App, nameW int) string {
 		t.Label.Width(potW).Align(lipgloss.Right).Render("THC/CBD"),
 		t.Label.Width(gramW).Align(lipgloss.Right).Render("BOUGHT"),
 		t.Label.Width(groundW).Align(lipgloss.Right).Render("GROUND"),
+		t.Label.Width(gramW).Align(lipgloss.Right).Render("AVB"),
 		t.Label.Width(lastW).Align(lipgloss.Right).Render("LAST USED"),
 	)
 }
 
-// historyLine renders one finished product. Its balances are all zero, so the
-// row says what it was and when it ended rather than repeating three zeroes.
+// historyLine renders one finished product: what it was, what it gave as
+// AVB, and when it ended, rather than repeating its zeroes.
 func (v storageView) historyLine(a *App, r productRow, nameW int, selected bool) string {
 	t := a.theme
 	name := truncate(a.data.ProductName(r.Slug), nameW)
@@ -490,6 +493,7 @@ func (v storageView) historyLine(a *App, r productRow, nameW int, selected bool)
 		t.Dim.Width(potW).Align(lipgloss.Right).Render(potency(r)),
 		t.Dim.Width(gramW).Align(lipgloss.Right).Render(fmt.Sprintf("%.2f g", r.Bought)),
 		t.Dim.Width(groundW).Align(lipgloss.Right).Render(fmt.Sprintf("%.2f g", r.Ground)),
+		t.Dim.Width(gramW).Align(lipgloss.Right).Render(fmt.Sprintf("%.2f g", r.AVB)),
 		t.Dim.Width(lastW).Align(lipgloss.Right).Render(last),
 	)
 }
@@ -864,7 +868,14 @@ func (v stashView) activeLine(a *App, s *stashStats, nameW int, selected bool) s
 func (v stashView) finishedSection(a *App, finished []*stashStats, activeCount, nameW, width, offset int) ([]string, int) {
 	t := a.theme
 	cursorLine := -1
-	lines := []string{"", t.Rule("Consumed", width)}
+	lines := []string{"", t.Rule("Consumed", width), lipgloss.JoinHorizontal(lipgloss.Left,
+		strings.Repeat(" ", markW-1),
+		t.Label.Width(nameW).Render("PRODUCT"),
+		t.Label.Width(potW).Align(lipgloss.Right).Render("THC/CBD"),
+		strings.Repeat(" ", stashGramW),
+		t.Label.Width(throughW).Align(lipgloss.Right).Render("THROUGH"),
+		t.Label.Width(seshCountW).Align(lipgloss.Right).Render("SESSIONS"),
+	)}
 	if len(finished) == 0 {
 		lines = append(lines, t.Dim.Render("  no stash finished yet"))
 	}
@@ -892,7 +903,7 @@ func (v stashView) finishedSection(a *App, finished []*stashStats, activeCount, 
 }
 
 // finishedLine renders one emptied stash: what it was, what went through it,
-// and how many sessions that took.
+// and how many sessions that took, in the columns of the stash table above.
 func (v stashView) finishedLine(a *App, s *stashStats, nameW int, selected bool) string {
 	t := a.theme
 	name := truncate(a.data.ProductName(s.Slug), nameW)
@@ -904,8 +915,9 @@ func (v stashView) finishedLine(a *App, s *stashStats, nameW int, selected bool)
 		v.prefix(a, s.Slug, selected),
 		label,
 		t.Dim.Width(potW).Align(lipgloss.Right).Render(stashPotency(a, s.Slug)),
+		strings.Repeat(" ", stashGramW),
 		t.Dim.Width(throughW).Align(lipgloss.Right).Render(fmt.Sprintf("%.2f g", s.Through)),
-		t.Dim.Width(seshCountW).Align(lipgloss.Right).Render(plural(s.Sessions, "session")),
+		t.Dim.Width(seshCountW).Align(lipgloss.Right).Render(fmt.Sprintf("%d", s.Sessions)),
 	)
 }
 
