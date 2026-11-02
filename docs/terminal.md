@@ -217,7 +217,7 @@ cluster**: `get` lists one kind of thing, `describe` tells one in full, and
 | `wits report refill` | When to order the next prescription; `--lead` for the pharmacy's days, `--ics` for a reminder |
 | `wits report prescriber` | One page for the prescriber, as a PDF; `--from`/`--to`, the last 90 days by default, `--seal` |
 
-### The repository
+### The repository, its copies and its settings
 
 | | |
 | --- | --- |
@@ -254,9 +254,9 @@ Two flags work everywhere:
 
 An alias is a repository's own shorthand, as in git:
 
-```console
-$ wits config alias.evening "sesh --device mighty --temp 185"
-$ wits evening wedding 0.2
+```sh
+wits config alias.evening "sesh --device mighty --temp 185"
+wits evening wedding 0.2
 ```
 
 A command of wits's own always wins, so an alias can never hide one.

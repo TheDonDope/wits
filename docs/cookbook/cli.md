@@ -1,11 +1,16 @@
 # Cookbook: the command line
 
+<!-- The collapsible sections below are HTML (<details>), which GitHub folds
+and unfolds; markdownlint's no-inline-html rule is off for this page alone,
+so they can be. -->
+<!-- markdownlint-disable MD033 -->
+
 This chapter explains how `wits` works as a command line: how a few lines in
 `main.go` become `wits grind wedding 1`, which parts of Go carry it, what
 Cobra does, and why the commands are named as they are. It ends with recipes
 for adding commands of your own.
 
-**Contents**
+## Contents
 
 1. [A first look](#1-a-first-look)
 2. [The two grammars](#2-the-two-grammars)
@@ -131,9 +136,9 @@ Dry run: nothing was written.
 
 Aliases work as git's do, and live in the repository's `.wits/config`:
 
-```console
-$ wits config alias.evening "sesh --device mighty --temp 185"
-$ wits evening wedding 0.2
+```sh
+wits config alias.evening "sesh --device mighty --temp 185"
+wits evening wedding 0.2
 ```
 
 ---
@@ -220,40 +225,40 @@ var grindDate string
 
 // Grind is the `wits grind` command.
 var Grind = &cobra.Command{
-	Use:         "grind <product> <grams>",                         // ①
-	Short:       "Move ground product from storage into the stash", // ②
-	Annotations: rehearsable(),                                     // ③
-	Long: "Record grinding product for the day, moving grams from storage into\n" +
-		"that product's stash. …",
-	Example: "  wits grind wedding-cake 0.75\n" +
-		"  wits grind lemon 1.2 --date 2026-07-29",
-	Args:              cobra.ExactArgs(2),                  // ④
-	ValidArgsFunction: completeProduct(journal.Storage),   // ⑤
-	RunE: func(cmd *cobra.Command, args []string) error {  // ⑥
-		s, err := open()
-		if err != nil {
-			return err
-		}
-		grams, err := parseGrams(args[1])
-		if err != nil {
-			return err
-		}
-		at, err := parseDate(grindDate)
-		if err != nil {
-			return err
-		}
-		e, err := s.Recorder.Grind(args[0], grams, at)
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(cmd.OutOrStdout(), "[%s] grind %.2fg %s, %.2fg left in storage\n", // ⑦
-			shortHash(e.Hash), e.Grams, e.Product, left(s, e, journal.Storage))
-		return nil
-	},
+    Use:         "grind <product> <grams>",                         // ①
+    Short:       "Move ground product from storage into the stash", // ②
+    Annotations: rehearsable(),                                     // ③
+    Long: "Record grinding product for the day, moving grams from storage into\n" +
+        "that product's stash. …",
+    Example: "  wits grind wedding-cake 0.75\n" +
+        "  wits grind lemon 1.2 --date 2026-07-29",
+    Args:              cobra.ExactArgs(2),                  // ④
+    ValidArgsFunction: completeProduct(journal.Storage),   // ⑤
+    RunE: func(cmd *cobra.Command, args []string) error {  // ⑥
+        s, err := open()
+        if err != nil {
+            return err
+        }
+        grams, err := parseGrams(args[1])
+        if err != nil {
+            return err
+        }
+        at, err := parseDate(grindDate)
+        if err != nil {
+            return err
+        }
+        e, err := s.Recorder.Grind(args[0], grams, at)
+        if err != nil {
+            return err
+        }
+        fmt.Fprintf(cmd.OutOrStdout(), "[%s] grind %.2fg %s, %.2fg left in storage\n", // ⑦
+            shortHash(e.Hash), e.Grams, e.Product, left(s, e, journal.Storage))
+        return nil
+    },
 }
 
 func init() {
-	Grind.Flags().StringVar(&grindDate, "date", "", "the date it was ground, defaults to now") // ⑧
+    Grind.Flags().StringVar(&grindDate, "date", "", "the date it was ground, defaults to now") // ⑧
 }
 ```
 
@@ -292,15 +297,15 @@ Root.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "build and check the e
 
 ```go
 PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-	if chdir != "" {
-		if err := os.Chdir(chdir); err != nil {
-			return fmt.Errorf("-C: %w", err)
-		}
-	}
-	if dryRun && cmd.Annotations["dry-run"] == "" {
-		return fmt.Errorf("%s cannot be rehearsed; --dry-run is for what the recorder writes", cmd.CommandPath())
-	}
-	return nil
+    if chdir != "" {
+        if err := os.Chdir(chdir); err != nil {
+            return fmt.Errorf("-C: %w", err)
+        }
+    }
+    if dryRun && cmd.Annotations["dry-run"] == "" {
+        return fmt.Errorf("%s cannot be rehearsed; --dry-run is for what the recorder writes", cmd.CommandPath())
+    }
+    return nil
 },
 ```
 
@@ -340,9 +345,9 @@ so by the time `main` calls `commands.Execute`, the tree is whole:
 
 ```go
 func init() {
-	Get.AddCommand(getProducts)
-	Describe.AddCommand(describeProduct)
-	Edit.AddCommand(editProduct)
+    Get.AddCommand(getProducts)
+    Describe.AddCommand(describeProduct)
+    Edit.AddCommand(editProduct)
 }
 ```
 
@@ -357,7 +362,7 @@ flag back to its default after each run.
 
 ```go
 type session struct {
-	*workspace.Workspace
+    *workspace.Workspace
 }
 ```
 
@@ -368,7 +373,7 @@ written out. `open()` is the one place a command gets one, and the one place
 
 ```go
 if dryRun {
-	ws.Recorder = ws.Recorder.Dry()
+    ws.Recorder = ws.Recorder.Dry()
 }
 ```
 
@@ -389,8 +394,8 @@ agrees with the ledger:
 
 ```go
 if errors.Is(err, record.ErrNothingToReconcile) {
-	fmt.Fprintf(out, "%s: the ledger already matches the scale (%.2f g)\n", slug, weighed)
-	continue
+    fmt.Fprintf(out, "%s: the ledger already matches the scale (%.2f g)\n", slug, weighed)
+    continue
 }
 ```
 
@@ -405,9 +410,9 @@ if errors.Is(err, record.ErrNothingToReconcile) {
 
 ```go
 func completeProduct(account journal.Account) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
-	return func(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
-		// … offer the products holding something in account
-	}
+    return func(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+        // … offer the products holding something in account
+    }
 }
 ```
 
@@ -422,8 +427,8 @@ generic over the row type `T`:
 
 ```go
 type listing[T any] struct {
-	head, wide []string
-	cells      func(T) (narrow, wide []string)
+    head, wide []string
+    cells      func(T) (narrow, wide []string)
 }
 
 func list[T any](out io.Writer, rows []T, l listing[T]) error
@@ -461,8 +466,8 @@ tested without a command at all.
 
 ```go
 type deviceRow struct {
-	Slug     string     `json:"slug"`
-	LastUsed *time.Time `json:"last_used,omitempty"`
+    Slug     string     `json:"slug"`
+    LastUsed *time.Time `json:"last_used,omitempty"`
 }
 ```
 
@@ -491,50 +496,50 @@ wits, so it's yours to add.
 package commands
 
 import (
-	"slices"
-	"time"
+    "slices"
+    "time"
 
-	"github.com/spf13/cobra"
+    "github.com/spf13/cobra"
 
-	"github.com/TheDonDope/wits/pkg/effects"
+    "github.com/TheDonDope/wits/pkg/effects"
 )
 
 var getRatings = &cobra.Command{
-	Use:     "ratings",
-	Aliases: []string{"rating"},
-	Short:   "Every session rating that stands, oldest first",
-	Args:    cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		s, err := open()
-		if err != nil {
-			return err
-		}
-		var rows []ratingRow
-		for session, r := range effects.Latest(s.Ratings) {
-			rows = append(rows, ratingRow{Session: session, At: r.At, Scores: effects.Summary(r.Scores), Note: r.Note})
-		}
-		slices.SortFunc(rows, func(a, b ratingRow) int { return a.At.Compare(b.At) })
-		return list(cmd.OutOrStdout(), rows, listing[ratingRow]{
-			head: []string{"SESSION", "RATED", "SCORES"},
-			wide: []string{"NOTE"},
-			cells: func(r ratingRow) ([]string, []string) {
-				return []string{shortHash(r.Session), r.At.Format(time.DateOnly), r.Scores},
-					[]string{orDash(r.Note)}
-			},
-		})
-	},
+    Use:     "ratings",
+    Aliases: []string{"rating"},
+    Short:   "Every session rating that stands, oldest first",
+    Args:    cobra.NoArgs,
+    RunE: func(cmd *cobra.Command, _ []string) error {
+        s, err := open()
+        if err != nil {
+            return err
+        }
+        var rows []ratingRow
+        for session, r := range effects.Latest(s.Ratings) {
+            rows = append(rows, ratingRow{Session: session, At: r.At, Scores: effects.Summary(r.Scores), Note: r.Note})
+        }
+        slices.SortFunc(rows, func(a, b ratingRow) int { return a.At.Compare(b.At) })
+        return list(cmd.OutOrStdout(), rows, listing[ratingRow]{
+            head: []string{"SESSION", "RATED", "SCORES"},
+            wide: []string{"NOTE"},
+            cells: func(r ratingRow) ([]string, []string) {
+                return []string{shortHash(r.Session), r.At.Format(time.DateOnly), r.Scores},
+                    []string{orDash(r.Note)}
+            },
+        })
+    },
 }
 
 // ratingRow is one rating as get lists it, and -o json prints it.
 type ratingRow struct {
-	Session string    `json:"session"`
-	At      time.Time `json:"at"`
-	Scores  string    `json:"scores"`
-	Note    string    `json:"note,omitempty"`
+    Session string    `json:"session"`
+    At      time.Time `json:"at"`
+    Scores  string    `json:"scores"`
+    Note    string    `json:"note,omitempty"`
 }
 
 func init() {
-	Get.AddCommand(getRatings)
+    Get.AddCommand(getRatings)
 }
 ```
 
@@ -610,14 +615,14 @@ throwaway repository:
 
 ```go
 func TestGetRatings(t *testing.T) {
-	dir := stockedRepo(t)                                   // a fill, a grind, a session
-	_, err := run(t, dir, "rate", "session", "overall=4", "sleep=5")
-	require.NoError(t, err)
+    dir := stockedRepo(t)                                   // a fill, a grind, a session
+    _, err := run(t, dir, "rate", "session", "overall=4", "sleep=5")
+    require.NoError(t, err)
 
-	out, err := run(t, dir, "get", "ratings")
+    out, err := run(t, dir, "get", "ratings")
 
-	require.NoError(t, err)
-	assert.Regexp(t, `\w{7}\s+\d{4}-\d\d-\d\d\s+overall 4, sleep 5`, out)
+    require.NoError(t, err)
+    assert.Regexp(t, `\w{7}\s+\d{4}-\d\d-\d\d\s+overall 4, sleep 5`, out)
 }
 ```
 
