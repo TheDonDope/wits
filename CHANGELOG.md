@@ -2,10 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.112.0"></a>
+## [v0.112.0] - 2026-11-02
+### Docs
+- **diary:** every write, everywhere, and the year in a terminal
+
+### Fix
+- **tui:** every column stands on screen, and every card says whose grams
+
+
 <a name="v0.111.0"></a>
 ## [v0.111.0] - 2026-10-27
 ### Chore
 - **vhs:** re-record wits-tour.gif, which visits Insights now
+
+### Docs
+- update changelog for v0.111.0
 
 ### Feat
 - **tui:** insights — the day, the cost, the year, the history, a trip, what is carried, the map
@@ -1368,7 +1380,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.111.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.112.0...HEAD
+[v0.112.0]: https://github.com/TheDonDope/wits/compare/v0.111.0...v0.112.0
 [v0.111.0]: https://github.com/TheDonDope/wits/compare/v0.110.0...v0.111.0
 [v0.110.0]: https://github.com/TheDonDope/wits/compare/v0.109.0...v0.110.0
 [v0.109.0]: https://github.com/TheDonDope/wits/compare/v0.108.0...v0.109.0
