@@ -156,7 +156,10 @@ func BarChart(bars []Bar, width int, t *Theme) string {
 			" ",
 			Gauge(barW, fraction, colour, t.Dim),
 			" ",
-			t.Value.Width(noteW).Align(lipgloss.Right).Render(b.Note),
+			// Left-aligned, so a note's leading figure stands in one column
+			// however long the rest of it runs: "4.6 of 5 · 23 ratings"
+			// over "4.5 of 5 · 112 ratings".
+			t.Value.Width(noteW).Render(b.Note),
 		))
 	}
 	return strings.Join(rows, "\n")

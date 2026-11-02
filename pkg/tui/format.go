@@ -113,7 +113,7 @@ func (t *Theme) entryLine(e journal.Event, name string, width int, selected, cor
 		lipgloss.NewStyle().Foreground(colour).Render(glyph),
 		" ",
 		t.Label.Width(10).Render(verb),
-		value.Render(fmt.Sprintf("%6.2f", e.Grams)) + t.Unit.Render("g"),
+		value.Render(fmt.Sprintf("%6.2f", e.Grams)) + t.Unit.Render(" g"),
 		"  ",
 		value.Render(name),
 	}

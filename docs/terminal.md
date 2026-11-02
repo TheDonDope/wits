@@ -691,5 +691,6 @@ CBDA             130°C     anti-inflammatory, anti-proliferic
 ⚠️  210°C is at or above the 205°C boiling point of Benzene.
 ```
 
-The devices screen shows the same for whichever device is selected, at its
-default setting, and `a` adds a device there.
+The devices screen shows the same for whichever device is selected, at the
+setting it is usually used at, under its row; the screen groups devices by
+kind, each with its maker, heat, use and last day, and `a` adds one there.

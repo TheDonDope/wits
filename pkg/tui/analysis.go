@@ -824,10 +824,14 @@ func (v sessionsView) recent(a *App, width int) string {
 	cursor := min(v.cursor, len(recent)-1)
 	rows := make([]string, 0, len(recent))
 	for i, e := range recent {
-		marker, name := "  ", t.Value.Render(truncate(a.data.ProductName(e.Product), 30))
+		marker, name := "  ", t.Value.Render(truncate(a.data.ProductName(e.Product), 29))
 		if i == cursor {
 			marker = lipgloss.NewStyle().Foreground(t.Accent).Render("│ ")
-			name = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(truncate(a.data.ProductName(e.Product), 30))
+			name = lipgloss.NewStyle().Foreground(t.Accent).Bold(true).Render(truncate(a.data.ProductName(e.Product), 29))
+		}
+		device := "—"
+		if e.Device != "" {
+			device = deviceName(a, e.Device)
 		}
 		temp := ""
 		if e.Temperature > 0 {
@@ -841,7 +845,8 @@ func (v sessionsView) recent(a *App, width int) string {
 			marker,
 			t.Dim.Width(18).Render(e.OccurredAt.Format("Mon 02 Jan 15:04")),
 			t.Value.Width(9).Render(fmt.Sprintf("%.2f g", e.Grams)),
-			lipgloss.NewStyle().Width(32).Render(name),
+			lipgloss.NewStyle().Width(31).Render(name),
+			t.Dim.Width(21).Render(truncate(device, 20)),
 			t.Label.Width(7).Render(temp),
 			rating,
 		), width))

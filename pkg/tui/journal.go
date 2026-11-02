@@ -340,7 +340,8 @@ func (v journalView) cover(a *App, width int) string {
 
 	strip := lipgloss.JoinHorizontal(lipgloss.Center, older, " ", mid, " ", newer)
 	return lipgloss.JoinVertical(lipgloss.Left, strip,
-		t.Dim.Render(fmt.Sprintf(" ← older · %d of %d · newer →", len(entries)-at, len(entries))))
+		// Counted from the newest, as the list's own counter under it counts.
+		t.Dim.Render(fmt.Sprintf(" ← older · %d of %d · newer →", at+1, len(entries))))
 }
 
 // midCard is the selected entry, told in full.
