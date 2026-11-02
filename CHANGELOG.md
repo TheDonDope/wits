@@ -2,9 +2,26 @@
 ## [Unreleased]
 
 
+<a name="v0.113.0"></a>
+## [v0.113.0] - 2026-11-03
+### Chore
+- **vhs:** re-record the cli, bundle and weighing gifs, which type the new names
+
+### Docs
+- **cookbook:** what Codacy's markdownlint asks — spaces in the code, a heading for the contents
+- **cookbook:** the command line, from main.go to the journal
+
+### BREAKING CHANGE
+
+reconcile, restore, like, temps, today, costs, review,
+refill, device and the old forms of describe, rate, report and bundle are
+gone; docs/terminal.md lists what replaced each.
+
+
 <a name="v0.112.0"></a>
 ## [v0.112.0] - 2026-11-02
 ### Docs
+- update changelog for v0.112.0
 - **diary:** every write, everywhere, and the year in a terminal
 
 ### Fix
@@ -1380,7 +1397,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.112.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.113.0...HEAD
+[v0.113.0]: https://github.com/TheDonDope/wits/compare/v0.112.0...v0.113.0
 [v0.112.0]: https://github.com/TheDonDope/wits/compare/v0.111.0...v0.112.0
 [v0.111.0]: https://github.com/TheDonDope/wits/compare/v0.110.0...v0.111.0
 [v0.110.0]: https://github.com/TheDonDope/wits/compare/v0.109.0...v0.110.0
