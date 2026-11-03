@@ -655,6 +655,10 @@ for d, n in c.most_common(3): print(f"{n:4}  {d}")'
  229  limelight-herb-frolic
 ```
 
+A script you run often can become a command: name it `wits-<name>`, put
+it on the PATH, and `wits <name>` runs it. The [plugins chapter](plugins.md)
+covers how.
+
 ---
 
 ## 7. Before you open a pull request

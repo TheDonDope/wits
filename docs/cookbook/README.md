@@ -11,6 +11,7 @@ you can copy, run and change.
 | Chapter | What it covers | Status |
 | --- | --- | --- |
 | [The command line](cli.md) | Go as wits uses it, how the command line is wired, Cobra, the two grammars, and recipes for new commands | ✅ |
+| [Plugins](plugins.md) | A command of your own without touching wits: `wits-<name>` on the PATH, the contract, a plugin in shell and in Go, and the three that come with wits | ✅ |
 | The browser | Angular, signals, the API's shapes, the phone's engine | planned |
 | The terminal interface | Bubble Tea v2, screens, modals, witsnap | planned |
 | The ledger | the journal, the fold, the three scopes | planned |
