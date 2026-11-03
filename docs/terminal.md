@@ -201,11 +201,12 @@ cluster**: `get` lists one kind of thing, `describe` tells one in full, and
 
 | | |
 | --- | --- |
-| `wits get products\|devices\|fills\|sessions\|entries\|plugins` | A list of one kind; `-o wide` adds columns, `-o json` prints every field, `-l maker=enua` keeps what matches, `--all` the empty jars and retired devices too |
+| `wits get products\|devices\|fills\|sessions\|entries\|plugins` | A list of one kind; `-o wide` adds columns, `-o json` prints every field, `-l maker=enua` keeps what matches, `--all` the empty jars and retired devices too, `--watch` prints it again at each change |
 | `wits describe product <product>` | What is known about a product: its label, its jar, its terpenes, its rating, and the products most like it |
 | `wits describe device <device>` | A device in full, and what its usual setting releases |
 | `wits describe fill [<n>]` | One fill: what it dispensed, and what of each jar is still its own; the latest without a number |
 | `wits describe temperature <celsius>` | What a temperature is hot enough to release, and whether it reaches benzene |
+| `wits describe … -o json` | Any of the four, for a script |
 | `wits edit product <product>` | `--name`, `--maker`, `--cultivar`, `--thc`, `--cbd` correct its label, the slug kept; `--terpenes` writes down its profile, dominant first |
 | `wits create device <name>` | A vaporizer, its temperature range and its load (`--load 0.15`) |
 | `wits edit device <device>` / `wits delete device <device>` | Change what the flags say; take it out of the catalog, its sessions keeping its name |
@@ -261,6 +262,31 @@ wits evening wedding 0.2
 
 A command of wits's own always wins, so an alias can never hide one.
 
+### For a script
+
+`-o json` on `get` and `describe` prints what a script reads, versioned the
+way kubectl versions its resources. A list is `{"apiVersion": "wits/v1",
+"kind": "FillList", "items": […]}`, and one thing described is
+`{"apiVersion": "wits/v1", "kind": "Fill", …}`, its fields after. Within
+`wits/v1` fields are only added; a field renamed or removed would be
+`wits/v2`, so a script that checks `apiVersion` never reads the wrong one.
+A device's own kind is its `type`, since `kind` names the shape.
+
+```console
+$ wits describe fill -o json | head -6
+{
+  "apiVersion": "wits/v1",
+  "kind": "Fill",
+  "fill": 30,
+  "opened": "2026-08-29T00:00:00Z",
+  "dispensed": 60,
+```
+
+`wits get … --watch` (`-w`) keeps running and prints the list again each
+time the repository changes, whichever surface wrote to it. With `-o json`,
+each list is one line, so a script can read the stream line by line. Ctrl-C
+stops it.
+
 ### Plugins
 
 A program named `wits-<name>` on your PATH runs as `wits <name>`, the way
@@ -269,7 +295,7 @@ set to the wits that ran it and `$WITS_DIR` to that directory, and its exit
 status is wits's own. `wits get plugins` lists the ones on the PATH; `-o wide`
 says which never run because a command of wits's own, or an earlier plugin,
 has the name. A plugin reads the repository through `wits get <kind> -o
-json`, so it can be written in anything.
+json` (and `describe … -o json`), so it can be written in anything.
 
 Three come with wits, in `plugins/`. `make plugins` builds them into `./bin`;
 `make install-plugins` (or `go install

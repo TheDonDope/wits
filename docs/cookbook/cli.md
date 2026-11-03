@@ -427,6 +427,7 @@ generic over the row type `T`:
 
 ```go
 type listing[T any] struct {
+    kind       string // what -o json names it: "Product", printed as a ProductList
     head, wide []string
     cells      func(T) (narrow, wide []string)
 }
@@ -496,7 +497,9 @@ wits, so it's yours to add.
 package commands
 
 import (
+    "cmp"
     "slices"
+    "strings"
     "time"
 
     "github.com/spf13/cobra"
@@ -509,7 +512,7 @@ var getRatings = &cobra.Command{
     Aliases: []string{"rating"},
     Short:   "Every session rating that stands, oldest first",
     Args:    cobra.NoArgs,
-    RunE: func(cmd *cobra.Command, _ []string) error {
+    RunE: watched(func(cmd *cobra.Command, _ []string) error {
         s, err := open()
         if err != nil {
             return err
@@ -518,8 +521,12 @@ var getRatings = &cobra.Command{
         for session, r := range effects.Latest(s.Ratings) {
             rows = append(rows, ratingRow{Session: session, At: r.At, Scores: effects.Summary(r.Scores), Note: r.Note})
         }
-        slices.SortFunc(rows, func(a, b ratingRow) int { return a.At.Compare(b.At) })
+        // Oldest first; two rated at once by session, so the order holds.
+        slices.SortFunc(rows, func(a, b ratingRow) int {
+            return cmp.Or(a.At.Compare(b.At), strings.Compare(a.Session, b.Session))
+        })
         return list(cmd.OutOrStdout(), rows, listing[ratingRow]{
+            kind: "Rating",
             head: []string{"SESSION", "RATED", "SCORES"},
             wide: []string{"NOTE"},
             cells: func(r ratingRow) ([]string, []string) {
@@ -527,7 +534,7 @@ var getRatings = &cobra.Command{
                     []string{orDash(r.Note)}
             },
         })
-    },
+    }),
 }
 
 // ratingRow is one rating as get lists it, and -o json prints it.
@@ -553,18 +560,24 @@ What each part does:
    (`s.Ratings`), and `effects.Latest` picks the rating that stands. If a
    figure is shown anywhere else too, it belongs in `pkg/views`, worked out
    once.
-3. **`list` does the rest.** Table, `-o wide`, `-o json`, `-l` and the empty
-   case all come for free.
-4. **`init()` hangs it on `get`.** There's no change to `root.go`.
+3. **`list` does the rest.** Table, `-o wide`, `-o json` as a `RatingList`,
+   `-l` and the empty case all come for free.
+4. **`watched` gives it `--watch`.** Wrapped in it, the list is printed again
+   each time the repository changes.
+5. **`init()` hangs it on `get`.** There's no change to `root.go`.
+6. **Pin its shape.** Add `"Rating": {ratingRow{}, "session at scores note"}`
+   to `TestShapes` in `output_test.go`. From then on, renaming a field fails
+   the test, because a script may be reading it (see
+   [6.5](#65-script-it)).
 
 ```console
 $ wits get ratings
 SESSION  RATED       SCORES
 4a08df7  2026-10-26  overall 5, pain 4, sleep 5, calm 5
-70caea0  2026-10-26  overall 5, pain 5, sleep 5, calm 4
-cc00d12  2026-10-26  overall 4, sleep 5, calm 5
+186d165  2026-10-26  overall 4, sleep 5, calm 4
+1a8993f  2026-10-26  overall 4, pain 4, sleep 5, calm 4
 …
-$ wits get ratings -o json | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))'
+$ wits get ratings -o json | python3 -c 'import json,sys; print(len(json.load(sys.stdin)["items"]))'
 718
 ```
 
@@ -642,18 +655,59 @@ go test ./cmd/wits/commands -run TestGetRatings -v
 
 ### 6.5 Script it
 
-Every `get` speaks JSON, so a question the command line doesn't answer is
-one pipe away. Which devices get the most sessions?
+Every `get` and every `describe` speaks JSON, so a question the command
+line doesn't answer is one pipe away. A list comes the way kubectl prints
+one: a version, a kind, and the items.
+
+```console
+$ wits get fills -o json | head -4
+{
+  "apiVersion": "wits/v1",
+  "kind": "FillList",
+  "items": [
+```
+
+Which devices get the most sessions?
 
 ```console
 $ wits get sessions -o json | python3 -c '
 import json, sys, collections
-c = collections.Counter(s.get("device", "-") for s in json.load(sys.stdin))
+l = json.load(sys.stdin)
+assert l["apiVersion"] == "wits/v1", l["apiVersion"]
+c = collections.Counter(s.get("device", "-") for s in l["items"])
 for d, n in c.most_common(3): print(f"{n:4}  {d}")'
  376  storz-bickel-venty
  292  storz-bickel-mighty
  229  limelight-herb-frolic
 ```
+
+`describe` prints one thing, with its version and kind first and then its
+fields, including what the text version works out: the fill's own grams of
+each jar, what a device's usual temperature releases, and the products most
+like one.
+
+```console
+$ wits describe fill -o json | python3 -c '
+import json, sys
+for j in json.load(sys.stdin)["jars"]:
+    print("%6.2f g  %s" % (j["left"], j["name"]))'
+ 11.37 g  NICE 32/1 Morning Sun
+ 12.42 g  All Nations 29/1 Mac Doughnut
+ 12.94 g  Sumo 25/1 Papaya Bomb
+```
+
+`--watch` (`-w`) keeps a `get` running and prints the list again each time
+the repository changes, from any surface: a grind typed in another
+terminal, a session recorded in the browser. With `-o json`, each list is
+one line, so a script can read the stream line by line. Ctrl-C stops it.
+
+> [!IMPORTANT]
+> **`wits/v1` is a promise.** Within one version, fields are only ever
+> added. A field renamed, retyped or removed is `wits/v2`. `TestShapes`
+> (`output_test.go`) pins every field of every kind, so such a change
+> fails the tests until the version moves with it. Check `apiVersion`, as
+> the script above does, and a new wits can never silently feed your
+> script the wrong field.
 
 A script you run often can become a command: name it `wits-<name>`, put
 it on the PATH, and `wits <name>` runs it. The [plugins chapter](plugins.md)

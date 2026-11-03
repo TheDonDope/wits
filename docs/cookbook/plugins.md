@@ -84,23 +84,38 @@ What wits gives a plugin, and what it expects back:
 | **`--dry-run`** | refused before a plugin's name; a plugin that writes takes its own |
 
 A plugin reads the repository the way a script does, through `wits get
-<kind> -o json`. It never opens `.wits/` itself: the journal is a
-hash-chained log, and a figure only means something after it has been
-replayed (`ledger.Fold`). wits does the replay and prints the result.
+<kind> -o json` and `wits describe <kind> <name> -o json`. It never opens
+`.wits/` itself: the journal is a hash-chained log, and a figure only means
+something after it has been replayed (`ledger.Fold`). wits does the replay
+and prints the result.
+
+What it prints is versioned, the way kubectl's resources are. A list is
+`{"apiVersion": "wits/v1", "kind": "FillList", "items": […]}`, and one thing
+described is `{"apiVersion": "wits/v1", "kind": "Fill", …its fields}`.
+Within `wits/v1`, fields are only ever added, so a plugin that checks
+`apiVersion` keeps working until the version changes, and then it stops
+with a clear error rather than misreading a renamed field.
 
 <details>
 <summary><b>The fields each kind prints</b></summary>
 
-| Kind | Fields |
-| --- | --- |
-| `products` | `slug`, `name`, `maker`, `cultivar`, `thc`, `cbd`, `storage`, `stash`, `avb`, `consumed`, `terpenes` |
-| `devices` | `slug`, `name`, `kind`, `maker`, `heat`, `min_temp`, `max_temp`, `usual_temp`, `load`, `retired`, `sessions`, `heated`, `grams`, `last_used` |
-| `fills` | `fill`, `opened`, `closed`, `dispensed`, `left`, `products` |
-| `sessions` | `hash`, `at`, `product`, `grams`, `device`, `temperature`, `rated`, `scores`, `note` |
-| `entries` | every field of a journal entry, as `.wits/journal.ndjson` holds it |
-| `plugins` | `name`, `path`, `hidden` |
+| `get` | `kind` | Each item's fields |
+| --- | --- | --- |
+| `products` | `ProductList` | `slug`, `name`, `maker`, `cultivar`, `thc`, `cbd`, `storage`, `stash`, `avb`, `consumed`, `terpenes` |
+| `devices` | `DeviceList` | `slug`, `name`, `type`, `maker`, `heat`, `min_temp`, `max_temp`, `usual_temp`, `load`, `retired`, `sessions`, `heated`, `grams`, `last_used` |
+| `fills` | `FillList` | `fill`, `opened`, `closed`, `dispensed`, `left`, `products` |
+| `sessions` | `SessionList` | `hash`, `at`, `product`, `grams`, `device`, `temperature`, `rated`, `scores`, `note` |
+| `entries` | `EntryList` | `seq`, `type`, `occurred_at`, `recorded_at`, `product`, `grams`, `from`, `to`, `device`, `temperature`, `mode`, `heater`, `setting`, `timer`, `note`, `reverts`, `merge`, `prev`, `hash` |
+| `plugins` | `PluginList` | `name`, `path`, `hidden` |
 
-Grams are grams, as decimals. Times are RFC 3339. `scores` is a session's
+| `describe` | `kind` | Its fields: the row's, and |
+| --- | --- | --- |
+| `product <p>` | `Product` | `taste`, `overall` and `ratings` (its sessions'), `rating` (the strain's as a whole), `like` (each `slug`, `name`, `alike` 0 to 1, `shared`, `overall`, `ratings`) |
+| `device <d>` | `Device` | `released`: what its usual temperature releases, each `name`, `boils_at`, `effects`, `harmful` |
+| `fill [<n>]` | `Fill` | `carried` from earlier fills, and `jars`: each `product`, `name` and the fill's own grams `left` |
+| `temperature <°C>` | `Temperature` | `celsius`, and `released` as for a device |
+
+A device's own kind is `type`, since `kind` names the shape. Grams are grams, as decimals. Times are RFC 3339. `scores` is a session's
 rating as numbers, `{"overall": 4, "sleep": 5}`; `rated` says the same
 thing as text. A field that is empty is left out.
 
@@ -117,7 +132,7 @@ What is left of the newest fill, in one line, for a status bar:
 # wits-left: what is left of the newest fill, in one line.
 "${WITS:-wits}" get fills -o json | python3 -c '
 import json, sys
-f = json.load(sys.stdin)[-1]
+f = json.load(sys.stdin)["items"][-1]
 print("%.2f g left of fill %d" % (f["left"], f["fill"]))'
 ```
 
@@ -139,7 +154,7 @@ a JSON list, and plain output.
 
 The three plugins in `plugins/` are each a `main` package, built apart from
 wits. They share one small package, `plugins/internal/wits`, with the shapes
-they read and a `Get` that calls back:
+they read and a `Get` that calls back and checks the version:
 
 ```go
 // Get runs `wits get <kind> -o json`, with any more flags, and reads what
@@ -153,7 +168,19 @@ func Get(v any, kind string, flags ...string) error {
     if err := c.Run(); err != nil {
         return fmt.Errorf("wits %s: %s", strings.Join(args, " "), cmp.Or(strings.TrimSpace(errs.String()), err.Error()))
     }
-    return json.Unmarshal(out.Bytes(), v)
+    return items(out.Bytes(), v)
+}
+
+// items reads a list's items into v, once its version is the one known.
+func items(raw []byte, v any) error {
+    var l list
+    if err := json.Unmarshal(raw, &l); err != nil {
+        return err
+    }
+    if l.APIVersion != APIVersion {
+        return fmt.Errorf("wits printed %q, and this plugin reads %s: a wits and a plugin of the same release agree", l.APIVersion, APIVersion)
+    }
+    return json.Unmarshal(l.Items, v)
 }
 ```
 
@@ -280,7 +307,8 @@ nobody has rated, which shares no rated terpenes, is not ranked at all.
 
 ## 6. Before you share one
 
-- [ ] It reads only `wits get … -o json`, never `.wits/` itself.
+- [ ] It reads only `wits get … -o json` and `wits describe … -o json`,
+      never `.wits/` itself, and checks `apiVersion`.
 - [ ] It calls back `$WITS`, falling back to `wits` on the PATH.
 - [ ] Its name isn't a command of wits's own (`wits get plugins -o wide`
       would say so).
