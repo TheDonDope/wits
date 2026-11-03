@@ -135,7 +135,7 @@ does not list.
 | **A session rated** | `wits rate session` | `e` on sessions | Effects, I forgot to |
 | **A price** | `wits price` | `$` | Costs, I forgot to |
 | **Old stashes cleared** | `wits weigh stash <jar> 0`, a jar at a time | `c` on storage | I forgot to |
-| **Lists of a kind** | `wits get products`, `devices`, `fills`, `sessions`, `entries`; `-o json` | the screens | the pages |
+| **Lists of a kind** | `wits get products`, `devices`, `fills`, `sessions`, `entries`; `-o json`, `--watch` | the screens | the pages |
 | **A device added** | `wits create device` | `a` on devices | Shelf → Devices |
 | **A device edited or removed** | `wits edit device`, `wits delete device` | `e`, `d` on devices | Shelf → Devices: changed, retired or removed |
 | **Where things stand** | `wits status` | the dashboard | the dashboard |
@@ -1910,6 +1910,36 @@ wits in `plugins/`, each a Go program that reads only `wits get … -o json`
 The cookbook's second chapter, `docs/cookbook/plugins.md`, has the contract,
 a six-line plugin in shell (`wits-left`) and the Go ones.
 
+### For a script — `-o json` versioned, `describe -o json`, `get --watch`
+
+What `-o json` prints is a contract now, versioned the way kubectl versions
+its resources (`output.go`). A list is `{"apiVersion": "wits/v1", "kind":
+"FillList", "items": […]}`; a thing described is one object, `apiVersion`
+and `kind` first and its fields after. Within `wits/v1` a field is only
+added: `TestShapes` pins every field of every kind, an entry's included, so
+renaming one fails until the version moves with it. The shapes are the
+command line's own rows, not `pkg/api`'s: the two answer different readers,
+and each is held to its own (the server's by `make types`). A device's own
+kind is `type` in it, since `kind` names the shape — the one field renamed
+on the way in, before anything was promised.
+
+`describe product|device|fill|temperature -o json` prints what the text
+works out: a product's taste, its sessions' rating, the strain's rating and
+the products most like it (`alike` 0 to 1, `shared`); a device's row and
+what its usual temperature releases; a fill's `carried` and each jar's own
+grams `left`; a temperature's compounds, benzene marked `harmful`.
+
+`get … --watch` (`-w`) prints the list again each time
+`workspace.Stamp` changes, looked at once a second as the server's change
+stream does, until Ctrl-C, which ends it cleanly. With `-o json` a list is a
+line, for a script to read as a stream. Tried on a copy of the demo: a
+grind in another shell, and both a table and a JSON watch printed again,
+Morning Sun from 10.37 g in storage to 9.37 g.
+
+The plugins check `apiVersion` (`plugins/internal/wits`) and refuse another
+with a message rather than misread it; their figures on the demo are
+unchanged.
+
 ---
 
 ## 📌 Planned
@@ -2076,33 +2106,9 @@ two timestamps. Three things only a ledger like this one can do.
 
 ### 9 · Built on the JSON
 
-What the plugins and scripts could stand on next. The first three make
-`-o json` something a script can rely on; the rest are things to build on
-it, as plugins or recipes in the cookbook, not in wits itself.
-
-#### 🔹 Versioned shapes
-
-- **Status**: Planned
-- `-o json` prints a bare list today. A kubectl-style envelope —
-  `{"apiVersion": "wits/v1", "kind": "ProductList", "items": […]}` — lets a
-  script know which shape it reads, so a renamed field is a new version
-  rather than a broken script. The shapes are the ones `pkg/api` already
-  holds the server to (`typescript.go`), so there is one definition.
-
-#### 🔹 `describe … -o json`
-
-- **Status**: Planned
-- `describe` prints text only. A fill's share of each jar, a device's
-  releases and a product's likeness are worked out already; printed as JSON,
-  a plugin needs no second `get` to find them.
-
-#### 🔹 `get … --watch`
-
-- **Status**: Planned
-- As `kubectl get -w`: the list printed again whenever the repository
-  changes, from the stream the server already has (`/api/changes`), or from
-  the journal's modification time without one. A status bar or a home
-  automation sensor then updates without polling.
+What could stand on `-o json` now that a script can rely on it (versioned,
+described, watched — built, above): plugins or recipes in the cookbook, not
+wits itself.
 
 #### 🔹 Recipes on top
 

@@ -240,6 +240,11 @@ under `get` through `list[T]`, never a `<noun> list`. A write the recorder
 makes carries `Annotations: rehearsable()`, or `--dry-run` is refused on it;
 one that bypasses the recorder (devices, config, seals) must not carry it.
 Tests run the whole tree as typed: `run(t, dir, "weigh", "stash", …)`.
+`-o json` is versioned (`APIVersion`, `wits/v1`, in `output.go`): a list as
+`{apiVersion, kind: "<Kind>List", items}`, a thing described with its
+`apiVersion` and `kind` first. `TestShapes` pins every field; adding one is
+adding it there, and renaming or removing one is `wits/v2`. A new `get`
+wraps its RunE in `watched` for `--watch`.
 A name that is no command of wits's own, nor an alias, runs `wits-<name>`
 from the PATH (`plugin.go`); the plugins in `plugins/` read only `wits get
 … -o json`, never `pkg/` or `.wits/`, and `make plugins` builds them.
