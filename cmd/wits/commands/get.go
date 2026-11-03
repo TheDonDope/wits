@@ -17,6 +17,7 @@ var (
 	getOutput   string
 	getSelector string
 	getAll      bool
+	getWatch    bool
 )
 
 // Get is the `wits get` command: a list of one kind of thing.
@@ -24,15 +25,17 @@ var Get = &cobra.Command{
 	Use:   "get <kind>",
 	Short: "List one kind of thing: products, devices, fills, sessions, entries",
 	Long: "List one kind of thing, the way kubectl get lists a kind of resource:\n" +
-		"products (the jars), devices, fills, sessions or entries. -o wide adds\n" +
-		"columns, -o json prints every field, for a script. -l keeps the rows\n" +
-		"whose fields match, by the names -o json prints: -l maker=enua, or\n" +
-		"several, by commas.",
+		"products (the jars), devices, fills, sessions, entries or plugins. -o\n" +
+		"wide adds columns, -o json prints every field for a script, as\n" +
+		"{\"apiVersion\": \"wits/v1\", \"kind\": \"ProductList\", \"items\": [...]}. -l\n" +
+		"keeps the rows whose fields match, by the names -o json prints: -l\n" +
+		"maker=enua, or several, by commas. --watch prints the list again each\n" +
+		"time the repository changes; with -o json, a list a line.",
 	Example: "  wits get products\n" +
 		"  wits get products --all -o wide\n" +
-		"  wits get devices -l kind=vaporizer\n" +
+		"  wits get devices -l type=vaporizer\n" +
 		"  wits get sessions -l device=mighty -o json\n" +
-		"  wits get fills",
+		"  wits get fills --watch",
 	Args: cobra.NoArgs,
 }
 
@@ -40,7 +43,12 @@ var Get = &cobra.Command{
 var Describe = &cobra.Command{
 	Use:   "describe <kind> <name>",
 	Short: "Tell one thing in full: a product, a device, a fill, a temperature",
-	Args:  cobra.NoArgs,
+	Long: "Tell one thing in full, the way kubectl describe does. -o json prints\n" +
+		"it for a script, its version and kind first: {\"apiVersion\":\n" +
+		"\"wits/v1\", \"kind\": \"Product\", ...}.",
+	Example: "  wits describe product wedding\n" +
+		"  wits describe fill -o json",
+	Args: cobra.NoArgs,
 }
 
 // Edit is the `wits edit` command: a catalog entry changed in place, its
@@ -71,11 +79,14 @@ func init() {
 	Get.PersistentFlags().StringVarP(&getOutput, "output", "o", "table", "table, wide or json")
 	Get.PersistentFlags().StringVarP(&getSelector, "selector", "l", "", "keep the rows whose fields match, as key=value,key=value")
 	Get.PersistentFlags().BoolVarP(&getAll, "all", "A", false, "everything, not only what is held or open")
+	Get.PersistentFlags().BoolVarP(&getWatch, "watch", "w", false, "print it again each time the repository changes")
+	Describe.PersistentFlags().StringVarP(&describeOutput, "output", "o", "text", "text or json")
 }
 
-// listing is how one kind of thing is printed: its columns, those -o wide
-// adds, and the cells of a row for each.
+// listing is how one kind of thing is printed: its kind, as -o json names
+// it, its columns, those -o wide adds, and the cells of a row for each.
 type listing[T any] struct {
+	kind       string
 	head, wide []string
 	cells      func(T) (narrow, wide []string)
 }
@@ -89,12 +100,7 @@ func list[T any](out io.Writer, rows []T, l listing[T]) error {
 	}
 	switch getOutput {
 	case "json":
-		if kept == nil {
-			kept = []T{}
-		}
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(kept)
+		return writeList(out, l.kind, kept, getWatch)
 	case "table", "wide":
 	default:
 		return fmt.Errorf("-o %s: table, wide or json", getOutput)

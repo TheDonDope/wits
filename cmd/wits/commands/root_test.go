@@ -73,14 +73,17 @@ func TestGet(t *testing.T) {
 
 	out, err = run(t, dir, "get", "sessions", "-o", "json")
 	require.NoError(t, err)
-	var sessions []sessionRow
+	var sessions listOf[sessionRow]
 	require.NoError(t, json.Unmarshal([]byte(out), &sessions))
-	require.Len(t, sessions, 1)
-	assert.Equal(t, "mighty", sessions[0].Device)
+	assert.Equal(t, "wits/v1", sessions.APIVersion)
+	assert.Equal(t, "SessionList", sessions.Kind)
+	require.Len(t, sessions.Items, 1)
+	assert.Equal(t, "mighty", sessions.Items[0].Device)
 
-	out, err = run(t, dir, "get", "devices", "-l", "kind=torch", "-o", "json")
+	out, err = run(t, dir, "get", "devices", "-l", "type=torch", "-o", "json")
 	require.NoError(t, err)
-	assert.Equal(t, "[]\n", out, "No row is an empty list, not null, for a script")
+	assert.JSONEq(t, `{"apiVersion": "wits/v1", "kind": "DeviceList", "items": []}`, out,
+		"no row is an empty list, not null, for a script")
 
 	out, err = run(t, dir, "get", "fills")
 	require.NoError(t, err)

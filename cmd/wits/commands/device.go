@@ -32,7 +32,7 @@ var getDevices = &cobra.Command{
 	Aliases: []string{"device", "dev"},
 	Short:   "The devices: what each is, how it heats, and how much it was used",
 	Args:    cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
+	RunE: watched(func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err
@@ -45,7 +45,8 @@ var getDevices = &cobra.Command{
 			}
 		}
 		return list(cmd.OutOrStdout(), rows, listing[deviceRow]{
-			head: []string{"SLUG", "NAME", "KIND", "HEAT", "SESSIONS"},
+			kind: "Device",
+			head: []string{"SLUG", "NAME", "TYPE", "HEAT", "SESSIONS"},
 			wide: []string{"MAKER", "LOAD", "GRAMS", "LAST USED"},
 			cells: func(r deviceRow) ([]string, []string) {
 				last := "-"
@@ -56,14 +57,15 @@ var getDevices = &cobra.Command{
 					[]string{orDash(r.Maker), gramsCell(r.Load), gramsCell(r.Grams), last}
 			},
 		})
-	},
+	}),
 }
 
 // deviceRow is one device as get lists it, and -o json prints it.
 type deviceRow struct {
-	Slug     string     `json:"slug"`
-	Name     string     `json:"name"`
-	Kind     string     `json:"kind"`
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+	// Kind is printed as type, since -o json names the shape by kind.
+	Kind     string     `json:"type"`
 	Maker    string     `json:"maker,omitempty"`
 	Heat     string     `json:"heat,omitempty"`
 	MinTemp  int        `json:"min_temp,omitempty"`
@@ -109,9 +111,13 @@ var describeDevice = &cobra.Command{
 	Use:     "device <device>",
 	Aliases: []string{"devices", "dev"},
 	Short:   "A device in full: what it is, how it was used, and what its usual setting releases",
-	Example: "  wits describe device mighty",
+	Example: "  wits describe device mighty\n  wits describe device mighty -o json",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		js, err := asJSON()
+		if err != nil {
+			return err
+		}
 		s, err := open()
 		if err != nil {
 			return err
@@ -122,6 +128,9 @@ var describeDevice = &cobra.Command{
 		}
 		out := cmd.OutOrStdout()
 		r := deviceRowOf(d, views.Devices(s.State.Standing)[d.Slug])
+		if js {
+			return writeObject(out, "Device", deviceDetail{deviceRow: r, Released: releasedAt(d.DefaultTemp)})
+		}
 		fmt.Fprintf(out, "%s (%s)\n", d.Name, d.Slug)
 		line := func(label, value string) {
 			if value != "" {
@@ -293,12 +302,23 @@ var describeTemperature = &cobra.Command{
 	Short:   "What a temperature releases, and whether it is too hot",
 	Long: "Show which cannabinoids and terpenes a given temperature is hot enough\n" +
 		"to volatilise, and warn when it is hot enough to produce benzene.",
-	Example: "  wits describe temperature 185",
+	Example: "  wits describe temperature 185\n  wits describe temperature 230 -o json",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		js, err := asJSON()
+		if err != nil {
+			return err
+		}
 		var celsius int
 		if _, err := fmt.Sscanf(strings.TrimSuffix(args[0], "°C"), "%d", &celsius); err != nil {
 			return fmt.Errorf("%q is not a temperature in degrees Celsius", args[0])
+		}
+		if js {
+			released := releasedAt(celsius)
+			if released == nil {
+				released = []releasedRow{}
+			}
+			return writeObject(cmd.OutOrStdout(), "Temperature", temperatureDetail{Celsius: celsius, Released: released})
 		}
 		writeReleasedTable(cmd.OutOrStdout(), celsius)
 		return nil
@@ -307,6 +327,41 @@ var describeTemperature = &cobra.Command{
 
 // writeReleasedTable lists what a temperature releases, and the hazards it
 // reaches.
+// deviceDetail is a device as describe -o json prints it: its row, and what
+// its usual setting releases.
+type deviceDetail struct {
+	deviceRow
+	Released []releasedRow `json:"released,omitempty"`
+}
+
+// temperatureDetail is a temperature as describe -o json prints it.
+type temperatureDetail struct {
+	Celsius  int           `json:"celsius"`
+	Released []releasedRow `json:"released"`
+}
+
+// releasedRow is a compound a temperature is hot enough to release; harmful
+// is benzene's mark.
+type releasedRow struct {
+	Name    string   `json:"name"`
+	BoilsAt int      `json:"boils_at"`
+	Effects []string `json:"effects,omitempty"`
+	Harmful bool     `json:"harmful,omitempty"`
+}
+
+// releasedAt is what a temperature releases, as rows; nothing at 0, a
+// device set to no temperature.
+func releasedAt(celsius int) []releasedRow {
+	if celsius <= 0 {
+		return nil
+	}
+	var rows []releasedRow
+	for _, r := range catalog.ReleasedAt(celsius) {
+		rows = append(rows, releasedRow{Name: r.Name, BoilsAt: r.BoilingPoint, Effects: r.Effects, Harmful: r.Harmful})
+	}
+	return rows
+}
+
 func writeReleasedTable(out io.Writer, celsius int) {
 	released := catalog.ReleasedAt(celsius)
 	if len(released) == 0 {

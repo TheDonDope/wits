@@ -99,6 +99,7 @@ var getPlugins = &cobra.Command{
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return list(cmd.OutOrStdout(), plugins(filepath.SplitList(os.Getenv("PATH"))), listing[pluginRow]{
+			kind: "Plugin",
 			head: []string{"NAME", "PATH"},
 			wide: []string{"HIDDEN"},
 			cells: func(r pluginRow) ([]string, []string) {

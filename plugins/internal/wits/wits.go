@@ -38,9 +38,21 @@ type Product struct {
 	Terpenes []string `json:"terpenes"`
 }
 
-// Get runs `wits get <kind> -o json`, with any more flags, and reads what
-// it prints into v. The wits is the one that ran the plugin ($WITS), or the
-// first on the PATH when the plugin was run by hand.
+// APIVersion is the version of the shapes these plugins read. A wits that
+// prints another has renamed or taken away a field they may read, so they
+// stop rather than guess.
+const APIVersion = "wits/v1"
+
+// list is what `wits get -o json` prints: a version, a kind, the items.
+type list struct {
+	APIVersion string          `json:"apiVersion"`
+	Kind       string          `json:"kind"`
+	Items      json.RawMessage `json:"items"`
+}
+
+// Get runs `wits get <kind> -o json`, with any more flags, and reads the
+// items it prints into v. The wits is the one that ran the plugin ($WITS),
+// or the first on the PATH when the plugin was run by hand.
 func Get(v any, kind string, flags ...string) error {
 	bin := cmp.Or(os.Getenv("WITS"), "wits")
 	args := append([]string{"get", kind, "-o", "json"}, flags...)
@@ -50,7 +62,19 @@ func Get(v any, kind string, flags ...string) error {
 	if err := c.Run(); err != nil {
 		return fmt.Errorf("wits %s: %s", strings.Join(args, " "), cmp.Or(strings.TrimSpace(errs.String()), err.Error()))
 	}
-	return json.Unmarshal(out.Bytes(), v)
+	return items(out.Bytes(), v)
+}
+
+// items reads a list's items into v, once its version is the one known.
+func items(raw []byte, v any) error {
+	var l list
+	if err := json.Unmarshal(raw, &l); err != nil {
+		return err
+	}
+	if l.APIVersion != APIVersion {
+		return fmt.Errorf("wits printed %q, and this plugin reads %s: a wits and a plugin of the same release agree", l.APIVersion, APIVersion)
+	}
+	return json.Unmarshal(l.Items, v)
 }
 
 // Fail prints an error the way wits prints its own, and exits.

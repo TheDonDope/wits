@@ -23,7 +23,7 @@ var getFills = &cobra.Command{
 		"its purchases and closed when its own jars are empty. LEFT is the fill's\n" +
 		"own grams still in storage, not the shelf's.",
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
+	RunE: watched(func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err
@@ -33,6 +33,7 @@ var getFills = &cobra.Command{
 			rows = append(rows, fillRowOf(s, &s.State.Cycles[i]))
 		}
 		return list(cmd.OutOrStdout(), rows, listing[fillRow]{
+			kind: "Fill",
 			head: []string{"FILL", "OPENED", "DISPENSED", "LEFT", "STATE"},
 			wide: []string{"CLOSED", "PRODUCTS"},
 			cells: func(r fillRow) ([]string, []string) {
@@ -44,7 +45,7 @@ var getFills = &cobra.Command{
 					[]string{closed, fmt.Sprint(len(r.Products))}
 			},
 		})
-	},
+	}),
 }
 
 // fillRow is one fill as get lists it, and -o json prints it. Dispensed and
@@ -71,9 +72,13 @@ var describeFill = &cobra.Command{
 	Use:     "fill [<number>]",
 	Aliases: []string{"fills", "cycle"},
 	Short:   "One fill in full: its products and what of each is left; without a number, the latest",
-	Example: "  wits describe fill\n  wits describe fill 30",
+	Example: "  wits describe fill\n  wits describe fill 30 -o json",
 	Args:    cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		js, err := asJSON()
+		if err != nil {
+			return err
+		}
 		s, err := open()
 		if err != nil {
 			return err
@@ -90,6 +95,9 @@ var describeFill = &cobra.Command{
 			c = &s.State.Cycles[n-1]
 		}
 		out := cmd.OutOrStdout()
+		if js {
+			return writeObject(out, "Fill", fillDetailOf(s, c))
+		}
 		r := fillRowOf(s, c)
 		state := "open"
 		if r.Closed != nil {
@@ -108,12 +116,35 @@ var describeFill = &cobra.Command{
 	},
 }
 
+// fillDetail is a fill as describe -o json prints it: its row, the grams it
+// carried in from earlier fills, and what of each jar is still its own.
+type fillDetail struct {
+	fillRow
+	Carried float64   `json:"carried"`
+	Jars    []fillJar `json:"jars"`
+}
+
+// fillJar is one product of a fill, and the fill's own grams of it left.
+type fillJar struct {
+	Product string  `json:"product"`
+	Name    string  `json:"name"`
+	Left    float64 `json:"left"`
+}
+
+func fillDetailOf(s *session, c *ledger.Cycle) fillDetail {
+	d := fillDetail{fillRow: fillRowOf(s, c), Carried: float64(c.Carried), Jars: []fillJar{}}
+	for _, slug := range c.Products {
+		d.Jars = append(d.Jars, fillJar{Product: slug, Name: s.ProductName(slug), Left: float64(s.State.ShareOf(c, slug))})
+	}
+	return d
+}
+
 var getSessions = &cobra.Command{
 	Use:     "sessions",
 	Aliases: []string{"session", "sesh"},
 	Short:   "Every session that stands, oldest first: what, how much, with what, how hot",
 	Args:    cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
+	RunE: watched(func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err
@@ -132,6 +163,7 @@ var getSessions = &cobra.Command{
 			rows = append(rows, r)
 		}
 		return list(cmd.OutOrStdout(), rows, listing[sessionRow]{
+			kind: "Session",
 			head: []string{"ENTRY", "WHEN", "PRODUCT", "GRAMS", "DEVICE", "TEMP"},
 			wide: []string{"RATED", "NOTE"},
 			cells: func(r sessionRow) ([]string, []string) {
@@ -143,7 +175,7 @@ var getSessions = &cobra.Command{
 					[]string{orDash(r.Rated), orDash(r.Note)}
 			},
 		})
-	},
+	}),
 }
 
 // sessionRow is one session as get lists it, and -o json prints it.
@@ -168,12 +200,13 @@ var getEntries = &cobra.Command{
 		"the replay folds them. -o json prints each entry whole, as the journal\n" +
 		"holds it; wits log reads the same entries newest first.",
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
+	RunE: watched(func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err
 		}
 		return list(cmd.OutOrStdout(), s.State.Events, listing[journal.Event]{
+			kind: "Entry",
 			head: []string{"ENTRY", "WHEN", "TYPE", "GRAMS", "PRODUCT"},
 			wide: []string{"FROM", "TO", "NOTE"},
 			cells: func(e journal.Event) ([]string, []string) {
@@ -181,7 +214,7 @@ var getEntries = &cobra.Command{
 					[]string{string(e.From), string(e.To), orDash(cmp.Or(e.Note, reverting(e)))}
 			},
 		})
-	},
+	}),
 }
 
 // reverting says which entry an undo undoes.
