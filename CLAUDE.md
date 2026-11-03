@@ -3,8 +3,8 @@
 Guidance for Claude Code in this repository. README.md is for people using
 wits, with `docs/terminal.md` (the command line and the terminal interface) and
 `docs/browser.md` (the server, the window, the phone) beside it, and the
-developer cookbook (`docs/cookbook/`, a chapter a part: the command line so
-far) for people changing it; ROADMAP.md is the plan and the record of what is
+developer cookbook (`docs/cookbook/`, a chapter a part: the command line and
+its plugins so far) for people changing it; ROADMAP.md is the plan and the record of what is
 built; this file is how to work on it.
 
 ## Start here
@@ -240,6 +240,9 @@ under `get` through `list[T]`, never a `<noun> list`. A write the recorder
 makes carries `Annotations: rehearsable()`, or `--dry-run` is refused on it;
 one that bypasses the recorder (devices, config, seals) must not carry it.
 Tests run the whole tree as typed: `run(t, dir, "weigh", "stash", …)`.
+A name that is no command of wits's own, nor an alias, runs `wits-<name>`
+from the PATH (`plugin.go`); the plugins in `plugins/` read only `wits get
+… -o json`, never `pkg/` or `.wits/`, and `make plugins` builds them.
 
 ## The browser interface
 

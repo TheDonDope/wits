@@ -201,7 +201,7 @@ cluster**: `get` lists one kind of thing, `describe` tells one in full, and
 
 | | |
 | --- | --- |
-| `wits get products\|devices\|fills\|sessions\|entries` | A list of one kind; `-o wide` adds columns, `-o json` prints every field, `-l maker=enua` keeps what matches, `--all` the empty jars and retired devices too |
+| `wits get products\|devices\|fills\|sessions\|entries\|plugins` | A list of one kind; `-o wide` adds columns, `-o json` prints every field, `-l maker=enua` keeps what matches, `--all` the empty jars and retired devices too |
 | `wits describe product <product>` | What is known about a product: its label, its jar, its terpenes, its rating, and the products most like it |
 | `wits describe device <device>` | A device in full, and what its usual setting releases |
 | `wits describe fill [<n>]` | One fill: what it dispensed, and what of each jar is still its own; the latest without a number |
@@ -260,6 +260,53 @@ wits evening wedding 0.2
 ```
 
 A command of wits's own always wins, so an alias can never hide one.
+
+### Plugins
+
+A program named `wits-<name>` on your PATH runs as `wits <name>`, the way
+git and kubectl find theirs. It runs in the directory `-C` names, with `$WITS`
+set to the wits that ran it and `$WITS_DIR` to that directory, and its exit
+status is wits's own. `wits get plugins` lists the ones on the PATH; `-o wide`
+says which never run because a command of wits's own, or an earlier plugin,
+has the name. A plugin reads the repository through `wits get <kind> -o
+json`, so it can be written in anything.
+
+Three come with wits, in `plugins/`. `make plugins` builds them into `./bin`;
+`make install-plugins` (or `go install
+github.com/TheDonDope/wits/plugins/...@latest`) puts them on the PATH.
+
+| | |
+| --- | --- |
+| `wits heatmap` | The sessions as a calendar, a column a week, each day shaded by its grams; `--weeks`, `--count` to shade by sessions |
+| `wits tolerance` | The grams a session takes, month by month, and whether the last three months take more than the three before; `--months`, `--threshold` |
+| `wits pick` | Tonight's jar: what is on the shelf, ranked by how your rated sessions of it went, and of every strain sharing its terpenes; `--for sleep`, `--top`, `--min` |
+
+On the demo repository:
+
+```console
+$ wits heatmap --weeks 26
+       Jun  Jul Aug  Sep Oct Nov
+Mon ······█▒·▒▓▓█░▓▒░▓·▒█·█···
+    ······▓█·░▓▒▒·█·░░·▓█·▓▒··
+Wed ······▓·░····░░····░█░·▒·
+    ·····░░·░···········▓▒·▒·
+Fri ·····░··▓··░░▒·▒░▒··░▓·▒·
+    ·····█░·░·▒▓██▓▒▓·▒▒·▓▓▒·
+Sun ·····█▒·████▓█▓██░▒··██▒·
+
+    less · ░ ▒ ▓ █ more (grams a day)
+
+262 sessions, 61.43 g in 26 weeks: a session on 83 of 177 days; the longest break, 38 days.
+$ wits pick --for sleep --top 1
+Tonight, for sleep (492 rated sessions, 4.4 of 5 on average):
+
+1. NICE 32/1 Morning Sun (nice-morning-sun-321): +0.56
+   3.40 g ground, 11.37 g sealed
+   you rated it 5.0 over 14 sessions
+   its terpenes: Limonene +0.01, Myrcene +0.02, Terpinolene -0.07
+```
+
+The cookbook's [plugins chapter](cookbook/plugins.md) shows how to write one.
 
 ## Bringing a spreadsheet across
 

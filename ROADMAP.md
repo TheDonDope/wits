@@ -154,6 +154,7 @@ does not list.
 | **Sync** | `wits remote`, `push`, `pull` | kept | Sync, on the phone |
 | **Seals** | `wits seal`, `wits verify` | kept | kept |
 | **Invoices, labels, terpenes from the web** | kept | kept | Record → Prescription, the jar's page |
+| **Plugins** | `wits <name>`, `wits get plugins` | kept | kept |
 
 Kept, and why:
 
@@ -164,6 +165,10 @@ Kept, and why:
 - **Backups, checks and seals** in the browser, and sync on the desk: the
   desk's browser stands beside a command line on the same machine, and the
   phone's Sync writes the whole repository as one bundle already.
+- **Plugins** in either interface: a plugin is a program the command line
+  runs, and it reads what `wits get … -o json` prints. A screen would only
+  run the same program and show its text, which the command line already
+  does.
 - **Invoices, labels and terpenes from the web** in a terminal: they read a
   PDF, a photograph or a web page and end in a fill or a product's terpenes,
   which both terminals record by hand.
@@ -1878,6 +1883,33 @@ The developer cookbook begins with it: `docs/cookbook/cli.md`, the Go, Cobra,
 the wiring and the naming, its recipe for `get ratings` built and run on the
 demo (718 ratings) before it was written down.
 
+### Plugins — `wits-<name>`, `wits heatmap`, `wits tolerance`, `wits pick`
+
+A name that is neither a command of wits's own nor an alias runs the program
+`wits-<name>` from the PATH, as git and kubectl find theirs (`plugin.go`).
+It runs in the directory `-C` names, with `$WITS` (the wits that ran it)
+and `$WITS_DIR`, and its exit status is wits's own. `--dry-run` is refused
+before its name, and a command of wits's own always wins. `wits get plugins`
+lists them in the order of the PATH, each directory read once, and `-o wide`
+says which never run. Sessions in `-o json` carry their rating as numbers
+too (`scores`), so a plugin doesn't parse `rated`. Three plugins come with
+wits in `plugins/`, each a Go program that reads only `wits get … -o json`
+(`make plugins`, `make install-plugins`):
+
+- `wits heatmap`: a calendar of sessions, a column a week, each day shaded
+  by its quartile among the days used (`--weeks`, `--count`). On the demo,
+  848 sessions and 197.89 g in 52 weeks, matching a count from the JSON on
+  its own.
+- `wits tolerance`: grams a session by month, the last three months pooled
+  against the three before them (`--months`, `--threshold`). On the demo,
+  steady: 0.233 g, −1 %.
+- `wits pick`: the jars on the shelf ranked by how their own rated sessions
+  went against the mean, plus how sessions of the strains sharing their
+  terpenes went (`--for sleep`, `--top`, `--min`).
+
+The cookbook's second chapter, `docs/cookbook/plugins.md`, has the contract,
+a six-line plugin in shell (`wits-left`) and the Go ones.
+
 ---
 
 ## 📌 Planned
@@ -2041,6 +2073,60 @@ two timestamps. Three things only a ledger like this one can do.
   sessions' temperatures will have released — so an `avb use` is offered an
   estimate in milligrams, as a range, with its assumptions on screen and never
   in a total.
+
+### 9 · Built on the JSON
+
+What the plugins and scripts could stand on next. The first three make
+`-o json` something a script can rely on; the rest are things to build on
+it, as plugins or recipes in the cookbook, not in wits itself.
+
+#### 🔹 Versioned shapes
+
+- **Status**: Planned
+- `-o json` prints a bare list today. A kubectl-style envelope —
+  `{"apiVersion": "wits/v1", "kind": "ProductList", "items": […]}` — lets a
+  script know which shape it reads, so a renamed field is a new version
+  rather than a broken script. The shapes are the ones `pkg/api` already
+  holds the server to (`typescript.go`), so there is one definition.
+
+#### 🔹 `describe … -o json`
+
+- **Status**: Planned
+- `describe` prints text only. A fill's share of each jar, a device's
+  releases and a product's likeness are worked out already; printed as JSON,
+  a plugin needs no second `get` to find them.
+
+#### 🔹 `get … --watch`
+
+- **Status**: Planned
+- As `kubectl get -w`: the list printed again whenever the repository
+  changes, from the stream the server already has (`/api/changes`), or from
+  the journal's modification time without one. A status bar or a home
+  automation sensor then updates without polling.
+
+#### 🔹 Recipes on top
+
+- **Status**: Planned
+- Each a plugin or a cookbook recipe, measured on the demo before it is
+  written down:
+  - **A status-bar line** (waybar, tmux, the Steam Deck's overlay): what is
+    left of the open fill, all day — `wits-left` is its first version.
+  - **A reorder alert**: a scheduled job that notifies a phone (ntfy.sh)
+    when the open fill falls below a line, or `report refill`'s date to
+    order by comes near. The first thing a recipe would send anywhere, so it
+    says so.
+  - **A nudge**: today's sessions against a usual day, as a desktop
+    notification.
+  - **SQL over the history**: `get entries -o json` loaded into DuckDB or
+    SQLite, with a few queries to start from, and Grafana on top for those
+    who want panels.
+  - **Home Assistant**: the jars as sensors, and a smart scale's reading put
+    through `wits weigh … --dry-run`, so the difference is shown before
+    anything is written.
+  - **An effects notebook**: sessions joined with terpenes in Jupyter, for
+    what the strain map doesn't ask.
+  - **A household view**: several repositories on one page, by `-C`, for a
+    carer with more than one patient.
 
 ### Later · hardware and delight
 
