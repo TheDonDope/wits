@@ -2,12 +2,22 @@
 ## [Unreleased]
 
 
+<a name="v0.114.0"></a>
+## [v0.114.0] - 2026-11-03
+### Docs
+- **cookbook:** plugins, from the PATH to a pick — and what could stand on the JSON next
+
+### Feat
+- **cli:** plugins — wits-<name> on the PATH runs as wits <name>
+
+
 <a name="v0.113.0"></a>
 ## [v0.113.0] - 2026-11-03
 ### Chore
 - **vhs:** re-record the cli, bundle and weighing gifs, which type the new names
 
 ### Docs
+- update changelog for v0.113.0
 - **cookbook:** what Codacy's markdownlint asks — spaces in the code, a heading for the contents
 - **cookbook:** the command line, from main.go to the journal
 
@@ -1397,7 +1407,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.113.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.114.0...HEAD
+[v0.114.0]: https://github.com/TheDonDope/wits/compare/v0.113.0...v0.114.0
 [v0.113.0]: https://github.com/TheDonDope/wits/compare/v0.112.0...v0.113.0
 [v0.112.0]: https://github.com/TheDonDope/wits/compare/v0.111.0...v0.112.0
 [v0.111.0]: https://github.com/TheDonDope/wits/compare/v0.110.0...v0.111.0
