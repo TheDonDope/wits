@@ -2,9 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v0.115.0"></a>
+## [v0.115.0] - 2026-11-03
+### Docs
+- the json contract — the version it promises, describe and watch, for scripts and plugins
+
+### Fix
+- **cli:** a watched list's printer is named show, print being Go's own
+
+
 <a name="v0.114.0"></a>
 ## [v0.114.0] - 2026-11-03
 ### Docs
+- update changelog for v0.114.0
 - **cookbook:** plugins, from the PATH to a pick — and what could stand on the JSON next
 
 ### Feat
@@ -1407,7 +1417,8 @@ restoring it into a new one, which rebuilds the chain.
 - initial commit
 
 
-[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.114.0...HEAD
+[Unreleased]: https://github.com/TheDonDope/wits/compare/v0.115.0...HEAD
+[v0.115.0]: https://github.com/TheDonDope/wits/compare/v0.114.0...v0.115.0
 [v0.114.0]: https://github.com/TheDonDope/wits/compare/v0.113.0...v0.114.0
 [v0.113.0]: https://github.com/TheDonDope/wits/compare/v0.112.0...v0.113.0
 [v0.112.0]: https://github.com/TheDonDope/wits/compare/v0.111.0...v0.112.0
