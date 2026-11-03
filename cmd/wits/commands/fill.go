@@ -127,7 +127,7 @@ var getSessions = &cobra.Command{
 			r := sessionRow{Hash: e.Hash, At: e.OccurredAt, Product: e.Product, Grams: e.Grams,
 				Device: e.Device, Temperature: e.Temperature, Note: e.Note}
 			if rating, ok := ratings[e.Hash]; ok {
-				r.Rated = effects.Summary(rating.Scores)
+				r.Rated, r.Scores = effects.Summary(rating.Scores), rating.Scores
 			}
 			rows = append(rows, r)
 		}
@@ -155,7 +155,9 @@ type sessionRow struct {
 	Device      string    `json:"device,omitempty"`
 	Temperature int       `json:"temperature,omitempty"`
 	Rated       string    `json:"rated,omitempty"`
-	Note        string    `json:"note,omitempty"`
+	// Scores are the rating as numbers, for a script: Rated says them.
+	Scores map[effects.Dimension]int `json:"scores,omitempty"`
+	Note   string                    `json:"note,omitempty"`
 }
 
 var getEntries = &cobra.Command{
