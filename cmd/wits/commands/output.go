@@ -138,11 +138,11 @@ func watched(run func(*cobra.Command, []string) error) func(*cobra.Command, []st
 
 // watch prints once, then again each time stamp says something changed,
 // until ctx is done.
-func watch(ctx context.Context, stamp func() string, print func(again bool) error) error {
+func watch(ctx context.Context, stamp func() string, show func(again bool) error) error {
 	look := time.NewTicker(watchEvery)
 	defer look.Stop()
 	last := stamp()
-	if err := print(false); err != nil {
+	if err := show(false); err != nil {
 		return err
 	}
 	for {
@@ -153,7 +153,7 @@ func watch(ctx context.Context, stamp func() string, print func(again bool) erro
 		}
 		if now := stamp(); now != last {
 			last = now
-			if err := print(true); err != nil {
+			if err := show(true); err != nil {
 				return err
 			}
 		}
