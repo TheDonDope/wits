@@ -7,6 +7,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -31,7 +32,7 @@ var getProducts = &cobra.Command{
 		"stash. Only those holding something, unless --all. -o wide adds the\n" +
 		"label and what went through a device.",
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
+	RunE: watched(func(cmd *cobra.Command, _ []string) error {
 		s, err := open()
 		if err != nil {
 			return err
@@ -44,6 +45,7 @@ var getProducts = &cobra.Command{
 			}
 		}
 		return list(cmd.OutOrStdout(), rows, listing[productRow]{
+			kind: "Product",
 			head: []string{"SLUG", "NAME", "STORAGE", "STASH"},
 			wide: []string{"THC/CBD", "MAKER", "AVB", "CONSUMED", "TERPENES"},
 			cells: func(r productRow) ([]string, []string) {
@@ -52,7 +54,7 @@ var getProducts = &cobra.Command{
 						gramsCell(r.Consumed), orDash(strings.Join(r.Terpenes, ", "))}
 			},
 		})
-	},
+	}),
 }
 
 // productRow is one product as get lists it, and -o json prints it.
@@ -87,10 +89,14 @@ var describeProduct = &cobra.Command{
 		"terpenes, how the strain was rated (wits rate strain), and the products\n" +
 		"most like it by name, cannabinoids and terpenes. The browser's Effects page\n" +
 		"draws all of them as a map.",
-	Example:           "  wits describe product wedding",
+	Example:           "  wits describe product wedding\n  wits describe product wedding -o json",
 	Args:              cobra.ExactArgs(1),
 	ValidArgsFunction: completeProduct(""),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		js, err := asJSON()
+		if err != nil {
+			return err
+		}
 		s, err := open()
 		if err != nil {
 			return err
@@ -100,6 +106,9 @@ var describeProduct = &cobra.Command{
 			return err
 		}
 		out := cmd.OutOrStdout()
+		if js {
+			return writeObject(out, "Product", productDetailOf(s, p))
+		}
 		writeProduct(out, s, p)
 		writeLike(out, s, p)
 		return nil
@@ -142,6 +151,58 @@ var editProduct = &cobra.Command{
 		writeProduct(cmd.OutOrStdout(), s, edited)
 		return nil
 	},
+}
+
+// productDetail is a product as describe -o json prints it: its row, how
+// its sessions were rated, how the strain was rated as a whole, and the
+// products most like it.
+type productDetail struct {
+	productRow
+	Taste   string        `json:"taste,omitempty"`
+	Overall float64       `json:"overall,omitempty"`
+	Ratings int           `json:"ratings,omitempty"`
+	Rating  *strainRating `json:"rating,omitempty"`
+	Like    []likeRow     `json:"like,omitempty"`
+}
+
+// strainRating is a strain rated as a whole (wits rate strain).
+type strainRating struct {
+	Overall int       `json:"overall,omitempty"`
+	Taste   int       `json:"taste,omitempty"`
+	Aroma   int       `json:"aroma,omitempty"`
+	Again   string    `json:"again,omitempty"`
+	Note    string    `json:"note,omitempty"`
+	At      time.Time `json:"at"`
+}
+
+// likeRow is a product like another: how alike, 0 to 1, the terpenes the
+// two share, and how its own sessions were rated.
+type likeRow struct {
+	Slug    string   `json:"slug"`
+	Name    string   `json:"name"`
+	Alike   float64  `json:"alike"`
+	Shared  []string `json:"shared,omitempty"`
+	Overall float64  `json:"overall,omitempty"`
+	Ratings int      `json:"ratings,omitempty"`
+}
+
+func productDetailOf(s *session, p *catalog.Product) productDetail {
+	d := productDetail{productRow: productRowOf(s, p)}
+	if r := p.Rating; r != nil {
+		d.Rating = &strainRating{Overall: r.Overall, Taste: r.Taste, Aroma: r.Aroma, Again: string(r.Again), Note: r.Note, At: r.At}
+	}
+	strains := report.Strains(s.Workspace)
+	i := slices.IndexFunc(strains, func(x report.Strain) bool { return x.Slug == p.Slug })
+	if i < 0 {
+		return d
+	}
+	d.Taste, d.Overall, d.Ratings = strains[i].Taste, strains[i].Overall, strains[i].Ratings
+	for _, l := range strains[i].Like {
+		j := slices.IndexFunc(strains, func(x report.Strain) bool { return x.Slug == l.Slug })
+		d.Like = append(d.Like, likeRow{Slug: l.Slug, Name: strains[j].Name, Alike: l.Score, Shared: l.Shared,
+			Overall: strains[j].Overall, Ratings: strains[j].Ratings})
+	}
+	return d
 }
 
 // writeProduct tells a product: its label, its jar, its terpenes, its rating.
