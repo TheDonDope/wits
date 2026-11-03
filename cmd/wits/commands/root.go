@@ -45,7 +45,9 @@ var Root = &cobra.Command{
 		"The journal is written the way git commits: short verbs, run as it happens\n" +
 		"(buy, grind, sesh, weigh). Everything else is read the way kubectl reads a\n" +
 		"cluster: get lists, describe tells one in full, edit, create and delete\n" +
-		"change the catalogs. On its own, wits opens the terminal interface.",
+		"change the catalogs. On its own, wits opens the terminal interface.\n\n" +
+		"A program named wits-<name> on your PATH runs as wits <name>: wits get\n" +
+		"plugins lists them.",
 	Version: version.String(),
 	Args:    cobra.NoArgs,
 	// main reports the error itself, so cobra should not print it too, and
@@ -100,9 +102,14 @@ func init() {
 }
 
 // Execute runs the command line on args, an alias of the repository's
-// expanded first.
+// expanded first, and a plugin's program when a name is no command of
+// wits's own.
 func Execute(ctx context.Context, args []string) error {
-	Root.SetArgs(expand(args))
+	args = expand(args)
+	if at, dir, path, ok := plugin(args); ok {
+		return runPlugin(ctx, args, at, dir, path)
+	}
+	Root.SetArgs(args)
 	return Root.ExecuteContext(ctx)
 }
 
@@ -115,7 +122,7 @@ func expand(args []string) []string {
 	if at < 0 {
 		return args
 	}
-	if c, _, err := Root.Find(args[at : at+1]); err == nil && c != Root {
+	if builtin(args[at]) {
 		return args
 	}
 	r, err := repo.Discover(dir)

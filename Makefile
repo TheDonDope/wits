@@ -12,7 +12,7 @@ UI_DEFINE = --define "WITS_VERSION='$(shell git describe --tags --always --dirty
 
 .PHONY: run install install-wits build build-windows clean doc changelog render-tapes \
 	test test-ci cover show-cover vet preflight snap release server ui ui-test serve \
-	wasm wasm-check types pages appimage demo-seed
+	wasm wasm-check types pages appimage demo-seed plugins install-plugins
 
 .DEFAULT_GOAL := build
 
@@ -44,6 +44,14 @@ build:
 	  -o ./bin/wits \
 	  ./cmd/wits
 
+# The plugins in plugins/, each a program wits-<name> that runs as
+# `wits <name>` once it is on the PATH: ./bin for a try, $GOBIN to keep.
+plugins:
+	go build -o ./bin/ ./plugins/...
+
+install-plugins:
+	go install ./plugins/...
+
 build-windows:
 	GOOS=windows \
 	GOARCH=amd64 \
@@ -56,6 +64,7 @@ build-windows:
 clean:
 	rm -f ./bin/wits
 	rm -f ./bin/wits.exe
+	rm -f ./bin/wits-heatmap ./bin/wits-tolerance ./bin/wits-pick
 	rm -f coverage.html
 	rm -f coverage.out
 	rm -rf tmp
